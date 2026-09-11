@@ -50,6 +50,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		return
 
+	# Releases are handled before the capture guard so letting go while the mouse is
+	# free still finishes the throw instead of leaving the hand charging forever.
+	if event.is_action_released("grab_left"):
+		interactor.release_hand(hand_left)
+		return
+	if event.is_action_released("grab_right"):
+		interactor.release_hand(hand_right)
+		return
+
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		# Click back into the window to regain mouse look.
 		if event is InputEventMouseButton and event.pressed:
@@ -59,9 +68,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		interactor.interact()
 	elif event.is_action_pressed("grab_left"):
-		interactor.grab_or_drop(hand_left)
+		interactor.grab_or_charge(hand_left)
 	elif event.is_action_pressed("grab_right"):
-		interactor.grab_or_drop(hand_right)
+		interactor.grab_or_charge(hand_right)
 
 
 func _physics_process(delta: float) -> void:

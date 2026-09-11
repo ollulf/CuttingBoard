@@ -1,6 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/components/carryable.gd" id="1_carryable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="2_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="3_impact"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(0.3, 0.3, 0.3)
@@ -18,3 +20,9 @@ shape = SubResource("BoxShape3D_1")
 
 [node name="Carryable" type="Node" parent="."]
 script = ExtResource("1_carryable")
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("2_destructible")
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("3_impact")

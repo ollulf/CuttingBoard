@@ -8,6 +8,9 @@ signal hover_changed(target: Node3D)
 
 @export var ray_length := 3.0
 @export var collision_mask := 1
+## Speed of a fully charged throw, in metres per second. A release with no wind-up
+## leaves the item at rest, which is what makes a quick click read as a plain drop.
+@export var throw_speed := 12.0
 ## Overlay applied to the hovered object's meshes; a translucent tint is built if unset.
 @export var highlight_material: Material
 
@@ -47,11 +50,20 @@ func interact() -> void:
 		usable.use(get_owner())
 
 
-func grab_or_drop(hand: HandSlot) -> void:
+## Pressing with an empty hand grabs; pressing with a full one starts winding up a throw.
+func grab_or_charge(hand: HandSlot) -> void:
 	if hand.is_free():
 		_grab_into(hand)
 	else:
-		_drop_from(hand)
+		hand.begin_charge()
+
+
+## Releasing only matters if this hand was winding up, so the press that performed a
+## grab does not immediately throw the item it just picked up.
+func release_hand(hand: HandSlot) -> void:
+	if not hand.is_charging():
+		return
+	_throw_from(hand, hand.end_charge())
 
 
 func _grab_into(hand: HandSlot) -> void:
@@ -61,12 +73,16 @@ func _grab_into(hand: HandSlot) -> void:
 	hand.hold(carryable.take(get_owner()))
 
 
-func _drop_from(hand: HandSlot) -> void:
+func _throw_from(hand: HandSlot, ratio: float) -> void:
 	var item := hand.release()
 	item.reparent(get_tree().current_scene, true)
 	var carryable := item.get_node_or_null("Carryable") as Carryable
 	if carryable:
 		carryable.return_to_world()
+	# After return_to_world, so the body is unfrozen and will accept the velocity.
+	var body := item as RigidBody3D
+	if body:
+		body.linear_velocity = -_camera.global_transform.basis.z * throw_speed * ratio
 
 
 func _get_target() -> Node3D:
