@@ -1,0 +1,7 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Source art working files (keep out of the repo)
+assets/models_source/*
+!assets/models_source/.gitkeep
