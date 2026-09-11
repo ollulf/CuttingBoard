@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://c360c8goxa7uh"]
+
+[ext_resource type="PackedScene" uid="uid://1aa0wu7c7xel" path="res://scenes/characters/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/items/carryable_base.tscn" id="2_yautc"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+tonemap_mode = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(60, 60)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.42, 0.45, 0.4, 1)
+uv1_scale = Vector3(30, 30, 1)
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_ground"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_box"]
+size = Vector3(2, 1, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_box"]
+size = Vector3(2, 1, 2)
+
+[node name="TestLevel" type="Node3D" unique_id=408145003]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1906193929]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=514558800]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=272265108]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1710344613]
+mesh = SubResource("PlaneMesh_ground")
+surface_material_override/0 = SubResource("StandardMaterial3D_ground")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1575756470]
+shape = SubResource("WorldBoundaryShape3D_ground")
+
+[node name="Step" type="StaticBody3D" parent="." unique_id=1948015408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.5, -5)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Step" unique_id=386015226]
+mesh = SubResource("BoxMesh_box")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Step" unique_id=616717470]
+shape = SubResource("BoxShape3D_box")
+
+[node name="Step2" type="StaticBody3D" parent="." unique_id=236739825]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.5, -8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Step2" unique_id=537268569]
+mesh = SubResource("BoxMesh_box")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Step2" unique_id=763378279]
+shape = SubResource("BoxShape3D_box")
+
+[node name="Player" parent="." unique_id=1386179318 instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="CarryableBase" parent="." unique_id=1680223564 instance=ExtResource("2_yautc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.678698, 0.15, -2.1022735)
