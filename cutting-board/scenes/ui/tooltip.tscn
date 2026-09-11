@@ -1,0 +1,50 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/tooltip.gd" id="1_tooltip"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+bg_color = Color(0.05, 0.05, 0.07, 0.66)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_key"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.85, 0.86, 0.95, 0.16)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="Tooltip" type="PanelContainer"]
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_tooltip")
+
+[node name="Row" type="HBoxContainer" parent="."]
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="KeyBadge" type="PanelContainer" parent="Row"]
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_key")
+
+[node name="KeyLabel" type="Label" parent="Row/KeyBadge"]
+theme_override_colors/font_color = Color(0.92, 0.93, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "LMB"
+
+[node name="ActionLabel" type="Label" parent="Row"]
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.88, 0.89, 0.95, 1)
+theme_override_font_sizes/font_size = 15
+text = "Pick up"

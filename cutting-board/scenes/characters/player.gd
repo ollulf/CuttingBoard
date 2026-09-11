@@ -16,12 +16,12 @@ extends CharacterBody3D
 ## How far the arms rise/fall in response to vertical velocity (jumping/falling).
 @export var arm_jump_lift := 0.15
 
-@onready var camera_pivot: Node3D = $CameraPivot
-@onready var arm_left: MeshInstance3D = $CameraPivot/Camera3D/ArmLeft
-@onready var arm_right: MeshInstance3D = $CameraPivot/Camera3D/ArmRight
-@onready var interactor: Interactor = $CameraPivot/Camera3D/Interactor
-@onready var hand_left: HandSlot = $CameraPivot/Camera3D/ArmLeft/HandSlot
-@onready var hand_right: HandSlot = $CameraPivot/Camera3D/ArmRight/HandSlot
+@onready var camera_pivot: Node3D = %CameraPivot
+@onready var arm_left: MeshInstance3D = %ArmLeft
+@onready var arm_right: MeshInstance3D = %ArmRight
+@onready var interactor: Interactor = %Interactor
+@onready var hand_left: HandSlot = %HandSlotLeft
+@onready var hand_right: HandSlot = %HandSlotRight
 
 const PITCH_LIMIT := deg_to_rad(89.0)
 

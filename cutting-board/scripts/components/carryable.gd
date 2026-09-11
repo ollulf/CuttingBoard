@@ -21,13 +21,22 @@ func take(by: Node) -> Node3D:
 		_world_mask = body.collision_mask
 		body.collision_layer = 0
 		body.collision_mask = 0
+	# Freezing is what keeps a held RigidBody3D following the hand instead of
+	# simulating its way out of it.
+	var rigid := root as RigidBody3D
+	if rigid:
+		rigid.freeze = true
 	picked_up.emit(by)
 	return root
 
 
-## Restores world collision after the item leaves a HandSlot.
+## Restores world physics after the item leaves a HandSlot.
 func return_to_world() -> void:
-	var body := get_parent() as CollisionObject3D
+	var root := get_parent()
+	var body := root as CollisionObject3D
 	if body:
 		body.collision_layer = _world_layer
 		body.collision_mask = _world_mask
+	var rigid := root as RigidBody3D
+	if rigid:
+		rigid.freeze = false

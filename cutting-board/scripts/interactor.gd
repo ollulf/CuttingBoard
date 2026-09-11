@@ -4,6 +4,8 @@ extends Node
 ## Raycasts from the parent Camera3D: highlights whatever interactable sits under the
 ## crosshair, uses Usable objects, and moves Carryable objects in and out of a HandSlot.
 
+signal hover_changed(target: Node3D)
+
 @export var ray_length := 3.0
 @export var collision_mask := 1
 ## Overlay applied to the hovered object's meshes; a translucent tint is built if unset.
@@ -32,6 +34,11 @@ func _physics_process(_delta: float) -> void:
 	_set_overlay(_hovered, null)
 	_hovered = target
 	_set_overlay(_hovered, highlight_material)
+	hover_changed.emit(_hovered)
+
+
+func get_hovered() -> Node3D:
+	return _hovered
 
 
 func interact() -> void:

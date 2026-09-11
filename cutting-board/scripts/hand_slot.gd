@@ -39,14 +39,16 @@ func release() -> Node3D:
 	if item == null:
 		return null
 	_clear_held()
-	item_released.emit(item)
 	return item
 
 
-## Keeps the slot usable when the held item is destroyed out from under it.
+## The single exit path for a held item, whether it was dropped or destroyed out from
+## under the slot, so item_released fires exactly once either way.
 func _clear_held() -> void:
 	if _held == null:
 		return
-	if _held.tree_exiting.is_connected(_clear_held):
-		_held.tree_exiting.disconnect(_clear_held)
+	var item := _held
+	if item.tree_exiting.is_connected(_clear_held):
+		item.tree_exiting.disconnect(_clear_held)
 	_held = null
+	item_released.emit(item)
