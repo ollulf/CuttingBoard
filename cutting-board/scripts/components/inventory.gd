@@ -52,11 +52,11 @@ func can_add(data: ItemData) -> bool:
 	return _find_open_stack(data) != null or find_free_origin(data.grid_size).x >= 0
 
 
-## Takes one off the entry's stack, dropping the entry once it empties.
-func remove(entry: InventoryEntry) -> void:
-	if entry == null or not _entries.has(entry):
+## Takes items off the entry's stack, dropping the entry once it empties.
+func remove(entry: InventoryEntry, count: int = 1) -> void:
+	if entry == null or not _entries.has(entry) or count <= 0:
 		return
-	entry.count -= 1
+	entry.count -= count
 	if entry.count <= 0:
 		_entries.erase(entry)
 	changed.emit()

@@ -11,6 +11,7 @@ extends CanvasLayer
 @onready var _left_prompt: Tooltip = $Corner/Prompts/LeftHandPrompt
 @onready var _right_prompt: Tooltip = $Corner/Prompts/RightHandPrompt
 @onready var _interact_prompt: Tooltip = $Corner/Prompts/InteractPrompt
+@onready var _stow_prompt: Tooltip = $Corner/Prompts/StowPrompt
 @onready var _inventory_panel: InventoryPanel = $InventoryPanel
 
 @onready var _interactor: Interactor = %Interactor
@@ -21,11 +22,16 @@ extends CanvasLayer
 
 func _ready() -> void:
 	_inventory_panel.bind(_inventory)
+	_inventory_panel.drop_requested.connect(_on_drop_requested)
+	var hands: Array[HandSlot] = [_hand_left, _hand_right]
+	_inventory_panel.bind_equipment(hands, _interactor)
 	_interactor.hover_changed.connect(_refresh.unbind(1))
 	_hand_left.item_held.connect(_refresh.unbind(1))
 	_hand_left.item_released.connect(_refresh.unbind(1))
 	_hand_right.item_held.connect(_refresh.unbind(1))
 	_hand_right.item_released.connect(_refresh.unbind(1))
+	_hand_left.equipped_changed.connect(_refresh.unbind(1))
+	_hand_right.equipped_changed.connect(_refresh.unbind(1))
 	_inventory.changed.connect(_refresh)
 	_refresh()
 
@@ -34,13 +40,18 @@ func _refresh() -> void:
 	_update_hand_prompt(_left_prompt, "LMB", _hand_left)
 	_update_hand_prompt(_right_prompt, "RMB", _hand_right)
 	_update_interact_prompt()
+	_update_stow_prompt()
 
 
+## An empty hand pointed at something loose picks it up on a plain click; otherwise a
+## plain click draws whatever is equipped to this hand. Shift works the world with it.
 func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
-	if not hand.is_free():
-		prompt.show_prompt(key, "Drop")
-	elif _hovering_carryable():
+	if hand.is_free() and _hovering_carryable():
 		prompt.show_prompt(key, "Pick up")
+	elif hand.equipped and not hand.is_drawn():
+		prompt.show_prompt(key, "Draw %s" % hand.equipped.display_name)
+	elif not hand.is_free():
+		prompt.show_prompt("Shift+" + key, "Drop")
 	else:
 		prompt.hide()
 
@@ -53,6 +64,22 @@ func _update_interact_prompt() -> void:
 		_interact_prompt.show_prompt("E", "Inventory full")
 	else:
 		_interact_prompt.hide()
+
+
+## Items dragged clear of the inventory window go back into the world in front of the
+## player. Only what actually made it out is taken off the stack, so an item with no
+## world scene to rebuild from stays safely in the grid instead of vanishing.
+func _on_drop_requested(entry: InventoryEntry, count: int) -> void:
+	var dropped := _interactor.drop_item(entry.data, count)
+	if dropped > 0:
+		_inventory.remove(entry, dropped)
+
+
+func _update_stow_prompt() -> void:
+	if _hand_left.is_drawn() or _hand_right.is_drawn():
+		_stow_prompt.show_prompt("F", "Put away")
+	else:
+		_stow_prompt.hide()
 
 
 func _hovering_carryable() -> bool:

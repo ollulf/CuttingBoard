@@ -90,8 +90,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -1.9488616)
 [node name="Barrel3" parent="." unique_id=960236127 instance=ExtResource("5_6xh4u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -3.2262414)
 
+[node name="Barrel4" parent="." unique_id=1409338221 instance=ExtResource("5_6xh4u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -4.422385)
+
+[node name="Barrel5" parent="." unique_id=2011571584 instance=ExtResource("5_6xh4u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -5.520435)
+
 [node name="Hammer" parent="." unique_id=1795017851 instance=ExtResource("6_cyt5c")]
 transform = Transform3D(1, 0, 0, 0, 0.8503981, 0.52613974, 0, -0.52613974, 0.8503981, 4.374507, 1.3617117, -4.5551653)
 
-[node name="TrainingDummy" parent="." instance=ExtResource("7_dummy")]
+[node name="Hammer2" parent="." unique_id=151172293 instance=ExtResource("6_cyt5c")]
+transform = Transform3D(1, 0, 0, 0, 0.8503981, 0.52613974, 0, -0.52613974, 0.8503981, 4.374507, 1.3617117, -5.5064287)
+
+[node name="TrainingDummy" parent="." unique_id=411894715 instance=ExtResource("7_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)

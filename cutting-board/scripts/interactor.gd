@@ -5,14 +5,30 @@ extends Node
 ## crosshair, uses Usable objects, and moves Carryable objects in and out of a HandSlot.
 
 signal hover_changed(target: Node3D)
+## An object under the crosshair went into the inventory. Carries the record stored,
+## so a listener can react to what was taken as well as that something was.
+signal item_stowed(data: ItemData)
 
 @export var ray_length := 3.0
 @export var collision_mask := 1
 ## Speed of a fully charged throw, in metres per second. A release with no wind-up
 ## leaves the item at rest, which is what makes a quick click read as a plain drop.
 @export var throw_speed := 12.0
+## How far down the line of sight a throw is aimed. The hands sit off to either side of
+## the camera, so a throw sent straight forward stays out there and never arrives where
+## the crosshair is pointing; aiming at a point on the sight line converges it instead.
+@export var aim_distance := 12.0
+## How much of that convergence to apply: 0 throws straight forward from the hand, 1
+## sends the item exactly through the aim point.
+@export_range(0.0, 1.0) var aim_convergence := 0.8
 ## Overlay applied to the hovered object's meshes; a translucent tint is built if unset.
 @export var highlight_material: Material
+
+## How far in front of the camera items from the inventory land, in metres, how fast
+## they are pushed away, and how far apart a dropped stack is spaced.
+@export var drop_distance := 1.3
+@export var drop_speed := 1.5
+@export var drop_spread := 0.3
 
 @onready var _camera: Camera3D = get_parent()
 
@@ -74,10 +90,18 @@ func stow_hovered(inventory: Inventory) -> bool:
 	if not can_stow_hovered(inventory):
 		return false
 	var carryable := _get_component(_hovered, "Carryable") as Carryable
-	if not inventory.add(carryable.item_data):
+	# Read the record before stowing: that is what frees the world object it lives on.
+	var data := carryable.item_data
+	if not inventory.add(data):
 		return false
 	carryable.stow(get_owner())
+	item_stowed.emit(data)
 	return true
+
+
+## True if there is something under the crosshair that a hand could take hold of.
+func has_grabbable() -> bool:
+	return _get_component(_hovered, "Carryable") != null
 
 
 ## Pressing with an empty hand grabs; pressing with a full one starts winding up a throw.
@@ -96,6 +120,99 @@ func release_hand(hand: HandSlot) -> void:
 	_throw_from(hand, hand.end_charge())
 
 
+## Rebuilds items from an inventory record and puts them back into the world just in
+## front of the camera. Returns how many actually made it out, which is what the caller
+## should then take off the stack — an item with no world scene cannot be dropped.
+func drop_item(data: ItemData, count: int = 1) -> int:
+	if data == null:
+		return 0
+	var dropped := 0
+	for i in count:
+		var item := data.spawn()
+		if item == null:
+			break
+		get_tree().current_scene.add_child(item)
+		# Spread a stack slightly so the pieces do not spawn inside one another.
+		var spread := _camera.global_transform.basis.x * (i - (count - 1) * 0.5) * drop_spread
+		item.global_position = _camera.global_position - _camera.global_transform.basis.z * drop_distance + spread
+		var body := item as RigidBody3D
+		if body:
+			body.linear_velocity = -_camera.global_transform.basis.z * drop_speed
+		dropped += 1
+	return dropped
+
+
+## Draws the item assigned to a slot, spawning the real world object into that hand, so
+## an equipped hammer is identical to one picked up off the ground. Whatever the hand
+## was carrying is dropped first — a click always ends with the equipped item ready.
+func draw_equipped(hand: HandSlot) -> bool:
+	if hand == null or hand.equipped == null or hand.is_drawn():
+		return false
+	var data := hand.equipped
+	if not hand.is_free():
+		drop_hand(hand)
+	var item := data.spawn()
+	if item == null:
+		return false
+	get_tree().current_scene.add_child(item)
+	var carryable := item.get_node_or_null("Carryable") as Carryable
+	if carryable:
+		carryable.take(get_owner())
+	if hand.hold_drawn(item):
+		return true
+	item.queue_free()
+	return false
+
+
+## Puts drawn items away: the world object is destroyed, but the slot keeps its
+## assignment, so what was in hand is simply back in its equipment slot ready to be
+## drawn again. Items the hands merely picked up are left alone — they are not
+## equipment and have nowhere to go but the floor. Returns how many were put away.
+func sheathe_equipment(hands: Array[HandSlot]) -> int:
+	var sheathed := 0
+	for hand in hands:
+		var item := hand.sheathe()
+		if item == null:
+			continue
+		item.queue_free()
+		sheathed += 1
+	return sheathed
+
+
+## Moves an assignment from one slot to the other, carrying the drawn object across
+## with it so a weapon already in hand simply changes hands.
+func move_equipped(from: HandSlot, to: HandSlot) -> bool:
+	if from == null or to == null or from == to or from.equipped == null or to.equipped != null:
+		return false
+	# Read the record first: releasing a drawn item is what clears the assignment.
+	var data := from.equipped
+	var item: Node3D = from.release() if from.is_drawn() else null
+	from.unequip()
+	if to.equip(data):
+		if item:
+			to.hold_drawn(item)
+		return true
+	# Refused — put it back exactly as it was rather than dropping it on the floor.
+	from.equip(data)
+	if item:
+		from.hold_drawn(item)
+	return false
+
+
+## Destroys whatever a hand holds, for when its record has just been banked elsewhere.
+func consume_held(hand: HandSlot) -> void:
+	if hand == null or hand.is_free():
+		return
+	hand.release().queue_free()
+
+
+## Puts whatever a hand holds back into the world at rest — a throw with no wind-up.
+func drop_hand(hand: HandSlot) -> void:
+	if hand == null or hand.is_free():
+		return
+	_throw_from(hand, 0.0)
+
+
 func _grab_into(hand: HandSlot) -> void:
 	var carryable := _get_component(_hovered, "Carryable") as Carryable
 	if carryable == null:
@@ -112,7 +229,18 @@ func _throw_from(hand: HandSlot, ratio: float) -> void:
 	# After return_to_world, so the body is unfrozen and will accept the velocity.
 	var body := item as RigidBody3D
 	if body:
-		body.linear_velocity = -_camera.global_transform.basis.z * throw_speed * ratio
+		body.linear_velocity = _throw_direction(item.global_position) * throw_speed * ratio
+
+
+## Which way an item leaves a hand: somewhere between straight ahead and angled in at a
+## point on the line of sight, so a throw from either hand converges toward the
+## crosshair instead of running parallel to it.
+func _throw_direction(from: Vector3) -> Vector3:
+	var forward := -_camera.global_transform.basis.z
+	var to_aim := _camera.global_position + forward * aim_distance - from
+	if to_aim.is_zero_approx():
+		return forward
+	return forward.slerp(to_aim.normalized(), aim_convergence)
 
 
 func _get_target() -> Node3D:

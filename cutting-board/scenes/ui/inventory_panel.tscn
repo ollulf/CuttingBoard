@@ -28,11 +28,16 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Frame" type="PanelContainer" parent="Center"]
+[node name="Row" type="HBoxContainer" parent="Center"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Frame" type="PanelContainer" parent="Center/Row"]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Margin" type="MarginContainer" parent="Center/Frame"]
+[node name="Margin" type="MarginContainer" parent="Center/Row/Frame"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 18
@@ -40,16 +45,44 @@ theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 18
 
-[node name="Rows" type="VBoxContainer" parent="Center/Frame/Margin"]
+[node name="Rows" type="VBoxContainer" parent="Center/Row/Frame/Margin"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Center/Frame/Margin/Rows"]
+[node name="Title" type="Label" parent="Center/Row/Frame/Margin/Rows"]
 layout_mode = 2
 mouse_filter = 2
 text = "Inventory"
 
-[node name="Grid" type="Control" parent="Center/Frame/Margin/Rows"]
+[node name="Grid" type="Control" parent="Center/Row/Frame/Margin/Rows"]
 layout_mode = 2
 mouse_filter = 2
+
+[node name="EquipFrame" type="PanelContainer" parent="Center/Row"]
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="Center/Row/EquipFrame"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Rows" type="VBoxContainer" parent="Center/Row/EquipFrame/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Center/Row/EquipFrame/Margin/Rows"]
+layout_mode = 2
+mouse_filter = 2
+text = "Equipment"
+
+[node name="Slots" type="VBoxContainer" parent="Center/Row/EquipFrame/Margin/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8

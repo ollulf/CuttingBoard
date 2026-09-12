@@ -1,36 +1,37 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene format=3 uid="uid://ba4o83ffo6w6c"]
 
 [ext_resource type="PackedScene" uid="uid://bt525g6ypbp17" path="res://scenes/environment/decoration/hammer.tscn" id="1_mesh"]
-[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
-[ext_resource type="Script" path="res://scripts/components/usable.gd" id="3_usable"]
-[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="4_destructible"]
-[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="5_impact"]
+[ext_resource type="Script" uid="uid://jtqbca6mqo6" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" uid="uid://usfd7o5etjik" path="res://scripts/components/usable.gd" id="3_usable"]
+[ext_resource type="Script" uid="uid://ci8j6fh2yi3i7" path="res://scripts/components/destructible.gd" id="4_destructible"]
+[ext_resource type="Script" uid="uid://bjihoqfhsb0l2" path="res://scripts/components/impact_damage.gd" id="5_impact"]
 [ext_resource type="Resource" path="res://resources/items/hammer.tres" id="6_item"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hammer"]
 size = Vector3(0.322, 0.723, 0.153)
 
-[node name="Hammer" type="RigidBody3D"]
+[node name="Hammer" type="RigidBody3D" unique_id=692946581]
 mass = 6.0
 
-[node name="Mesh" parent="." instance=ExtResource("1_mesh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0133, -0.3041, -0.0003)
+[node name="Mesh" parent="." unique_id=2076751470 instance=ExtResource("1_mesh")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.0064999997, -0.012283593, -0.0068)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=808466619]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.0068, 0.2918164, 0.0064999997)
 shape = SubResource("BoxShape3D_hammer")
 
-[node name="Carryable" type="Node" parent="."]
+[node name="Carryable" type="Node" parent="." unique_id=127725793]
 script = ExtResource("2_carryable")
 item_data = ExtResource("6_item")
 impact_damage = 22
 
-[node name="Usable" type="Node" parent="."]
+[node name="Usable" type="Node" parent="." unique_id=2134738368]
 script = ExtResource("3_usable")
 
-[node name="Destructible" type="Node" parent="."]
+[node name="Destructible" type="Node" parent="." unique_id=856521825]
 script = ExtResource("4_destructible")
 durability = 220
 
-[node name="ImpactDamage" type="Node" parent="."]
+[node name="ImpactDamage" type="Node" parent="." unique_id=1082808082]
 script = ExtResource("5_impact")
 damage_per_speed = 3.0

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://2u341643arq2"
+path="res://.godot/imported/Plasticine Cowboy - Unto the Coven (Gemini Sun).mp3-4a3092b606a71ca406209f60f915be36.mp3str"
+
+[deps]
+
+source_file="res://assets/audio/music/Plasticine Cowboy - Unto the Coven (Gemini Sun).mp3"
+dest_files=["res://.godot/imported/Plasticine Cowboy - Unto the Coven (Gemini Sun).mp3-4a3092b606a71ca406209f60f915be36.mp3str"]
+
+[params]
+
+loop=true
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
