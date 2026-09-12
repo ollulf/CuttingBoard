@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" path="res://scenes/items/carryable_base.tscn" id="2_yautc"]
 [ext_resource type="PackedScene" uid="uid://6l5ghah5ecm" path="res://scenes/environment/buildings/house_1x2.tscn" id="3_fr1um"]
 [ext_resource type="PackedScene" uid="uid://cs66pedltoe0j" path="res://scenes/environment/foliage/trees/tree_1_large.tscn" id="4_v45ci"]
+[ext_resource type="PackedScene" path="res://scenes/items/barrel.tscn" id="5_6xh4u"]
+[ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="6_cyt5c"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -77,3 +79,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1388183, 0.011931408, -3.2
 
 [node name="tree_1_large" parent="." unique_id=394365836 instance=ExtResource("4_v45ci")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.1923075, 0.5999272, 12.464374)
+
+[node name="Barrel" parent="." unique_id=1388112633 instance=ExtResource("5_6xh4u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -0.69977665)
+
+[node name="Barrel2" parent="." unique_id=104482399 instance=ExtResource("5_6xh4u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -1.9488616)
+
+[node name="Barrel3" parent="." unique_id=960236127 instance=ExtResource("5_6xh4u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -3.2262414)
+
+[node name="Hammer" parent="." unique_id=1795017851 instance=ExtResource("6_cyt5c")]
+transform = Transform3D(1, 0, 0, 0, 0.8503981, 0.52613974, 0, -0.52613974, 0.8503981, 4.374507, 1.3617117, -4.5551653)

@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bt525g6ypbp17" path="res://scenes/environment/decoration/hammer.tscn" id="1_mesh"]
+[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" path="res://scripts/components/usable.gd" id="3_usable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="4_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="5_impact"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hammer"]
+size = Vector3(0.322, 0.723, 0.153)
+
+[node name="Hammer" type="RigidBody3D"]
+mass = 6.0
+
+[node name="Mesh" parent="." instance=ExtResource("1_mesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0133, -0.3041, -0.0003)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_hammer")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+
+[node name="Usable" type="Node" parent="."]
+script = ExtResource("3_usable")
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("4_destructible")
+durability = 220
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("5_impact")
+damage_per_speed = 3.0

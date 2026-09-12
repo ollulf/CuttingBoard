@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" uid="uid://di2yos6lnw6kr" path="res://scenes/environment/decoration/barrel_1.tscn" id="1_mesh"]
+[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="3_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="4_impact"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_barrel"]
+height = 0.9
+radius = 0.475
+
+[node name="Barrel" type="RigidBody3D"]
+mass = 40.0
+
+[node name="Mesh" parent="." instance=ExtResource("1_mesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CylinderShape3D_barrel")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("3_destructible")
+durability = 160
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("4_impact")
