@@ -22,6 +22,7 @@ extends CharacterBody3D
 @onready var interactor: Interactor = %Interactor
 @onready var hand_left: HandSlot = %HandSlotLeft
 @onready var hand_right: HandSlot = %HandSlotRight
+@onready var inventory: Inventory = %Inventory
 
 const PITCH_LIMIT := deg_to_rad(89.0)
 
@@ -66,7 +67,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("interact"):
-		interactor.interact()
+		interactor.interact(inventory)
 	elif event.is_action_pressed("grab_left"):
 		interactor.grab_or_charge(hand_left)
 	elif event.is_action_pressed("grab_right"):
@@ -74,13 +75,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# A free cursor means something is in front of the player — the inventory, or an
+	# unfocused window — so the body stops taking movement input until look is captured.
+	var controlling := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 
-	if is_on_floor() and Input.is_action_just_pressed("jump"):
+	if controlling and is_on_floor() and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 
-	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_dir := Vector2.ZERO
+	if controlling:
+		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := (transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)).normalized()
 	var speed := sprint_speed if Input.is_action_pressed("sprint") else walk_speed
 	var accel := acceleration if is_on_floor() else air_acceleration

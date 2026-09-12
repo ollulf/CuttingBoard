@@ -44,10 +44,33 @@ func get_hovered() -> Node3D:
 	return _hovered
 
 
-func interact() -> void:
+## The "interact" action: a loose item goes into the inventory, since that is what a
+## player pointing at a barrel means. Anything that is not stowable — a lever, a door,
+## a full inventory's worth of item — falls through to the object's Usable behaviour.
+func interact(inventory: Inventory = null) -> void:
+	if stow_hovered(inventory):
+		return
 	var usable := _get_component(_hovered, "Usable") as Usable
 	if usable:
 		usable.use(get_owner())
+
+
+## True if the hovered object is carryable and there is room for it in `inventory`.
+func can_stow_hovered(inventory: Inventory) -> bool:
+	if inventory == null:
+		return false
+	var carryable := _get_component(_hovered, "Carryable") as Carryable
+	return carryable != null and inventory.can_add(carryable.item_data)
+
+
+func stow_hovered(inventory: Inventory) -> bool:
+	if not can_stow_hovered(inventory):
+		return false
+	var carryable := _get_component(_hovered, "Carryable") as Carryable
+	if not inventory.add(carryable.item_data):
+		return false
+	carryable.stow(get_owner())
+	return true
 
 
 ## Pressing with an empty hand grabs; pressing with a full one starts winding up a throw.

@@ -40,3 +40,10 @@ func return_to_world() -> void:
 	var rigid := root as RigidBody3D
 	if rigid:
 		rigid.freeze = false
+
+
+## Removes the object from the world once its ItemData has been banked somewhere.
+## The node is not kept around: ItemData.spawn() rebuilds it when it is dropped.
+func stow(by: Node) -> void:
+	picked_up.emit(by)
+	get_parent().queue_free()

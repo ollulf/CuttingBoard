@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://ccvpfug3m1854" path="res://scripts/ui/interaction_prompts.gd" id="1_6ll6g"]
 [ext_resource type="Texture2D" uid="uid://cil2u4nvwybgg" path="res://assets/ui/icons/crosshair.png" id="2_ig75s"]
 [ext_resource type="PackedScene" path="res://scenes/ui/tooltip.tscn" id="3_4ed8p"]
+[ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="4_invpanel"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
@@ -43,6 +44,10 @@ mouse_filter = 2
 theme_override_constants/separation = 6
 alignment = 2
 
+[node name="InteractPrompt" parent="Corner/Prompts" instance=ExtResource("3_4ed8p")]
+layout_mode = 2
+size_flags_horizontal = 8
+
 [node name="LeftHandPrompt" parent="Corner/Prompts" unique_id=945546717 instance=ExtResource("3_4ed8p")]
 layout_mode = 2
 size_flags_horizontal = 8
@@ -50,3 +55,5 @@ size_flags_horizontal = 8
 [node name="RightHandPrompt" parent="Corner/Prompts" unique_id=1142184977 instance=ExtResource("3_4ed8p")]
 layout_mode = 2
 size_flags_horizontal = 8
+
+[node name="InventoryPanel" parent="." instance=ExtResource("4_invpanel")]
