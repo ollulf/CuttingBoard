@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://b7tjn3n22jqbt"]
+
+[ext_resource type="Script" uid="uid://ccvpfug3m1854" path="res://scripts/ui/interaction_prompts.gd" id="1_6ll6g"]
+[ext_resource type="Texture2D" uid="uid://cil2u4nvwybgg" path="res://assets/ui/icons/crosshair.png" id="2_ig75s"]
+[ext_resource type="PackedScene" path="res://scenes/ui/tooltip.tscn" id="3_4ed8p"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1616519425]
+script = ExtResource("1_6ll6g")
+
+[node name="Crosshair" type="TextureRect" parent="." unique_id=973741609]
+texture_filter = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_ig75s")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Corner" type="MarginContainer" parent="." unique_id=943974237]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Prompts" type="VBoxContainer" parent="Corner" unique_id=309091143]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 2
+
+[node name="LeftHandPrompt" parent="Corner/Prompts" unique_id=945546717 instance=ExtResource("3_4ed8p")]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="RightHandPrompt" parent="Corner/Prompts" unique_id=1142184977 instance=ExtResource("3_4ed8p")]
+layout_mode = 2
+size_flags_horizontal = 8

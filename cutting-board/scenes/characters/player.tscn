@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bqs1jdkkeh4h3" path="res://scenes/characters/player.gd" id="1_player"]
 [ext_resource type="Script" uid="uid://d2jgjokwhsre7" path="res://scripts/interactor.gd" id="2_interactor"]
 [ext_resource type="Script" uid="uid://yhko12gy4jjn" path="res://scripts/hand_slot.gd" id="3_hand_slot"]
-[ext_resource type="PackedScene" path="res://scenes/ui/interaction_prompts.tscn" id="4_prompts"]
+[ext_resource type="PackedScene" uid="uid://b7tjn3n22jqbt" path="res://scenes/ui/HUD.tscn" id="4_prompts"]
 [ext_resource type="PackedScene" path="res://scenes/ui/charge_bar.tscn" id="5_charge_bar"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
@@ -32,7 +32,7 @@ current = true
 
 [node name="ArmLeft" type="MeshInstance3D" parent="CameraPivot/Camera3D" unique_id=949494793]
 unique_name_in_owner = true
-transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -0.6, -0.5, -0.5)
+transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -0.7, -0.3, -0.6)
 mesh = SubResource("BoxMesh_arm")
 surface_material_override/0 = SubResource("StandardMaterial3D_arm")
 
@@ -41,9 +41,11 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
 script = ExtResource("3_hand_slot")
 
+[node name="ChargeBar" parent="CameraPivot/Camera3D/ArmLeft/HandSlotLeft" unique_id=985039455 instance=ExtResource("5_charge_bar")]
+
 [node name="ArmRight" type="MeshInstance3D" parent="CameraPivot/Camera3D" unique_id=1725595375]
 unique_name_in_owner = true
-transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.6, -0.5, -0.5)
+transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.7, -0.3, -0.6)
 mesh = SubResource("BoxMesh_arm")
 surface_material_override/0 = SubResource("StandardMaterial3D_arm")
 
@@ -52,12 +54,10 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
 script = ExtResource("3_hand_slot")
 
+[node name="ChargeBar" parent="CameraPivot/Camera3D/ArmRight/HandSlotRight" unique_id=1584888876 instance=ExtResource("5_charge_bar")]
+
 [node name="Interactor" type="Node" parent="CameraPivot/Camera3D" unique_id=167089925]
 unique_name_in_owner = true
 script = ExtResource("2_interactor")
 
 [node name="InteractionPrompts" parent="." unique_id=162121589 instance=ExtResource("4_prompts")]
-
-[node name="ChargeBar" parent="CameraPivot/Camera3D/ArmLeft/HandSlotLeft" instance=ExtResource("5_charge_bar")]
-
-[node name="ChargeBar" parent="CameraPivot/Camera3D/ArmRight/HandSlotRight" instance=ExtResource("5_charge_bar")]
