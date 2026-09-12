@@ -22,6 +22,7 @@ shape = SubResource("BoxShape3D_hammer")
 [node name="Carryable" type="Node" parent="."]
 script = ExtResource("2_carryable")
 item_data = ExtResource("6_item")
+impact_damage = 22
 
 [node name="Usable" type="Node" parent="."]
 script = ExtResource("3_usable")

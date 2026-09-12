@@ -29,6 +29,13 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	# The hovered object can be destroyed while it is being looked at — a barrel
+	# shattering on impact. A freed node cannot even be passed to a typed parameter,
+	# so it has to be dropped here rather than guarded against further down. The test
+	# is is_instance_valid alone: a freed reference compares equal to null, so a
+	# null check would skip exactly the case this guards.
+	if not is_instance_valid(_hovered):
+		_hovered = null
 	var target := _get_target()
 	if not _is_interactable(target):
 		target = null
@@ -114,7 +121,11 @@ func _get_target() -> Node3D:
 	var end := origin - _camera.global_transform.basis.z * ray_length
 	var query := PhysicsRayQueryParameters3D.create(origin, end, collision_mask)
 	var result := space_state.intersect_ray(query)
-	return result.get("collider") as Node3D
+	var collider := result.get("collider") as Node3D
+	# Physics still reports a body that was freed earlier in the same frame — a barrel
+	# shattering on impact — and a freed node cannot even be passed to a typed
+	# parameter later on, so it is dropped at the source.
+	return collider if is_instance_valid(collider) else null
 
 
 func _is_interactable(node: Node3D) -> bool:

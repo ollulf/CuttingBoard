@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/characters/training_dummy.gd" id="1_dummy"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="2_health"]
+[ext_resource type="PackedScene" uid="uid://ryddrs3qhijp" path="res://scenes/environment/decoration/sack.tscn" id="3_sack"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/plank_1.tscn" id="4_post"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/plank_2.tscn" id="5_arms"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_dummy"]
+radius = 0.45
+height = 1.9
+
+[node name="TrainingDummy" type="StaticBody3D"]
+script = ExtResource("1_dummy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("CapsuleShape3D_dummy")
+
+[node name="Visual" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Post" parent="Visual" instance=ExtResource("4_post")]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
+
+[node name="Arms" parent="Visual" instance=ExtResource("5_arms")]
+transform = Transform3D(0, 0.8, 0, -0.8, 0, 0, 0, 0, 0.8, -0.66, 1.5, 0)
+
+[node name="Torso" parent="Visual" instance=ExtResource("3_sack")]
+transform = Transform3D(1.7, 0, 0, 0, 1.7, 0, 0, 0, 1.7, 0, 0.85, 0)
+
+[node name="Head" parent="Visual" instance=ExtResource("3_sack")]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 0, 1.6, 0)
+
+[node name="Readout" type="Label3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0)
+pixel_size = 0.008
+billboard = 1
+text = "100 / 100"
+font_size = 48
+outline_size = 16
+
+[node name="Health" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_health")
+max_health = 100

@@ -1,12 +1,18 @@
 class_name Carryable
 extends Node
 
-## Lets an object be taken out of the world and held in a HandSlot, and describes what
-## the object becomes once it reaches an inventory (item_data).
+## Lets an object be taken out of the world and held in a HandSlot, describes what the
+## object becomes once it reaches an inventory (item_data), and how hard it hits when
+## it is thrown (impact_damage).
 
 @export var item_data: ItemData
+## Damage dealt to whatever this lands on after a full-power throw. Authored per object
+## rather than derived from mass, so a light hammer can still hit harder than a barrel.
+@export_range(0, 999) var impact_damage := 0
 
 signal picked_up(by: Node)
+## Emitted when the object is handed back to world physics, thrown or merely dropped.
+signal released
 
 var _world_layer := 0
 var _world_mask := 0
@@ -40,6 +46,7 @@ func return_to_world() -> void:
 	var rigid := root as RigidBody3D
 	if rigid:
 		rigid.freeze = false
+	released.emit()
 
 
 ## Removes the object from the world once its ItemData has been banked somewhere.

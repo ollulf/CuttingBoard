@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://cs66pedltoe0j" path="res://scenes/environment/foliage/trees/tree_1_large.tscn" id="4_v45ci"]
 [ext_resource type="PackedScene" path="res://scenes/items/barrel.tscn" id="5_6xh4u"]
 [ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="6_cyt5c"]
+[ext_resource type="PackedScene" path="res://scenes/characters/training_dummy.tscn" id="7_dummy"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -91,3 +92,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.394818, 0.45, -3.2262414)
 
 [node name="Hammer" parent="." unique_id=1795017851 instance=ExtResource("6_cyt5c")]
 transform = Transform3D(1, 0, 0, 0, 0.8503981, 0.52613974, 0, -0.52613974, 0.8503981, 4.374507, 1.3617117, -4.5551653)
+
+[node name="TrainingDummy" parent="." instance=ExtResource("7_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
