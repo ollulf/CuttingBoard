@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://6l5ghah5ecm"]
+
+[ext_resource type="PackedScene" uid="uid://b6xxo006nv5go" path="res://scenes/environment/buildings/house_1x2_import.tscn" id="1_house"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_akphn"]
+size = Vector3(10, 5, 10)
+
+[node name="house_1x2" type="Node3D"]
+
+[node name="Mesh" parent="." instance=ExtResource("1_house")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_akphn")

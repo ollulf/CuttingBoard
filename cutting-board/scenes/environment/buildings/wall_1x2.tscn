@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://dx144bpv8r2qw"]
+
+[ext_resource type="PackedScene" uid="uid://dv5vaepwavwq1" path="res://assets/meshes/environment/buildings/wall_1x3.glb" id="1_svdey"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="3_a2cix"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_svdey"]
+size = Vector3(9.8961, 5, 5)
+
+[node name="wall_1x32" instance=ExtResource("1_svdey")]
+
+[node name="wall_1x3" parent="." index="0"]
+transform = Transform3D(0.66, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("3_a2cix")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_svdey")

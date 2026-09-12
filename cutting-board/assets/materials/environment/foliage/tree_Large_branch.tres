@@ -1,0 +1,21 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://yjghn8y4o836"]
+
+[ext_resource type="Texture2D" uid="uid://du1odxaoro1sw" path="res://assets/textures/environment/trees/tree_large_branch.png" id="1_gwvcj"]
+[ext_resource type="Shader" uid="uid://dmtcoj6j38521" path="res://assets/shaders/wind.gdshader" id="1_qbmhk"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_qbmhk")
+shader_parameter/wind_enabled = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/texture_albedo = ExtResource("1_gwvcj")
+shader_parameter/alpha_scissor_threshold = 0.5
+shader_parameter/albedo_texture_size = Vector2i(409, 409)
+shader_parameter/wind_direction = Vector3(1, 0, 0.3)
+shader_parameter/wind_strength = 1.0
+shader_parameter/wind_frequency = 0.8
+shader_parameter/bend_top_amount = 0.5
+shader_parameter/bend_power = 1.5
+shader_parameter/height_scale = 25.0
+shader_parameter/base_rigidity = 0.3
+shader_parameter/wind_max_distance = 80.0

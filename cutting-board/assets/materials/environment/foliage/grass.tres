@@ -1,0 +1,21 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://bdxltprtn8w65"]
+
+[ext_resource type="Texture2D" uid="uid://cjc5kotevpyhh" path="res://assets/textures/environment/Bushes_Color_Noise.png" id="1_oysvd"]
+[ext_resource type="Shader" uid="uid://dmtcoj6j38521" path="res://assets/shaders/wind.gdshader" id="1_uibgx"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_uibgx")
+shader_parameter/wind_enabled = false
+shader_parameter/albedo = Color(0.5017, 0.58, 0.493, 1)
+shader_parameter/texture_albedo = ExtResource("1_oysvd")
+shader_parameter/alpha_scissor_threshold = 0.5
+shader_parameter/albedo_texture_size = Vector2i(128, 128)
+shader_parameter/wind_direction = Vector3(1, 0, 0.3)
+shader_parameter/wind_strength = 1.0
+shader_parameter/wind_frequency = 1.0
+shader_parameter/bend_top_amount = 0.3
+shader_parameter/bend_power = 1.5
+shader_parameter/height_scale = 2.0
+shader_parameter/base_rigidity = 0.3
+shader_parameter/wind_max_distance = 400.0

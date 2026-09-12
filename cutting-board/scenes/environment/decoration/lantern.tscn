@@ -1,0 +1,9 @@
+[gd_scene load_steps=4 format=3 uid="uid://cd7ud8wwb166o"]
+
+[ext_resource type="PackedScene" uid="uid://dv6t6jfprdc1h" path="res://assets/meshes/props/lantern.glb" id="1_qwsco"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="2_qwsco"]
+[ext_resource type="Material" uid="uid://b1njo15mh7wkd" path="res://assets/materials/environment/window.tres" id="3_yon3f"]
+
+[node name="Lantern" instance=ExtResource("1_qwsco")]
+surface_material_override/0 = ExtResource("2_qwsco")
+surface_material_override/1 = ExtResource("3_yon3f")

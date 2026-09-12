@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://bsegebvlsixkl"]
+
+[ext_resource type="PackedScene" uid="uid://be6fno4ndpe2c" path="res://scenes/environment/buildings/1x2_fence.tscn" id="1_fence"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_svdey"]
+size = Vector3(9.8961, 5, 5)
+
+[node name="fence_1x2_solid" type="Node3D"]
+
+[node name="Mesh" parent="." instance=ExtResource("1_fence")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_svdey")

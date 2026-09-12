@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bgd1qgpt0fpog"]
+
+[ext_resource type="Texture2D" uid="uid://bkeklljliylt1" path="res://assets/textures/environment/fabric.png" id="1_ximm2"]
+
+[resource]
+albedo_color = Color(0.996665, 0.934435, 0.894394, 1)
+albedo_texture = ExtResource("1_ximm2")
+texture_filter = 0

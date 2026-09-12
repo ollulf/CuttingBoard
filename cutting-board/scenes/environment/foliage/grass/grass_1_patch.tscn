@@ -1,0 +1,32 @@
+[gd_scene load_steps=8 format=3 uid="uid://bh8kal8it7bew"]
+
+[ext_resource type="PackedScene" uid="uid://bcyi8ox8qua0m" path="res://scenes/environment/foliage/grass/bush_1_large.tscn" id="1_6s8ms"]
+[ext_resource type="PackedScene" uid="uid://bhi245ypa5gnk" path="res://scenes/environment/foliage/grass/bush_1_medium.tscn" id="2_vaffs"]
+[ext_resource type="PackedScene" uid="uid://b0cnaiynhw5st" path="res://scenes/environment/foliage/grass/bush_1_small.tscn" id="3_0jvyq"]
+[ext_resource type="PackedScene" uid="uid://ckguf0bap0ljc" path="res://scenes/environment/foliage/grass/bush_2_large.tscn" id="4_n3b30"]
+[ext_resource type="PackedScene" uid="uid://b3x1th17yaqdw" path="res://scenes/environment/foliage/grass/bush_2_medium.tscn" id="5_nahsy"]
+[ext_resource type="PackedScene" uid="uid://giak7fqydrpe" path="res://scenes/environment/foliage/grass/bush_2_small.tscn" id="6_dvbb1"]
+[ext_resource type="PackedScene" uid="uid://58gfyu8kpw08" path="res://scenes/environment/foliage/grass/bush_3_large.tscn" id="7_8g3an"]
+
+[node name="grass_1_patch" type="Node3D"]
+
+[node name="bush_1_large" parent="." instance=ExtResource("1_6s8ms")]
+transform = Transform3D(0.999999, 0, 0, 0, 1, 0, 0, 0, 0.999999, 1.44182, 0, -0.879245)
+
+[node name="Bush_1_medium" parent="." instance=ExtResource("2_vaffs")]
+transform = Transform3D(0.999999, 0, 0, 0, 1, 0, 0, 0, 0.999999, -2.24089, 0, 1.13053)
+
+[node name="Bush_1_small" parent="." instance=ExtResource("3_0jvyq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.27297, 5.96045e-07, -5.45)
+
+[node name="Bush_2_large" parent="." instance=ExtResource("4_n3b30")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.192249, -5.96045e-07, -1.72765)
+
+[node name="bush_2_medium" parent="." instance=ExtResource("5_nahsy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.15245, 0, -0.104569)
+
+[node name="bush_2_small" parent="." instance=ExtResource("6_dvbb1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.839695, 0, 6.21685)
+
+[node name="Bush_3_large" parent="." instance=ExtResource("7_8g3an")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)

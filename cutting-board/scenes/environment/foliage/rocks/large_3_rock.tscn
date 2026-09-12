@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpgvmd444wupy"]
+
+[ext_resource type="PackedScene" uid="uid://b8jcnaralhbhy" path="res://assets/meshes/environment/foliage/rocks/large_3_rock.glb" id="1_dm2nj"]
+[ext_resource type="Material" uid="uid://c4nynhpcgqxjl" path="res://assets/materials/environment/foliage/stone_1.tres" id="2_cvj1w"]
+
+[node name="large_3_rock" instance=ExtResource("1_dm2nj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_cvj1w")
+
+[node name="VisibleOnScreenEnabler3D" type="VisibleOnScreenEnabler3D" parent="." index="0"]
+transform = Transform3D(-0.44336462, 0, 0, 0, 0.35979685, 0, 0, 0, -0.31344092, 0, 1.40423, 0)
+aabb = AABB(-28.6116, -19.7074, -19.2616, 57.2232, 39.4147, 38.5233)

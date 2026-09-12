@@ -1,0 +1,23 @@
+[gd_scene load_steps=6 format=3 uid="uid://brgbt2xdlamts"]
+
+[ext_resource type="PackedScene" uid="uid://b3x1th17yaqdw" path="res://scenes/environment/foliage/grass/bush_2_medium.tscn" id="1_q3xll"]
+[ext_resource type="PackedScene" uid="uid://giak7fqydrpe" path="res://scenes/environment/foliage/grass/bush_2_small.tscn" id="2_ornt5"]
+[ext_resource type="PackedScene" uid="uid://58gfyu8kpw08" path="res://scenes/environment/foliage/grass/bush_3_large.tscn" id="3_q3aeu"]
+[ext_resource type="PackedScene" uid="uid://i773ml6oa2u7" path="res://scenes/environment/foliage/grass/bush_3_small.tscn" id="4_yhy57"]
+[ext_resource type="PackedScene" uid="uid://ckguf0bap0ljc" path="res://scenes/environment/foliage/grass/bush_2_large.tscn" id="5_0aqgf"]
+
+[node name="grass_2_patch" type="Node3D"]
+
+[node name="bush_2_medium" parent="." instance=ExtResource("1_q3xll")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.58507, 0, 3.44298)
+
+[node name="bush_2_small" parent="." instance=ExtResource("2_ornt5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.89482, 0, -2.50326)
+
+[node name="Bush_3_large" parent="." instance=ExtResource("3_q3aeu")]
+
+[node name="Bush_3_small" parent="." instance=ExtResource("4_yhy57")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66246, 0, 1.26646)
+
+[node name="Bush_2_large" parent="." instance=ExtResource("5_0aqgf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.988915, 0, -0.90532)

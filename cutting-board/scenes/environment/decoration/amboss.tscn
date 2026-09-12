@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://p4acgkd5hgve"]
+
+[ext_resource type="PackedScene" uid="uid://dtspnulhfx4j0" path="res://assets/meshes/props/amboss.glb" id="1_htwn6"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="2_1lmdn"]
+
+[node name="amboss" instance=ExtResource("1_htwn6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_1lmdn")

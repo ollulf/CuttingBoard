@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3 uid="uid://dvmhnhf158up0"]
+
+[ext_resource type="PackedScene" uid="uid://cn65w7en314rf" path="res://assets/meshes/environment/buildings/ruin_2x2.glb" id="1_20npw"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="2_pnar1"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="3_id1bh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_20npw"]
+size = Vector3(10, 5, 10)
+
+[node name="ruin_2x2" instance=ExtResource("1_20npw")]
+
+[node name="Ruin_2x2" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_pnar1")
+surface_material_override/1 = ExtResource("3_id1bh")
+surface_material_override/2 = ExtResource("3_id1bh")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_20npw")

@@ -1,0 +1,10 @@
+[gd_scene load_steps=4 format=3 uid="uid://bdtb4mhooyax"]
+
+[ext_resource type="PackedScene" uid="uid://dtdv6eym0nu0c" path="res://assets/meshes/props/2_box.glb" id="1_2eg8u"]
+[ext_resource type="Material" uid="uid://ufovdlh45nww" path="res://assets/materials/environment/wooden_planks_branches.tres" id="2_nkln5"]
+[ext_resource type="Material" uid="uid://bl6puaxo5v5f6" path="res://assets/materials/environment/wooden_planks.tres" id="3_v3qma"]
+
+[node name="1_box" instance=ExtResource("1_2eg8u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_nkln5")
+surface_material_override/1 = ExtResource("3_v3qma")

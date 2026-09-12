@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://db4hlgy05x26n"]
+
+[ext_resource type="Texture2D" uid="uid://brp8jtyijqt3" path="res://assets/textures/environment/metal.png" id="1_km6jk"]
+
+[resource]
+albedo_color = Color(0.450648, 0.450648, 0.450648, 1)
+albedo_texture = ExtResource("1_km6jk")
+texture_filter = 0

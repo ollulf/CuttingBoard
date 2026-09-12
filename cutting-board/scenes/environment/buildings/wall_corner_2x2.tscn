@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://ckeo2owgkkvcm"]
+
+[ext_resource type="PackedScene" uid="uid://bnk7vsh3bkhxj" path="res://assets/meshes/environment/buildings/wall_corner_2x2.glb" id="1_os8te"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="2_2a7au"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_os8te"]
+size = Vector3(5.2429, 5, 4.78237)
+
+[node name="wall_corner_2x2" instance=ExtResource("1_os8te")]
+
+[node name="wall_corner_2x2" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_2a7au")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.445, 2.5, -2.355)
+shape = SubResource("BoxShape3D_os8te")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="1"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -2.47763, 2.5, 2.26688)
+shape = SubResource("BoxShape3D_os8te")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="StaticBody3D" index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.29965, 2.5, -2.545)
+shape = SubResource("BoxShape3D_os8te")

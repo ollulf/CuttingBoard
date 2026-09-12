@@ -1,0 +1,22 @@
+[gd_scene load_steps=6 format=3 uid="uid://ki1qd1vity5r"]
+
+[ext_resource type="PackedScene" uid="uid://cjfrnm30fdxej" path="res://assets/meshes/environment/buildings/well_1x1.glb" id="1_6bhmc"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="2_47k84"]
+[ext_resource type="Material" uid="uid://cd4h3sifq3ovp" path="res://assets/materials/environment/thatched_roof.tres" id="3_k8uxb"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="4_txf1v"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6bhmc"]
+size = Vector3(5, 5, 5)
+
+[node name="well_1x1" instance=ExtResource("1_6bhmc")]
+
+[node name="Well" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_47k84")
+surface_material_override/1 = ExtResource("3_k8uxb")
+surface_material_override/2 = ExtResource("4_txf1v")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_6bhmc")

@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://ryddrs3qhijp"]
+
+[ext_resource type="PackedScene" uid="uid://cf81s1gjemkhx" path="res://assets/meshes/props/sack.glb" id="1_64x76"]
+[ext_resource type="Material" uid="uid://bgd1qgpt0fpog" path="res://assets/materials/environment/fabric_white.tres" id="2_6o7c2"]
+
+[node name="sack" instance=ExtResource("1_64x76")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_6o7c2")

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://k3do0oioqbn5"]
+
+[ext_resource type="PackedScene" uid="uid://bur501jtguxx2" path="res://assets/meshes/props/debris_1.glb" id="1_0ouad"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="2_qqogn"]
+
+[node name="debris_1" instance=ExtResource("1_0ouad")]
+
+[node name="Debris_1" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_qqogn")

@@ -1,0 +1,36 @@
+[gd_scene load_steps=7 format=3 uid="uid://c4wm12ek3vnmp"]
+
+[ext_resource type="PackedScene" uid="uid://cn65w7en314rf" path="res://assets/meshes/environment/buildings/ruin_2x2.glb" id="1_0pec5"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="3_g1us0"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="4_3m5o6"]
+[ext_resource type="PackedScene" uid="uid://d2kfasqrokj8r" path="res://assets/meshes/environment/buildings/well_destroyed_1x1.glb" id="5_ut747"]
+[ext_resource type="PackedScene" uid="uid://co06o23jop7rx" path="res://scenes/environment/decoration/debris_2.tscn" id="6_g1us0"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_20npw"]
+size = Vector3(5, 5, 5)
+
+[node name="ruin_2x2" instance=ExtResource("1_0pec5")]
+
+[node name="Ruin_2x2" parent="." index="0"]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+visible = false
+surface_material_override/0 = ExtResource("3_g1us0")
+surface_material_override/1 = ExtResource("4_3m5o6")
+surface_material_override/2 = ExtResource("4_3m5o6")
+
+[node name="well_destroyed_1x1" parent="." index="1" instance=ExtResource("5_ut747")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
+
+[node name="Destroyed_well" parent="well_destroyed_1x1" index="0"]
+surface_material_override/0 = ExtResource("3_g1us0")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="2"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_20npw")
+
+[node name="debris_2" parent="." index="3" instance=ExtResource("6_g1us0")]
+transform = Transform3D(1.0942, 0, -0.250487, 0, 0.746307, 0, 0.189453, 0, 1.4467, 0.75485, -0.115357, -0.28862)
+
+[editable path="well_destroyed_1x1"]

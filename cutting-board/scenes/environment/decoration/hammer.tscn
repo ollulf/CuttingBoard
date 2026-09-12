@@ -1,0 +1,10 @@
+[gd_scene load_steps=4 format=3 uid="uid://bt525g6ypbp17"]
+
+[ext_resource type="PackedScene" uid="uid://dr3kf4iv00lk4" path="res://assets/meshes/props/hammer.glb" id="1_vcgd3"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="2_for5m"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="3_tfjix"]
+
+[node name="hammer" instance=ExtResource("1_vcgd3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_for5m")
+surface_material_override/1 = ExtResource("3_tfjix")

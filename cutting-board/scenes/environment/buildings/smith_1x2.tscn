@@ -1,0 +1,28 @@
+[gd_scene load_steps=9 format=3 uid="uid://duq0kcbuervo1"]
+
+[ext_resource type="PackedScene" uid="uid://caxlqr3uhaypb" path="res://assets/meshes/environment/buildings/smith_1x2.glb" id="1_pema0"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="2_nxwk6"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="3_3f57p"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="4_ug0mn"]
+[ext_resource type="Material" uid="uid://cbrq65kcjolgc" path="res://assets/materials/environment/wooden_shingles.tres" id="5_lxmwq"]
+[ext_resource type="Material" uid="uid://stq57ackhr6q" path="res://assets/materials/environment/clay_wall.tres" id="6_pdo8e"]
+[ext_resource type="Material" uid="uid://b1njo15mh7wkd" path="res://assets/materials/environment/window.tres" id="8_ug0mn"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pema0"]
+size = Vector3(10, 5, 5)
+
+[node name="smith_1x2" instance=ExtResource("1_pema0")]
+
+[node name="Smith" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_nxwk6")
+surface_material_override/1 = ExtResource("3_3f57p")
+surface_material_override/2 = ExtResource("4_ug0mn")
+surface_material_override/3 = ExtResource("5_lxmwq")
+surface_material_override/4 = ExtResource("6_pdo8e")
+surface_material_override/5 = ExtResource("8_ug0mn")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_pema0")

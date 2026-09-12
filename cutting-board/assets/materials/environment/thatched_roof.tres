@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cd4h3sifq3ovp"]
+
+[ext_resource type="Texture2D" uid="uid://qafu0obujair" path="res://assets/textures/environment/ThatchedRoof.png" id="1_0r7ac"]
+
+[resource]
+albedo_color = Color(0.77, 0.846667, 1, 1)
+albedo_texture = ExtResource("1_0r7ac")
+texture_filter = 0

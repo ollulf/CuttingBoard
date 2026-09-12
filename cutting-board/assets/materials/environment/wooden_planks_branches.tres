@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://ufovdlh45nww"]
+
+[ext_resource type="Texture2D" uid="uid://bjwnkg6to7evg" path="res://assets/textures/environment/rough_wood.png" id="1_uoup0"]
+
+[resource]
+albedo_color = Color(0.86, 0.731, 0.731, 1)
+albedo_texture = ExtResource("1_uoup0")
+texture_filter = 0

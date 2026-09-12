@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://bl8ugmb54vkd1"]
+
+[ext_resource type="PackedScene" uid="uid://b500q4bhc8hjo" path="res://assets/meshes/environment/foliage/trees/tree_1_slim.glb" id="1_23gr7"]
+[ext_resource type="Material" uid="uid://c4mtm62k41y2a" path="res://assets/materials/environment/foliage/tree_slim_1.tres" id="2_8mbxh"]
+[ext_resource type="Material" uid="uid://b0pioolpwlgp6" path="res://assets/materials/environment/foliage/tree_slim_branch.tres" id="3_2fic8"]
+
+[node name="tree_1_slim" instance=ExtResource("1_23gr7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_8mbxh")
+surface_material_override/1 = ExtResource("3_2fic8")
+
+[node name="VisibleOnScreenNotifier3D" type="VisibleOnScreenEnabler3D" parent="." index="0"]
+transform = Transform3D(1.1218442, 0, 0, 0, 1, 0, 0, 0, 1.2477176, 0, 11.618, 0)
+aabb = AABB(-5, -14.6176, -5, 10, 29.2353, 10)

@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bma2y4g1tqsi3"]
+
+[ext_resource type="Texture2D" uid="uid://44mwjkb7pqew" path="res://assets/textures/environment/brick_wall.png" id="1_tb8te"]
+
+[resource]
+albedo_texture = ExtResource("1_tb8te")
+texture_filter = 0

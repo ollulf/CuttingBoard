@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cbrq65kcjolgc"]
+
+[ext_resource type="Texture2D" uid="uid://cgej6vugiqrdr" path="res://assets/textures/environment/wooden_shingles.png" id="1_wvbqs"]
+
+[resource]
+albedo_color = Color(0.81, 0.955667, 1, 1)
+albedo_texture = ExtResource("1_wvbqs")
+texture_filter = 0

@@ -1,0 +1,36 @@
+[gd_scene load_steps=9 format=3 uid="uid://crd7qkxr1o3b"]
+
+[ext_resource type="PackedScene" uid="uid://de1yf6i6tw7jf" path="res://assets/meshes/environment/buildings/house_2x2.glb" id="1_17r57"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="2_1i8xn"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="3_viv3f"]
+[ext_resource type="Material" uid="uid://cd4h3sifq3ovp" path="res://assets/materials/environment/thatched_roof.tres" id="4_2odmd"]
+[ext_resource type="Material" uid="uid://stq57ackhr6q" path="res://assets/materials/environment/clay_wall.tres" id="5_w5fcj"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="6_iyejd"]
+[ext_resource type="Material" uid="uid://b1njo15mh7wkd" path="res://assets/materials/environment/window.tres" id="8_w5fcj"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_akphn"]
+size = Vector3(10, 5, 10)
+
+[node name="house_2x2" instance=ExtResource("1_17r57")]
+
+[node name="House_2x2" parent="." index="0"]
+transform = Transform3D(0.85, 0, 0, 0, 1, 0, 0, 0, 1.15, 0.142181, 0, 0.731205)
+surface_material_override/0 = ExtResource("2_1i8xn")
+surface_material_override/1 = ExtResource("3_viv3f")
+surface_material_override/2 = ExtResource("4_2odmd")
+surface_material_override/3 = ExtResource("5_w5fcj")
+surface_material_override/4 = ExtResource("2_1i8xn")
+surface_material_override/5 = ExtResource("6_iyejd")
+surface_material_override/6 = ExtResource("8_w5fcj")
+surface_material_override/7 = ExtResource("6_iyejd")
+surface_material_override/8 = ExtResource("2_1i8xn")
+surface_material_override/9 = ExtResource("8_w5fcj")
+surface_material_override/10 = ExtResource("6_iyejd")
+surface_material_override/11 = ExtResource("2_1i8xn")
+surface_material_override/12 = ExtResource("8_w5fcj")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_akphn")

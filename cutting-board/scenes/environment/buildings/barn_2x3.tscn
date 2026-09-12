@@ -1,0 +1,27 @@
+[gd_scene load_steps=8 format=3 uid="uid://c1i0sfero84vb"]
+
+[ext_resource type="PackedScene" uid="uid://cx5ogq8y4fikq" path="res://assets/meshes/environment/buildings/barn_2x3.glb" id="1_sirkh"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="2_buocy"]
+[ext_resource type="Material" uid="uid://cd4h3sifq3ovp" path="res://assets/materials/environment/thatched_roof.tres" id="3_ocmk0"]
+[ext_resource type="Material" uid="uid://stq57ackhr6q" path="res://assets/materials/environment/clay_wall.tres" id="4_vgbpj"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="5_ryjx5"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="6_3n31h"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_28ebe"]
+size = Vector3(15, 5, 10)
+
+[node name="barn_2x3" instance=ExtResource("1_sirkh")]
+
+[node name="Barn_2x3" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, 0)
+surface_material_override/0 = ExtResource("2_buocy")
+surface_material_override/1 = ExtResource("3_ocmk0")
+surface_material_override/2 = ExtResource("4_vgbpj")
+surface_material_override/3 = ExtResource("5_ryjx5")
+surface_material_override/4 = ExtResource("6_3n31h")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("BoxShape3D_28ebe")

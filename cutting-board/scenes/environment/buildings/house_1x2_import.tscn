@@ -1,0 +1,19 @@
+[gd_scene load_steps=8 format=3 uid="uid://b6xxo006nv5go"]
+
+[ext_resource type="PackedScene" uid="uid://c63d1jl54nhjk" path="res://assets/meshes/environment/buildings/house_1x2.glb" id="1_jyn6r"]
+[ext_resource type="Material" uid="uid://8hxh6jr8i1vm" path="res://assets/materials/environment/dark_planks.tres" id="2_v0dr8"]
+[ext_resource type="Material" uid="uid://cd4h3sifq3ovp" path="res://assets/materials/environment/thatched_roof.tres" id="3_j83qf"]
+[ext_resource type="Material" uid="uid://bma2y4g1tqsi3" path="res://assets/materials/environment/brick_wall.tres" id="4_4d8p6"]
+[ext_resource type="Material" uid="uid://stq57ackhr6q" path="res://assets/materials/environment/clay_wall.tres" id="5_altai"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="6_4wlyo"]
+[ext_resource type="Material" uid="uid://b1njo15mh7wkd" path="res://assets/materials/environment/window.tres" id="6_v0dr8"]
+
+[node name="house_1x2" instance=ExtResource("1_jyn6r")]
+
+[node name="House_1x2" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_v0dr8")
+surface_material_override/1 = ExtResource("3_j83qf")
+surface_material_override/2 = ExtResource("4_4d8p6")
+surface_material_override/3 = ExtResource("5_altai")
+surface_material_override/4 = ExtResource("6_v0dr8")
+surface_material_override/5 = ExtResource("6_4wlyo")

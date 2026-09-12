@@ -1,0 +1,10 @@
+[gd_scene load_steps=4 format=3 uid="uid://crlu2gsm8d2rr"]
+
+[ext_resource type="PackedScene" uid="uid://b2fr5e4ytf6vk" path="res://assets/meshes/props/pike.glb" id="1_8e3v6"]
+[ext_resource type="Material" uid="uid://bgd1qgpt0fpog" path="res://assets/materials/environment/fabric_white.tres" id="2_8e3v6"]
+[ext_resource type="Material" uid="uid://cbrq65kcjolgc" path="res://assets/materials/environment/wooden_shingles.tres" id="3_fo2n1"]
+
+[node name="Pike" instance=ExtResource("1_8e3v6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_8e3v6")
+surface_material_override/1 = ExtResource("3_fo2n1")

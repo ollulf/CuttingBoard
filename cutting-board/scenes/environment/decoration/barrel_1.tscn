@@ -1,0 +1,10 @@
+[gd_scene load_steps=4 format=3 uid="uid://di2yos6lnw6kr"]
+
+[ext_resource type="PackedScene" uid="uid://c3tfh6losiqta" path="res://assets/meshes/props/barrel.glb" id="1_wkod7"]
+[ext_resource type="Material" uid="uid://ufovdlh45nww" path="res://assets/materials/environment/wooden_planks_branches.tres" id="2_wkod7"]
+[ext_resource type="Material" uid="uid://db4hlgy05x26n" path="res://assets/materials/environment/metal.tres" id="3_7m5wi"]
+
+[node name="barrel_1" instance=ExtResource("1_wkod7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_wkod7")
+surface_material_override/1 = ExtResource("3_7m5wi")

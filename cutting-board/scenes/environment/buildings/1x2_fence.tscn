@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://be6fno4ndpe2c"]
+
+[ext_resource type="PackedScene" uid="uid://6k3ayui0nxif" path="res://assets/meshes/environment/buildings/1x2_fence.glb" id="1_wtbpn"]
+[ext_resource type="Material" uid="uid://bl6puaxo5v5f6" path="res://assets/materials/environment/wooden_planks.tres" id="2_bc8go"]
+
+[node name="fence_1x2" instance=ExtResource("1_wtbpn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_bc8go")

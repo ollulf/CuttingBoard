@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://b3x1th17yaqdw"]
+
+[ext_resource type="PackedScene" uid="uid://b2mkwjwsebvml" path="res://assets/meshes/environment/foliage/grass/bush_2_medium.glb" id="1_wtkc4"]
+[ext_resource type="Material" uid="uid://bdxltprtn8w65" path="res://assets/materials/environment/foliage/grass.tres" id="2_aplow"]
+
+[node name="bush_2_medium" instance=ExtResource("1_wtkc4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_aplow")
+
+[node name="VisibleOnScreenEnabler3D" type="VisibleOnScreenEnabler3D" parent="." index="0"]
+transform = Transform3D(-0.44336462, 0, 0, 0, 0.28476351, 0, 0, 0, -0.44336462, 0, 1.40423, 0)

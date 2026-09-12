@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3 uid="uid://c1uwdmcluvfp3"]
+
+[ext_resource type="PackedScene" uid="uid://c6iuxqv4p7re8" path="res://assets/meshes/environment/foliage/trees/tree_1_strange.glb" id="1_6p5io"]
+[ext_resource type="Material" uid="uid://dduup0ivpy4ni" path="res://assets/materials/environment/foliage/tree_strange_1_bark.tres" id="2_lpytl"]
+[ext_resource type="Material" uid="uid://b72a6b6wcdd8q" path="res://assets/materials/environment/foliage/tree_strange_1.tres" id="3_7478c"]
+[ext_resource type="Material" uid="uid://cn33r0j1fc1db" path="res://assets/materials/environment/foliage/tree_strange_branch.tres" id="4_77pi3"]
+
+[node name="tree_1_strange" instance=ExtResource("1_6p5io")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_lpytl")
+surface_material_override/1 = ExtResource("3_7478c")
+surface_material_override/2 = ExtResource("4_77pi3")
+
+[node name="VisibleOnScreenNotifier3D" type="VisibleOnScreenEnabler3D" parent="." index="0"]
+transform = Transform3D(0.94648844, 0, 0, 0, 1, 0, 0, 0, 0.94648844, 0, 11.618, 0)
+aabb = AABB(-5, -14.6176, -5, 10, 29.2353, 10)

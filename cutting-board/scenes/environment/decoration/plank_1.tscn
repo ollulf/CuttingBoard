@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://jejo6ahbgg58"]
+
+[ext_resource type="PackedScene" uid="uid://ctjk7hn5vuvub" path="res://assets/meshes/props/1_plank.glb" id="1_eydgv"]
+[ext_resource type="Material" uid="uid://bl6puaxo5v5f6" path="res://assets/materials/environment/wooden_planks.tres" id="2_ijbt3"]
+
+[node name="plank_1" instance=ExtResource("1_eydgv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+surface_material_override/0 = ExtResource("2_ijbt3")
