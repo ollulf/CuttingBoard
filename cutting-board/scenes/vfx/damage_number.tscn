@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/vfx/damage_number.gd" id="1_number"]
+[ext_resource type="FontFile" uid="uid://rplyw8yyul84" path="res://assets/fonts/Cubix.ttf" id="2_cubix"]
+
+[node name="DamageNumber" type="Label3D"]
+billboard = 1
+shaded = false
+double_sided = true
+no_depth_test = true
+fixed_size = false
+render_priority = 2
+outline_render_priority = 1
+pixel_size = 0.006
+font = ExtResource("2_cubix")
+font_size = 72
+outline_size = 16
+outline_modulate = Color(0, 0, 0, 0.8)
+text = "0"
+script = ExtResource("1_number")

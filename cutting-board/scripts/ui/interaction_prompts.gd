@@ -25,6 +25,7 @@ func _ready() -> void:
 	_inventory_panel.drop_requested.connect(_on_drop_requested)
 	var hands: Array[HandSlot] = [_hand_left, _hand_right]
 	_inventory_panel.bind_equipment(hands, _interactor)
+	_interactor.container_opened.connect(_inventory_panel.open_container)
 	_interactor.hover_changed.connect(_refresh.unbind(1))
 	_hand_left.item_held.connect(_refresh.unbind(1))
 	_hand_left.item_released.connect(_refresh.unbind(1))
@@ -53,12 +54,17 @@ func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
 	elif not hand.is_free():
 		prompt.show_prompt("Shift+" + key, "Drop")
 	else:
-		prompt.hide()
+		# An empty hand with nothing to pick up and nothing to draw throws a punch,
+		# which is the same order the click itself resolves in.
+		prompt.show_prompt(key, "Punch")
 
 
 func _update_interact_prompt() -> void:
+	var container := _interactor.get_hovered_container()
 	if _interactor.can_stow_hovered(_inventory):
 		_interact_prompt.show_prompt("E", "Take")
+	elif container:
+		_interact_prompt.show_prompt("E", "Open %s" % container.get_display_name())
 	elif _hovering_carryable():
 		# Carryable but refused, which at this point only means the grid is full.
 		_interact_prompt.show_prompt("E", "Inventory full")
@@ -66,13 +72,14 @@ func _update_interact_prompt() -> void:
 		_interact_prompt.hide()
 
 
-## Items dragged clear of the inventory window go back into the world in front of the
-## player. Only what actually made it out is taken off the stack, so an item with no
-## world scene to rebuild from stays safely in the grid instead of vanishing.
-func _on_drop_requested(entry: InventoryEntry, count: int) -> void:
-	var dropped := _interactor.drop_item(entry.data, count)
-	if dropped > 0:
-		_inventory.remove(entry, dropped)
+## An item dragged clear of the inventory window goes back into the world in front of
+## the player. It only leaves the grid once it has actually made it out there, so an
+## item with no world scene to rebuild from stays safely put instead of vanishing. The
+## inventory comes with the request because the item may have been dragged out of an
+## open chest rather than out of the player's own grid.
+func _on_drop_requested(inventory: Inventory, entry: InventoryEntry) -> void:
+	if _interactor.drop_item(entry.data, entry.durability):
+		inventory.remove(entry)
 
 
 func _update_stow_prompt() -> void:

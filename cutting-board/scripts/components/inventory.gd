@@ -4,11 +4,18 @@ extends Node
 ## A grid container measured in squares. Unlike a HandSlot, which holds the live world
 ## node, an inventory stores lightweight ItemData records, so the same component works
 ## for the player, a chest, a wagon or a corpse — only grid_size differs.
+##
+## Items do not stack. Every item occupies its own footprint, which is what makes the
+## grid itself the limit on what can be carried: two hammers cost two hammers' worth of
+## room, and an item's condition stays its own rather than being averaged into a pile.
 
 signal changed
 
 ## Width and height of the grid, in squares.
 @export var grid_size := Vector2i(6, 8)
+## What this container is called on screen when its grid is opened. Left blank it falls
+## back to the owning object's node name, which is enough for a chest called "Chest".
+@export var display_name: String
 
 var _entries: Array[InventoryEntry] = []
 
@@ -17,31 +24,34 @@ func get_entries() -> Array[InventoryEntry]:
 	return _entries
 
 
+## The heading to put over this grid.
+func get_display_name() -> String:
+	if not display_name.is_empty():
+		return display_name
+	var holder := get_parent()
+	return holder.name if holder else "Container"
+
+
 func is_empty() -> bool:
 	return _entries.is_empty()
 
 
-## Adds an item wherever it fits: first onto an existing stack, otherwise into the
-## first free footprint, scanning row by row. Returns false if there is no room.
-func add(data: ItemData) -> bool:
+## Adds an item to the first free footprint, scanning row by row. Returns false if there
+## is no room. `durability` is what this particular item has left, or -1 for a fresh one.
+func add(data: ItemData, durability: int = -1) -> bool:
 	if data == null:
 		return false
-	var stack := _find_open_stack(data)
-	if stack:
-		stack.count += 1
-		changed.emit()
-		return true
 	var origin := find_free_origin(data.grid_size)
 	if origin.x < 0:
 		return false
-	return add_at(data, origin)
+	return add_at(data, origin, durability)
 
 
 ## Adds an item at an exact cell, for placement the player drives by hand.
-func add_at(data: ItemData, origin: Vector2i) -> bool:
+func add_at(data: ItemData, origin: Vector2i, durability: int = -1) -> bool:
 	if data == null or not is_region_free(origin, data.grid_size):
 		return false
-	_entries.append(InventoryEntry.new(data, origin))
+	_entries.append(InventoryEntry.new(data, origin, durability))
 	changed.emit()
 	return true
 
@@ -49,70 +59,25 @@ func add_at(data: ItemData, origin: Vector2i) -> bool:
 func can_add(data: ItemData) -> bool:
 	if data == null:
 		return false
-	return _find_open_stack(data) != null or find_free_origin(data.grid_size).x >= 0
+	return find_free_origin(data.grid_size).x >= 0
 
 
-## Takes items off the entry's stack, dropping the entry once it empties.
-func remove(entry: InventoryEntry, count: int = 1) -> void:
-	if entry == null or not _entries.has(entry) or count <= 0:
+## Takes an item out of the grid.
+func remove(entry: InventoryEntry) -> void:
+	if entry == null or not _entries.has(entry):
 		return
-	entry.count -= count
-	if entry.count <= 0:
-		_entries.erase(entry)
+	_entries.erase(entry)
 	changed.emit()
 
 
-## Relocates an entry, leaving it untouched if the destination is blocked.
+## Relocates an entry, leaving it untouched if the destination is blocked. The entry is
+## allowed to land on the squares it is itself vacating.
 func move(entry: InventoryEntry, origin: Vector2i) -> bool:
-	return move_to(entry, origin, -1)
-
-
-## Moves `count` items out of an entry to a free region at `origin`; -1 means the whole
-## stack. Taking the whole stack relocates the entry, taking part of it splits a new
-## entry off and leaves the remainder where it was.
-func move_to(entry: InventoryEntry, origin: Vector2i, count: int = -1) -> bool:
 	if entry == null or not _entries.has(entry):
 		return false
-	if count < 0:
-		count = entry.count
-	count = clampi(count, 1, entry.count)
-	var whole := count == entry.count
-	# A split leaves the source in place, so the source still blocks the destination;
-	# only a whole-stack move may land on the squares it is vacating.
-	if not is_region_free(origin, entry.get_size(), entry if whole else null):
+	if not is_region_free(origin, entry.get_size(), entry):
 		return false
-	if whole:
-		entry.origin = origin
-	else:
-		entry.count -= count
-		_entries.append(InventoryEntry.new(entry.data, origin, count))
-	changed.emit()
-	return true
-
-
-## True if `count` items can be poured from one stack onto another of the same item.
-func can_merge(source: InventoryEntry, target: InventoryEntry, count: int = -1) -> bool:
-	if source == null or target == null or source == target:
-		return false
-	if not _entries.has(source) or not _entries.has(target):
-		return false
-	if source.data != target.data:
-		return false
-	if count < 0:
-		count = source.count
-	return count >= 1 and count <= source.count and target.count + count <= target.data.stack_max
-
-
-## Pours `count` items from one stack into another, emptying the source if it runs out.
-func merge(source: InventoryEntry, target: InventoryEntry, count: int = -1) -> bool:
-	if not can_merge(source, target, count):
-		return false
-	if count < 0:
-		count = source.count
-	target.count += count
-	source.count -= count
-	if source.count <= 0:
-		_entries.erase(source)
+	entry.origin = origin
 	changed.emit()
 	return true
 
@@ -147,15 +112,6 @@ func find_free_origin(size: Vector2i) -> Vector2i:
 			if is_region_free(origin, size):
 				return origin
 	return Vector2i(-1, -1)
-
-
-func _find_open_stack(data: ItemData) -> InventoryEntry:
-	if data.stack_max <= 1:
-		return null
-	for entry in _entries:
-		if entry.data == data and entry.count < data.stack_max:
-			return entry
-	return null
 
 
 func _overlaps(a_pos: Vector2i, a_size: Vector2i, b_pos: Vector2i, b_size: Vector2i) -> bool:

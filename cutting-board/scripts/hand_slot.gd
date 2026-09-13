@@ -28,6 +28,10 @@ signal equipped_changed(data: ItemData)
 
 ## The item assigned to this slot: a record, not a live object.
 var equipped: ItemData = null
+## What the assigned item has left. The slot has to hold this alongside the record for
+## the same reason an InventoryEntry does — the record is shared by every copy of the
+## item — so equipping a worn hammer and drawing it again gets the worn one back.
+var equipped_durability := -1
 
 var _held: Node3D = null
 ## Whether what the hand holds is this slot's assigned item, made real.
@@ -86,20 +90,23 @@ func begin_charge() -> void:
 
 ## Assigns an item to this slot. Nothing is spawned: the record simply waits here until
 ## it is drawn.
-func equip(data: ItemData) -> bool:
+func equip(data: ItemData, durability: int = -1) -> bool:
 	if data == null or equipped != null or data.item_type != equips:
 		return false
 	equipped = data
+	equipped_durability = durability if durability >= 0 else data.durability
 	equipped_changed.emit(equipped)
 	return true
 
 
-## Clears the assignment and hands the record back to the caller to store.
+## Clears the assignment and hands the record back to the caller to store. The wear goes
+## with it in equipped_durability, which the caller must read before this clears it.
 func unequip() -> ItemData:
 	var data := equipped
 	if data == null:
 		return null
 	equipped = null
+	equipped_durability = -1
 	equipped_changed.emit(null)
 	return data
 
@@ -107,6 +114,17 @@ func unequip() -> ItemData:
 ## True while the assigned item is the very object this hand is holding.
 func is_drawn() -> bool:
 	return _drawn and not is_free()
+
+
+## What the assigned item has left right now. While it is drawn that is read off the
+## live object, since that is where damage has actually been landing; otherwise the slot
+## is the only thing still holding the number.
+func get_equipped_durability() -> int:
+	if is_drawn():
+		var live := Destructible.read(_held)
+		if live >= 0:
+			return live
+	return equipped_durability
 
 
 ## Takes hold of the assigned item, made real. The slot stays assigned while it is out,
@@ -125,6 +143,9 @@ func hold_drawn(item: Node3D) -> bool:
 func sheathe() -> Node3D:
 	if not is_drawn():
 		return null
+	# Bank what it took while it was out: the object is about to be destroyed, and the
+	# slot is where its condition has to survive until it is drawn again.
+	equipped_durability = get_equipped_durability()
 	_drawn = false
 	return release()
 
@@ -153,6 +174,7 @@ func _clear_held() -> void:
 	if _drawn:
 		_drawn = false
 		equipped = null
+		equipped_durability = -1
 		equipped_changed.emit(null)
 	item_released.emit(item)
 

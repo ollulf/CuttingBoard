@@ -1,18 +1,24 @@
 class_name InventoryEntry
 extends RefCounted
 
-## One occupied region of an Inventory grid: which item sits there, where its top-left
-## corner is, and how many are stacked in that one footprint.
+## One occupied region of an Inventory grid: which item sits there and where its
+## top-left corner is. One entry is one item — items do not stack, so a second hammer
+## takes its own squares rather than piling onto the first.
 
 var data: ItemData
 var origin: Vector2i
-var count: int
+## What this item has left, on ItemData.durability's scale. Wear is held here and not on
+## the ItemData because an ItemData is a single shared resource: every hammer in the
+## game points at the same record, so damage written there would be damage to all of
+## them at once.
+var durability: int
 
 
-func _init(p_data: ItemData, p_origin: Vector2i, p_count: int = 1) -> void:
+## A durability of -1 means "as authored", which is what a fresh item arrives with.
+func _init(p_data: ItemData, p_origin: Vector2i, p_durability: int = -1) -> void:
 	data = p_data
 	origin = p_origin
-	count = p_count
+	durability = p_durability if p_durability >= 0 else (p_data.durability if p_data else 0)
 
 
 func get_size() -> Vector2i:

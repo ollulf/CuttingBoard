@@ -7,6 +7,9 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/charge_bar.tscn" id="5_charge_bar"]
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="6_inventory"]
 [ext_resource type="AudioStream" uid="uid://b40cxrp7u8m7h" path="res://assets/audio/sfx/pick_up.wav" id="7_pickup"]
+[ext_resource type="Script" path="res://scripts/components/arm_animator.gd" id="8_arm_animator"]
+[ext_resource type="AnimationLibrary" path="res://resources/animations/arms.tres" id="9_arm_anims"]
+[ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="10_melee"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -33,37 +36,65 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 [node name="Camera3D" type="Camera3D" parent="CameraPivot" unique_id=692127463]
 current = true
 
-[node name="ArmLeft" type="MeshInstance3D" parent="CameraPivot/Camera3D" unique_id=949494793]
+[node name="Arms" type="Node3D" parent="CameraPivot/Camera3D"]
+unique_name_in_owner = true
+script = ExtResource("8_arm_animator")
+
+[node name="LeftPlayer" type="AnimationPlayer" parent="CameraPivot/Camera3D/Arms"]
+unique_name_in_owner = true
+root_node = NodePath("..")
+libraries = {
+&"": ExtResource("9_arm_anims")
+}
+
+[node name="RightPlayer" type="AnimationPlayer" parent="CameraPivot/Camera3D/Arms"]
+unique_name_in_owner = true
+root_node = NodePath("..")
+libraries = {
+&"": ExtResource("9_arm_anims")
+}
+
+[node name="ArmLeftPivot" type="Node3D" parent="CameraPivot/Camera3D/Arms"]
 unique_name_in_owner = true
 transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -0.7, -0.3, -0.6)
+
+[node name="ArmLeft" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot" unique_id=949494793]
+unique_name_in_owner = true
 mesh = SubResource("BoxMesh_arm")
 surface_material_override/0 = SubResource("StandardMaterial3D_arm")
 
-[node name="HandSlotLeft" type="Node3D" parent="CameraPivot/Camera3D/ArmLeft" unique_id=1502060170]
+[node name="HandSlotLeft" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeft" unique_id=1502060170]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
 script = ExtResource("3_hand_slot")
 display_name = "Left Hand"
 
-[node name="ChargeBar" parent="CameraPivot/Camera3D/ArmLeft/HandSlotLeft" unique_id=985039455 instance=ExtResource("5_charge_bar")]
+[node name="ChargeBar" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeft/HandSlotLeft" unique_id=985039455 instance=ExtResource("5_charge_bar")]
 
-[node name="ArmRight" type="MeshInstance3D" parent="CameraPivot/Camera3D" unique_id=1725595375]
+[node name="ArmRightPivot" type="Node3D" parent="CameraPivot/Camera3D/Arms"]
 unique_name_in_owner = true
 transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.7, -0.3, -0.6)
+
+[node name="ArmRight" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot" unique_id=1725595375]
+unique_name_in_owner = true
 mesh = SubResource("BoxMesh_arm")
 surface_material_override/0 = SubResource("StandardMaterial3D_arm")
 
-[node name="HandSlotRight" type="Node3D" parent="CameraPivot/Camera3D/ArmRight" unique_id=1724605880]
+[node name="HandSlotRight" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRight" unique_id=1724605880]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
 script = ExtResource("3_hand_slot")
 display_name = "Right Hand"
 
-[node name="ChargeBar" parent="CameraPivot/Camera3D/ArmRight/HandSlotRight" unique_id=1584888876 instance=ExtResource("5_charge_bar")]
+[node name="ChargeBar" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRight/HandSlotRight" unique_id=1584888876 instance=ExtResource("5_charge_bar")]
 
 [node name="Interactor" type="Node" parent="CameraPivot/Camera3D" unique_id=167089925]
 unique_name_in_owner = true
 script = ExtResource("2_interactor")
+
+[node name="MeleeAttack" type="Node" parent="CameraPivot/Camera3D"]
+unique_name_in_owner = true
+script = ExtResource("10_melee")
 
 [node name="InteractionPrompts" parent="." unique_id=162121589 instance=ExtResource("4_prompts")]
 

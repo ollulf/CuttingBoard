@@ -49,6 +49,12 @@ func return_to_world() -> void:
 	released.emit()
 
 
+## What this object has left, or -1 if it wears down at all. Read before stow(), which
+## is what destroys the node holding it.
+func get_durability() -> int:
+	return Destructible.read(get_parent())
+
+
 ## Removes the object from the world once its ItemData has been banked somewhere.
 ## The node is not kept around: ItemData.spawn() rebuilds it when it is dropped.
 func stow(by: Node) -> void:

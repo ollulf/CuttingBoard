@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/inventory_panel.gd" id="1_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/item_tooltip.tscn" id="2_tooltip"]
 
 [node name="InventoryPanel" type="Control"]
 visible = false
@@ -33,8 +34,41 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
 
-[node name="Frame" type="PanelContainer" parent="Center/Row"]
+[node name="ContainerFrame" type="PanelContainer" parent="Center/Row"]
+unique_name_in_owner = true
+visible = false
 layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="Center/Row/ContainerFrame"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Rows" type="VBoxContainer" parent="Center/Row/ContainerFrame/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="ContainerTitle" type="Label" parent="Center/Row/ContainerFrame/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+text = "Chest"
+
+[node name="ContainerGrid" type="Control" parent="Center/Row/ContainerFrame/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Frame" type="PanelContainer" parent="Center/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 0
 mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="Center/Row/Frame"]
@@ -50,16 +84,19 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Center/Row/Frame/Margin/Rows"]
+[node name="PlayerTitle" type="Label" parent="Center/Row/Frame/Margin/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 text = "Inventory"
 
-[node name="Grid" type="Control" parent="Center/Row/Frame/Margin/Rows"]
+[node name="PlayerGrid" type="Control" parent="Center/Row/Frame/Margin/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
 [node name="EquipFrame" type="PanelContainer" parent="Center/Row"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 0
 mouse_filter = 2
@@ -77,12 +114,20 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Center/Row/EquipFrame/Margin/Rows"]
+[node name="EquipTitle" type="Label" parent="Center/Row/EquipFrame/Margin/Rows"]
 layout_mode = 2
 mouse_filter = 2
 text = "Equipment"
 
 [node name="Slots" type="VBoxContainer" parent="Center/Row/EquipFrame/Margin/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
+
+[node name="TooltipTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+one_shot = true
+
+[node name="ItemTooltip" parent="." instance=ExtResource("2_tooltip")]
+unique_name_in_owner = true

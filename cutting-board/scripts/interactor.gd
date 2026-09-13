@@ -8,6 +8,9 @@ signal hover_changed(target: Node3D)
 ## An object under the crosshair went into the inventory. Carries the record stored,
 ## so a listener can react to what was taken as well as that something was.
 signal item_stowed(data: ItemData)
+## A container under the crosshair was opened. The interactor owns no UI, so it reports
+## which inventory was opened and leaves putting a screen on it to whoever owns the HUD.
+signal container_opened(inventory: Inventory)
 
 @export var ray_length := 3.0
 @export var collision_mask := 1
@@ -24,11 +27,10 @@ signal item_stowed(data: ItemData)
 ## Overlay applied to the hovered object's meshes; a translucent tint is built if unset.
 @export var highlight_material: Material
 
-## How far in front of the camera items from the inventory land, in metres, how fast
-## they are pushed away, and how far apart a dropped stack is spaced.
+## How far in front of the camera items from the inventory land, in metres, and how fast
+## they are pushed away.
 @export var drop_distance := 1.3
 @export var drop_speed := 1.5
-@export var drop_spread := 0.3
 
 @onready var _camera: Camera3D = get_parent()
 
@@ -73,9 +75,23 @@ func get_hovered() -> Node3D:
 func interact(inventory: Inventory = null) -> void:
 	if stow_hovered(inventory):
 		return
+	# A container is opened as well as used rather than instead of it, so a chest can
+	# still swing its lid or play a sound through its own Usable.
+	var container := get_hovered_container()
+	if container:
+		container_opened.emit(container)
 	var usable := _get_component(_hovered, "Usable") as Usable
 	if usable:
 		usable.use(get_owner())
+
+
+## The inventory of the container under the crosshair, or null if what is there is not
+## one. A carryable object's own inventory does not count: pointing at a sack means
+## picking it up, and its contents come with it.
+func get_hovered_container() -> Inventory:
+	if _get_component(_hovered, "Carryable") != null:
+		return null
+	return _get_component(_hovered, "Inventory") as Inventory
 
 
 ## True if the hovered object is carryable and there is room for it in `inventory`.
@@ -90,9 +106,11 @@ func stow_hovered(inventory: Inventory) -> bool:
 	if not can_stow_hovered(inventory):
 		return false
 	var carryable := _get_component(_hovered, "Carryable") as Carryable
-	# Read the record before stowing: that is what frees the world object it lives on.
+	# Read the record and the wear before stowing: that is what frees the world object
+	# both live on, and the wear is the half that would otherwise be lost.
 	var data := carryable.item_data
-	if not inventory.add(data):
+	var durability := carryable.get_durability()
+	if not inventory.add(data, durability):
 		return false
 	carryable.stow(get_owner())
 	item_stowed.emit(data)
@@ -120,26 +138,27 @@ func release_hand(hand: HandSlot) -> void:
 	_throw_from(hand, hand.end_charge())
 
 
-## Rebuilds items from an inventory record and puts them back into the world just in
-## front of the camera. Returns how many actually made it out, which is what the caller
-## should then take off the stack — an item with no world scene cannot be dropped.
-func drop_item(data: ItemData, count: int = 1) -> int:
+## Rebuilds an item from an inventory record and puts it back into the world just in
+## front of the camera. Returns false when it could not be — an item with no world scene
+## cannot be dropped — which is the caller's cue to leave the record where it is rather
+## than remove it.
+func drop_item(data: ItemData, durability: int = -1) -> bool:
 	if data == null:
-		return 0
-	var dropped := 0
-	for i in count:
-		var item := data.spawn()
-		if item == null:
-			break
-		get_tree().current_scene.add_child(item)
-		# Spread a stack slightly so the pieces do not spawn inside one another.
-		var spread := _camera.global_transform.basis.x * (i - (count - 1) * 0.5) * drop_spread
-		item.global_position = _camera.global_position - _camera.global_transform.basis.z * drop_distance + spread
-		var body := item as RigidBody3D
-		if body:
-			body.linear_velocity = -_camera.global_transform.basis.z * drop_speed
-		dropped += 1
-	return dropped
+		return false
+	var item := data.spawn()
+	if item == null:
+		return false
+	get_tree().current_scene.add_child(item)
+	# The rebuilt object starts at the scene's authored durability, so the wear the
+	# record was carrying has to be put back onto it.
+	Destructible.write(item, durability)
+	item.global_position = (
+		_camera.global_position - _camera.global_transform.basis.z * drop_distance
+	)
+	var body := item as RigidBody3D
+	if body:
+		body.linear_velocity = -_camera.global_transform.basis.z * drop_speed
+	return true
 
 
 ## Draws the item assigned to a slot, spawning the real world object into that hand, so
@@ -155,6 +174,8 @@ func draw_equipped(hand: HandSlot) -> bool:
 	if item == null:
 		return false
 	get_tree().current_scene.add_child(item)
+	# Drawn at the wear the slot has been keeping for it, not fresh off its scene.
+	Destructible.write(item, hand.equipped_durability)
 	var carryable := item.get_node_or_null("Carryable") as Carryable
 	if carryable:
 		carryable.take(get_owner())
@@ -184,16 +205,17 @@ func sheathe_equipment(hands: Array[HandSlot]) -> int:
 func move_equipped(from: HandSlot, to: HandSlot) -> bool:
 	if from == null or to == null or from == to or from.equipped == null or to.equipped != null:
 		return false
-	# Read the record first: releasing a drawn item is what clears the assignment.
+	# Read the record and its wear first: releasing a drawn item is what clears both.
 	var data := from.equipped
+	var durability := from.get_equipped_durability()
 	var item: Node3D = from.release() if from.is_drawn() else null
 	from.unequip()
-	if to.equip(data):
+	if to.equip(data, durability):
 		if item:
 			to.hold_drawn(item)
 		return true
 	# Refused — put it back exactly as it was rather than dropping it on the floor.
-	from.equip(data)
+	from.equip(data, durability)
 	if item:
 		from.hold_drawn(item)
 	return false
@@ -248,6 +270,12 @@ func _get_target() -> Node3D:
 	var origin := _camera.global_position
 	var end := origin - _camera.global_transform.basis.z * ray_length
 	var query := PhysicsRayQueryParameters3D.create(origin, end, collision_mask)
+	# The ray starts inside the owner's own capsule. Excluding that body keeps the
+	# player from ever reading as a target of their own — they carry components the
+	# interactor looks for, their Inventory among them.
+	var own_body := get_owner() as CollisionObject3D
+	if own_body:
+		query.exclude = [own_body.get_rid()]
 	var result := space_state.intersect_ray(query)
 	var collider := result.get("collider") as Node3D
 	# Physics still reports a body that was freed earlier in the same frame — a barrel
@@ -257,7 +285,11 @@ func _get_target() -> Node3D:
 
 
 func _is_interactable(node: Node3D) -> bool:
-	return _get_component(node, "Carryable") != null or _get_component(node, "Usable") != null
+	return (
+		_get_component(node, "Carryable") != null
+		or _get_component(node, "Usable") != null
+		or _get_component(node, "Inventory") != null
+	)
 
 
 func _get_component(node: Node3D, component_name: String) -> Node:

@@ -27,8 +27,13 @@ extends CharacterBody3D
 
 @onready var camera_pivot: Node3D = %CameraPivot
 @onready var collision_shape: CollisionShape3D = %CollisionShape3D
-@onready var arm_left: MeshInstance3D = %ArmLeft
-@onready var arm_right: MeshInstance3D = %ArmRight
+## The bob and jump lift are written to the pivots, never to the arms themselves: the
+## arms are what ArmAnimator's animations move, and driving both from here every frame
+## would simply overwrite whatever a swing was doing.
+@onready var arm_left_pivot: Node3D = %ArmLeftPivot
+@onready var arm_right_pivot: Node3D = %ArmRightPivot
+@onready var arms: ArmAnimator = %Arms
+@onready var melee: MeleeAttack = %MeleeAttack
 @onready var interactor: Interactor = %Interactor
 @onready var hand_left: HandSlot = %HandSlotLeft
 @onready var hand_right: HandSlot = %HandSlotRight
@@ -57,8 +62,8 @@ var _last_forward_tap := -INF
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	_arm_left_base_pos = arm_left.position
-	_arm_right_base_pos = arm_right.position
+	_arm_left_base_pos = arm_left_pivot.position
+	_arm_right_base_pos = arm_right_pivot.position
 	# The capsule is shared with anything else instancing this scene unless it is made
 	# unique here, which would make one player's crouch shrink all of them.
 	_capsule = (collision_shape.shape as CapsuleShape3D).duplicate()
@@ -68,6 +73,8 @@ func _ready() -> void:
 	# Anything taken into the inventory gets the same confirmation click, whoever
 	# triggered it, so the sound hangs off the event rather than the E key.
 	interactor.item_stowed.connect(_on_item_stowed)
+	# The blow lands when the animation says it does, not when the button was pressed.
+	arms.hit.connect(_on_arm_hit)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -115,11 +122,29 @@ func _unhandled_input(event: InputEvent) -> void:
 ## the obvious reading of clicking on a barrel; otherwise a plain click readies that
 ## hand's equipped item. Shift always works the world — grabbing what is under the
 ## crosshair, or winding up a throw with what is already held.
+##
+## A click with nothing to grab and nothing to draw is a blow. Putting the punch last
+## means it costs none of the existing gestures: it happens exactly when the click would
+## otherwise have done nothing at all.
 func _use_hand(hand: HandSlot, event: InputEvent) -> void:
 	if _is_grab_modifier(event) or (hand.is_free() and interactor.has_grabbable()):
 		interactor.grab_or_charge(hand)
-	else:
-		interactor.draw_equipped(hand)
+	elif not interactor.draw_equipped(hand):
+		_punch(hand)
+
+
+## Throws a blow with one arm. What the hand is holding chooses the animation, which is
+## how a drawn weapon swings rather than jabbing — a hand carrying something loose is
+## busy with it instead, since Shift-click is already how that gets thrown.
+func _punch(hand: HandSlot) -> void:
+	if not hand.is_free() and not hand.is_drawn():
+		return
+	var arm := ArmAnimator.Arm.LEFT if hand == hand_left else ArmAnimator.Arm.RIGHT
+	arms.play_action(&"punch", arm, hand.equipped if hand.is_drawn() else null)
+
+
+func _on_arm_hit(arm: int) -> void:
+	melee.strike(hand_left if arm == ArmAnimator.Arm.LEFT else hand_right)
 
 
 ## Grabbing, throwing and dropping all hang off Shift, which leaves a plain left or
@@ -233,5 +258,5 @@ func _update_arms(delta: float) -> void:
 	# Raise the arms when jumping, let them drop a bit while falling.
 	var jump_offset := clampf(velocity.y / jump_velocity, -1.0, 1.0) * arm_jump_lift
 
-	arm_left.position = _arm_left_base_pos + Vector3(0.0, bob_offset + jump_offset, 0.0)
-	arm_right.position = _arm_right_base_pos + Vector3(0.0, -bob_offset + jump_offset, 0.0)
+	arm_left_pivot.position = _arm_left_base_pos + Vector3(0.0, bob_offset + jump_offset, 0.0)
+	arm_right_pivot.position = _arm_right_base_pos + Vector3(0.0, -bob_offset + jump_offset, 0.0)

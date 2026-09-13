@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/items/barrel.tscn" id="5_6xh4u"]
 [ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="6_cyt5c"]
 [ext_resource type="PackedScene" path="res://scenes/characters/training_dummy.tscn" id="7_dummy"]
+[ext_resource type="PackedScene" path="res://scenes/props/chest.tscn" id="8_chest"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -104,3 +105,6 @@ transform = Transform3D(1, 0, 0, 0, 0.8503981, 0.52613974, 0, -0.52613974, 0.850
 
 [node name="TrainingDummy" parent="." unique_id=411894715 instance=ExtResource("7_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+
+[node name="Chest" parent="." instance=ExtResource("8_chest")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0, -3.2)

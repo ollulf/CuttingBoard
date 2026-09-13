@@ -8,3 +8,5 @@ display_name = "Hammer"
 item_type = 1
 grid_size = Vector2i(3, 1)
 world_scene_path = "res://scenes/items/hammer.tscn"
+weight = 6.0
+durability = 220
