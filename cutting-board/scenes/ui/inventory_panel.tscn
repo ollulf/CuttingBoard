@@ -117,7 +117,7 @@ theme_override_constants/separation = 10
 [node name="EquipTitle" type="Label" parent="Center/Row/EquipFrame/Margin/Rows"]
 layout_mode = 2
 mouse_filter = 2
-text = "Equipment"
+text = "Hands"
 
 [node name="Slots" type="VBoxContainer" parent="Center/Row/EquipFrame/Margin/Rows"]
 unique_name_in_owner = true

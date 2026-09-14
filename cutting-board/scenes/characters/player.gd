@@ -38,6 +38,7 @@ extends CharacterBody3D
 @onready var hand_left: HandSlot = %HandSlotLeft
 @onready var hand_right: HandSlot = %HandSlotRight
 @onready var inventory: Inventory = %Inventory
+@onready var hotbar: Hotbar = %Hotbar
 @onready var pickup_sound: AudioStreamPlayer = %PickupSound
 @onready var hands: Array[HandSlot] = [hand_left, hand_right]
 
@@ -73,6 +74,10 @@ func _ready() -> void:
 	# Anything taken into the inventory gets the same confirmation click, whoever
 	# triggered it, so the sound hangs off the event rather than the E key.
 	interactor.item_stowed.connect(_on_item_stowed)
+	# The bar needs all three of these at once — the bag its slots link into, the hands
+	# they draw into, and the interactor that turns a record into a real object — and
+	# the player is the only thing that can see all three.
+	hotbar.setup(inventory, hands, interactor)
 	# The blow lands when the animation says it does, not when the button was pressed.
 	arms.hit.connect(_on_arm_hit)
 
@@ -111,36 +116,48 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("interact"):
 		interactor.interact(inventory)
 	elif event.is_action_pressed("stow_equipment"):
-		interactor.sheathe_equipment(hands)
+		hotbar.stow_hands()
 	elif event.is_action_pressed("grab_left"):
 		_use_hand(hand_left, event)
 	elif event.is_action_pressed("grab_right"):
 		_use_hand(hand_right, event)
+	else:
+		_use_hotbar(event)
+
+
+## The number keys, 1 to 6: the first three reach with the left hand, the last three
+## with the right. A key both draws and puts away, so one tap brings the hammer out and
+## the next puts it back in the squares it came from.
+func _use_hotbar(event: InputEvent) -> void:
+	for index in hotbar.slot_count():
+		if event.is_action_pressed("hotbar_%d" % (index + 1)):
+			hotbar.use(index)
+			return
 
 
 ## An empty hand pointed at something loose picks it up on a plain click, since that is
-## the obvious reading of clicking on a barrel; otherwise a plain click readies that
-## hand's equipped item. Shift always works the world — grabbing what is under the
-## crosshair, or winding up a throw with what is already held.
+## the obvious reading of clicking on a barrel. Shift always works the world — grabbing
+## what is under the crosshair, or winding up a throw with what is already held.
 ##
-## A click with nothing to grab and nothing to draw is a blow. Putting the punch last
-## means it costs none of the existing gestures: it happens exactly when the click would
-## otherwise have done nothing at all.
+## A click with nothing to grab is a blow. Putting the punch last means it costs none of
+## the existing gestures: it happens exactly when the click would otherwise have done
+## nothing at all.
 func _use_hand(hand: HandSlot, event: InputEvent) -> void:
 	if _is_grab_modifier(event) or (hand.is_free() and interactor.has_grabbable()):
 		interactor.grab_or_charge(hand)
-	elif not interactor.draw_equipped(hand):
+	else:
 		_punch(hand)
 
 
 ## Throws a blow with one arm. What the hand is holding chooses the animation, which is
-## how a drawn weapon swings rather than jabbing — a hand carrying something loose is
-## busy with it instead, since Shift-click is already how that gets thrown.
+## how a weapon swings rather than jabbing. A hand carrying something that is not a
+## weapon is busy with it instead, since Shift-click is already how that gets thrown.
 func _punch(hand: HandSlot) -> void:
-	if not hand.is_free() and not hand.is_drawn():
+	var held := hand.get_item_data()
+	if not hand.is_free() and (held == null or not held.is_weapon()):
 		return
 	var arm := ArmAnimator.Arm.LEFT if hand == hand_left else ArmAnimator.Arm.RIGHT
-	arms.play_action(&"punch", arm, hand.equipped if hand.is_drawn() else null)
+	arms.play_action(&"punch", arm, held)
 
 
 func _on_arm_hit(arm: int) -> void:

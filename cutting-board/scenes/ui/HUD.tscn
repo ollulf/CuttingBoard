@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://cil2u4nvwybgg" path="res://assets/ui/icons/crosshair.png" id="2_ig75s"]
 [ext_resource type="PackedScene" path="res://scenes/ui/tooltip.tscn" id="3_4ed8p"]
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="4_invpanel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hotbar_panel.tscn" id="5_hotbar"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
@@ -61,3 +62,5 @@ layout_mode = 2
 size_flags_horizontal = 8
 
 [node name="InventoryPanel" parent="." instance=ExtResource("4_invpanel")]
+
+[node name="HotbarPanel" parent="." instance=ExtResource("5_hotbar")]

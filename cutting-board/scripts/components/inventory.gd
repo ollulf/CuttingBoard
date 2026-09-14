@@ -38,28 +38,47 @@ func is_empty() -> bool:
 
 ## Adds an item to the first free footprint, scanning row by row. Returns false if there
 ## is no room. `durability` is what this particular item has left, or -1 for a fresh one.
+## An item that will not fit upright is tried on its side before being refused, since a
+## long item often still fits down a grid it cannot fit across.
 func add(data: ItemData, durability: int = -1) -> bool:
-	if data == null:
-		return false
-	var origin := find_free_origin(data.grid_size)
-	if origin.x < 0:
-		return false
-	return add_at(data, origin, durability)
+	return store(data, durability) != null
 
 
 ## Adds an item at an exact cell, for placement the player drives by hand.
-func add_at(data: ItemData, origin: Vector2i, durability: int = -1) -> bool:
-	if data == null or not is_region_free(origin, data.grid_size):
-		return false
-	_entries.append(InventoryEntry.new(data, origin, durability))
+func add_at(data: ItemData, origin: Vector2i, durability: int = -1, rotated: bool = false) -> bool:
+	return store_at(data, origin, durability, rotated) != null
+
+
+## The same as add, but handing back the entry it made. Anything that has to keep
+## pointing at an item after storing it — a hotbar link following its item back into the
+## grid — needs the entry itself, since that, and not the shared ItemData, is what
+## identifies this one particular item.
+func store(data: ItemData, durability: int = -1) -> InventoryEntry:
+	if data == null:
+		return null
+	for rotated in [false, true]:
+		var origin := find_free_origin(data.footprint(rotated))
+		if origin.x >= 0:
+			return store_at(data, origin, durability, rotated)
+	return null
+
+
+## The same as add_at, handing back the entry it made.
+func store_at(
+	data: ItemData, origin: Vector2i, durability: int = -1, rotated: bool = false
+) -> InventoryEntry:
+	if data == null or not is_region_free(origin, data.footprint(rotated)):
+		return null
+	var entry := InventoryEntry.new(data, origin, durability, rotated)
+	_entries.append(entry)
 	changed.emit()
-	return true
+	return entry
 
 
 func can_add(data: ItemData) -> bool:
 	if data == null:
 		return false
-	return find_free_origin(data.grid_size).x >= 0
+	return find_free_origin(data.grid_size).x >= 0 or find_free_origin(data.footprint(true)).x >= 0
 
 
 ## Takes an item out of the grid.
@@ -70,16 +89,25 @@ func remove(entry: InventoryEntry) -> void:
 	changed.emit()
 
 
-## Relocates an entry, leaving it untouched if the destination is blocked. The entry is
-## allowed to land on the squares it is itself vacating.
-func move(entry: InventoryEntry, origin: Vector2i) -> bool:
+## Relocates an entry and sets which way round it lies, leaving it untouched if the
+## destination is blocked. The entry is allowed to land on the squares it is itself
+## vacating. Moving and turning are one operation because a drag can do both at once,
+## and half of it applying would leave an item overlapping its neighbour.
+func move(entry: InventoryEntry, origin: Vector2i, rotated: bool) -> bool:
 	if entry == null or not _entries.has(entry):
 		return false
-	if not is_region_free(origin, entry.get_size(), entry):
+	if not is_region_free(origin, entry.data.footprint(rotated), entry):
 		return false
 	entry.origin = origin
+	entry.rotated = rotated
 	changed.emit()
 	return true
+
+
+## Turns an item on its side where it stands. Refused when the turned footprint would
+## not fit, so the item stays as it is rather than shoving a neighbour aside.
+func rotate_item(entry: InventoryEntry) -> bool:
+	return entry != null and move(entry, entry.origin, not entry.rotated)
 
 
 func get_entry_at(cell: Vector2i) -> InventoryEntry:

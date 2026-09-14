@@ -161,63 +161,63 @@ func drop_item(data: ItemData, durability: int = -1) -> bool:
 	return true
 
 
-## Draws the item assigned to a slot, spawning the real world object into that hand, so
-## an equipped hammer is identical to one picked up off the ground. Whatever the hand
-## was carrying is dropped first — a click always ends with the equipped item ready.
-func draw_equipped(hand: HandSlot) -> bool:
-	if hand == null or hand.equipped == null or hand.is_drawn():
-		return false
-	var data := hand.equipped
-	if not hand.is_free():
-		drop_hand(hand)
+## Builds an inventory record into a real object and puts it straight into a hand, so an
+## item taken out of the bag is identical to one picked up off the ground. Returns the
+## object, or null if it could not be made — an item with no world scene has nothing to
+## become — which is the caller's cue to leave the record where it was.
+func spawn_into_hand(data: ItemData, durability: int, hand: HandSlot) -> Node3D:
+	if data == null or hand == null or not hand.is_free():
+		return null
 	var item := data.spawn()
 	if item == null:
-		return false
+		return null
 	get_tree().current_scene.add_child(item)
-	# Drawn at the wear the slot has been keeping for it, not fresh off its scene.
-	Destructible.write(item, hand.equipped_durability)
+	# Rebuilt at the wear the record was carrying, not fresh off its scene.
+	Destructible.write(item, durability)
 	var carryable := item.get_node_or_null("Carryable") as Carryable
 	if carryable:
 		carryable.take(get_owner())
-	if hand.hold_drawn(item):
-		return true
+	if hand.hold(item):
+		return item
 	item.queue_free()
-	return false
+	return null
 
 
-## Puts drawn items away: the world object is destroyed, but the slot keeps its
-## assignment, so what was in hand is simply back in its equipment slot ready to be
-## drawn again. Items the hands merely picked up are left alone — they are not
-## equipment and have nowhere to go but the floor. Returns how many were put away.
-func sheathe_equipment(hands: Array[HandSlot]) -> int:
-	var sheathed := 0
-	for hand in hands:
-		var item := hand.sheathe()
-		if item == null:
-			continue
-		item.queue_free()
-		sheathed += 1
-	return sheathed
+## The reverse: banks what a hand is holding into an inventory and destroys the object.
+## `origin` is only a preference — the square the item came out of, or where it was
+## dropped — and anywhere it fits will do. Returns the entry it became, or null when
+## there was no room, in which case the item is still in the hand and nothing was lost.
+func stow_held(
+	hand: HandSlot, inventory: Inventory, origin := Vector2i(-1, -1), rotated := false
+) -> InventoryEntry:
+	if hand == null or inventory == null or hand.is_free():
+		return null
+	# Read before storing: both the record and the wear live on the object that is about
+	# to be destroyed.
+	var data := hand.get_item_data()
+	if data == null:
+		return null
+	var durability := hand.get_durability()
+	var entry: InventoryEntry = null
+	if origin.x >= 0:
+		entry = inventory.store_at(data, origin, durability, rotated)
+	if entry == null:
+		entry = inventory.store(data, durability)
+	if entry == null:
+		return null
+	consume_held(hand)
+	return entry
 
 
-## Moves an assignment from one slot to the other, carrying the drawn object across
-## with it so a weapon already in hand simply changes hands.
-func move_equipped(from: HandSlot, to: HandSlot) -> bool:
-	if from == null or to == null or from == to or from.equipped == null or to.equipped != null:
+## Hands a held object across to the other hand. A refused move puts it straight back,
+## so a full hand never costs the item.
+func move_held(from: HandSlot, to: HandSlot) -> bool:
+	if from == null or to == null or from == to or from.is_free() or not to.is_free():
 		return false
-	# Read the record and its wear first: releasing a drawn item is what clears both.
-	var data := from.equipped
-	var durability := from.get_equipped_durability()
-	var item: Node3D = from.release() if from.is_drawn() else null
-	from.unequip()
-	if to.equip(data, durability):
-		if item:
-			to.hold_drawn(item)
+	var item := from.release()
+	if to.hold(item):
 		return true
-	# Refused — put it back exactly as it was rather than dropping it on the floor.
-	from.equip(data, durability)
-	if item:
-		from.hold_drawn(item)
+	from.hold(item)
 	return false
 
 

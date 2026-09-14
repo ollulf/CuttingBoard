@@ -34,6 +34,13 @@ enum Type { MISC, WEAPON }
 @export_file("*.tscn") var world_scene_path: String
 
 
+## The squares this item covers, turned on its side when `rotated`. Which way round any
+## one item is stored is not kept here — this record is shared by every copy of the item
+## — but the two shapes it can take are the same for all of them.
+func footprint(rotated: bool) -> Vector2i:
+	return Vector2i(grid_size.y, grid_size.x) if rotated else grid_size
+
+
 ## Instantiates the world object this record came from, or null if no scene is set.
 func spawn() -> Node3D:
 	if world_scene_path.is_empty():

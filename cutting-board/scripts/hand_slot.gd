@@ -1,41 +1,25 @@
 class_name HandSlot
 extends Node3D
 
-## One equip slot on the player's body, which is two things at once.
+## One hand on the player's body. It holds a live world Node3D and nothing else.
 ##
-## It has an assignment — the item equipped to it in the equipment window — which is a
-## lightweight ItemData record, the same kind of thing the inventory stores. And it has
-## what the hand is physically holding, which is a live world Node3D with its own
-## component state. Keeping those apart is what lets a hand carry a barrel around while
-## a hammer stays equipped: the record waits in the slot, and drawing it spawns the real
-## object into the hand. A held item can also be wound up for a throw.
+## There is no record waiting in reserve here: a hand either has an object in it or is
+## empty. Where an item lives while it is not being held is the inventory's business,
+## and which item a number key reaches for is the hotbar's — keeping both of those out
+## of the hand is what lets one path serve a barrel grabbed off the ground and a hammer
+## pulled out of the bag. A held item can be wound up for a throw.
 
 signal item_held(item: Node3D)
 signal item_released(item: Node3D)
 signal charge_changed(ratio: float)
-## Fired when the slot's assignment changes, including when a drawn item is lost.
-signal equipped_changed(data: ItemData)
 
-## Name shown for this slot in the equipment window.
+## Name shown for this hand in the inventory screen and on the hotbar.
 @export var display_name := "Hand"
-## What may be equipped into this slot from the inventory. Picking objects up out of
-## the world is deliberately not restricted — a hand can still carry a barrel — this
-## only gates what the equipment window accepts.
-@export var equips: ItemData.Type = ItemData.Type.WEAPON
 
 ## Seconds of winding up to reach a full-power throw.
 @export_range(0.1, 5.0) var charge_time := 0.9
 
-## The item assigned to this slot: a record, not a live object.
-var equipped: ItemData = null
-## What the assigned item has left. The slot has to hold this alongside the record for
-## the same reason an InventoryEntry does — the record is shared by every copy of the
-## item — so equipping a worn hammer and drawing it again gets the worn one back.
-var equipped_durability := -1
-
 var _held: Node3D = null
-## Whether what the hand holds is this slot's assigned item, made real.
-var _drawn := false
 var _charging := false
 var _charge := 0.0
 
@@ -55,8 +39,29 @@ func get_held() -> Node3D:
 	return _held
 
 
+func get_carryable() -> Carryable:
+	if _held == null:
+		return null
+	return _held.get_node_or_null("Carryable") as Carryable
+
+
+## The inventory record for what this hand is holding, or null when it is empty or has
+## hold of something that never came from an item. This is what the hand offers the
+## inventory screen: it is the same kind of record a grid square stores, so an item in
+## the hand can be dragged into the bag exactly like one being moved between grids.
+func get_item_data() -> ItemData:
+	var carryable := get_carryable()
+	return carryable.item_data if carryable else null
+
+
+## What the held object has left, or -1 if it does not wear down. Read off the live
+## object, since that is where damage has actually been landing.
+func get_durability() -> int:
+	return Destructible.read(_held) if _held else -1
+
+
 func hold(item: Node3D) -> bool:
-	if not is_free():
+	if not is_free() or item == null:
 		return false
 	_held = item
 	item.reparent(self, false)
@@ -68,7 +73,7 @@ func hold(item: Node3D) -> bool:
 	return true
 
 
-## Empties the slot and returns what was held; the caller decides where it goes next.
+## Empties the hand and returns what was held; the caller decides where it goes next.
 func release() -> Node3D:
 	var item := _held
 	if item == null:
@@ -88,68 +93,6 @@ func begin_charge() -> void:
 	_charge = 0.0
 
 
-## Assigns an item to this slot. Nothing is spawned: the record simply waits here until
-## it is drawn.
-func equip(data: ItemData, durability: int = -1) -> bool:
-	if data == null or equipped != null or data.item_type != equips:
-		return false
-	equipped = data
-	equipped_durability = durability if durability >= 0 else data.durability
-	equipped_changed.emit(equipped)
-	return true
-
-
-## Clears the assignment and hands the record back to the caller to store. The wear goes
-## with it in equipped_durability, which the caller must read before this clears it.
-func unequip() -> ItemData:
-	var data := equipped
-	if data == null:
-		return null
-	equipped = null
-	equipped_durability = -1
-	equipped_changed.emit(null)
-	return data
-
-
-## True while the assigned item is the very object this hand is holding.
-func is_drawn() -> bool:
-	return _drawn and not is_free()
-
-
-## What the assigned item has left right now. While it is drawn that is read off the
-## live object, since that is where damage has actually been landing; otherwise the slot
-## is the only thing still holding the number.
-func get_equipped_durability() -> int:
-	if is_drawn():
-		var live := Destructible.read(_held)
-		if live >= 0:
-			return live
-	return equipped_durability
-
-
-## Takes hold of the assigned item, made real. The slot stays assigned while it is out,
-## and forgets the assignment if that object ever leaves the hand by any other route —
-## thrown or destroyed — because it is then loose in the world, not equipment.
-func hold_drawn(item: Node3D) -> bool:
-	if not hold(item):
-		return false
-	_drawn = true
-	return true
-
-
-## Puts a drawn item away, returning the world object for the caller to destroy. The
-## assignment is deliberately kept: clearing _drawn first means the item leaves by the
-## normal exit path without that path treating it as equipment lost to the world.
-func sheathe() -> Node3D:
-	if not is_drawn():
-		return null
-	# Bank what it took while it was out: the object is about to be destroyed, and the
-	# slot is where its condition has to survive until it is drawn again.
-	equipped_durability = get_equipped_durability()
-	_drawn = false
-	return release()
-
-
 ## Ends the wind-up and reports how far it got, as 0..1.
 func end_charge() -> float:
 	var ratio := get_charge_ratio()
@@ -161,8 +104,8 @@ func get_charge_ratio() -> float:
 	return _charge / charge_time
 
 
-## The single exit path for a held item, whether it was thrown or destroyed out from
-## under the slot, so item_released fires exactly once either way.
+## The single exit path for a held item, whether it was stowed, thrown or destroyed out
+## from under the hand, so item_released fires exactly once either way.
 func _clear_held() -> void:
 	if _held == null:
 		return
@@ -171,11 +114,6 @@ func _clear_held() -> void:
 		item.tree_exiting.disconnect(_clear_held)
 	_held = null
 	_stop_charge()
-	if _drawn:
-		_drawn = false
-		equipped = null
-		equipped_durability = -1
-		equipped_changed.emit(null)
 	item_released.emit(item)
 
 

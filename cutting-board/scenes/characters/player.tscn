@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/components/arm_animator.gd" id="8_arm_animator"]
 [ext_resource type="AnimationLibrary" path="res://resources/animations/arms.tres" id="9_arm_anims"]
 [ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="10_melee"]
+[ext_resource type="Script" path="res://scripts/components/hotbar.gd" id="11_hotbar"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -107,3 +108,7 @@ grid_size = Vector2i(6, 8)
 unique_name_in_owner = true
 stream = ExtResource("7_pickup")
 bus = &"SFX"
+
+[node name="Hotbar" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("11_hotbar")

@@ -24,11 +24,20 @@ func _ready() -> void:
 	get_tree().node_added.connect(_on_node_added)
 
 
+## Every component is hooked exactly once, however many times it is announced. A node is
+## added to the tree again each time it is reparented — which is what picking an item up
+## into a hand does — and connecting twice would both raise an error and, once it stopped
+## erroring, show every number twice over.
 func _on_node_added(node: Node) -> void:
 	if node is Health:
-		(node as Health).damaged.connect(_on_health_damaged.bind(node))
+		_hook((node as Health).damaged, _on_health_damaged.bind(node))
 	elif node is Destructible:
-		(node as Destructible).damaged.connect(_on_durability_lost)
+		_hook((node as Destructible).damaged, _on_durability_lost)
+
+
+func _hook(source: Signal, handler: Callable) -> void:
+	if not source.is_connected(handler):
+		source.connect(handler)
 
 
 ## Spawns a number into the running scene rather than onto the victim, so it keeps
