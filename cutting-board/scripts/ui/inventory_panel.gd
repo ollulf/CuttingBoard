@@ -783,9 +783,14 @@ func _make_cell(cell: Vector2i) -> ColorRect:
 ## Builds one item tile sized to its footprint. Callers place it: the grid positions it
 ## on a cell, an equipment slot centres it, a drag hands it to the cursor. Both the size
 ## and the minimum are set, since only one of the two is honoured in each of those.
+##
+## A plain Panel rather than a PanelContainer: a container grows to its content's minimum
+## size, and a wrapping label measured before it has a width asks for one line per word,
+## which stretched a fresh drag ghost into a tall column. A Panel keeps the footprint.
 func _make_tile(data: ItemData, rotated: bool = false) -> Control:
-	var tile := PanelContainer.new()
+	var tile := Panel.new()
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tile.clip_contents = true
 	# The tile covers its whole footprint including the gaps between the squares it spans.
 	var cells := data.footprint(rotated)
 	var footprint := Vector2(_span(cells.x), _span(cells.y))
@@ -795,25 +800,27 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 	var style := StyleBoxFlat.new()
 	style.bg_color = item_color
 	style.set_corner_radius_all(4)
-	style.set_content_margin_all(4)
 	tile.add_theme_stylebox_override("panel", style)
 
+	var content: Control
 	if data.icon:
 		var icon := TextureRect.new()
 		icon.texture = data.icon
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tile.add_child(icon)
+		content = icon
 	else:
 		var label := Label.new()
 		label.text = data.display_name
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.clip_text = true
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_color_override("font_color", Color(0.1, 0.08, 0.05))
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tile.add_child(label)
+		content = label
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tile.add_child(content)
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
 	return tile
 
 

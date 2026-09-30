@@ -1,4 +1,4 @@
-[gd_resource type="AnimationLibrary" load_steps=3 format=3]
+[gd_resource type="AnimationLibrary" format=3 uid="uid://drjtoluutliur"]
 
 [sub_resource type="Animation" id="Animation_punch_unarmed_left"]
 resource_name = "punch_unarmed_left"
