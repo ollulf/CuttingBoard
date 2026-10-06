@@ -58,13 +58,15 @@ func _refresh() -> void:
 
 
 ## An empty hand pointed at something loose picks it up on a plain click; otherwise it
-## swings what it is holding. Shift works the world with it.
+## swings what it is holding, or puts it on if it is worn. Shift works the world with it.
 func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
 	var held := hand.get_item_data()
 	if hand.is_free() and _hovering_carryable():
 		prompt.show_prompt(key, "Pick up")
 	elif held and held.is_weapon():
 		prompt.show_prompt(key, "Swing %s" % held.display_name)
+	elif Equipment.slot_for(held) != Equipment.NO_SLOT:
+		prompt.show_prompt(key, "Put on %s" % held.display_name)
 	elif not hand.is_free():
 		prompt.show_prompt("Shift+" + key, "Drop")
 	else:

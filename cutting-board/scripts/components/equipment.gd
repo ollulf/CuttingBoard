@@ -7,8 +7,9 @@ extends Node
 ## spawns anything. Each slot takes only its own kind of item, read off
 ## ItemData.item_type, so a hood cannot go on as a mask.
 ##
-## Wearing something has no effect yet. A pack does not change what the grid holds and a
-## mask is not drawn on anyone; this is only the loadout those will read from.
+## Wearing something mostly has no effect yet: a pack does not change what the grid
+## holds. The mask is the exception — the player's body wears whatever is in the Mask
+## slot, which is the face it falls with.
 
 signal changed
 
@@ -23,11 +24,19 @@ const SLOT_TYPES := {
 	Slot.PACK: ItemData.Type.PACK,
 }
 
+## What is worn from the start, each item in the slot its kind goes in.
+@export var starting_items: Array[ItemData] = []
+
 ## What each slot holds, by slot; a slot that is not in here is empty.
 var _items: Dictionary = {}
 ## Wear of each worn item. It is kept beside the record and not on it for the same
 ## reason InventoryEntry keeps it: an ItemData is shared by every copy of the item.
 var _durability: Dictionary = {}
+
+
+func _ready() -> void:
+	for data in starting_items:
+		equip(slot_for(data), data)
 
 
 ## The slot an item would go in, or NO_SLOT for anything that is not worn.
