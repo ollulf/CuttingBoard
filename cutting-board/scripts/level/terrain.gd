@@ -34,6 +34,10 @@ const SNAP_GROUP := &"terrain_snap"
 ## Gravel-covered areas such as a village square, as (x, z, radius) in local metres.
 @export var gravel_areas: Array[Vector3] = []
 @export var material: Material
+## Edge length of the square pieces the ground mesh is cut into, in metres. Each piece is
+## lit and culled on its own: the Compatibility renderer lights a mesh with only a
+## limited number of lights, so one mesh for the whole valley would drop most lanterns.
+@export var chunk_size := 24
 ## How far snapped props are pushed into the ground, so roots and rock bases do not float
 ## on slopes.
 @export var snap_sink := 0.3
@@ -56,8 +60,7 @@ func build() -> void:
 		return
 	_resolution = size + 1
 	_build_heights()
-	_mesh_instance.mesh = _build_mesh()
-	_mesh_instance.material_override = material
+	_build_chunks()
 	var shape := HeightMapShape3D.new()
 	shape.map_width = _resolution
 	shape.map_depth = _resolution
@@ -110,12 +113,66 @@ func _flatness(x: float, z: float) -> float:
 	return flat
 
 
-func _build_mesh() -> ArrayMesh:
-	var half := size * 0.5
+## Replaces the ground mesh: one MeshInstance3D per chunk, under %TerrainMesh. They are
+## generated every build and never saved with the scene.
+func _build_chunks() -> void:
+	for child in _mesh_instance.get_children():
+		_mesh_instance.remove_child(child)
+		child.queue_free()
+	_mesh_instance.mesh = null
+	var grid := _build_grid()
+	var step := maxi(chunk_size, 1)
+	for z0 in range(0, size, step):
+		for x0 in range(0, size, step):
+			var chunk := MeshInstance3D.new()
+			chunk.name = "Chunk_%d_%d" % [x0 / step, z0 / step]
+			chunk.mesh = _build_chunk_mesh(grid, x0, z0, mini(x0 + step, size), mini(z0 + step, size))
+			chunk.material_override = material
+			_mesh_instance.add_child(chunk)
+
+
+## The mesh for the grid cells from (x0, z0) to (x1, z1), sharing the vertices of `grid`
+## along its edges with its neighbours so the seams match exactly.
+func _build_chunk_mesh(grid: Array, x0: int, z0: int, x1: int, z1: int) -> ArrayMesh:
+	var all_vertices: PackedVector3Array = grid[0]
+	var all_normals: PackedVector3Array = grid[1]
+	var all_colors: PackedColorArray = grid[2]
+	var width := x1 - x0 + 1
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
 	var indices := PackedInt32Array()
+	for iz in range(z0, z1 + 1):
+		for ix in range(x0, x1 + 1):
+			var i := iz * _resolution + ix
+			vertices.append(all_vertices[i])
+			normals.append(all_normals[i])
+			colors.append(all_colors[i])
+	for iz in z1 - z0:
+		for ix in x1 - x0:
+			var a := iz * width + ix
+			var b := a + 1
+			var c := a + width
+			var d := c + 1
+			indices.append_array([a, b, c, b, d, c])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+## Vertex positions, normals and path/gravel colours for every grid point, as
+## [vertices, normals, colors].
+func _build_grid() -> Array:
+	var half := size * 0.5
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var colors := PackedColorArray()
 	vertices.resize(_resolution * _resolution)
 	normals.resize(vertices.size())
 	colors.resize(vertices.size())
@@ -130,22 +187,7 @@ func _build_mesh() -> ArrayMesh:
 			var dz := _grid_height(ix, iz + 1) - _grid_height(ix, iz - 1)
 			normals[i] = Vector3(-dx, 2.0, -dz).normalized()
 			colors[i] = Color(_path_coverage(x, z), _gravel_coverage(x, z), 0.0)
-	for iz in size:
-		for ix in size:
-			var a := iz * _resolution + ix
-			var b := a + 1
-			var c := a + _resolution
-			var d := c + 1
-			indices.append_array([a, b, c, b, d, c])
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
-	arrays[Mesh.ARRAY_INDEX] = indices
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
+	return [vertices, normals, colors]
 
 
 func _grid_height(ix: int, iz: int) -> float:

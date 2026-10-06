@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/post/psx_palette.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/render_size = Vector2(320, 180)
+shader_parameter/strength = 1.0
+shader_parameter/dither_spread = 0.1
+shader_parameter/exposure = 1.0
+shader_parameter/tint = Vector4(1, 1, 1, 1)
+shader_parameter/vignette = 1.2

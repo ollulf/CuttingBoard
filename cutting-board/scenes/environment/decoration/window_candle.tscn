@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/components/light_flicker.gd" id="1_flicker"]
+
+[node name="WindowCandle" type="OmniLight3D"]
+light_color = Color(0.94, 0.58, 0.2, 1)
+light_energy = 1.6
+omni_range = 5.5
+omni_attenuation = 1.3
+script = ExtResource("1_flicker")
+amount = 0.22

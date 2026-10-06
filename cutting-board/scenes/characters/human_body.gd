@@ -25,6 +25,17 @@ signal went_limp
 		material = value
 		if is_node_ready():
 			_apply_material()
+## A mask worn over the face, which is how one faction tells itself from another in the
+## dark. Instanced onto the head bone when the body is ready; its origin is placed at
+## `mask_offset` from the bone, facing forward (-Z).
+@export var mask_scene: PackedScene
+## Where the mask sits relative to the head bone, which is at the base of the skull.
+@export var mask_offset := Vector3(0.0, 0.13, -0.135)
+## Chance that a mask comes off and tumbles away when the body goes limp.
+@export_range(0.0, 1.0) var mask_pop_chance := 0.7
+## Impulse the mask leaves the face with, in newton-seconds, on top of the killing blow's
+## direction.
+@export var mask_pop_impulse := 0.6
 ## Hits in a game land harder than physics says they should: every impulse a hit puts
 ## into the bones is multiplied by this.
 @export var impulse_scale := 2.5
@@ -62,6 +73,7 @@ var _half_lengths := {}
 var _authored := {}
 var _limp := false
 var _flinch: Tween
+var _mask: Node3D
 
 
 func _ready() -> void:
@@ -84,6 +96,7 @@ func _ready() -> void:
 	# Idle bones only trail the skeleton; the simulator wakes up when there is a hit.
 	physical_bones.active = false
 	_apply_material()
+	_put_on_mask()
 
 
 ## The character wearing this body: the scene it was placed in, or the body itself when
@@ -184,6 +197,10 @@ func go_limp(info: DamageInfo = null, carried_velocity := Vector3.ZERO) -> void:
 	if info:
 		var impulse := get_impulse(info)
 		_push(_nearest_bone(info.position, _bones), impulse, info.position)
+	if _mask and randf() < mask_pop_chance:
+		# Deferred: adding a body from inside a physics callback is not allowed.
+		_knock_off_mask.call_deferred(_mask, info, carried_velocity)
+		_mask = null
 	went_limp.emit()
 
 
@@ -258,6 +275,51 @@ func _half_length_of(bone: PhysicalBone3D) -> float:
 func _apply_material() -> void:
 	if mesh:
 		mesh.material_override = material
+
+
+## Hangs the mask on the head bone, so it turns, flinches and falls with the head. It is
+## added here rather than in the generated scene so that rebuilding the body keeps it.
+func _put_on_mask() -> void:
+	if mask_scene == null:
+		return
+	var attachment := BoneAttachment3D.new()
+	attachment.name = "HeadAttachment"
+	attachment.bone_name = "Head"
+	skeleton.add_child(attachment)
+	_mask = mask_scene.instantiate() as Node3D
+	_mask.position = mask_offset
+	attachment.add_child(_mask)
+
+
+## The mask comes away from a falling body as a small rigid body of its own, carried off
+## by the blow and the body's own momentum. It stays in the level after that.
+func _knock_off_mask(mask: Node3D, info: DamageInfo, carried_velocity: Vector3) -> void:
+	var level := get_actor().get_parent()
+	if level == null:
+		return
+	var at := mask.global_transform
+	var loose := RigidBody3D.new()
+	loose.name = "FallenMask"
+	loose.mass = 0.3
+	loose.angular_damp = 1.0
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.22, 0.26, 0.06)
+	shape.shape = box
+	loose.add_child(shape)
+	level.add_child(loose)
+	loose.global_transform = at
+	# The body's own bones would catch it straight away; let it clear them.
+	for bone in _bones:
+		loose.add_collision_exception_with(bone)
+	mask.get_parent().remove_child(mask)
+	loose.add_child(mask)
+	mask.transform = Transform3D.IDENTITY
+	var push := get_impulse(info).normalized() if info else Vector3.ZERO
+	var away := -at.basis.z
+	loose.linear_velocity = carried_velocity
+	loose.apply_central_impulse((push + away * 0.6 + Vector3.UP * 0.8).normalized() * mask_pop_impulse)
+	loose.apply_torque_impulse(Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 0.02)
 
 
 ## The character a collider belongs to. A fallen or flinching body's bones are colliders

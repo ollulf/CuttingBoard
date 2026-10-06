@@ -1,0 +1,19 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/mask.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/wood_color = Color(0.169, 0.114, 0.063, 1)
+shader_parameter/grain_color = Color(0.08, 0.05, 0.06, 1)
+shader_parameter/hole_color = Color(0.027, 0.02, 0.039, 1)
+shader_parameter/self_glow = 0.0
+shader_parameter/eye_glow = Color(0.941, 0.659, 0.22, 1)
+shader_parameter/eye_glow_energy = 0.9
+shader_parameter/chin_taper = 0.55
+shader_parameter/eye_center = Vector2(0.34, -0.05)
+shader_parameter/eye_size = Vector2(0.16, 0.07)
+shader_parameter/eye_slant = -0.45
+shader_parameter/mouth_y = 0.55
+shader_parameter/mouth_size = Vector2(0.0, 0.0)
+shader_parameter/grain_density = 30.0

@@ -2,6 +2,8 @@ shader_type spatial;
 
 render_mode blend_mix, depth_draw_opaque, cull_disabled, diffuse_burley, specular_schlick_ggx;
 
+#include "res://assets/shaders/include/psx.gdshaderinc"
+
 uniform bool wind_enabled = true;
 
 uniform vec4 albedo : source_color;
@@ -22,6 +24,8 @@ uniform float base_rigidity = 0.3;
 
 // Distance where wind stops
 uniform float wind_max_distance = 400.0;
+
+varying vec3 psx_uv;
 
 void vertex() {
     if(wind_enabled)
@@ -60,11 +64,13 @@ void vertex() {
     VERTEX = pos;
 	}
 
-
+	// PS1 jitter on top of the sway, so foliage wobbles like everything else.
+	POSITION = psx_snap(PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+	psx_uv = psx_affine_uv_out(UV, POSITION);
 }
 
 void fragment() {
-    vec4 albedo_tex = texture(texture_albedo, UV);
+    vec4 albedo_tex = texture(texture_albedo, psx_affine_uv_in(psx_uv, UV));
     ALBEDO = albedo.rgb * albedo_tex.rgb;
     ALPHA  = albedo.a * albedo_tex.a;
     ALPHA_SCISSOR_THRESHOLD = alpha_scissor_threshold;

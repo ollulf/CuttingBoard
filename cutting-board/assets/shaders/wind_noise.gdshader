@@ -2,6 +2,8 @@ shader_type spatial;
 
 render_mode blend_mix, depth_draw_opaque, cull_disabled, diffuse_burley, specular_schlick_ggx;
 
+#include "res://assets/shaders/include/psx.gdshaderinc"
+
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_nearest, repeat_enable;
 uniform float alpha_scissor_threshold : hint_range(0.0, 1.0, 0.001);
@@ -28,6 +30,8 @@ uniform sampler2D wind_noise;              // tiling noise texture
 uniform float noise_scale : hint_range(0.001, 1.0, 0.001) = 0.05;   // how stretched the noise is in world space
 uniform float noise_speed : hint_range(0.0, 2.0, 0.01) = 0.2;       // how fast the noise “moves”
 uniform float noise_influence : hint_range(0.0, 2.0, 0.01) = 0.6;   // how strongly noise affects sway
+
+varying vec3 psx_uv;
 
 void vertex() {
     vec3 pos = VERTEX;
@@ -64,10 +68,14 @@ void vertex() {
     pos += sway_offset;
 
     VERTEX = pos;
+
+    // PS1 jitter on top of the sway, so trees wobble like everything else.
+    POSITION = psx_snap(PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+    psx_uv = psx_affine_uv_out(UV, POSITION);
 }
 
 void fragment() {
-    vec2 base_uv = UV;
+    vec2 base_uv = psx_affine_uv_in(psx_uv, UV);
 
     vec4 albedo_tex = texture(texture_albedo, base_uv);
     ALBEDO = albedo.rgb * albedo_tex.rgb;

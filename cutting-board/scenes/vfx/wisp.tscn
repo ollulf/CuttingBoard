@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/vfx/wisp.gd" id="1_script"]
+[ext_resource type="Shader" path="res://assets/shaders/glow_mote.gdshader" id="2_shader"]
+[ext_resource type="Script" path="res://scripts/components/light_flicker.gd" id="3_flicker"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mote"]
+shader = ExtResource("2_shader")
+
+[sub_resource type="QuadMesh" id="QuadMesh_mote"]
+material = SubResource("ShaderMaterial_mote")
+size = Vector2(0.7, 0.7)
+
+[node name="Wisp" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Mote" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("QuadMesh_mote")
+
+[node name="Light" type="OmniLight3D" parent="."]
+light_color = Color(0.94, 0.62, 0.22, 1)
+light_energy = 2.0
+omni_range = 6.5
+omni_attenuation = 1.6
+script = ExtResource("3_flicker")
+amount = 0.35
+sway_speed = 1.4
+flutter_speed = 9.0

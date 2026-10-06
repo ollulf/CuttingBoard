@@ -38,6 +38,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/foliage/trees/tree_2_slim.tscn" id="36_dt0sw"]
 [ext_resource type="PackedScene" path="res://scenes/environment/foliage/trees/tree_3_large.tscn" id="37_tqi5i"]
 [ext_resource type="PackedScene" path="res://scenes/characters/villager.tscn" id="38_fxndj"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/window_candle.tscn" id="39_candle"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -115,6 +116,29 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.3,
 
 [node name="LanternPost_6" parent="Lanterns" unique_id=2020816492 groups=["navigation_source"] instance=ExtResource("12_l2xnu")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -2.3, 0, 22)
+
+[node name="LanternPost_7" parent="Lanterns" groups=["navigation_source"] instance=ExtResource("12_l2xnu")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.2, 0, 19.5)
+
+[node name="WindowCandles" type="Node3D" parent="."]
+
+[node name="House2x2" parent="WindowCandles" instance=ExtResource("39_candle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 2, -8.3)
+
+[node name="House1x2" parent="WindowCandles" instance=ExtResource("39_candle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.3, 2, -23.3)
+
+[node name="Smith1x2" parent="WindowCandles" instance=ExtResource("39_candle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 3.4, -9.3)
+
+[node name="House2x2_2" parent="WindowCandles" instance=ExtResource("39_candle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.3, 2, -28)
+
+[node name="WagonMaker1x2" parent="WindowCandles" instance=ExtResource("39_candle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 3.4, 9.3)
+
+[node name="House1x2_2" parent="WindowCandles" instance=ExtResource("39_candle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.8, 2, 21.3)
 
 [node name="Smithy" type="Node3D" parent="." unique_id=2005061349]
 

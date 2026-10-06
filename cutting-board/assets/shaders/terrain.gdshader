@@ -9,6 +9,8 @@ shader_type spatial;
 
 render_mode diffuse_burley, specular_disabled;
 
+#include "res://assets/shaders/include/psx.gdshaderinc"
+
 uniform sampler2D grass_texture : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D forest_texture : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D path_texture : source_color, filter_linear_mipmap, repeat_enable;
@@ -48,6 +50,8 @@ float value_noise(vec2 p) {
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	// Textures are projected in world space, so only the snap applies, not affine UVs.
+	POSITION = psx_snap(PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 

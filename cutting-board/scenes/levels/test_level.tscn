@@ -15,21 +15,9 @@
 [ext_resource type="PackedScene" path="res://scenes/levels/valley_terrain.tscn" id="13_terrain"]
 [ext_resource type="PackedScene" path="res://scenes/levels/village.tscn" id="14_village"]
 [ext_resource type="PackedScene" path="res://scenes/levels/valley_foliage.tscn" id="15_foliage"]
-
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
-ground_bottom_color = Color(0.6463, 0.6558, 0.6708, 1)
-
-[sub_resource type="Sky" id="Sky_1"]
-sky_material = SubResource("ProceduralSkyMaterial_1")
-
-[sub_resource type="Environment" id="Environment_1"]
-background_mode = 2
-sky = SubResource("Sky_1")
-tonemap_mode = 2
-fog_enabled = true
-fog_light_color = Color(0.66, 0.69, 0.74, 1)
-fog_density = 0.0018
-fog_sky_affect = 0.0
+[ext_resource type="PackedScene" path="res://scenes/levels/lighting/tallow_fair_lighting.tscn" id="16_lighting"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/lantern_post.tscn" id="17_lantern"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/wisp.tscn" id="18_wisp"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -45,12 +33,7 @@ agent_max_climb = 0.3
 
 [node name="TestLevel" type="Node3D" unique_id=408145003]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1906193929]
-environment = SubResource("Environment_1")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=514558800]
-transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
-shadow_enabled = true
+[node name="Lighting" parent="." unique_id=1906193929 instance=ExtResource("16_lighting")]
 
 [node name="Terrain" parent="." unique_id=272265108 instance=ExtResource("13_terrain")]
 
@@ -58,6 +41,49 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 
 [node name="ValleyFoliage" parent="." unique_id=725114063 instance=ExtResource("15_foliage")]
+
+[node name="RoadLanterns" type="Node3D" parent="."]
+
+[node name="LanternPost" parent="RoadLanterns" groups=["navigation_source", "terrain_snap"] instance=ExtResource("17_lantern")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.4, 0, -12)
+
+[node name="LanternPost_2" parent="RoadLanterns" groups=["navigation_source", "terrain_snap"] instance=ExtResource("17_lantern")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.2, 0, -27)
+
+[node name="LanternPost_3" parent="RoadLanterns" groups=["navigation_source", "terrain_snap"] instance=ExtResource("17_lantern")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 4.5, 0, -88)
+
+[node name="LanternPost_4" parent="RoadLanterns" groups=["navigation_source", "terrain_snap"] instance=ExtResource("17_lantern")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, -49.5)
+
+[node name="Wisps" type="Node3D" parent="."]
+
+[node name="Wisp" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -10)
+
+[node name="Wisp_2" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -19)
+
+[node name="Wisp_3" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -26)
+
+[node name="Wisp_4" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, -36)
+
+[node name="Wisp_5" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 12)
+
+[node name="Wisp_6" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 22)
+
+[node name="Wisp_7" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, -38)
+
+[node name="Wisp_8" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 0, -64)
+
+[node name="Wisp_9" parent="Wisps" groups=["terrain_snap"] instance=ExtResource("18_wisp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 40)
 
 [node name="Step" type="StaticBody3D" parent="." unique_id=1948015408 groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.5, -5)

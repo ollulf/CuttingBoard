@@ -1,0 +1,76 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/characters/bandit_mask.tres" id="1_mask"]
+[ext_resource type="Material" path="res://assets/materials/characters/antler.tres" id="2_antler"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_face"]
+material = ExtResource("1_mask")
+size = Vector2(0.24, 0.28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_beam"]
+material = ExtResource("2_antler")
+size = Vector3(0.03, 0.2433, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_beam_top"]
+material = ExtResource("2_antler")
+size = Vector3(0.026, 0.2182, 0.026)
+
+[sub_resource type="BoxMesh" id="BoxMesh_brow_tine"]
+material = ExtResource("2_antler")
+size = Vector3(0.022, 0.1759, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mid_tine"]
+material = ExtResource("2_antler")
+size = Vector3(0.02, 0.1663, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_end_tine"]
+material = ExtResource("2_antler")
+size = Vector3(0.018, 0.112, 0.018)
+
+[node name="BanditMask" type="Node3D"]
+
+[node name="Face" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+mesh = SubResource("QuadMesh_face")
+
+[node name="Antlers" type="Node3D" parent="."]
+
+[node name="LeftBeam" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.87622, -0.48192, 0, 0.48192, 0.87622, 0, 0, 0, 1, -0.115, 0.2, 0.06)
+mesh = SubResource("BoxMesh_beam")
+
+[node name="LeftBeamTop" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.73106, -0.68232, 0, 0.68232, 0.73106, 0, 0, 0, 1, -0.24, 0.375, 0.06)
+mesh = SubResource("BoxMesh_beam_top")
+
+[node name="LeftBrowTine" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.97014, 0.24254, 0, -0.24254, 0.97014, 0, 0, 0, 1, -0.15, 0.38, 0.06)
+mesh = SubResource("BoxMesh_brow_tine")
+
+[node name="LeftMidTine" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.99178, 0.12797, 0, -0.12797, 0.99178, 0, 0, 0, 1, -0.23, 0.4525, 0.06)
+mesh = SubResource("BoxMesh_mid_tine")
+
+[node name="LeftEndTine" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.48564, -0.87416, 0, 0.87416, 0.48564, 0, 0, 0, 1, -0.355, 0.475, 0.06)
+mesh = SubResource("BoxMesh_end_tine")
+
+[node name="RightBeam" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.87622, 0.48192, 0, -0.48192, 0.87622, 0, 0, 0, 1, 0.115, 0.2, 0.06)
+mesh = SubResource("BoxMesh_beam")
+
+[node name="RightBeamTop" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.73106, 0.68232, 0, -0.68232, 0.73106, 0, 0, 0, 1, 0.24, 0.375, 0.06)
+mesh = SubResource("BoxMesh_beam_top")
+
+[node name="RightBrowTine" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.97014, -0.24254, 0, 0.24254, 0.97014, 0, 0, 0, 1, 0.15, 0.38, 0.06)
+mesh = SubResource("BoxMesh_brow_tine")
+
+[node name="RightMidTine" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.99178, -0.12797, 0, 0.12797, 0.99178, 0, 0, 0, 1, 0.23, 0.4525, 0.06)
+mesh = SubResource("BoxMesh_mid_tine")
+
+[node name="RightEndTine" type="MeshInstance3D" parent="Antlers"]
+transform = Transform3D(0.48564, 0.87416, 0, -0.87416, 0.48564, 0, 0, 0, 1, 0.355, 0.475, 0.06)
+mesh = SubResource("BoxMesh_end_tine")

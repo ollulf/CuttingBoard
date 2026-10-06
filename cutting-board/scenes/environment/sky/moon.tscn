@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/environment/sky/moon.gd" id="1_script"]
+[ext_resource type="Shader" path="res://assets/shaders/moon.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_moon"]
+render_priority = -1
+shader = ExtResource("2_shader")
+
+[sub_resource type="QuadMesh" id="QuadMesh_moon"]
+material = SubResource("ShaderMaterial_moon")
+
+[node name="Moon" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="MoonQuad" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(60, 0, 0, 0, 60, 0, 0, 0, 60, 0, 0, 0)
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("QuadMesh_moon")
