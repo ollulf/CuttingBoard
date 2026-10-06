@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/target_bar.tscn" id="7_targetbar"]
 [ext_resource type="PackedScene" path="res://scenes/vfx/funhouse_mirror.tscn" id="8_mirror"]
 [ext_resource type="PackedScene" path="res://scenes/ui/mend_overlay.tscn" id="9_mend"]
+[ext_resource type="PackedScene" path="res://scenes/ui/cheat_menu.tscn" id="10_cheats"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
@@ -79,3 +80,5 @@ size_flags_horizontal = 8
 [node name="InventoryPanel" parent="." instance=ExtResource("4_invpanel")]
 
 [node name="HotbarPanel" parent="." instance=ExtResource("5_hotbar")]
+
+[node name="CheatMenu" parent="." instance=ExtResource("10_cheats")]

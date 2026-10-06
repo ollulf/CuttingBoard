@@ -18,6 +18,7 @@ extends CanvasLayer
 @onready var _hurt_overlay: HurtOverlay = $HurtOverlay
 @onready var _mend_overlay: MendOverlay = $MendOverlay
 @onready var _funhouse_mirror: FunhouseMirror = $FunhouseMirror
+@onready var _cheat_menu: CheatMenu = $CheatMenu
 
 @onready var _interactor: Interactor = %Interactor
 @onready var _hand_left: HandSlot = %HandSlotLeft
@@ -30,6 +31,7 @@ extends CanvasLayer
 
 func _ready() -> void:
 	_inventory_panel.bind(_inventory)
+	_cheat_menu.bind(_inventory)
 	_inventory_panel.drop_requested.connect(_on_drop_requested)
 	var hands: Array[HandSlot] = [_hand_left, _hand_right]
 	_inventory_panel.bind_equipment(hands, _interactor)
