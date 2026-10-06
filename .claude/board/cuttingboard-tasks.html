@@ -208,8 +208,6 @@ details.done .list { margin-top: 6px; }
   <div class="tok-big" id="tokTotal">–</div>
   <div class="tok-bar" id="tokBar" aria-hidden="true"></div>
   <ul class="tok-legend" id="tokLegend"></ul>
-  <h3 class="side-sub">By agent</h3>
-  <ol class="tok-agents" id="tokAgents"><li class="tok-empty">No usage read yet. The manager updates this on every check.</li></ol>
   <p class="tok-foot" id="tokFoot"></p>
 </aside>
 <div class="wrap">
@@ -478,7 +476,7 @@ details.done .list { margin-top: 6px; }
 
   function renderTokens() {
     renderLimits();
-    const total = $("tokTotal"), bar = $("tokBar"), legend = $("tokLegend"), list = $("tokAgents"), foot = $("tokFoot");
+    const total = $("tokTotal"), bar = $("tokBar"), legend = $("tokLegend"), foot = $("tokFoot");
     if (!usage || !usage.total) return;
     const t = usage.total;
     total.textContent = fmt(t.total);
@@ -495,26 +493,6 @@ details.done .list { margin-top: 6px; }
     legend.replaceChildren(...parts.map(([cls, name, v]) => {
       const li = el("li"); li.append(el("i", cls), document.createTextNode(name), el("b", null, fmt(v))); return li;
     }));
-
-    const byAgent = new Map();
-    for (const tk of tasks) for (const id of agentIdsOf(tk.data)) byAgent.set(id, tk.data);
-    const rows = [];
-    if (usage.manager && usage.manager.total) rows.push({ name: "Manager (Claude Code)", total: usage.manager.total, cls: "mgr" });
-    for (const [id, u] of Object.entries(usage.agents || {})) {
-      const d = byAgent.get(id);
-      rows.push({ name: d ? (d.title || "Untitled task") : "Earlier agent · " + id.slice(1, 7), total: u.total || 0, cls: d && d.status === "working" ? "live" : "" });
-    }
-    rows.sort((a, b) => b.total - a.total);
-    const max = rows.length ? rows[0].total : 1;
-    list.replaceChildren(...rows.map(r => {
-      const li = el("li", r.cls);
-      const name = el("div", "name"); name.append(el("span", null, r.name), el("b", null, fmt(r.total)));
-      name.title = r.name + " · " + r.total.toLocaleString() + " tokens";
-      const mini = el("div", "mini"); const fill = el("span"); fill.style.width = Math.max(2, Math.round(r.total / max * 100)) + "%"; mini.append(fill);
-      li.append(name, mini);
-      return li;
-    }));
-    if (!rows.length) list.replaceChildren(el("li", "tok-empty", "No usage yet today."));
     foot.textContent = "From Claude Code logs · " + (usage.date || "") + " · read " + ago(usage.updatedAt);
   }
 
