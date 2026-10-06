@@ -158,6 +158,15 @@ button:disabled { opacity: 0.5; cursor: default; }
 .status { font: 700 11px/1 var(--px); text-transform: uppercase; padding: 5px 7px 5px 6px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--panel-lo); color: var(--idle); min-width: 0; }
 .status::before { content: ""; width: 6px; height: 6px; background: currentColor; flex: none; }
 .status.queued { color: var(--idle); }
+/* Effort the manager chose for the agent: pixel signal bars, one lit for low, two for medium. */
+.badges { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.effort { display: inline-flex; align-items: flex-end; gap: 2px; padding: 4px 6px; background: var(--panel-lo); font: 700 10px/1 var(--px); color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+.effort i { display: block; width: 3px; background: var(--panel-hi); }
+.effort i:nth-child(1) { height: 4px; } .effort i:nth-child(2) { height: 7px; } .effort i:nth-child(3) { height: 10px; }
+.effort.low i:nth-child(1) { background: var(--ok); }
+.effort.medium i:nth-child(-n+2) { background: var(--warn); }
+.effort.high i { background: var(--bad); }
+.effort b { margin-left: 4px; font-weight: 700; }
 .status.working { color: var(--work); }
 .status.review { color: var(--warn); }
 .status.attention { color: var(--bad); }
@@ -276,6 +285,20 @@ details.done .list { margin-top: 6px; }
     if (h < 24) return h + "h ago";
     return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   }
+  const EFFORT = { low: "Low", medium: "Med", high: "High" };
+  function effortBadge(effort) {
+    const e = el("span", "effort " + effort);
+    e.title = "Agent effort: " + effort;
+    e.append(el("i"), el("i"), el("i"), el("b", null, EFFORT[effort] || effort));
+    return e;
+  }
+  // The status badge, followed by the effort the manager picked once the task has one.
+  function statusWithEffort(status, effort) {
+    if (!effort) return status;
+    const wrap = el("span", "badges");
+    wrap.append(status, effortBadge(effort));
+    return wrap;
+  }
   function block(label, node) {
     const b = el("div", "block");
     b.append(el("span", "label", label), node);
@@ -309,7 +332,7 @@ details.done .list { margin-top: 6px; }
     head.setAttribute("aria-expanded", String(isOpen));
     const [label, cls] = STATUS[d.status] || [d.status, "queued"];
     head.append(
-      el("span", "status " + cls, label + (d.round > 1 && d.status !== "done" ? " · R" + d.round : "")),
+      statusWithEffort(el("span", "status " + cls, label + (d.round > 1 && d.status !== "done" ? " · R" + d.round : "")), d.effort),
       el("span", "task-title", d.title || "Untitled task"),
       el("span", "when", (taskTokens(d) ? fmt(taskTokens(d)) + " tok · " : "") + ago(d.status === "done" ? d.mergedAt : d.updatedAt || d.createdAt))
     );
@@ -348,6 +371,7 @@ details.done .list { margin-top: 6px; }
     }
     if (d.feedback && d.round > 1 && d.status !== "done") body.append(block("Your change request", el("p", "text", d.feedback)));
     if (d.answer && d.status !== "done") body.append(block("Your answer", el("p", "text", d.answer)));
+    if (d.effort) body.append(block("Effort", el("p", "text", (EFFORT[d.effort] || d.effort) + (d.effortReason ? ": " + d.effortReason : ""))));
     body.append(block("Agent brief", d.instructions
       ? el("p", "text", d.instructions)
       : el("p", "text muted", "Claude writes this when the task is picked up.")));
