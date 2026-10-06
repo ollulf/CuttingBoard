@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MaskData" format=3]
+
+[ext_resource type="Script" uid="uid://7f28yo0kbwbx" path="res://scripts/mask_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/villager_mask.png" id="2_ilagp"]
+[ext_resource type="PackedScene" path="res://scenes/characters/masks/villager_mask.tscn" id="2_worn"]
+[ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="3_faction"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_gidam"]
+diffuse_texture = ExtResource("2_ilagp")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+worn_scene = ExtResource("2_worn")
+faction = ExtResource("3_faction")
+display_name = "Villager Mask"
+icon = SubResource("CanvasTexture_gidam")
+item_type = 2
+description = "Pale carved wood, smiling. The village knows its own by this face."
+weight = 0.3
+world_scene_path = "res://scenes/items/villager_mask.tscn"

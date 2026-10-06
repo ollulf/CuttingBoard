@@ -25,17 +25,26 @@ signal went_limp
 		material = value
 		if is_node_ready():
 			_apply_material()
-## A mask worn over the face, which is how one faction tells itself from another in the
-## dark. Instanced onto the head bone when the body is ready; its origin is placed at
-## `mask_offset` from the bone, facing forward (-Z).
-@export var mask_scene: PackedScene
+## The mask worn over the face, which is how one faction tells itself from another in the
+## dark. Its worn_scene is instanced onto the head bone, origin at `mask_offset` from the
+## bone, facing forward (-Z). Changing it on a living body swaps the face, which is how
+## the player's body keeps up with what is in their Mask slot.
+@export var mask: MaskData:
+	set(value):
+		mask = value
+		if is_node_ready() and not _limp:
+			_put_on_mask()
 ## Where the mask sits relative to the head bone, which is at the base of the skull.
 @export var mask_offset := Vector3(0.0, 0.13, -0.135)
-## Chance that a mask comes off and tumbles away when the body goes limp.
+## Chance that a mask comes off and tumbles away when the body goes limp, as an item that
+## can be picked up. Otherwise it stays on the face and is found among the body's things
+## when it is searched; taking it from there takes it off the face.
 @export_range(0.0, 1.0) var mask_pop_chance := 0.7
 ## Impulse the mask leaves the face with, in newton-seconds, on top of the killing blow's
 ## direction.
 @export var mask_pop_impulse := 0.6
+## Seconds a mask that came off passes through the body it came off, to get clear of it.
+@export var mask_clear_time := 0.5
 ## Hits in a game land harder than physics says they should: every impulse a hit puts
 ## into the bones is multiplied by this.
 @export var impulse_scale := 2.5
@@ -81,7 +90,12 @@ var _half_lengths := {}
 var _authored := {}
 var _limp := false
 var _flinch: Tween
-var _mask: Node3D
+## The face drawn on the head, built from `mask`.
+var _face: Node3D
+## Where a mask left on a dead face is listed in its wearer's inventory, so the face can
+## come off once that entry is taken.
+var _face_entry: InventoryEntry
+var _face_inventory: Inventory
 
 
 func _ready() -> void:
@@ -212,10 +226,11 @@ func go_limp(info: DamageInfo = null, carried_velocity := Vector3.ZERO) -> void:
 	if info:
 		var impulse := get_impulse(info)
 		_push(_nearest_bone(info.position, _bones), impulse, info.position)
-	if _mask and randf() < mask_pop_chance:
-		# Deferred: adding a body from inside a physics callback is not allowed.
-		_knock_off_mask.call_deferred(_mask, info, carried_velocity)
-		_mask = null
+	if _face:
+		if randf() < mask_pop_chance or not _leave_mask_on():
+			# Deferred: adding a body from inside a physics callback is not allowed.
+			_knock_off_mask.call_deferred(_face, info, carried_velocity)
+			_face = null
 	went_limp.emit()
 
 
@@ -302,49 +317,77 @@ func _apply_material() -> void:
 		mesh.material_override = material
 
 
-## Hangs the mask on the head bone, so it turns, flinches and falls with the head. It is
-## added here rather than in the generated scene so that rebuilding the body keeps it.
+## Hangs the mask's face on the head bone, so it turns, flinches and falls with the head,
+## in place of whatever face was there. It is added here rather than in the generated
+## scene so that rebuilding the body keeps it.
 func _put_on_mask() -> void:
-	if mask_scene == null:
+	if _face:
+		_face.queue_free()
+		_face = null
+	if mask == null or mask.worn_scene == null:
 		return
-	var attachment := BoneAttachment3D.new()
-	attachment.name = "HeadAttachment"
-	attachment.bone_name = "Head"
-	skeleton.add_child(attachment)
-	_mask = mask_scene.instantiate() as Node3D
-	_mask.position = mask_offset
-	attachment.add_child(_mask)
+	var attachment := skeleton.get_node_or_null("HeadAttachment") as BoneAttachment3D
+	if attachment == null:
+		attachment = BoneAttachment3D.new()
+		attachment.name = "HeadAttachment"
+		attachment.bone_name = "Head"
+		skeleton.add_child(attachment)
+	_face = mask.worn_scene.instantiate() as Node3D
+	_face.position = mask_offset
+	attachment.add_child(_face)
 
 
-## The mask comes away from a falling body as a small rigid body of its own, carried off
-## by the blow and the body's own momentum. It stays in the level after that.
-func _knock_off_mask(mask: Node3D, info: DamageInfo, carried_velocity: Vector3) -> void:
+## The mask comes away from a falling body as the item it is — the same object as one
+## dropped out of an inventory — carried off by the blow and the body's own momentum. It
+## lies where it lands until someone picks it up.
+func _knock_off_mask(face: Node3D, info: DamageInfo, carried_velocity: Vector3) -> void:
+	var at := face.global_transform
+	face.queue_free()
 	var level := get_actor().get_parent()
-	if level == null:
+	var loose := mask.spawn() as RigidBody3D if mask else null
+	if level == null or loose == null:
 		return
-	var at := mask.global_transform
-	var loose := RigidBody3D.new()
-	loose.name = "FallenMask"
-	loose.mass = 0.3
-	loose.angular_damp = 1.0
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(0.22, 0.26, 0.06)
-	shape.shape = box
-	loose.add_child(shape)
 	level.add_child(loose)
+	# The item's mesh is the worn face at its origin, so it leaves from exactly where the
+	# face was drawn.
 	loose.global_transform = at
-	# The body's own bones would catch it straight away; let it clear them.
-	for bone in _bones:
-		loose.add_collision_exception_with(bone)
-	mask.get_parent().remove_child(mask)
-	loose.add_child(mask)
-	mask.transform = Transform3D.IDENTITY
+	# The body's own bones would catch it straight away; let it clear them. Only for a
+	# moment: a mask that could pass through the body for good would end up underneath
+	# it, where the limbs above stand between it and anyone reaching for it.
+	keep_clear_of(loose, get_actor(), mask_clear_time)
 	var push := get_impulse(info).normalized() if info else Vector3.ZERO
 	var away := -at.basis.z
 	loose.linear_velocity = carried_velocity
 	loose.apply_central_impulse((push + away * 0.6 + Vector3.UP * 0.8).normalized() * mask_pop_impulse)
 	loose.apply_torque_impulse(Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 0.02)
+
+
+## Leaves the mask on a dead face and lists it with the rest of the wearer's things, so
+## searching the body offers it like anything else in its pockets. Returns false when the
+## wearer has no inventory, or no room in it, and the mask has to come off after all.
+func _leave_mask_on() -> bool:
+	var inventory := get_actor().get_node_or_null("Inventory") as Inventory
+	if inventory == null or mask == null:
+		return false
+	_face_entry = inventory.store(mask)
+	if _face_entry == null:
+		return false
+	_face_inventory = inventory
+	inventory.changed.connect(_on_face_inventory_changed)
+	return true
+
+
+## The face comes off as soon as its entry leaves the body's inventory — taken, dropped
+## or moved into another grid.
+func _on_face_inventory_changed() -> void:
+	if _face_inventory.get_entries().has(_face_entry):
+		return
+	_face_inventory.changed.disconnect(_on_face_inventory_changed)
+	_face_inventory = null
+	_face_entry = null
+	if _face:
+		_face.queue_free()
+		_face = null
 
 
 ## Everything of `actor` that a ray or a thrown object could run into: its own collision

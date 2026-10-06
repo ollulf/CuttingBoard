@@ -21,6 +21,9 @@ extends Node
 ## - The icon is grid_size * pixels_per_cell pixels, so it has the shape of the item's
 ##   footprint in the inventory. The item is turned (stood up, laid down, swung round)
 ##   to whichever pose fills that shape best, preferring the pose it is modelled in.
+##   A scene whose root has an "icon_pose" Basis in its metadata is shown in that pose
+##   instead, given in the camera's own terms (X to the right, Y up, Z toward the
+##   camera): for a flat thing like a saw blade that no square turn shows well.
 ## - An orthographic camera looks at it from a fixed 3/4 angle (camera_yaw, camera_pitch)
 ##   and is framed to the item's vertices. The lights ride along with the camera in the
 ##   scene's Rig node — warm key from the upper left, violet rim from behind, violet
@@ -134,7 +137,8 @@ func _bake(data: ItemData) -> Image:
 	var reserve := padding + (1 if outline else 0)
 	var inner := Vector2(size - Vector2i(reserve, reserve) * 2).max(Vector2.ONE)
 	var points := _points(meshes)
-	%Pivot.basis = _choose_pose(points, view, inner)
+	var pose: Variant = _authored_pose(data.world_scene_path)
+	%Pivot.basis = view * pose if pose is Basis else _choose_pose(points, view, inner)
 
 	# The item's extent as the camera sees it: across, up and toward the camera.
 	var lo := Vector3.INF
@@ -196,6 +200,18 @@ func _copy_meshes(scene_path: String) -> Array[MeshInstance3D]:
 		copies.append(copy)
 	root.free()
 	return copies
+
+
+## The pose the scene asks to be shown in, from its root's "icon_pose" metadata, or
+## null when it leaves the choice to _choose_pose().
+func _authored_pose(scene_path: String) -> Variant:
+	var scene := load(scene_path) as PackedScene
+	if scene == null:
+		return null
+	var root := scene.instantiate()
+	var pose: Variant = root.get_meta(&"icon_pose", null)
+	root.free()
+	return pose if pose is Basis else null
 
 
 ## Every triangle corner of the meshes, in the item's own space, for tight framing.

@@ -41,6 +41,8 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/decoration/window_candle.tscn" id="39_candle"]
 [ext_resource type="Script" path="res://scripts/components/ambient_sound.gd" id="40_ambient"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/fair_murmur_loop.wav" id="41_murmur"]
+[ext_resource type="PackedScene" path="res://scenes/items/saw.tscn" id="42_saw"]
+[ext_resource type="PackedScene" path="res://scenes/items/plank.tscn" id="42_plank"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -192,8 +194,14 @@ transform = Transform3D(0.9781476, 0.2079117, 0, -0.2079117, 0.9781476, 0, 0, 0,
 [node name="Plank1_2" parent="WagonYard" unique_id=1906152302 instance=ExtResource("18_i8xei")]
 transform = Transform3D(0.95105654, 0.309017, 0, -0.309017, 0.95105654, 0, 0, 0, 1, 4.9, 0, 10.6)
 
+[node name="PlankWeapon" parent="WagonYard" instance=ExtResource("42_plank")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 7.2, 0.075, 11.4)
+
 [node name="1Box_3" parent="WagonYard" unique_id=1279916977 instance=ExtResource("9_npjoh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 0.46875, 17.8)
+
+[node name="Saw" parent="WagonYard" unique_id=1739204511 instance=ExtResource("42_saw")]
+transform = Transform3D(-0.07338695, -0.9848078, -0.1573787, 0.9063078, 0, -0.42261836, 0.41619778, -0.17364818, 0.892539, 3.92, 0.955, 18.05)
 
 [node name="Farm" type="Node3D" parent="." unique_id=502573557]
 

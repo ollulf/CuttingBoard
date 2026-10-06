@@ -6,7 +6,8 @@ extends Node
 ## ever say where to go; how the body gets there lives here.
 ##
 ## When there is no usable path — the navigation mesh has not finished baking, or the
-## target is off it — the body heads straight for the target instead of standing still.
+## target is off it — the body heads straight for the target instead of standing still,
+## and stops where something solid is in the way.
 
 @export var walk_speed := 2.0
 @export var run_speed := 4.5
@@ -83,7 +84,7 @@ func _physics_process(delta: float) -> void:
 
 	var desired := Vector3.ZERO
 	if _moving:
-		if _flat_distance(_body.global_position, _target) <= arrive_distance:
+		if _flat_distance(_body.global_position, _target) <= arrive_distance or _blocked_short():
 			_moving = false
 		else:
 			var direction := _flat(_next_waypoint() - _body.global_position).normalized()
@@ -103,13 +104,22 @@ func _physics_process(delta: float) -> void:
 
 func _next_waypoint() -> Vector3:
 	var next := _agent.get_next_path_position()
-	if _agent.get_current_navigation_path().is_empty():
-		return _target
-	# An agent with no route reports its own position, which would leave the body
-	# walking on the spot.
-	if _flat_distance(next, _body.global_position) < 0.05:
+	# With no path, or once at its end — the target is off the mesh — the rest of the way
+	# is walked straight. Steering for the path's end until right on it and only then for
+	# the target would flip the body back and forth over that point every few frames.
+	if _agent.get_current_navigation_path().is_empty() or _agent.is_navigation_finished():
 		return _target
 	return next
+
+
+## Whether the body has walked the whole path and is now pressed against something on
+## the straight stretch to a target off the mesh — inside a building, behind a fence.
+## That is as close as it gets, so it counts as having arrived.
+func _blocked_short() -> bool:
+	if not _agent.is_navigation_finished() or not _body.is_on_wall():
+		return false
+	var ahead := _flat(_target - _body.global_position).normalized()
+	return _body.get_wall_normal().dot(ahead) < -0.5
 
 
 func _turn(delta: float) -> void:

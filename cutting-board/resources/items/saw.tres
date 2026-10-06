@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" uid="uid://do61rqf33jfp4" path="res://assets/ui/icons/items/saw.png" id="1_4vbjq"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_rxxoc"]
+diffuse_texture = ExtResource("1_4vbjq")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Saw"
+icon = SubResource("CanvasTexture_rxxoc")
+item_type = 1
+description = "A carpenter's hand saw. Light and quick in the hand, and the teeth bite."
+weight = 1.5
+durability = 150
+grid_size = Vector2i(3, 1)
+world_scene_path = "res://scenes/items/saw.tscn"
