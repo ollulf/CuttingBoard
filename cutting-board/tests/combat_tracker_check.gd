@@ -62,7 +62,7 @@ func _run() -> void:
 	Health.find_in(villager).apply_damage(DamageInfo.new(10, rock))
 	await _wait(0.05)
 	_check("a thrown item's hit counts as the thrower's", tracker.get_target() == villager)
-	_check("villager named from its own name", CombatTracker.name_of(villager) == "Villager")
+	_check("villager named from its own name", villager.name_pool.has(CombatTracker.name_of(villager)))
 
 	# Someone else's fight is not the player's.
 	Health.find_in(dummy).apply_damage(DamageInfo.new(5, villager))

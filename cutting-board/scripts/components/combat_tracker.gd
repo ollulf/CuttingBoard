@@ -19,6 +19,9 @@ signal target_changed(target: Node3D)
 ## checked every scan_interval. Unlike combat_changed it has no linger and ignores the
 ## owner's own blows; the Music autoload switches to its combat cue on it.
 signal targeted_changed(targeted: bool)
+## The NPC the owner is standing close to and looking at, or null — the one whose name
+## the target bar shows out of combat.
+signal nearby_changed(npc: Node3D)
 
 ## Seconds after the last blow, or the last NPC coming for the owner, that a fight ends.
 @export var linger := 6.0
@@ -28,6 +31,16 @@ signal targeted_changed(targeted: bool)
 @export var scan_interval := 0.25
 ## How long a thrown item's hit still counts as the thrower's.
 @export var thrown_memory := 4.0
+
+@export_group("Nearby")
+## An NPC within this many metres that the owner looks at gets its bar up out of combat,
+## to show its name. 0 turns this off.
+@export var nearby_range := 4.0
+## How far off the view's centre, in degrees, an NPC still counts as looked at.
+@export var nearby_angle := 35.0
+## How often the nearby NPC is looked for.
+@export var nearby_interval := 0.1
+@export_group("")
 
 var _in_combat := false
 var _combat_left := 0.0
@@ -40,6 +53,8 @@ var _targeted := false
 ## Item that just left a hand -> [who let go, when], so a thrown rock is credited to
 ## its thrower rather than to the rock.
 var _thrown := {}
+var _nearby: Node3D
+var _nearby_left := 0.0
 
 @onready var _actor: Node = get_parent()
 
@@ -59,6 +74,10 @@ func is_targeted() -> bool:
 
 func get_target() -> Node3D:
 	return _target if is_instance_valid(_target) else null
+
+
+func get_nearby() -> Node3D:
+	return _nearby if is_instance_valid(_nearby) else null
 
 
 ## The first CombatTracker found going up from `node`: the player's, for a HUD
@@ -91,6 +110,10 @@ func _process(delta: float) -> void:
 	if _scan_left <= 0.0:
 		_scan_left = scan_interval
 		_scan()
+	_nearby_left -= delta
+	if _nearby_left <= 0.0:
+		_nearby_left = nearby_interval
+		_set_nearby(_find_nearby())
 	if _has_target and (not is_instance_valid(_target) or not Health.is_node_alive(_target)):
 		# Counted from the moment it is found dead, so the empty bar always gets its beat.
 		if _dead_left < 0.0:
@@ -199,6 +222,53 @@ func _nearest_attacker() -> Node3D:
 			nearest = npc
 			nearest_distance = distance
 	return nearest
+
+
+## The closest living NPC within nearby_range that sits within nearby_angle of where the
+## owner looks, with nothing solid between them. Distance and angle weed out the rest,
+## so only the one candidate gets a ray.
+func _find_nearby() -> Node3D:
+	var actor := _actor as Node3D
+	if nearby_range <= 0.0 or actor == null or not Health.is_node_alive(actor):
+		return null
+	var view := _view_of(actor)
+	var min_dot := cos(deg_to_rad(nearby_angle))
+	var best: Npc = null
+	var best_distance := INF
+	for node in get_tree().get_nodes_in_group(Faction.GROUP):
+		var npc := node as Npc
+		if npc == null or not npc.health.is_alive():
+			continue
+		var to_npc := npc.eyes.global_position - view.origin
+		var distance := to_npc.length()
+		if distance > nearby_range or distance >= best_distance or distance < 0.01:
+			continue
+		if (to_npc / distance).dot(-view.basis.z) < min_dot:
+			continue
+		best = npc
+		best_distance = distance
+	if best == null:
+		return null
+	var query := PhysicsRayQueryParameters3D.create(view.origin, best.eyes.global_position)
+	if actor is CollisionObject3D:
+		query.exclude = [(actor as CollisionObject3D).get_rid()]
+	var hit := actor.get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty() and hit.collider != best:
+		return null
+	return best
+
+
+## Where the owner looks from and towards: its camera if it has one, else its body.
+func _view_of(actor: Node3D) -> Transform3D:
+	var camera := actor.get_node_or_null("%Camera3D") as Camera3D
+	return camera.global_transform if camera else actor.global_transform
+
+
+func _set_nearby(npc: Node3D) -> void:
+	if npc == get_nearby():
+		return
+	_nearby = npc
+	nearby_changed.emit(npc)
 
 
 func _set_target(target: Node3D) -> void:

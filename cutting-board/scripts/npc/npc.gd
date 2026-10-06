@@ -14,6 +14,10 @@ extends CharacterBody3D
 @export var left_hand_item: ItemData
 @export var starting_items: Array[ItemData] = []
 
+## Names one is drawn from at spawn for the NPC's own name — the one over its bar and on
+## its pockets. Empty keeps the Inventory's display_name.
+@export var name_pool: Array[String] = []
+
 @export_group("Random Weapon")
 ## Weapons one is drawn from at spawn, by weight, when right_hand_item is not set. A
 ## throwable pick (a rock) goes in the pockets instead, to be thrown — it is not swung.
@@ -81,6 +85,8 @@ var _grudges := {}
 
 func _ready() -> void:
 	home = global_position
+	if not name_pool.is_empty():
+		inventory.display_name = name_pool.pick_random()
 	sight.spotted.connect(memory.remember)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
