@@ -18,6 +18,9 @@ const MAX_DURABILITY := 9999
 @export_range(0, 9999) var durability := 100
 ## Heard where the object was as it comes apart.
 @export var break_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
+## Seen where the object was as it comes apart: a BreakBurst scene, spawned into the
+## world (not under the freed object) and sized from it.
+@export var break_effect: PackedScene = preload("res://scenes/vfx/break_burst.tscn")
 
 
 func _ready() -> void:
@@ -60,5 +63,20 @@ func damage(amount: int) -> void:
 	if durability == 0:
 		if node:
 			Sfx.play_at(break_sound, node.global_position)
+			_spawn_break_effect(node)
 		destroyed.emit()
 		get_parent().queue_free()
+
+
+func _spawn_break_effect(node: Node3D) -> void:
+	if break_effect == null or not node.is_inside_tree():
+		return
+	var effect := break_effect.instantiate() as Node3D
+	# Top level, so the position set below is a world position whatever it lands under.
+	effect.top_level = true
+	if effect is BreakBurst:
+		effect.setup(node)
+	else:
+		effect.position = node.global_position
+	var tree := node.get_tree()
+	(tree.current_scene if tree.current_scene else tree.root).add_child(effect)
