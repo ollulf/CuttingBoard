@@ -18,5 +18,5 @@ icon = SubResource("CanvasTexture_gidam")
 item_type = 2
 description = "Pale carved wood, smiling. The village knows its own by this face."
 weight = 0.3
-durability = 40
+durability = 80
 world_scene_path = "res://scenes/items/villager_mask.tscn"
