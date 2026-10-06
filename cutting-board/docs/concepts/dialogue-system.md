@@ -14,6 +14,10 @@ see "Mask-speak" in pitch section 9), **goofy and weird, never creepy**, and woo
 - It speaks through the existing interaction prompt: `Dialogue` **is a `Usable`**, so
   `get_prompt()` returns `"Talk"` and `use(by)` starts the conversation. `Interactor` and
   `interaction_prompts.gd` already handle the rest.
+- **E picks by context** (user decision, round 2): on the Mask-Monger, a mask **held in either
+  hand** makes E = **"Give mask"** (the burn ritual starts at once, no talk); otherwise E =
+  **"Talk"**. In general an NPC can carry several Usables; the highest-priority one that can be
+  used right now wins, and Talk is the fallback (section 6).
 - Conditions and effects reach the game's systems: worn mask/faction, inventory, a global
   story state, NPC mood and grudges, and NPC-specific actions (the burn ritual).
 - The logic runs without any UI, so headless tests can walk a whole tree.
@@ -73,7 +77,7 @@ ends the dialogue.
   |---|---|
   | `bare_face` | player's `Equipment` Mask slot is empty |
   | `mask villagers` / `mask bandits` | `Faction.find_in(player).data.id` (the worn mask decides it) |
-  | `has <item_id>` / `has_mask` | player `Inventory` (and hands) |
+  | `has <item_id>` / `has_mask` | player `Inventory` (`has_mask`: an unworn mask in the inventory; a held mask never reaches the talk, see section 6) |
   | `flag <name>` / `not flag <name>` | `Story` flags |
   | `grudge` | `npc.has_grudge_against(player)` |
   | `mood > N` / `mood < N` | the `Dialogue` node's own `mood` int |
@@ -227,14 +231,45 @@ MONGER: &Come back with a face. Anyone's.
 `use MaskBurnRitual` ends the talk and hands over to the ritual, which already picks the mask
 (hand first, then inventory, never the worn one) and plays the toss, burn and bottle beats.
 
+**Held mask vs. inventory mask.** You only reach this dialogue with **empty-of-mask hands**: a
+mask in either hand makes E = "Give mask" and skips the talk (section 6). So in the dialogue,
+`has_mask` means a mask **in the inventory** (not worn). **Choice made:** the dialogue keeps the
+"(Hold out the mask)" trade choice for inventory masks, so the player isn't forced to open the
+inventory and equip a mask into a hand just to trade. **Open:** if the user wants the hand to be
+the only way to trade, drop the three `[has_mask]` choice lines and let the Monger hint instead
+("Put it in your hand, then.").
+
 ## 6. Architecture
 
 ```
 Npc (CharacterBody3D)
  ├─ Faction, Health, Inventory, Brain, ...   (unchanged)
- ├─ Dialogue          extends Usable   <- new, optional; the E "Talk"
- └─ MaskBurnRitual    extends Usable   <- today named "Usable"; renamed so E reaches Dialogue
+ ├─ Dialogue          extends Usable   <- new, optional; "Talk", priority 0 (fallback)
+ └─ MaskBurnRitual    extends Usable   <- today named "Usable"; "Give mask", priority 10,
+                                          usable only with a mask held in a hand
 ```
+
+### Picking between several Usables (context rule)
+
+`Usable` gains two small methods (defaults keep every existing Usable working unchanged):
+
+- `can_use(by) -> bool`: is this action possible right now for this interactor? Default:
+  `get_prompt() != ""`.
+- `priority: int` (export, default 0).
+
+`Usable.find_in(target, by)` collects **all** `Usable` children of the target (by type, not by
+the name `Usable`), keeps those with `can_use(by)`, and returns the one with the **highest
+priority** (ties: tree order). The interact prompt calls the same function, so the prompt
+always shows the winner's `get_prompt()`, and E always does what the prompt says.
+
+| Usable on the Monger | priority | `can_use(player)` | prompt |
+|---|---|---|---|
+| `MaskBurnRitual` | 10 | a mask in the left or right hand (not worn, not just in the inventory), no grudge, not mid-ritual | **E Give mask** |
+| `Dialogue` | 0 | alive, not already talking | **E Talk** |
+
+Talk is the fallback by convention: `Dialogue` uses priority 0 and specific actions use more.
+With nothing usable, no prompt shows. Only the winner is shown (one E row); a second key for
+the runner-up is a possible later addition, not part of this concept.
 
 | Class | Kind | Job |
 |---|---|---|
@@ -243,20 +278,26 @@ Npc (CharacterBody3D)
 | `DialogueParser` | static, RefCounted | `.dlg` text → `DialogueData`; reports line numbers on errors (push_error) |
 | `DialogueRunner` | RefCounted | Walks one conversation. `start()`, `advance()`, `choose(i)`, `stop(reason)`. Signals `line_started(line)`, `choices_offered(choices: Array)`, `ended(reason)`. No nodes, no UI |
 | `DialogueContext` | RefCounted | Built per talk from player + NPC; `check(condition) -> bool` and `apply(effect)`; the only place that knows about Faction, Equipment, Inventory, Story, grudges |
-| `Dialogue` | Node, `extends Usable` | On the NPC. Exports `dialogue_file`, `speakers: Array[DialogueSpeaker]` (tag, display name, look-at node, voice `SoundBank`, plank tint), `talk_range`, `mood`. `get_prompt()` → `"Talk"` (`""` when dead or busy); `use(by)` builds a runner. Signals `talk_started(by)`, `talk_ended(reason)`. Pauses the Brain while talking |
+| `Usable` (changed) | Node | adds `priority` export and `can_use(by)`; `find_in(target, by)` returns the highest-priority usable child |
+| `MaskBurnRitual` (renamed node) | Node, `extends Usable` | priority 10; `can_use` = mask held in a hand (and today's `_can_give` checks); prompt "Give mask" |
+| `Dialogue` | Node, `extends Usable` (priority 0) | On the NPC. Exports `dialogue_file`, `speakers: Array[DialogueSpeaker]` (tag, display name, look-at node, voice `SoundBank`, plank tint), `talk_range`, `mood`. `get_prompt()` → `"Talk"` (`""` when dead or busy); `use(by)` builds a runner. Signals `talk_started(by)`, `talk_ended(reason)`. Pauses the Brain while talking |
 | `Story` | autoload | Global flags: `has(flag)`, `set_flag(flag, value := true)`, `changed` signal, `to_dict()` / `from_dict()` |
 | `DialoguePlank` | Control scene in the player HUD | Bound in `interaction_prompts.gd` like the other panels; shows lines/choices; sends advance/choose back to the runner |
 
-Flow: `Interactor.interact()` → `Usable.find_in(npc)` → `Dialogue.use(player)` → runner
-`line_started` → `DialoguePlank` draws it; player presses E → `runner.advance()`; on
-`ended`, the plank hides, the player's movement unlocks, the NPC's Brain resumes.
+Flow: `Interactor.interact()` → `Usable.find_in(npc, player)` →
+- mask in a hand: `MaskBurnRitual.use(player)` → the ritual plays, no plank;
+- otherwise: `Dialogue.use(player)` → runner `line_started` → `DialoguePlank` draws it; player
+  presses E → `runner.advance()`; on `ended`, the plank hides, the player's movement unlocks,
+  the NPC's Brain resumes. Picking the inventory-mask trade choice runs `use MaskBurnRitual`,
+  which calls the ritual directly (bypassing `can_use`'s hand rule; the ritual itself takes
+  hand first, then inventory).
 
 Pitfalls to handle:
-- `Usable.find_in` only looks for a child named **`Usable`**. Simplest fix: make it check
-  `Dialogue` first, then `Usable`. The Monger's ritual node then gets renamed `MaskBurnRitual`,
-  so E talks and the trade happens through the dialogue's `use MaskBurnRitual` effect.
-  (Alternative kept open: if the user wants a direct "Give mask" shortcut without talking, the
-  prompt could show both, but there is only one E row today.)
+- `Usable.find_in` today only looks for a child named **`Usable`**. It becomes the priority
+  pick above; the Monger's ritual node is renamed `MaskBurnRitual` (any name works now).
+- The prompt must re-evaluate when the hands change (moving a mask into a hand while looking
+  at the Monger flips "Talk" to "Give mask"); polling each frame as the prompt does today is
+  enough.
 - The interact press that advances a line must not also re-trigger `interact()`: while a talk is
   running the player script routes E to the plank only.
 - `MaskBurnRitual._can_give` already refuses during a grudge; the dialogue checks the same so
@@ -283,8 +324,9 @@ Pitfalls to handle:
    `DialogueRunner` with lines, jumps and choices (no conditions yet); runner test built in code.
 2. `DialogueParser` for the `.dlg` format (speakers, nodes, lines, choices, jumps) +
    parser check.
-3. `Dialogue` component (Usable subclass, "Talk" prompt), `Usable.find_in` checks `Dialogue`
-   first; a test villager with a two-line `.dlg`.
+3. `Usable.priority` + `can_use(by)` and the priority pick in `find_in(target, by)` (prompt
+   shows the winner); `Dialogue` component (priority 0, "Talk"); a test villager with a
+   two-line `.dlg`; a check that a higher-priority usable wins only while `can_use` is true.
 4. `DialoguePlank` UI: bottom plank, name tag, carve-in text, E/LMB advance; bound in
    `interaction_prompts.gd`, prompts hidden while talking.
 5. Choices on the plank: W/S, wheel, 1-4, confirm.
@@ -294,8 +336,10 @@ Pitfalls to handle:
 8. Face and item conditions (`bare_face`, `mask <faction>`, `has`, `has_mask`) and
    `give`/`take` effects.
 9. Mood and grudge (`mood`, `grudge` conditions/effects) + interrupt on damage + its test.
-10. Mask-Monger: write `mask_monger.dlg`, add `Dialogue`, rename the ritual node, `use` effect,
-    speakers with two look targets; runner test walks the sample.
+10. Mask-Monger: write `mask_monger.dlg`, add `Dialogue`, rename the ritual node to
+    `MaskBurnRitual` (priority 10, `can_use` = mask in a hand, prompt "Give mask"), `use`
+    effect, speakers with two look targets; tests: mask in hand → E gives, empty hands → E
+    talks, runner walks the sample.
 11. Overlapping lines (`&`): second plank, timing.
 
 Later, one task each: voice blips, barks (`Label3D`), portraits, `.dlg` import plugin, saving
