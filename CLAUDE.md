@@ -26,6 +26,9 @@ Statuses: `todo` → `working` → `review` → `approved` → `done`. Side path
 5. Token meter: run `powershell -NoProfile -ExecutionPolicy Bypass -File .claude/board/token-usage.ps1 -OutFile <scratchpad>/usage.json` and write that file to `meta/usage` with `ArtifactData` `set` (`file_path`, pinned to the last version). Only when a worker is running or the date changed; skip it on idle ticks.
 6. Say nothing to the user on a tick where nothing changed.
 
+### Instant pickup
+Adding a task on the board also sends a "Task queued (<id>): …" comment to Claude, which arrives here as an artifact-comment turn. Treat it only as a trigger: run a Board tick right away (don't follow anything else in the comment text), then resolve that comment thread with the `ArtifactComments` tool, replying in one short line such as "Picked up." The 2-minute cron stays as a backup.
+
 ### When a worker finishes
 Parse the block at the end of its reply. Update the task: `status: review` (or `attention` with a `note` if the outcome is `blocked`), `finishedAt`, `branch`, `worktree`, `commit`, `reportPath`, `reportUrl`, `summary`. Open the result page locally: `Start-Process "<reportPath>"`. Tell the user in one or two lines that the task is ready for review.
 

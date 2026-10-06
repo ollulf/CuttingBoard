@@ -533,18 +533,33 @@ details.done .list { margin-top: 6px; }
     $("addBtn").disabled = true; $("addErr").hidden = true;
     const now = Date.now();
     try {
-      await db.collection("tasks").doc("t" + now.toString(36)).set({ title, status: "todo", createdAt: now, updatedAt: now, round: 1 });
+      const id = "t" + now.toString(36);
+      await db.collection("tasks").doc(id).set({ title, status: "todo", createdAt: now, updatedAt: now, round: 1 });
       field.value = ""; grow();
+      pingManager(id, title);
     } catch (e) {
       $("addErr").textContent = e && e.code === "invalid_argument" ? "You can't add tasks to this board." : "The task didn't save. Try again in a moment.";
       $("addErr").hidden = false;
     } finally { $("addBtn").disabled = false; field.focus(); }
   });
 
+  // Wakes the manager session right away through "Send to Claude" instead of waiting for
+  // its next scheduled check. Best effort: if it can't go through, the check still finds the task.
+  let comments = null;
+  async function pingManager(id, title) {
+    if (!comments) return;
+    try {
+      if ((await comments.canSendToClaude()) !== "available") return;
+      const anchor = await comments.anchorFor($("addForm"));
+      await comments.sendToClaude({ anchor, text: "Task queued (" + id + "): " + title.slice(0, 300) + "\n\nRun a board tick to pick it up." });
+    } catch (e) { /* the scheduled check picks the task up */ }
+  }
+
   render();
   renderManager();
 
   (async () => {
+    if (window.claude) window.claude.use("comments").then(c => { comments = c; }, () => {});
     db = window.claude ? await window.claude.use("db") : null;
     if (!db) { $("noDb").hidden = false; $("addBtn").disabled = true; loaded = true; render(); return; }
     db.collection("tasks").onSnapshot(
