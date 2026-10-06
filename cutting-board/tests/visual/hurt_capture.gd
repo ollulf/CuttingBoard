@@ -49,7 +49,7 @@ func _ready() -> void:
 	add_child(level)
 	_player = level.get_node("Player")
 	_health = Health.find_in(_player)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	MouseGrab.release()
 	if "--no-mirror" in OS.get_cmdline_user_args():
 		var mirror := _player.find_child("FunhouseMirror", true, false) as FunhouseMirror
 		mirror.enabled = false

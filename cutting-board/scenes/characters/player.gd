@@ -110,7 +110,7 @@ var _was_on_floor := true
 
 
 func _ready() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	MouseGrab.capture()
 	_arm_left_base_pos = arm_left_pivot.position
 	_arm_right_base_pos = arm_right_pivot.position
 	# The capsule is shared with anything else instancing this scene unless it is made
@@ -135,7 +135,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _dead:
 		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event is InputEventMouseMotion and MouseGrab.is_captured():
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		camera_pivot.rotation.x = clampf(
 			camera_pivot.rotation.x - event.relative.y * mouse_sensitivity,
@@ -145,7 +145,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		MouseGrab.release()
 		return
 
 	# Releases are handled before the capture guard so letting go while the mouse is
@@ -157,10 +157,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		interactor.release_hand(hand_right)
 		return
 
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+	if not MouseGrab.is_captured():
 		# Click back into the window to regain mouse look.
 		if event is InputEventMouseButton and event.pressed:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			MouseGrab.capture()
 		return
 
 	if event.is_action_pressed("crouch"):
@@ -231,7 +231,7 @@ func _is_grab_modifier(event: InputEvent) -> bool:
 func _physics_process(delta: float) -> void:
 	# A free cursor means something is in front of the player — the inventory, or an
 	# unfocused window — so the body stops taking movement input until look is captured.
-	var controlling := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	var controlling := MouseGrab.is_captured()
 
 	if not is_on_floor():
 		velocity += get_gravity() * delta

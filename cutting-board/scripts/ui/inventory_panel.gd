@@ -317,7 +317,7 @@ func open() -> void:
 	if not visible:
 		Sfx.play(open_sound)
 	show()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	MouseGrab.release()
 
 
 func close() -> void:
@@ -328,7 +328,7 @@ func close() -> void:
 	# A container is only open for as long as the screen showing it is.
 	_bind_container(null)
 	hide()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	MouseGrab.capture()
 
 
 # --- Grids ------------------------------------------------------------------------

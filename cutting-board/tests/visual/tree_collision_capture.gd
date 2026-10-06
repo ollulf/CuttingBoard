@@ -97,7 +97,7 @@ func _walk_clip() -> void:
 	await _wait(0.5)
 	Input.action_press("move_forward")
 	for i in 150:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		MouseGrab.capture()
 		if i == 75:
 			Input.action_press("move_right")
 		await get_tree().process_frame
