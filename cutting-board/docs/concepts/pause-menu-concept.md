@@ -28,3 +28,19 @@ Quit needs two carves.
   across the inside, around the knot and along the grain. Resume is always the biggest, right under the eyes.
 - **Navigation:** arrows jump to the nearest word in that direction; Tab walks a fixed carve order.
   The selected word is lit like candlelight with the knife waiting at its start.
+
+## Round 3: A2 in 3D
+
+The same flow rebuilt as a real-time three.js mock-up in the game's PS1 look: 320x240 upscaled with
+nearest filtering, clip-space vertex snapping, per-vertex (Lambert) light from a village lantern,
+optional ordered dither. On pause the blocky hands reach to the face, pull the mask down and turn
+its inside to you; a warm candle key light sits below the mask so the carving reads.
+
+- **Mask:** a bent low-poly plane (concave inside) cut to shape by an alpha mask, with a darker
+  outer shell behind it. Both shapes (1 and 2) are there with a toggle.
+- **Words:** drawn into the inside texture as two-tone carving (pale lip, dark groove), tilted at
+  most ~17 degrees. The selected word gets a flickering candle glow (a small point light plus a halo).
+- **Carving:** the right hand's knife follows the selected word; a carve draws the groove over
+  0.4 s and sprays small wood chips. Resume puts the mask back on; Quit needs two carves.
+- Checked with a `#selftest3d` run in headless Chrome (software WebGL): picking hits every word,
+  arrows and Tab reach all five, and the carve flow works on both masks.
