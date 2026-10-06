@@ -24,6 +24,9 @@ signal spotted(actor: Node3D)
 @onready var _body: Node3D = owner
 
 var _timer := 0.0
+## The NPC's own capsule and limbs, which the line of sight starts among. Gathered on
+## the first look, once the body has built its bones.
+var _own_rids: Array[RID] = []
 
 
 func _ready() -> void:
@@ -72,9 +75,12 @@ func _in_view_cone(to_target: Vector3) -> bool:
 
 func _has_line_of_sight(actor: Node3D, target: Vector3) -> bool:
 	var query := PhysicsRayQueryParameters3D.create(_eyes.global_position, target, collision_mask)
-	var own_body := _body as CollisionObject3D
-	if own_body:
-		query.exclude = [own_body.get_rid()]
+	# The NPC's own arms would otherwise blind it to anyone standing right in front.
+	if _own_rids.is_empty():
+		for collider in HumanBody.colliders_of(_body):
+			_own_rids.append(collider.get_rid())
+	query.exclude = _own_rids
 	var hit := _eyes.get_world_3d().direct_space_state.intersect_ray(query)
 	# Nothing in the way at all also counts: the ray may end just short of a thin actor.
-	return hit.is_empty() or hit.get("collider") == actor
+	# Meeting one of the actor's own limbs is seeing the actor.
+	return hit.is_empty() or HumanBody.actor_of(hit.get("collider")) == actor
