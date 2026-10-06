@@ -291,7 +291,7 @@ const ghost = psx(new T.MeshBasicMaterial({ color: P.moon, fog: false }));
 
 /* ---------- the mask: a JS port of mask.gdshader, baked into a 32×40 texture ---------- */
 const MASKS = {
-  whittler: { wood: [0.89, 0.81, 0.61], grain: [0.72, 0.6, 0.38], hole: [0.027, 0.02, 0.039], glow: 0.35, eye: [0.91, 0.83, 0.54], eyeE: 0.8,
+  whittler: { wood: [0.76, 0.64, 0.44], grain: [0.52, 0.4, 0.24], hole: [0.027, 0.02, 0.039], glow: 0.2, eye: [0.91, 0.83, 0.54], eyeE: 1.0,
     taper: 0.42, ec: [0.34, -0.1], es: [0.17, 0.12], slant: 0.0, my: 0.5, ms: [0.22, 0.04], gd: 18 },
   villager: { wood: [0.851, 0.788, 0.627], grain: [0.62, 0.53, 0.38], hole: [0.027, 0.02, 0.039], glow: 0.8, eye: [0, 0, 0], eyeE: 0,
     taper: 0.3, ec: [0.36, -0.12], es: [0.2, 0.11], slant: 0.25, my: 0.5, ms: [0.32, 0.045], gd: 22 },
@@ -971,7 +971,7 @@ function select(id) {
     const cv = document.createElement("canvas"); cv.width = 32; cv.height = 40;
     const x = cv.getContext("2d"); x.fillStyle = "#120c16"; x.fillRect(0, 0, 32, 40);
     const q = MASKS[k], em = bakeMask(q).em;
-    x.drawImage(maskMats[k].canvas, 0, 0); x.globalCompositeOperation = "lighter"; x.globalAlpha = 0.6; x.drawImage(em, 0, 0);
+    x.drawImage(maskMats[k].canvas, 0, 0); x.globalCompositeOperation = "lighter"; x.globalAlpha = 0.95; x.drawImage(em, 0, 0);
     d.innerHTML = `<div class="pic"></div><div class="t"><b>${info[k][0]}</b>${info[k][1]}</div>`;
     d.querySelector(".pic").appendChild(cv); host.appendChild(d);
   }
