@@ -32,6 +32,16 @@ signal container_opened(inventory: Inventory)
 @export var drop_distance := 1.3
 @export var drop_speed := 1.5
 
+@export_group("Sounds")
+## A hand taking hold of something off the ground.
+@export var grab_sound: SoundBank = preload("res://resources/audio/grab.tres")
+## A held item leaving the hand: thrown when it was wound up past throw_sound_charge,
+## let go otherwise.
+@export var throw_sound: SoundBank = preload("res://resources/audio/throw.tres")
+@export var drop_sound: SoundBank = preload("res://resources/audio/drop.tres")
+@export_range(0.0, 1.0) var throw_sound_charge := 0.2
+@export_group("")
+
 @onready var _camera: Camera3D = get_parent()
 
 var _hovered: Node3D = null
@@ -248,7 +258,8 @@ func _grab_into(hand: HandSlot) -> void:
 	var carryable := _get_component(_hovered, "Carryable") as Carryable
 	if carryable == null:
 		return
-	hand.hold(carryable.take(get_owner()))
+	if hand.hold(carryable.take(get_owner())):
+		Sfx.play(grab_sound)
 
 
 func _throw_from(hand: HandSlot, ratio: float) -> void:
@@ -262,6 +273,10 @@ func _throw_from(hand: HandSlot, ratio: float) -> void:
 	if body:
 		HumanBody.keep_clear_of(body, get_owner())
 		body.linear_velocity = _throw_direction(item.global_position) * throw_speed * ratio
+	if ratio >= throw_sound_charge:
+		Sfx.play(throw_sound, linear_to_db(clampf(ratio, 0.5, 1.0)))
+	else:
+		Sfx.play(drop_sound)
 
 
 ## Which way an item leaves a hand: somewhere between straight ahead and angled in at a

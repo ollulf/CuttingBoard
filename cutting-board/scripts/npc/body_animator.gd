@@ -48,6 +48,8 @@ enum Gesture { LOOK_AROUND, GLANCE, LOOK_DOWN, LOOK_UP, STRETCH_NECK, SHIFT_WEIG
 @export var stand_speed := 0.15
 ## How quickly the pose blends between standing and walking, higher is snappier.
 @export var gait_blend_speed := 6.0
+## Heard at the feet each time one comes down, a little louder at a run.
+@export var step_sound: SoundBank = preload("res://resources/audio/step_npc.tres")
 
 @export_group("Idle")
 ## Breaths per second, and how far each lifts the chest, in degrees.
@@ -166,7 +168,9 @@ func _pose(delta: float, speed: float) -> void:
 
 	var swing := deg_to_rad(lerpf(walk_swing, run_swing, run)) * pace
 	var stride := 4.0 * _leg_length * sin(maxf(swing, 0.05)) * (1.0 + run_flight * run)
+	var last_phase := _phase
 	_phase = fmod(_phase + TAU * speed / stride * delta, TAU)
+	_update_steps(last_phase, run)
 	var s := sin(_phase)
 	var c := cos(_phase)
 
@@ -260,6 +264,20 @@ func _pose(delta: float, speed: float) -> void:
 
 ## Height of a leg's sole above the ground, in model space, posed as given with the hips
 ## at their rest height.
+## A footstep each time a heel strikes: when a thigh is furthest forward and its knee has
+## straightened, a quarter turn into the cycle for the right leg and three quarters for
+## the left. Only once the body is really walking, so shuffling round on the spot makes
+## no sound.
+func _update_steps(last_phase: float, run: float) -> void:
+	if _gait < 0.5:
+		return
+	# Measured from the right heel strike, so both strikes become crossings of 0 and PI.
+	var from := fposmod(last_phase - PI * 0.5, TAU)
+	var to := fposmod(_phase - PI * 0.5, TAU)
+	if to < from or (from < PI and to >= PI):
+		Sfx.play_at(step_sound, _actor.global_position, linear_to_db(lerpf(0.8, 1.3, run)))
+
+
 func _sole_y(side: StringName, hips: Basis, thigh: Basis, shin: Basis) -> float:
 	var thigh_name := StringName(side + "Thigh")
 	var shin_name := StringName(side + "Shin")

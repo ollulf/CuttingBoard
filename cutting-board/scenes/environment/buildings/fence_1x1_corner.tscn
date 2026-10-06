@@ -1,8 +1,31 @@
-[gd_scene load_steps=3 format=3 uid="uid://cvsu7v2ki0821"]
+[gd_scene load_steps=6 format=3 uid="uid://cvsu7v2ki0821"]
 
 [ext_resource type="PackedScene" uid="uid://bec2y127j0l5h" path="res://assets/meshes/environment/buildings/1x1_fence_corner.glb" id="1_shpol"]
 [ext_resource type="Material" uid="uid://bl6puaxo5v5f6" path="res://assets/materials/environment/wooden_planks.tres" id="2_8y1o6"]
 
-[node name="fence_1x1_corner" instance=ExtResource("1_shpol")]
+[sub_resource type="BoxShape3D" id="BoxShape3D_rails_x"]
+size = Vector3(1.465, 1.3, 0.255)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rails_z"]
+size = Vector3(0.322, 1.3, 1.027)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_post"]
+size = Vector3(0.228, 1.635, 0.223)
+
+[node name="fence_1x1_corner" groups=["navigation_source"] instance=ExtResource("1_shpol")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 surface_material_override/0 = ExtResource("2_8y1o6")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="RailsX" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.557, 0.65, 0.005)
+shape = SubResource("BoxShape3D_rails_x")
+
+[node name="RailsZ" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0.65, -0.637)
+shape = SubResource("BoxShape3D_rails_z")
+
+[node name="CornerPost" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.023, 0.818, 0.021)
+shape = SubResource("BoxShape3D_post")

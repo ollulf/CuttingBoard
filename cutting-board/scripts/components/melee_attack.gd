@@ -20,6 +20,15 @@ extends Node
 ## hammer rocks a body further than a fist does. Carried on the hit as its knockback.
 @export var knockback_per_damage := 0.8
 
+@export_group("Sounds")
+## The arm cutting the air, played by play_swing() when the blow is thrown.
+@export var swing_sound: SoundBank = preload("res://resources/audio/swing.tres")
+## A blow landing on anything with Health, living or not.
+@export var hit_body_sound: SoundBank = preload("res://resources/audio/hit_body.tres")
+## A blow landing on anything else: a crate, a wall, a dropped hammer.
+@export var hit_object_sound: SoundBank = preload("res://resources/audio/impact_wood.tres")
+@export_group("")
+
 ## What the blow is aimed along: its position is where the swing starts, its -Z where it goes.
 @onready var _aim: Node3D = get_parent()
 
@@ -41,6 +50,9 @@ func strike(hand: HandSlot) -> void:
 	# any part of it that was missed, since a blow on yourself is never what was meant.
 	if health and health == Health.find_in(get_owner()):
 		return
+	# A heavier blow lands louder: a hammer over a fist.
+	var weight := linear_to_db(clampf(damage / 15.0, 0.7, 1.15))
+	Sfx.play_at(hit_body_sound if health else hit_object_sound, hit["position"], weight)
 	if health:
 		var info := DamageInfo.new(damage, get_owner())
 		# Where the blow landed, not the victim's origin: a character's origin is at its
@@ -64,6 +76,12 @@ func strike(hand: HandSlot) -> void:
 	var bone := target as PhysicalBone3D
 	if bone:
 		bone.apply_impulse(direction * knockback, hit["position"] - bone.global_position)
+
+
+## The whoosh of the blow being thrown, from where it starts. Separate from strike()
+## because the swing is heard as the arm sets off and the hit only when it arrives.
+func play_swing() -> void:
+	Sfx.play_at(swing_sound, _aim.global_position)
 
 
 ## What this hand hits for: the held item's own impact damage, or a bare fist. An item

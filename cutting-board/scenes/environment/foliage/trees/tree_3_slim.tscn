@@ -1,8 +1,12 @@
-[gd_scene load_steps=4 format=3 uid="uid://co4y7ye1o82d3"]
+[gd_scene load_steps=5 format=3 uid="uid://co4y7ye1o82d3"]
 
 [ext_resource type="PackedScene" uid="uid://cvrpbujccmssj" path="res://assets/meshes/environment/foliage/trees/tree_3_slim.glb" id="1_34c6p"]
 [ext_resource type="Material" uid="uid://c4mtm62k41y2a" path="res://assets/materials/environment/foliage/tree_slim_1.tres" id="2_culti"]
 [ext_resource type="Material" uid="uid://b0pioolpwlgp6" path="res://assets/materials/environment/foliage/tree_slim_branch.tres" id="3_wj8h2"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trunk"]
+height = 9
+radius = 0.28
 
 [node name="tree_3_slim" instance=ExtResource("1_34c6p")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
@@ -12,3 +16,17 @@ surface_material_override/1 = ExtResource("3_wj8h2")
 [node name="VisibleOnScreenNotifier3D" type="VisibleOnScreenEnabler3D" parent="." index="0"]
 transform = Transform3D(-0.7184401, 0, 0, 0, 1, 0, 0, 0, -0.7184401, 0, 11.618, 0)
 aabb = AABB(-5, -14.6176, -5, 10, 29.2353, 10)
+
+[node name="TrunkBody" type="StaticBody3D" parent="."]
+process_mode = 3
+
+[node name="TrunkShape" type="CollisionShape3D" parent="TrunkBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 3.5, 0.01)
+shape = SubResource("CylinderShape3D_trunk")
+
+[node name="TrunkObstacle" type="NavigationObstacle3D" parent="TrunkBody" groups=["navigation_source"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -1, 0.01)
+height = 9
+vertices = PackedVector3Array(0.28, 0, 0, 0.2425, 0, 0.14, 0.14, 0, 0.2425, 0, 0, 0.28, -0.14, 0, 0.2425, -0.2425, 0, 0.14, -0.28, 0, 0, -0.2425, 0, -0.14, -0.14, 0, -0.2425, 0, 0, -0.28, 0.14, 0, -0.2425, 0.2425, 0, -0.14)
+affect_navigation_mesh = true
+avoidance_enabled = false

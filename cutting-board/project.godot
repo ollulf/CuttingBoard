@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 DamageNumbers="*res://scripts/autoload/damage_numbers.gd"
+Sfx="*res://scripts/autoload/sfx.gd"
 PsxScreen="*res://scenes/vfx/psx_screen.tscn"
 
 [display]

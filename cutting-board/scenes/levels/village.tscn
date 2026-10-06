@@ -39,6 +39,8 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/foliage/trees/tree_3_large.tscn" id="37_tqi5i"]
 [ext_resource type="PackedScene" path="res://scenes/characters/villager.tscn" id="38_fxndj"]
 [ext_resource type="PackedScene" path="res://scenes/environment/decoration/window_candle.tscn" id="39_candle"]
+[ext_resource type="Script" path="res://scripts/components/ambient_sound.gd" id="40_ambient"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/fair_murmur_loop.wav" id="41_murmur"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -75,6 +77,16 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -15,
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0)
 
 [node name="Market" type="Node3D" parent="." unique_id=1466891014]
+
+[node name="FairMurmur" type="AudioStreamPlayer3D" parent="Market"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+script = ExtResource("40_ambient")
+stream = ExtResource("41_murmur")
+volume_db = -8.0
+unit_size = 9.0
+max_distance = 85.0
+bus = &"Ambience"
+attenuation_filter_cutoff_hz = 2500.0
 
 [node name="MarketStall" parent="Market" unique_id=1496366954 groups=["navigation_source"] instance=ExtResource("7_fv3fo")]
 transform = Transform3D(-0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, -0.70710677, -6.5, 0, -5.5)

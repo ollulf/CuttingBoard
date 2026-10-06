@@ -1,0 +1,823 @@
+extends SceneTree
+
+## Regenerates every synthesised sound in assets/audio from code, so a sound can be tuned
+## by editing its recipe below and running this again:
+##
+##   godot --headless --path cutting-board -s res://tools/audio/synth_sfx.gd
+##   godot --headless --path cutting-board -s res://tools/audio/synth_sfx.gd -- --only=swing,hit_body
+##
+## then `godot --headless --path cutting-board --import` (or focusing the editor) to
+## reimport the changed WAVs.
+##
+## Everything is made from white noise and sine/saw oscillators shaped by envelopes and
+## RBJ biquad filters — no recorded audio. The output is deliberately lo-fi: mono, 16-bit,
+## 22 050 Hz, which is about what a PS1 game streamed out of its sound RAM. Each recipe
+## is seeded from its own name, so a run reproduces the same files exactly and tuning one
+## sound never changes another.
+##
+## A recipe that writes several numbered takes (step_dirt_1..5) varies its parameters per
+## take; the SoundBank resources in resources/audio pick between takes at random and add
+## pitch and volume jitter on top.
+##
+## The ambience loops are rendered a little longer than they play and their tail is
+## crossfaded into their head, which makes the seam inaudible; a WAV "smpl" chunk marks
+## the loop so Godot imports them looping without touching the import settings.
+
+const RATE := 22050
+const ROOT := "res://assets/audio/"
+
+var rng := RandomNumberGenerator.new()
+
+
+func _init() -> void:
+	var only: PackedStringArray = []
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=").split(",")
+	var recipes := {
+		# Player and characters.
+		"step_dirt": _make_steps,
+		"jump": _make_jumps,
+		"land": _make_lands,
+		"swing": _make_swings,
+		"throw": _make_throws,
+		"hit_body": _make_body_hits,
+		"player_hurt": _make_player_hurts,
+		"player_death": _make_player_death,
+		"npc_hurt": _make_npc_hurts,
+		"npc_death": _make_npc_deaths,
+		"body_fall": _make_body_falls,
+		"grab": _make_grabs,
+		"draw": _make_draws,
+		"stow": _make_stows,
+		# World.
+		"impact_wood": _make_wood_impacts,
+		"impact_stone": _make_stone_impacts,
+		"break_wood": _make_wood_breaks,
+		"break_stone": _make_stone_breaks,
+		# Interface.
+		"ui": _make_ui,
+		# Ambience.
+		"night_loop": _make_night_loop,
+		"fair_murmur_loop": _make_fair_murmur,
+		"lantern_crackle_loop": _make_lantern_crackle,
+	}
+	for recipe_name in recipes:
+		if not only.is_empty() and not only.has(recipe_name):
+			continue
+		rng.seed = hash(recipe_name)
+		var started := Time.get_ticks_msec()
+		(recipes[recipe_name] as Callable).call()
+		print("%s  (%d ms)" % [recipe_name, Time.get_ticks_msec() - started])
+	quit()
+
+
+# --- Recipes: characters ------------------------------------------------------------------
+
+
+## Soft boots on packed earth and grass: a dull heel thump, then the roll onto the toe
+## scuffing a little grit. Used for walking, running and crouching alike — the banks
+## change only volume and pitch — and for NPCs.
+func _make_steps() -> void:
+	for take in 5:
+		var out := _silence(0.24)
+		var heel_freq := rng.randf_range(700.0, 1100.0)
+		_mix(out, _shape(_bandpass(_noise(0.08), heel_freq, 0.8), 0.002, 0.035), 0, 0.7)
+		_mix(out, _shape(_lowpass(_noise(0.1), 280.0, 0.7), 0.003, 0.05), 0, 1.0)
+		_mix(out, _tone(0.08, rng.randf_range(75.0, 95.0), 50.0, 0.04), 0, 0.5)
+		var toe := _seconds(rng.randf_range(0.045, 0.075))
+		var grit := _grains(_bandpass(_noise(0.12), rng.randf_range(1500.0, 2300.0), 1.0), 0.35, 0.004)
+		_mix(out, _shape(grit, 0.004, 0.06), toe, 0.55)
+		_mix(out, _shape(_lowpass(_noise(0.06), 400.0, 0.7), 0.003, 0.03), toe, 0.35)
+		_save("sfx/step_dirt_%d" % (take + 1), out, 0.9)
+
+
+## Pushing off: a quick scuff of both feet and a short breath out.
+func _make_jumps() -> void:
+	for take in 2:
+		var out := _silence(0.28)
+		_mix(out, _shape(_bandpass(_noise(0.1), rng.randf_range(1000.0, 1400.0), 0.7), 0.004, 0.05), 0, 0.8)
+		_mix(out, _shape(_lowpass(_noise(0.08), 300.0, 0.7), 0.003, 0.04), 0, 0.6)
+		var breath := _formants(_noise(0.22), [700.0, 1500.0, 2600.0], [1.0, 0.6, 0.2], 4.0)
+		_mix(out, _shape(breath, 0.025, 0.11), _seconds(0.02), 0.45)
+		_save("sfx/jump_%d" % (take + 1), out, 0.85)
+
+
+## Both feet coming down at once, with the weight behind them: a heavier thump than a
+## step and a longer spray of grit.
+func _make_lands() -> void:
+	for take in 2:
+		var out := _silence(0.4)
+		_mix(out, _tone(0.2, rng.randf_range(65.0, 80.0), 38.0, 0.09), 0, 1.0)
+		_mix(out, _shape(_lowpass(_noise(0.25), 420.0, 0.7), 0.002, 0.11), 0, 0.9)
+		var second := _seconds(rng.randf_range(0.02, 0.04))
+		_mix(out, _shape(_bandpass(_noise(0.08), 900.0, 0.8), 0.002, 0.03), second, 0.5)
+		var grit := _grains(_bandpass(_noise(0.3), rng.randf_range(1600.0, 2400.0), 1.0), 0.3, 0.004)
+		_mix(out, _shape(grit, 0.01, 0.12), _seconds(0.03), 0.5)
+		_save("sfx/land_%d" % (take + 1), _softclip(out, 1.4), 0.9)
+
+
+## A fist cutting the air: band-passed noise whose centre sweeps up and back down while
+## its level swells and fades, which is what the ear reads as something passing by.
+func _make_swings() -> void:
+	for take in 3:
+		var length := rng.randf_range(0.18, 0.26)
+		var peak := rng.randf_range(1100.0, 1700.0)
+		var out := _whoosh(length, 350.0, peak, 500.0, 1.6, 0.4)
+		_save("sfx/swing_%d" % (take + 1), out, 0.85)
+
+
+## A throw: a longer, lower whoosh with the flap of a sleeve in it.
+func _make_throws() -> void:
+	for take in 2:
+		var length := rng.randf_range(0.3, 0.38)
+		var out := _whoosh(length, 250.0, rng.randf_range(850.0, 1100.0), 330.0, 1.3, 0.35)
+		var flap := _shape(_lowpass(_noise(length), 600.0, 0.7), 0.04, length * 0.3)
+		for i in flap.size():
+			flap[i] *= 0.6 + 0.4 * sin(TAU * 22.0 * i / RATE)
+		_mix(out, flap, 0, 0.4)
+		_save("sfx/throw_%d" % (take + 1), out, 0.85)
+
+
+## A blunt blow landing on a body: a deep punchy thump with a slap on top of it and a
+## dull mid-range thud, pushed into soft saturation so it hits hard at low volume.
+func _make_body_hits() -> void:
+	for take in 3:
+		var out := _silence(0.26)
+		_mix(out, _tone(0.16, rng.randf_range(130.0, 160.0), 52.0, 0.07), 0, 1.0)
+		var slap := _highpass(_lowpass(_noise(0.05), rng.randf_range(2400.0, 3400.0), 0.7), 300.0, 0.7)
+		_mix(out, _shape(slap, 0.0005, 0.016), 0, 0.9)
+		_mix(out, _shape(_bandpass(_noise(0.15), rng.randf_range(220.0, 300.0), 1.0), 0.002, 0.06), 0, 0.8)
+		_save("sfx/hit_body_%d" % (take + 1), _softclip(out, 2.2), 0.95)
+
+
+## The player's own grunts when hit: a rough male voice, short and sharp, on three
+## different vowels so repeats do not sound like a sample.
+func _make_player_hurts() -> void:
+	var vowels := [[640.0, 1190.0, 2390.0], [730.0, 1090.0, 2440.0], [530.0, 1840.0, 2480.0]]
+	for take in 3:
+		var length := rng.randf_range(0.22, 0.3)
+		var f0 := rng.randf_range(125.0, 145.0)
+		var out := _voice(length, f0, f0 * 0.78, vowels[take], 0.012, length * 0.45)
+		_save("sfx/player_hurt_%d" % (take + 1), out, 0.9)
+
+
+## The player's last breath: a long falling groan sliding from "ah" towards "oh".
+func _make_player_death() -> void:
+	var a := _voice(0.9, 120.0, 62.0, [730.0, 1090.0, 2440.0], 0.03, 0.5)
+	var o := _voice(0.9, 120.0, 62.0, [570.0, 840.0, 2410.0], 0.03, 0.5)
+	var out := _silence(0.9)
+	for i in out.size():
+		var t := float(i) / out.size()
+		out[i] = a[i] * (1.0 - t) + o[i] * t
+	_save("sfx/player_death", out, 0.9)
+
+
+## Villagers and bandits wear masks, so their voices come out of a wooden or cloth face:
+## the same grunt as the player's, then dulled by a low-pass and given the hollow ring of
+## the mask's cavity.
+func _make_npc_hurts() -> void:
+	var vowels := [[640.0, 1190.0, 2390.0], [730.0, 1090.0, 2440.0], [530.0, 1840.0, 2480.0], [570.0, 840.0, 2410.0]]
+	for take in 4:
+		var length := rng.randf_range(0.2, 0.32)
+		var f0 := rng.randf_range(105.0, 165.0)
+		var out := _voice(length, f0, f0 * rng.randf_range(0.72, 0.85), vowels[take], 0.015, length * 0.45)
+		_save("sfx/npc_hurt_%d" % (take + 1), _masked(out), 0.9)
+
+
+func _make_npc_deaths() -> void:
+	for take in 2:
+		var f0 := rng.randf_range(110.0, 140.0)
+		var out := _voice(0.75, f0, f0 * 0.5, [570.0, 840.0, 2410.0], 0.03, 0.42)
+		_save("sfx/npc_death_%d" % (take + 1), _masked(out), 0.9)
+
+
+## A body hitting the ground: one heavy thump, then the limbs settling after it.
+func _make_body_falls() -> void:
+	for take in 2:
+		var out := _silence(0.55)
+		_mix(out, _tone(0.25, rng.randf_range(65.0, 75.0), 40.0, 0.13), 0, 1.0)
+		_mix(out, _shape(_lowpass(_noise(0.3), 500.0, 0.7), 0.002, 0.16), 0, 0.9)
+		for bump in 2:
+			var at := _seconds(rng.randf_range(0.1, 0.25) + bump * 0.1)
+			_mix(out, _shape(_lowpass(_noise(0.1), 700.0, 0.7), 0.002, 0.035), at, 0.45 - bump * 0.15)
+		_save("sfx/body_fall_%d" % (take + 1), _softclip(out, 1.3), 0.9)
+
+
+## A hand closing on something: a rustle of sleeve and a light knock of contact.
+func _make_grabs() -> void:
+	for take in 2:
+		var out := _silence(0.16)
+		var rustle := _grains(_bandpass(_noise(0.12), rng.randf_range(2200.0, 2900.0), 0.8), 0.6, 0.003)
+		_mix(out, _shape(rustle, 0.01, 0.045), 0, 0.7)
+		_mix(out, _modes(0.08, [rng.randf_range(280.0, 340.0), 720.0], [0.03, 0.02], [1.0, 0.5]), _seconds(0.02), 0.45)
+		_save("sfx/grab_%d" % (take + 1), out, 0.8)
+
+
+## Pulling an item out of a satchel: leather sliding over leather, rising, and the knock
+## of the item settling into the hand.
+func _make_draws() -> void:
+	for take in 2:
+		var length := rng.randf_range(0.22, 0.28)
+		var out := _silence(length + 0.06)
+		var sweep := _sweep(_noise(length), 1800.0, rng.randf_range(2900.0, 3400.0), 1.2)
+		var slide := _grains(sweep, 0.75, 0.002)
+		var env := _ramp(slide.size(), 0.85, 0.15)
+		for i in slide.size():
+			slide[i] *= env[i]
+		_mix(out, slide, 0, 0.6)
+		_mix(out, _modes(0.07, [220.0, 540.0, 900.0], [0.05, 0.03, 0.02], [1.0, 0.5, 0.3]), _seconds(length - 0.02), 0.5)
+		_save("sfx/draw_%d" % (take + 1), out, 0.8)
+
+
+## The reverse: a falling slide into the bag ending on the soft thump of the bag closing
+## round it.
+func _make_stows() -> void:
+	for take in 2:
+		var length := rng.randf_range(0.2, 0.26)
+		var out := _silence(length + 0.08)
+		var sweep := _sweep(_noise(length), rng.randf_range(2800.0, 3200.0), 1500.0, 1.2)
+		var slide := _grains(sweep, 0.75, 0.002)
+		var env := _ramp(slide.size(), 0.25, 0.75)
+		for i in slide.size():
+			slide[i] *= env[i]
+		_mix(out, slide, 0, 0.6)
+		_mix(out, _shape(_lowpass(_noise(0.1), 320.0, 0.7), 0.003, 0.05), _seconds(length - 0.03), 0.8)
+		_save("sfx/stow_%d" % (take + 1), out, 0.8)
+
+
+# --- Recipes: world -----------------------------------------------------------------------
+
+
+## A wooden box or barrel knocking against the ground: the hollow ring of a few wooden
+## modes, the click that excites them and the dull thud of the earth under it.
+func _make_wood_impacts() -> void:
+	for take in 4:
+		var f0 := rng.randf_range(150.0, 260.0)
+		var out := _silence(0.32)
+		_mix(out, _modes(0.3, [f0, f0 * 2.31, f0 * 3.87, f0 * 5.4], [0.12, 0.08, 0.05, 0.035], [1.0, 0.6, 0.4, 0.25]), 0, 0.8)
+		_mix(out, _shape(_lowpass(_noise(0.02), 4000.0, 0.7), 0.0003, 0.004), 0, 0.6)
+		_mix(out, _shape(_lowpass(_noise(0.12), 250.0, 0.7), 0.002, 0.05), 0, 0.7)
+		_save("sfx/impact_wood_%d" % (take + 1), _softclip(out, 1.3), 0.9)
+
+
+## A rock: a bright click with a short stony ring, on top of the thud of it hitting
+## earth.
+func _make_stone_impacts() -> void:
+	for take in 4:
+		var f0 := rng.randf_range(1050.0, 1600.0)
+		var out := _silence(0.2)
+		_mix(out, _shape(_highpass(_noise(0.03), 1500.0, 0.7), 0.0002, 0.006), 0, 0.8)
+		_mix(out, _modes(0.12, [f0, f0 * 1.73, f0 * 2.61], [0.025, 0.018, 0.012], [1.0, 0.6, 0.4]), 0, 0.5)
+		_mix(out, _shape(_lowpass(_noise(0.1), 220.0, 0.7), 0.002, 0.04), 0, 0.8)
+		_save("sfx/impact_stone_%d" % (take + 1), out, 0.9)
+
+
+## A crate or barrel giving way: one big crunch, a run of cracks that get smaller as it
+## comes apart, and splinters pattering down afterwards.
+func _make_wood_breaks() -> void:
+	for take in 2:
+		var out := _silence(0.85)
+		_mix(out, _tone(0.2, 95.0, 48.0, 0.12), 0, 0.9)
+		_mix(out, _shape(_lowpass(_noise(0.2), 1500.0, 0.7), 0.001, 0.09), 0, 0.9)
+		var at := 0.0
+		var loud := 1.0
+		for crack in rng.randi_range(6, 9):
+			at += rng.randf_range(0.015, 0.07)
+			var crunch := _shape(_bandpass(_noise(0.05), rng.randf_range(800.0, 3000.0), 1.5), 0.0005, rng.randf_range(0.008, 0.02))
+			_mix(out, crunch, _seconds(at), 0.8 * loud)
+			var f0 := rng.randf_range(200.0, 500.0)
+			_mix(out, _modes(0.08, [f0, f0 * 2.4], [0.04, 0.025], [1.0, 0.5]), _seconds(at), 0.5 * loud)
+			loud *= 0.82
+		for splinter in 14:
+			var when := rng.randf_range(0.12, 0.75)
+			var click := _shape(_highpass(_noise(0.01), 2500.0, 0.7), 0.0002, 0.003)
+			_mix(out, click, _seconds(when), rng.randf_range(0.1, 0.35) * (1.0 - when))
+		_save("sfx/break_wood_%d" % (take + 1), _softclip(out, 1.5), 0.95)
+
+
+## A thrown rock splitting: a hard crack and a spill of gravel.
+func _make_stone_breaks() -> void:
+	for take in 2:
+		var out := _silence(0.5)
+		_mix(out, _shape(_highpass(_noise(0.06), 800.0, 0.7), 0.0003, 0.025), 0, 1.0)
+		_mix(out, _shape(_lowpass(_noise(0.1), 250.0, 0.7), 0.002, 0.05), 0, 0.8)
+		for chip in 12:
+			var when := rng.randf_range(0.01, 0.4)
+			var f0 := rng.randf_range(1500.0, 3500.0)
+			var ring := _modes(0.03, [f0, f0 * 1.6], [0.01, 0.007], [1.0, 0.5])
+			_mix(out, ring, _seconds(when), rng.randf_range(0.15, 0.5) * (1.0 - when * 2.0))
+		_save("sfx/break_stone_%d" % (take + 1), out, 0.9)
+
+
+# --- Recipes: interface -------------------------------------------------------------------
+
+
+## The inventory sounds. The screen is the satchel, so opening and closing it are a
+## leather flap and a buckle; items being moved about in it are small wooden tocks.
+func _make_ui() -> void:
+	# Opening: the buckle clinks, the flap lifts with a rustle and a soft thump.
+	var open := _silence(0.26)
+	_mix(open, _modes(0.05, [2600.0, 4100.0], [0.03, 0.02], [1.0, 0.6]), 0, 0.25)
+	var rustle := _grains(_bandpass(_noise(0.2), 2200.0, 1.0), 0.7, 0.003)
+	_mix(open, _shape(rustle, 0.015, 0.08), _seconds(0.02), 0.6)
+	_mix(open, _shape(_lowpass(_noise(0.1), 400.0, 0.7), 0.003, 0.04), _seconds(0.06), 0.7)
+	_save("ui/ui_bag_open", open, 0.75)
+
+	# Closing: the flap comes down first, then the buckle.
+	var close := _silence(0.24)
+	_mix(close, _shape(_lowpass(_noise(0.1), 380.0, 0.7), 0.002, 0.045), 0, 0.8)
+	var rustle_short := _grains(_bandpass(_noise(0.12), 1900.0, 1.0), 0.7, 0.003)
+	_mix(close, _shape(rustle_short, 0.005, 0.05), 0, 0.5)
+	_mix(close, _modes(0.06, [2400.0, 3900.0], [0.03, 0.02], [1.0, 0.6]), _seconds(0.12), 0.25)
+	_save("ui/ui_bag_close", close, 0.75)
+
+	# Setting an item down in the grid.
+	var place := _silence(0.1)
+	_mix(place, _modes(0.1, [520.0, 1310.0, 2150.0], [0.04, 0.025, 0.015], [1.0, 0.5, 0.3]), 0, 0.8)
+	_mix(place, _shape(_lowpass(_noise(0.01), 3000.0, 0.7), 0.0002, 0.003), 0, 0.4)
+	_save("ui/ui_place", place, 0.7)
+
+	# Putting something on or into a hand: a lower tock with a small metal chink.
+	var equip := _silence(0.2)
+	_mix(equip, _modes(0.1, [380.0, 960.0], [0.05, 0.03], [1.0, 0.5]), 0, 0.8)
+	_mix(equip, _modes(0.18, [2400.0, 3610.0, 5100.0], [0.06, 0.04, 0.03], [1.0, 0.6, 0.4]), _seconds(0.015), 0.3)
+	_save("ui/ui_equip", equip, 0.7)
+
+	# Refused: two short low buzzes.
+	var invalid := _silence(0.17)
+	for blip in 2:
+		var buzz := _lowpass(_square(0.055, 140.0), 900.0, 0.7)
+		_mix(invalid, _shape(buzz, 0.003, 0.03), _seconds(blip * 0.08), 1.0)
+	_save("ui/ui_invalid", invalid, 0.6)
+
+	# An item let go out of the window and into the world: a small falling swish.
+	_save("ui/ui_drop", _whoosh(0.14, 1300.0, 1100.0, 500.0, 1.4, 0.2), 0.6)
+
+
+# --- Recipes: ambience --------------------------------------------------------------------
+
+
+## The night outside: a low wind that rises and falls, a few crickets near by and a
+## field of them far off.
+func _make_night_loop() -> void:
+	var loop := 16.0
+	var fade := 1.5
+	var length := loop + fade
+	var n := _seconds(length)
+
+	# Wind: brown noise, its low-pass opening and closing on slow sines that fit a whole
+	# number of times into the loop, so only the noise itself needs the crossfade.
+	var brown := _brown(length)
+	var cutoffs := PackedFloat32Array()
+	cutoffs.resize(n)
+	var level := PackedFloat32Array()
+	level.resize(n)
+	for i in n:
+		var t := float(i) / RATE
+		var gust := 0.5 * sin(TAU * t / loop) + 0.3 * sin(TAU * 2.0 * t / loop + 1.3) + 0.2 * sin(TAU * 5.0 * t / loop + 0.4)
+		cutoffs[i] = 420.0 + 220.0 * gust
+		level[i] = 0.75 + 0.25 * gust
+	var wind := _filter_swept(brown, "lowpass", cutoffs, 0.9)
+	var out := _silence(length)
+	for i in n:
+		out[i] = wind[i] * level[i] * 0.7
+
+	# Crickets: each chirp a few short pulses of a high tone, repeated at the cricket's
+	# own rate, now and then skipping a beat. Farther crickets are quieter and duller.
+	var crickets := [[4200.0, 0.62, 0.11, 4], [4550.0, 0.85, 0.07, 3], [3850.0, 1.15, 0.05, 4]]
+	for cricket in crickets:
+		var at := rng.randf_range(0.0, 0.5)
+		while at < length - 0.2:
+			if rng.randf() > 0.15:
+				_mix(out, _chirp(cricket[0] * rng.randf_range(0.99, 1.01), cricket[3]), _seconds(at), cricket[2])
+			at += cricket[1] * rng.randf_range(0.9, 1.1)
+	# The far field: a narrow band of noise around cricket pitch with a slow shimmer.
+	var field := _bandpass(_noise(length), 4300.0, 6.0)
+	for i in n:
+		field[i] *= 0.6 + 0.4 * sin(TAU * 3.0 * i / RATE / 2.0)
+	_mix(out, field, 0, 0.06)
+
+	_save_loop("ambience/night_loop", out, loop, fade, 0.6)
+
+
+## A crowd at the fair, heard from a distance: a handful of voices talking over each
+## other in syllables with no words, muffled by the distance and smeared by the houses.
+func _make_fair_murmur() -> void:
+	var loop := 12.0
+	var fade := 1.0
+	var length := loop + fade
+	var out := _silence(length)
+	var vowels := [[730.0, 1090.0, 2440.0], [530.0, 1840.0, 2480.0], [270.0, 2290.0, 3010.0], [570.0, 840.0, 2410.0], [640.0, 1190.0, 2390.0], [300.0, 870.0, 2240.0]]
+	for speaker in 9:
+		var base := rng.randf_range(95.0, 230.0)
+		var gain := rng.randf_range(0.4, 1.0)
+		var at := rng.randf_range(0.0, 1.5)
+		while at < length - 0.4:
+			# A phrase: a run of syllables with the pitch drifting through it, then a pause.
+			var syllables := rng.randi_range(3, 9)
+			var pitch := base * rng.randf_range(0.95, 1.15)
+			for s in syllables:
+				var dur := rng.randf_range(0.1, 0.25)
+				if at + dur > length:
+					break
+				var vowel: Array = vowels[rng.randi_range(0, vowels.size() - 1)]
+				var syl := _voice(dur, pitch, pitch * rng.randf_range(0.9, 1.05), vowel, 0.02, dur * 0.35)
+				_mix(out, syl, _seconds(at), gain * rng.randf_range(0.6, 1.0))
+				pitch *= rng.randf_range(0.94, 1.03)
+				at += dur + rng.randf_range(0.02, 0.12)
+			at += rng.randf_range(0.4, 1.8)
+	out = _lowpass(out, 950.0, 0.7)
+	# A couple of short echoes off the houses.
+	var smear := out.duplicate()
+	_mix(out, smear, _seconds(0.043), 0.35)
+	_mix(out, smear, _seconds(0.091), 0.2)
+	_save_loop("ambience/fair_murmur_loop", out, loop, fade, 0.6)
+
+
+## A lantern's flame: a faint low flutter and the odd crackle, most of them tiny and a
+## few sharp.
+func _make_lantern_crackle() -> void:
+	var loop := 8.0
+	var fade := 0.5
+	var length := loop + fade
+	var n := _seconds(length)
+	var out := _lowpass(_brown(length), 160.0, 0.7)
+	for i in n:
+		var t := float(i) / RATE
+		out[i] *= 0.5 * (0.7 + 0.3 * sin(TAU * 1.0 * t / loop * 8.0) * sin(TAU * 3.0 * t / loop))
+	var at := 0.0
+	while at < length - 0.05:
+		at += -log(maxf(rng.randf(), 0.0001)) / 7.0
+		var size := pow(rng.randf(), 3.0)
+		for click in rng.randi_range(1, 3):
+			var crack := _shape(_highpass(_noise(0.01), 2000.0, 0.7), 0.0001, rng.randf_range(0.0015, 0.004))
+			_mix(out, crack, _seconds(at + click * rng.randf_range(0.004, 0.012)), 0.15 + 0.85 * size)
+		if size > 0.5:
+			var sizzle := _shape(_bandpass(_noise(0.05), 3500.0, 1.0), 0.002, 0.025)
+			_mix(out, sizzle, _seconds(at), 0.2 * size)
+	_save_loop("ambience/lantern_crackle_loop", out, loop, fade, 0.6)
+
+
+# --- Building blocks ----------------------------------------------------------------------
+
+
+## A swept band-pass whoosh: the centre glides from `start` to `peak` at `peak_at`
+## (0..1 of the length) and on to `end`, while the level swells and dies away with it.
+func _whoosh(length: float, start: float, peak: float, end: float, q: float, peak_at: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var freqs := PackedFloat32Array()
+	freqs.resize(n)
+	var env := PackedFloat32Array()
+	env.resize(n)
+	for i in n:
+		var t := float(i) / n
+		if t < peak_at:
+			var u := t / peak_at
+			freqs[i] = lerpf(start, peak, u * u)
+			env[i] = pow(sin(u * PI * 0.5), 2.0)
+		else:
+			var u := (t - peak_at) / (1.0 - peak_at)
+			freqs[i] = lerpf(peak, end, sqrt(u))
+			env[i] = pow(cos(u * PI * 0.5), 1.5)
+	var out := _filter_swept(_noise(length), "bandpass", freqs, q)
+	for i in n:
+		out[i] *= env[i]
+	return out
+
+
+## A voice: a sawtooth glottal source gliding from `f0_from` to `f0_to`, with a little
+## pitch jitter and a growl at half the pitch for roughness, shaped by three formants for
+## the vowel and given a breath of aspiration noise. `attack` is the onset time; the rest
+## of the sound falls away over `decay`.
+func _voice(length: float, f0_from: float, f0_to: float, vowel: Array, attack: float, decay: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var source := PackedFloat32Array()
+	source.resize(n)
+	var phase := 0.0
+	var drift := 0.0
+	for i in n:
+		var t := float(i) / n
+		drift = clampf(drift + rng.randf_range(-0.004, 0.004), -0.04, 0.04)
+		var f0 := lerpf(f0_from, f0_to, t) * (1.0 + drift)
+		phase += f0 / RATE
+		var growl := 0.75 + 0.25 * signf(sin(PI * phase))
+		source[i] = (2.0 * fposmod(phase, 1.0) - 1.0) * growl
+	var breath := _noise(length)
+	for i in n:
+		source[i] += breath[i] * 0.18
+	var voiced := _formants(source, vowel, [1.0, 0.5, 0.2], 9.0)
+	return _shape(voiced, attack, decay)
+
+
+## The muffling of a mask: a low-pass dulls the voice and a peak around 450 Hz adds the
+## boxy ring of the space between face and mask.
+func _masked(voice: PackedFloat32Array) -> PackedFloat32Array:
+	var dull := _lowpass(voice, 1100.0, 0.7)
+	var ring := _bandpass(voice, 450.0, 3.0)
+	_mix(dull, ring, 0, 0.6)
+	return dull
+
+
+## A cricket's chirp: `pulses` short pulses of a tone, 22 ms apart.
+func _chirp(freq: float, pulses: int) -> PackedFloat32Array:
+	var out := _silence(0.022 * pulses + 0.02)
+	var pulse_len := _seconds(0.013)
+	for p in pulses:
+		var start := _seconds(0.022 * p)
+		for i in pulse_len:
+			var env := pow(sin(PI * float(i) / pulse_len), 2.0)
+			out[start + i] += sin(TAU * freq * (start + i) / RATE) * env
+	return out
+
+
+## A tone gliding exponentially from `from` to `to` Hz over `glide` seconds, decaying
+## away to nothing by the end of `length`.
+func _tone(length: float, from: float, to: float, glide: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var freq := to + (from - to) * exp(-t / maxf(glide * 0.4, 0.001))
+		phase += TAU * freq / RATE
+		out[i] = sin(phase) * exp(-t / (length * 0.3)) * minf(1.0, t / 0.002)
+	return out
+
+
+## Modal synthesis: a struck object as a sum of exponentially decaying sines.
+func _modes(length: float, freqs: Array, decays: Array, amps: Array) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for m in freqs.size():
+		var freq: float = freqs[m] * rng.randf_range(0.98, 1.02)
+		var decay: float = decays[m]
+		var amp: float = amps[m]
+		var phase := rng.randf() * TAU
+		for i in n:
+			var t := float(i) / RATE
+			out[i] += sin(phase + TAU * freq * t) * exp(-t / decay) * amp * minf(1.0, t / 0.0005)
+	return out
+
+
+func _square(length: float, freq: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		out[i] = 1.0 if fposmod(freq * i / RATE, 1.0) < 0.5 else -1.0
+	return out
+
+
+func _noise(length: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		out[i] = rng.randf_range(-1.0, 1.0)
+	return out
+
+
+## Brown (red) noise: leaky-integrated white noise, all rumble and no hiss.
+func _brown(length: float) -> PackedFloat32Array:
+	var out := _noise(length)
+	var acc := 0.0
+	for i in out.size():
+		acc = acc * 0.995 + out[i] * 0.1
+		out[i] = acc
+	return out
+
+
+## Chops a signal into random short grains — `density` of them kept — which turns smooth
+## noise into grit, gravel or the crackle of cloth. Each grain is faded in and out, so
+## the chopping itself adds no clicks of its own.
+func _grains(x: PackedFloat32Array, density: float, grain: float) -> PackedFloat32Array:
+	var size := maxi(_seconds(grain), 2)
+	var out := x.duplicate()
+	var i := 0
+	while i < out.size():
+		var keep := rng.randf() < density
+		var gain := rng.randf_range(0.4, 1.0) if keep else 0.0
+		for j in range(i, mini(i + size, out.size())):
+			out[j] *= gain * pow(sin(PI * float(j - i) / size), 2.0)
+		i += size
+	return out
+
+
+## An attack ramp of `attack` seconds, then an exponential decay with time constant
+## `decay` seconds.
+func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32Array:
+	var out := x.duplicate()
+	for i in out.size():
+		var t := float(i) / RATE
+		var a := minf(1.0, t / maxf(attack, 0.0001))
+		var d := exp(-maxf(t - attack, 0.0) / maxf(decay, 0.0001))
+		out[i] *= a * d
+	return out
+
+
+## A rise over the first `rise` of the length and a fall over the last `fall`.
+func _ramp(n: int, rise: float, fall: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var t := float(i) / n
+		out[i] = minf(t / rise, 1.0) * minf((1.0 - t) / fall, 1.0)
+	return out
+
+
+## Band-pass noise sweeping from `from` to `to` Hz across its length.
+func _sweep(x: PackedFloat32Array, from: float, to: float, q: float) -> PackedFloat32Array:
+	var freqs := PackedFloat32Array()
+	freqs.resize(x.size())
+	for i in x.size():
+		freqs[i] = lerpf(from, to, float(i) / x.size())
+	return _filter_swept(x, "bandpass", freqs, q)
+
+
+func _formants(x: PackedFloat32Array, freqs: Array, gains: Array, q: float) -> PackedFloat32Array:
+	var out := _silence_samples(x.size())
+	for f in freqs.size():
+		_mix(out, _bandpass(x, freqs[f], q * (1.0 + f * 0.5)), 0, gains[f])
+	return out
+
+
+func _softclip(x: PackedFloat32Array, drive: float) -> PackedFloat32Array:
+	var out := x.duplicate()
+	var peak := 0.0
+	for v in out:
+		peak = maxf(peak, absf(v))
+	if peak <= 0.0:
+		return out
+	for i in out.size():
+		out[i] = tanh(out[i] / peak * drive) / tanh(drive)
+	return out
+
+
+func _lowpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
+	return _biquad(x, "lowpass", freq, q)
+
+
+func _highpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
+	return _biquad(x, "highpass", freq, q)
+
+
+func _bandpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
+	return _biquad(x, "bandpass", freq, q)
+
+
+func _biquad(x: PackedFloat32Array, type: String, freq: float, q: float) -> PackedFloat32Array:
+	var freqs := PackedFloat32Array()
+	freqs.resize(x.size())
+	freqs.fill(freq)
+	return _filter_swept(x, type, freqs, q)
+
+
+## An RBJ biquad whose frequency may change every sample; the coefficients are only
+## recomputed every few samples, which is far below what the ear can hear.
+func _filter_swept(x: PackedFloat32Array, type: String, freqs: PackedFloat32Array, q: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(x.size())
+	var x1 := 0.0
+	var x2 := 0.0
+	var y1 := 0.0
+	var y2 := 0.0
+	var b0 := 0.0
+	var b1 := 0.0
+	var b2 := 0.0
+	var a1 := 0.0
+	var a2 := 0.0
+	for i in x.size():
+		if i % 8 == 0:
+			var w0 := TAU * clampf(freqs[i], 20.0, RATE * 0.45) / RATE
+			var cw := cos(w0)
+			var alpha := sin(w0) / (2.0 * q)
+			var a0 := 1.0 + alpha
+			match type:
+				"lowpass":
+					b0 = (1.0 - cw) * 0.5
+					b1 = 1.0 - cw
+					b2 = b0
+				"highpass":
+					b0 = (1.0 + cw) * 0.5
+					b1 = -(1.0 + cw)
+					b2 = b0
+				_:
+					b0 = alpha
+					b1 = 0.0
+					b2 = -alpha
+			b0 /= a0
+			b1 /= a0
+			b2 /= a0
+			a1 = -2.0 * cw / a0
+			a2 = (1.0 - alpha) / a0
+		var v := b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+		x2 = x1
+		x1 = x[i]
+		y2 = y1
+		y1 = v
+		out[i] = v
+	return out
+
+
+func _mix(into: PackedFloat32Array, x: PackedFloat32Array, offset: int, gain: float) -> void:
+	for i in x.size():
+		var j := offset + i
+		if j >= into.size():
+			return
+		into[j] += x[i] * gain
+
+
+func _silence(length: float) -> PackedFloat32Array:
+	return _silence_samples(_seconds(length))
+
+
+func _silence_samples(n: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(n)
+	out.fill(0.0)
+	return out
+
+
+func _seconds(length: float) -> int:
+	return int(round(length * RATE))
+
+
+# --- Output -------------------------------------------------------------------------------
+
+
+## Normalises a one-shot to `peak`, fades its last few milliseconds so it never ends on a
+## click, and writes it.
+func _save(path: String, x: PackedFloat32Array, peak: float) -> void:
+	var out := _normalized(x, peak)
+	var fade := mini(_seconds(0.01), out.size())
+	for i in fade:
+		out[out.size() - 1 - i] *= float(i) / fade
+	_write_wav(ROOT + path + ".wav", out, false)
+
+
+## Folds the last `fade` seconds of a buffer rendered `loop + fade` long back over its
+## start with an equal-power crossfade, so the loop point is seamless, and writes it
+## marked as a loop.
+func _save_loop(path: String, x: PackedFloat32Array, loop: float, fade: float, peak: float) -> void:
+	var n := _seconds(loop)
+	var f := _seconds(fade)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		out[i] = x[i]
+	for i in f:
+		var t := float(i) / f
+		out[i] = x[i] * sqrt(t) + x[n + i] * sqrt(1.0 - t)
+	_write_wav(ROOT + path + ".wav", _normalized(out, peak), true)
+
+
+func _normalized(x: PackedFloat32Array, peak: float) -> PackedFloat32Array:
+	var out := x.duplicate()
+	var top := 0.0
+	for v in out:
+		top = maxf(top, absf(v))
+	if top > 0.0:
+		for i in out.size():
+			out[i] *= peak / top
+	return out
+
+
+## 16-bit mono PCM. A looping file also gets a "smpl" chunk with one forward loop over
+## the whole file, which Godot's WAV importer reads as the loop.
+func _write_wav(path: String, x: PackedFloat32Array, looping: bool) -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
+	var data := PackedByteArray()
+	data.resize(x.size() * 2)
+	for i in x.size():
+		data.encode_s16(i * 2, clampi(int(round(x[i] * 32767.0)), -32768, 32767))
+	var smpl := PackedByteArray()
+	if looping:
+		smpl.resize(68)
+		smpl.fill(0)
+		smpl.encode_u32(0, 0x6c706d73)  # "smpl"
+		smpl.encode_u32(4, 60)
+		smpl.encode_u32(16, int(1.0e9 / RATE))  # sample period, ns
+		smpl.encode_u32(20, 60)  # MIDI unity note
+		smpl.encode_u32(36, 1)  # one loop
+		smpl.encode_u32(48, 0)  # forward
+		smpl.encode_u32(52, 0)  # loop start
+		smpl.encode_u32(56, x.size() - 1)  # loop end, inclusive
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_buffer("RIFF".to_ascii_buffer())
+	file.store_32(36 + data.size() + smpl.size())
+	file.store_buffer("WAVEfmt ".to_ascii_buffer())
+	file.store_32(16)
+	file.store_16(1)
+	file.store_16(1)
+	file.store_32(RATE)
+	file.store_32(RATE * 2)
+	file.store_16(2)
+	file.store_16(16)
+	file.store_buffer("data".to_ascii_buffer())
+	file.store_32(data.size())
+	file.store_buffer(data)
+	file.store_buffer(smpl)
+	file.close()

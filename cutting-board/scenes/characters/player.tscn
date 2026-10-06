@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://b7tjn3n22jqbt" path="res://scenes/ui/HUD.tscn" id="4_prompts"]
 [ext_resource type="PackedScene" path="res://scenes/ui/charge_bar.tscn" id="5_charge_bar"]
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="6_inventory"]
-[ext_resource type="AudioStream" uid="uid://b40cxrp7u8m7h" path="res://assets/audio/sfx/pick_up.wav" id="7_pickup"]
 [ext_resource type="Script" path="res://scripts/components/arm_animator.gd" id="8_arm_animator"]
 [ext_resource type="AnimationLibrary" path="res://resources/animations/arms.tres" id="9_arm_anims"]
 [ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="10_melee"]
@@ -17,16 +16,12 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/human_body.tscn" id="15_human_body"]
 [ext_resource type="Script" path="res://scripts/components/equipment.gd" id="16_equipment"]
 [ext_resource type="Script" path="res://scripts/components/combat_tracker.gd" id="16_combat"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/fp_arm_left.res" id="17_arm_left"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/fp_arm_right.res" id="18_arm_right"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
 height = 1.8
-
-[sub_resource type="BoxMesh" id="BoxMesh_arm"]
-size = Vector3(0.15, 0.15, 0.6)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_arm"]
-albedo_color = Color(0.85, 0.65, 0.55, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
 albedo_color = Color(0.42, 0.5, 0.33, 1)
@@ -76,8 +71,8 @@ transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -0.7, -0
 
 [node name="ArmLeft" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot" unique_id=949494793]
 unique_name_in_owner = true
-mesh = SubResource("BoxMesh_arm")
-surface_material_override/0 = SubResource("StandardMaterial3D_arm")
+mesh = ExtResource("17_arm_left")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
 
 [node name="HandSlotLeft" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeft" unique_id=1502060170]
 unique_name_in_owner = true
@@ -93,8 +88,8 @@ transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.7, -0.
 
 [node name="ArmRight" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot" unique_id=1725595375]
 unique_name_in_owner = true
-mesh = SubResource("BoxMesh_arm")
-surface_material_override/0 = SubResource("StandardMaterial3D_arm")
+mesh = ExtResource("18_arm_right")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
 
 [node name="HandSlotRight" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRight" unique_id=1724605880]
 unique_name_in_owner = true
@@ -118,11 +113,6 @@ script = ExtResource("10_melee")
 unique_name_in_owner = true
 script = ExtResource("6_inventory")
 grid_size = Vector2i(6, 8)
-
-[node name="PickupSound" type="AudioStreamPlayer" parent="."]
-unique_name_in_owner = true
-stream = ExtResource("7_pickup")
-bus = &"SFX"
 
 [node name="Hotbar" type="Node" parent="."]
 unique_name_in_owner = true
