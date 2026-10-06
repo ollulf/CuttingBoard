@@ -153,8 +153,11 @@ func _grudge_expires() -> void:
 	villager.health.apply_damage(DamageInfo.new(5, _player))
 	await _wait(0.6)
 	_check("grudge: fighting while it lasts", _is_fighting(villager))
+	# Grudges expire on the wall clock, but under --fixed-fps physics
+	# runs faster than real time, so wait out both clocks.
 	var waited := 0.0
-	while waited < 3.0:
+	var wall_start := Time.get_ticks_msec()
+	while waited < 3.0 or Time.get_ticks_msec() - wall_start < 3000:
 		await get_tree().physics_frame
 		waited += get_physics_process_delta_time()
 		_pin_player()
