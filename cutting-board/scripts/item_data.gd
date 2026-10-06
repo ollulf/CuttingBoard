@@ -4,8 +4,11 @@ extends Resource
 ## Data record stored by the inventory; the world Node3D is freed once picked up.
 
 ## What kind of item this is. Equipment slots use it to decide what they will accept;
-## MISC is the default so an item is only a weapon when it says so.
-enum Type { MISC, WEAPON }
+## MISC is the default so an item is only a weapon when it says so. The last four are
+## things worn on the body, and each fits exactly one slot of the player's Equipment.
+## New kinds go on the end: the type is saved as its number, so inserting one would
+## quietly turn every authored item into something else.
+enum Type { MISC, WEAPON, MASK, HEAD, BODY, PACK }
 
 @export var display_name: String
 @export var icon: Texture2D
