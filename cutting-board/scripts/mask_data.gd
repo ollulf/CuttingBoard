@@ -6,8 +6,8 @@ extends ItemData
 ## knows the face it puts on a body and whose face that is.
 ##
 ## A mask is the faction in this world — whoever wears a bandit's face is taken for a
-## bandit — but nothing reads `faction` yet. It is here so that wearing one can start to
-## mean something without every mask having to be authored again.
+## bandit. Faction reads `faction` off whatever is in the wearer's Mask slot and takes
+## that side for as long as the mask stays on.
 
 ## The face hung on the head of whoever wears this: a plain Node3D scene, facing -Z, with
 ## its origin at the middle of the face. HumanBody instances it; it has no physics or
