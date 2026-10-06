@@ -1,0 +1,358 @@
+<title>CuttingBoard Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a four-lane workbench — queue, agents at work, review, merged — lanes stack on phones. */
+:root {
+  --bg: #eef0f2;
+  --lane: #e2e6ea;
+  --card: #ffffff;
+  --fg: #1b2129;
+  --muted: #5d6874;
+  --line: #c9d0d7;
+  --accent: #9a5d12;       /* tallow amber */
+  --accent-fg: #ffffff;
+  --accent-soft: #f6e7cf;
+  --ok: #2f7a4a;
+  --ok-soft: #dcefe2;
+  --warn: #a2470f;
+  --warn-soft: #f7e0d2;
+  --work: #305f9a;
+  --work-soft: #dce7f5;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181d; --lane: #1b2027; --card: #232932; --fg: #e5e9ee; --muted: #98a3af; --line: #343c47;
+    --accent: #e0a24a; --accent-fg: #1a1205; --accent-soft: #3a2b16;
+    --ok: #7cc995; --ok-soft: #1e3427; --warn: #f0a070; --warn-soft: #3d2618; --work: #8cb4ea; --work-soft: #1d2b40;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181d; --lane: #1b2027; --card: #232932; --fg: #e5e9ee; --muted: #98a3af; --line: #343c47;
+  --accent: #e0a24a; --accent-fg: #1a1205; --accent-soft: #3a2b16;
+  --ok: #7cc995; --ok-soft: #1e3427; --warn: #f0a070; --warn-soft: #3d2618; --work: #8cb4ea; --work-soft: #1d2b40;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); padding-inline: 16px; padding-block: 20px 40px; }
+.wrap { max-width: 1400px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+h1 { font: 800 30px/1 var(--display); font-stretch: 80%; letter-spacing: 0.01em; margin: 0; text-transform: uppercase; }
+h1 span { color: var(--accent); }
+.manager { font: 13px/1.4 var(--mono); color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.live { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+.dot.stale { background: var(--warn); }
+.notice { background: var(--warn-soft); color: var(--warn); padding: 10px 14px; border-radius: 6px; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .board { grid-template-columns: minmax(0, 1fr); } }
+.lane { background: var(--lane); border-radius: 8px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.lane h2 { font: 700 15px/1 var(--display); font-stretch: 85%; text-transform: uppercase; letter-spacing: 0.06em; margin: 2px 2px 4px; display: flex; justify-content: space-between; align-items: center; }
+.count { font: 600 12px/1 var(--mono); color: var(--muted); }
+.lane-hint { font-size: 13px; color: var(--muted); margin: 0 2px; }
+.empty { font-size: 13px; color: var(--muted); border: 1px dashed var(--line); border-radius: 6px; padding: 14px; text-align: center; }
+form.add { display: grid; gap: 8px; background: var(--card); border-radius: 6px; padding: 10px; border: 1px solid var(--line); }
+label { font: 600 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+input[type=text], textarea { width: 100%; font: 14px/1.45 var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; }
+textarea { resize: vertical; min-height: 96px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button { font: 700 13px/1 var(--display); font-stretch: 90%; letter-spacing: 0.03em; text-transform: uppercase; border-radius: 4px; padding: 8px 12px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--fg); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.approve { background: var(--ok); color: var(--card); border-color: var(--ok); }
+button:disabled { opacity: 0.55; cursor: default; }
+.card { background: var(--card); border-radius: 6px; padding: 11px 12px; display: grid; gap: 7px; border: 1px solid var(--line); min-width: 0; }
+.card h3 { font: 700 16px/1.25 var(--display); font-stretch: 92%; margin: 0; overflow-wrap: anywhere; text-wrap: balance; }
+.chip { justify-self: start; font: 600 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 7px; border-radius: 3px; background: var(--lane); color: var(--muted); }
+.chip.working { background: var(--work-soft); color: var(--work); }
+.chip.review { background: var(--accent-soft); color: var(--accent); }
+.chip.attention { background: var(--warn-soft); color: var(--warn); }
+.chip.done { background: var(--ok-soft); color: var(--ok); }
+.instr { font-size: 13.5px; color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.instr.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.more { font-size: 12px; color: var(--accent); background: none; border: 0; padding: 0; text-transform: none; font-family: var(--body); letter-spacing: 0; justify-self: start; }
+.meta { font: 12px/1.5 var(--mono); color: var(--muted); display: grid; gap: 2px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.summary { font-size: 13.5px; border-left: 3px solid var(--accent); padding-left: 9px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note { font-size: 13px; background: var(--warn-soft); color: var(--warn); padding: 7px 9px; border-radius: 4px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.feedback { font-size: 13px; background: var(--lane); padding: 7px 9px; border-radius: 4px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.report { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
+.report a { color: var(--accent); font-weight: 700; }
+.path { font: 11.5px/1.4 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.changes { display: grid; gap: 6px; }
+.changes textarea { min-height: 70px; }
+details.done-list > summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+details.done-list[open] > summary { margin-bottom: 10px; }
+details.done-list .stack { display: grid; gap: 10px; }
+.err { color: var(--warn); font-size: 13px; margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .2s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Cutting<span>Board</span> Tasks</h1>
+    <div class="manager" id="manager"><span class="dot" id="managerDot"></span><span id="managerText">Waiting for the manager's first check-in</span></div>
+  </header>
+  <p class="notice" id="noDb" hidden>The board can't reach its storage in this view. Open it on claude.ai while signed in to add or approve tasks.</p>
+
+  <div class="board">
+    <section class="lane" aria-labelledby="h-todo">
+      <h2 id="h-todo">To do <span class="count" id="c-todo">0</span></h2>
+      <form class="add" id="addForm">
+        <label for="newTitle">Task</label>
+        <input type="text" id="newTitle" placeholder="Bandits flee at low health" maxlength="120" required>
+        <label for="newInstr">Instructions for the agent</label>
+        <textarea id="newInstr" placeholder="What should change, how it should behave, anything to keep in mind." required></textarea>
+        <button class="primary" type="submit" id="addBtn">Add to queue</button>
+        <p class="err" id="addErr" hidden></p>
+      </form>
+      <div id="l-todo" class="stack-lane"></div>
+    </section>
+    <section class="lane" aria-labelledby="h-work">
+      <h2 id="h-work">In progress <span class="count" id="c-work">0</span></h2>
+      <p class="lane-hint">Up to 3 agents at once, each in its own worktree.</p>
+      <div id="l-work"></div>
+    </section>
+    <section class="lane" aria-labelledby="h-review">
+      <h2 id="h-review">Review <span class="count" id="c-review">0</span></h2>
+      <p class="lane-hint">Approve merges the branch into main and removes its worktree.</p>
+      <div id="l-review"></div>
+    </section>
+    <section class="lane" aria-labelledby="h-done">
+      <h2 id="h-done">Done <span class="count" id="c-done">0</span></h2>
+      <div id="l-done"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  const LANES = {
+    todo: ["todo"],
+    work: ["working", "changes"],
+    review: ["review", "approved", "attention"],
+    done: ["done"],
+  };
+  const CHIP = {
+    todo: ["Queued", ""],
+    working: ["Agent working", "working"],
+    changes: ["Changes requested", "working"],
+    review: ["Ready for review", "review"],
+    approved: ["Approved, merging", "review"],
+    attention: ["Needs attention", "attention"],
+    done: ["Merged", "done"],
+  };
+  let db = null;
+  let tasks = [];
+  const expanded = new Set();
+  const openChanges = new Set();
+  const busy = new Set();
+  const drafts = {};
+  let focusNext = null;
+
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function ago(ms) {
+    if (!ms) return "";
+    const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+    if (s < 60) return "just now";
+    const m = Math.round(s / 60);
+    if (m < 60) return m + " min ago";
+    const h = Math.round(m / 60);
+    if (h < 24) return h + " h ago";
+    return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  async function write(id, fn) {
+    busy.add(id); delete cardErrors[id]; render();
+    try { await fn(); }
+    catch (e) {
+      try {
+        if (!e || e.code !== "unavailable") throw e;
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+        await fn();
+      } catch (e2) { showCardError(id, e2); }
+    }
+    finally { busy.delete(id); render(); }
+  }
+  const cardErrors = {};
+  function showCardError(id, e) {
+    cardErrors[id] = (e && e.code === "invalid_argument") ? "You don't have permission to change this board." : "That didn't save. Try again in a moment.";
+  }
+
+  function card(t) {
+    const d = t.data;
+    const c = el("article", "card");
+    const [chipText, chipCls] = CHIP[d.status] || [d.status, ""];
+    c.append(el("span", "chip " + chipCls, chipText + (d.round > 1 && d.status !== "done" ? " · round " + d.round : "")));
+    c.append(el("h3", null, d.title || "Untitled task"));
+
+    if (d.instructions) {
+      const long = d.instructions.length > 220 || d.instructions.split("\n").length > 4;
+      const p = el("p", "instr" + (long && !expanded.has(t.id) ? " clamp" : ""), d.instructions);
+      c.append(p);
+      if (long) {
+        const b = el("button", "more", expanded.has(t.id) ? "Show less" : "Show all");
+        b.type = "button";
+        b.onclick = () => { expanded.has(t.id) ? expanded.delete(t.id) : expanded.add(t.id); render(); };
+        c.append(b);
+      }
+    }
+    if (d.summary && d.status !== "todo") c.append(el("p", "summary", d.summary));
+    if (d.note && (d.status === "attention" || d.status === "working" || d.status === "changes")) c.append(el("p", "note", d.note));
+    if (d.feedback && (d.status === "changes" || d.status === "working")) c.append(el("p", "feedback", "Your note: " + d.feedback));
+
+    if (d.reportUrl || d.reportPath) {
+      const r = el("div", "report");
+      if (d.reportUrl) {
+        const a = el("a", null, "Open result page");
+        a.href = d.reportUrl; a.target = "_blank"; a.rel = "noopener";
+        r.append(a);
+      }
+      if (d.reportPath) r.append(el("span", "path", d.reportPath));
+      c.append(r);
+    }
+
+    const meta = el("div", "meta");
+    const line = (s) => { if (s) meta.append(el("span", null, s)); };
+    line("Added " + ago(d.createdAt));
+    if (d.status === "working" && d.startedAt) line("Started " + ago(d.startedAt));
+    if (d.status === "review" && d.finishedAt) line("Finished " + ago(d.finishedAt));
+    if (d.status === "done" && d.mergedAt) line("Merged " + ago(d.mergedAt) + (d.mergeCommit ? " · " + d.mergeCommit : ""));
+    if (d.branch && d.status !== "done") line(d.branch);
+    c.append(meta);
+
+    const isBusy = busy.has(t.id);
+    const actions = el("div", "actions");
+    if (d.status === "todo") {
+      const rm = el("button", null, "Remove");
+      rm.type = "button"; rm.disabled = isBusy || !db;
+      rm.onclick = () => write(t.id, () => db.collection("tasks").doc(t.id).delete());
+      actions.append(rm);
+    }
+    if (d.status === "review" || d.status === "attention") {
+      const ap = el("button", "approve", d.status === "attention" ? "Retry merge" : "Approve & merge");
+      ap.type = "button"; ap.disabled = isBusy || !db;
+      ap.onclick = () => write(t.id, () => db.collection("tasks").doc(t.id).update({ status: "approved", updatedAt: Date.now(), note: "" }));
+      const ch = el("button", null, openChanges.has(t.id) ? "Cancel" : "Request changes");
+      ch.type = "button"; ch.disabled = isBusy || !db;
+      ch.onclick = () => {
+        if (openChanges.has(t.id)) openChanges.delete(t.id);
+        else { openChanges.add(t.id); focusNext = t.id; }
+        render();
+      };
+      actions.append(ap, ch);
+    }
+    if (actions.childElementCount) c.append(actions);
+
+    if (openChanges.has(t.id) && (d.status === "review" || d.status === "attention")) {
+      const f = el("form", "changes");
+      const tid = "fb-" + t.id;
+      const lab = el("label", null, "What should the agent change?"); lab.htmlFor = tid;
+      const ta = el("textarea"); ta.id = tid; ta.required = true;
+      ta.placeholder = "The bandits flee too early, wait until 20% health.";
+      ta.value = drafts[t.id] || "";
+      ta.oninput = () => { drafts[t.id] = ta.value; };
+      const send = el("button", "primary", "Send back to agent"); send.type = "submit"; send.disabled = isBusy;
+      f.append(lab, ta, send);
+      f.onsubmit = (ev) => {
+        ev.preventDefault();
+        const text = ta.value.trim();
+        if (!text) return;
+        openChanges.delete(t.id);
+        delete drafts[t.id];
+        write(t.id, () => db.collection("tasks").doc(t.id).update({ status: "changes", feedback: text, updatedAt: Date.now(), note: "" }));
+      };
+      c.append(f);
+      if (focusNext === t.id) { focusNext = null; setTimeout(() => ta.focus(), 0); }
+      else if (document.activeElement && document.activeElement.id === tid) setTimeout(() => { const n = $(tid); if (n) n.focus(); }, 0);
+    }
+    if (cardErrors[t.id]) c.append(el("p", "err", cardErrors[t.id]));
+    return c;
+  }
+
+  function fill(lane, list, emptyText) {
+    const box = $("l-" + lane);
+    box.replaceChildren();
+    box.style.display = "grid"; box.style.gap = "10px";
+    $("c-" + lane).textContent = list.length;
+    if (!list.length) { box.append(el("div", "empty", emptyText)); return; }
+    if (lane === "done") {
+      const det = el("details", "done-list");
+      det.append(el("summary", null, "Show " + list.length + " merged task" + (list.length === 1 ? "" : "s")));
+      const st = el("div", "stack");
+      list.forEach(t => st.append(card(t)));
+      det.append(st);
+      box.append(det);
+      return;
+    }
+    list.forEach(t => box.append(card(t)));
+  }
+
+  function render() {
+    const by = (lane) => tasks.filter(t => LANES[lane].includes(t.data.status));
+    const asc = (a, b) => (a.data.createdAt || 0) - (b.data.createdAt || 0);
+    const desc = (a, b) => (b.data.mergedAt || b.data.updatedAt || 0) - (a.data.mergedAt || a.data.updatedAt || 0);
+    const doneOpen = document.querySelector("details.done-list")?.open;
+    fill("todo", by("todo").sort(asc), "No queued tasks. Add one above and the manager picks it up within about two minutes.");
+    fill("work", by("work").sort(asc), "No agents running.");
+    fill("review", by("review").sort(asc), "Nothing waiting for you. Finished tasks land here with a link to their result page.");
+    fill("done", by("done").sort(desc), "Approved tasks show up here once they're merged into main.");
+    if (doneOpen) { const d = document.querySelector("details.done-list"); if (d) d.open = true; }
+  }
+
+  let heartbeat = null;
+  function renderManager() {
+    const dot = $("managerDot"), txt = $("managerText");
+    if (!heartbeat) { dot.className = "dot"; txt.textContent = "Manager hasn't checked in yet"; return; }
+    const stale = Date.now() - heartbeat.lastCheck > 6 * 60 * 1000;
+    dot.className = "dot " + (stale ? "stale" : "live");
+    txt.textContent = stale
+      ? "Manager last checked " + ago(heartbeat.lastCheck) + ". Is the Claude Code session still open?"
+      : "Manager checked " + ago(heartbeat.lastCheck) + " · " + (heartbeat.running || 0) + " of 3 agents busy";
+  }
+  setInterval(renderManager, 30000);
+
+  $("addForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (!db) return;
+    const title = $("newTitle").value.trim(), instructions = $("newInstr").value.trim();
+    if (!title || !instructions) return;
+    $("addBtn").disabled = true; $("addErr").hidden = true;
+    const now = Date.now();
+    try {
+      await db.collection("tasks").doc("t" + now.toString(36)).set({ title, instructions, status: "todo", createdAt: now, updatedAt: now, round: 1 });
+      $("newTitle").value = ""; $("newInstr").value = "";
+    } catch (e) {
+      $("addErr").textContent = e && e.code === "invalid_argument" ? "You don't have permission to add tasks to this board." : "The task didn't save. Try again in a moment.";
+      $("addErr").hidden = false;
+    } finally { $("addBtn").disabled = false; }
+  });
+
+  render();
+  renderManager();
+
+  (async () => {
+    db = window.claude ? await window.claude.use("db") : null;
+    if (!db) { $("noDb").hidden = false; $("addBtn").disabled = true; render(); return; }
+    render();
+    db.collection("tasks").onSnapshot(
+      (snap) => { tasks = snap.docs.filter(d => d.exists).map(d => ({ id: d.id, data: d.data() })); render(); },
+      () => { $("noDb").hidden = false; }
+    );
+    db.doc("meta/manager").onSnapshot(
+      (snap) => { heartbeat = snap.exists ? snap.data() : null; renderManager(); },
+      () => {}
+    );
+  })();
+})();
+</script>
