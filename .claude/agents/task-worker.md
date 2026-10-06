@@ -18,7 +18,7 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 1. Read the relevant code before changing anything. If the task is ambiguous, make the most sensible choice and note it in the result page.
 2. Implement the task in your worktree.
 3. Verify what you can. Godot is at `F:\Fork\pvkk\engine\godot.exe`:
-   - **Warm the import cache before your first Godot run:** a fresh worktree has no `.godot/` folder, and a cold import of every asset takes minutes. Copy the main checkout's cache: `robocopy "F:\Fork\CuttingBoard\cutting-board\.godot" "<your worktree>\cutting-board\.godot" /E /NFL /NDL /NJH /NJS /R:0 /W:0` (exit codes below 8 mean success; if refused, import cold), then delete the copied `cutting-board/.godot/global_script_class_cache.cfg` and `cutting-board/.godot/uid_cache.bin` (they can be stale) and run `godot.exe --headless --path cutting-board --import`.
+   - **Warm the import cache before your first Godot run:** a fresh worktree has no `.godot/` folder, and a cold import of every asset takes minutes. Copy the main checkout's cache: `robocopy "F:\Fork\CuttingBoard\cutting-board\.godot" "<your worktree>\cutting-board\.godot" /E /NFL /NDL /NJH /NJS /R:0 /W:0` (run it with the PowerShell tool, not Bash: Git Bash rewrites the `/E`-style switches into paths and robocopy rejects them; exit codes below 8 mean success; if refused, import cold), then delete the copied `cutting-board/.godot/global_script_class_cache.cfg` and `cutting-board/.godot/uid_cache.bin` (they can be stale) and run `godot.exe --headless --path cutting-board --import`.
    - `godot.exe --headless --path cutting-board --quit` (or `--check-only -s <script>`) catches parse and load errors.
    - **Tests (`cutting-board/tests/*_check.tscn`):** while iterating, run only the tests your change touches (your new test plus the ones for systems you changed). Run the **full suite once**, at the end before committing, **in parallel**: start each scene as its own background process with a time limit (`timeout 300 godot.exe --headless --fixed-fps 60 --path cutting-board res://tests/<name>.tscn > <scratch>/<name>.log 2>&1 &`), `wait`, then check each log ends with `0 failure(s)` or all `PASS`. `--fixed-fps 60` runs physics as fast as the CPU allows (same 1/60 s steps); game timers on the wall clock (`Time.get_ticks_msec`) do not speed up, so tests that wait on them must also wait real time. Never run the suite one scene after another, and don't rerun the full suite after small fixes; rerun only the tests that failed.
    - For anything visible, take screenshots with a real window (not `--headless`), e.g. `tallow_capture.tscn -- --shots=<dir> --only=<names>` (launched with the recipe below), or write a small capture scene under `cutting-board/tests/` for the feature. Before/after shots are the best evidence: capture `main` from the main checkout `F:/Fork/CuttingBoard` before your change only if it costs little.
@@ -29,6 +29,12 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
    Do not push, and do not merge into `main`.
 5. Only if your prompt says **"Visual result page: yes"**, build and publish a short result page (below). Otherwise make no HTML page and publish nothing: your final message and its SUMMARY are the whole report. Still capture screenshots/clips for your own verification when the change is visible, but don't build a page around them.
+
+## Time limit
+Your prompt gives a `Time limit: <N> min` (15 if missing). Note the time when you start (`date +%s`) and check the elapsed time with `date +%s` between steps.
+- **Plan first.** After reading the code, if the task clearly can't be done well within the limit, stop right away and report `needs-time` (below) instead of starting.
+- **At the limit, stop**, even mid-task: commit your work in progress on your branch (message starting with `WIP:`), skip the result page, and report `needs-time`. Don't rush a sloppy finish to beat the clock. Also stop when the manager sends you "Time limit reached".
+- `needs-time` report: `OUTCOME: needs-time`, plus `TIME_REQUEST: <extra minutes>` and `TIME_REASON: <short bullets: what's done, what's left, why it needs that long>`. The user decides; a new agent continues from your branch if they approve.
 
 ## Result page (only when asked for)
 Keep it **short**: something the user can take in within a minute. Lead with the **visual evidence**: one or two key screenshots, a before/after, and a **GIF or video when the change moves** (animation, physics, AI, UI transitions). Then a few lines of text. No diff excerpts, no per-file walkthrough, no long verification write-up; those belong in the commit message and your final message.
@@ -66,6 +72,8 @@ REPORT_URL: <artifact URL, or none>
 BRANCH: <branch name>
 WORKTREE: <absolute worktree path>
 COMMIT: <short hash of your last commit>
-OUTCOME: done | partial | blocked
-SUMMARY: <2–4 plain sentences for the task card: what changed, how it was checked, and anything the user should check. Without a result page this is all the user sees, so make it self-sufficient.>
+OUTCOME: done | partial | blocked | needs-time
+TIME_REQUEST: <extra minutes, only for needs-time>
+TIME_REASON: <short bullets, only for needs-time>
+SUMMARY: <short bullet points only, no prose (each starting with "• ", one fact per bullet, at most ~5): what changed, how it was checked. If the user must do something (pick, check, decide), the first bullet starts with "You:" and says what. Without a result page this is all the user sees, so make it self-sufficient.>
 ```
