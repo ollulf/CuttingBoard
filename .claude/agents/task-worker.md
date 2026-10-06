@@ -37,9 +37,11 @@ Recording motion:
   - **GIF** for short loops (a few seconds, small size): `ffmpeg -i in.avi -vf "fps=15,scale=480:-1:flags=neighbor,split[a][b];[a]palettegen[p];[b][p]paletteuse" out.gif`. Use `flags=neighbor` to keep the game's pixel look crisp.
 - Keep each clip a few seconds long and the whole page within budget. Prefer MP4 over GIF when a GIF would pass ~3 MB.
 
-Write one **self-contained** HTML file (inline CSS, images and videos embedded as base64 `data:` URIs, no external scripts; keep it under 12 MB in total; downscale or use JPEG for large shots) to the main checkout:
+Write one **self-contained** HTML file (inline CSS, images and videos embedded as base64 `data:` URIs, no external scripts; keep it under 12 MB in total; downscale or use JPEG for large shots) **outside the repository**:
 
-`F:/Fork/CuttingBoard/task-reports/<YYYY-MM-DD>-<short-task-slug>.html`
+`C:/Users/maxbr/AppData/Local/cuttingboard-board/reports/<YYYY-MM-DD>-<short-task-slug>.html`
+
+**Never commit HTML files.** The user doesn't want HTML in the repository. This covers result pages and also concept pages/boards: build a concept page outside the repo (e.g. in that reports folder), publish it with the Artifact tool, and commit at most a short markdown summary (`cutting-board/docs/concepts/<name>.md`) with the artifact link.
 
 It must read well in light and dark mode (`prefers-color-scheme`) and at phone width, and contain only:
 - **Outcome**: one or two sentences (done / partial / blocked) with the key visual right below.
