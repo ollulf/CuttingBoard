@@ -1,11 +1,17 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" format=3]
 
-[ext_resource type="Script" path="res://scripts/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://0uo7ewxm7o60" path="res://assets/ui/icons/items/barrel.png" id="1_ee4tb"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_la1ky"]
+diffuse_texture = ExtResource("1_ee4tb")
+texture_filter = 1
 
 [resource]
 script = ExtResource("1_script")
 display_name = "Barrel"
-grid_size = Vector2i(3, 4)
-world_scene_path = "res://scenes/items/barrel.tscn"
+icon = SubResource("CanvasTexture_la1ky")
 weight = 40.0
 durability = 160
+grid_size = Vector2i(3, 4)
+world_scene_path = "res://scenes/items/barrel.tscn"

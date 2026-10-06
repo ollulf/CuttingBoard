@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://tools/icon_baker/icon_baker.gd" id="1_script"]
+
+[sub_resource type="Environment" id="Environment_icons"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(0.48, 0.36, 0.6, 1)
+ambient_light_energy = 0.9
+tonemap_mode = 0
+
+[node name="IconBaker" type="Node"]
+script = ExtResource("1_script")
+
+[node name="Viewport" type="SubViewport" parent="."]
+unique_name_in_owner = true
+own_world_3d = true
+transparent_bg = true
+size = Vector2i(64, 64)
+render_target_update_mode = 4
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Viewport"]
+environment = SubResource("Environment_icons")
+
+[node name="Pivot" type="Node3D" parent="Viewport"]
+unique_name_in_owner = true
+
+[node name="Rig" type="Node3D" parent="Viewport"]
+unique_name_in_owner = true
+
+[node name="Camera" type="Camera3D" parent="Viewport/Rig"]
+unique_name_in_owner = true
+projection = 1
+current = true
+size = 1.0
+near = 0.01
+far = 100.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="Viewport/Rig"]
+rotation_degrees = Vector3(-40, -35, 0)
+light_color = Color(1, 0.8, 0.56, 1)
+light_energy = 1.5
+
+[node name="RimLight" type="DirectionalLight3D" parent="Viewport/Rig"]
+rotation_degrees = Vector3(-25, 150, 0)
+light_color = Color(0.62, 0.5, 0.95, 1)
+light_energy = 0.7
