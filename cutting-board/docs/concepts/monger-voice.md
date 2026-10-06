@@ -14,6 +14,8 @@ the files compare the voice, not the melody:
 - **greeting** (2.15 s): eight blips that lift and settle, "well-hel-lo, dear-ie-come-closer".
 - **wise** (4.0 s): slower, one pause in the middle, a long falling final syllable.
 
+Listening page: https://claude.ai/artifact/GtuAYSBVFjwX8Lgaa2Qcoj
+
 ## Files
 
 All in `assets/audio/voice_concepts/` (22 050 Hz mono 16-bit, like the rest of the SFX).
