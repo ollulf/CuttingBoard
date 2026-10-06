@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
 [ext_resource type="Script" path="res://scripts/components/health_regen.gd" id="99_regen"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="11_inventory"]
 [ext_resource type="PackedScene" path="res://scenes/characters/mask_monger_model.tscn" id="12_model"]
 [ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="13_faction"]
+[ext_resource type="Script" path="res://scenes/characters/mask_burn_ritual.gd" id="14_ritual"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_monger"]
 radius = 0.5
@@ -104,3 +105,7 @@ script = ExtResource("9_wander")
 radius = 2.5
 pause_min = 3.0
 pause_max = 8.0
+
+[node name="Usable" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("14_ritual")

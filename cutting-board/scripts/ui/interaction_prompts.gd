@@ -96,6 +96,8 @@ func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
 
 func _update_interact_prompt() -> void:
 	var container := _interactor.get_hovered_container()
+	var usable := Usable.find_in(_interactor.get_hovered())
+	var offer := usable.get_prompt(_interactor.get_owner()) if usable else ""
 	if _interactor.can_stow_hovered(_inventory):
 		_interact_prompt.show_prompt("E", "Take")
 	elif container:
@@ -103,6 +105,8 @@ func _update_interact_prompt() -> void:
 	elif _hovering_carryable():
 		# Carryable but refused, which at this point only means the grid is full.
 		_interact_prompt.show_prompt("E", "Inventory full")
+	elif not offer.is_empty():
+		_interact_prompt.show_prompt("E", offer)
 	else:
 		_interact_prompt.hide()
 
