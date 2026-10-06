@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/charge_bar.tscn" id="5_charge_bar"]
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="6_inventory"]
 [ext_resource type="Script" path="res://scripts/components/arm_animator.gd" id="8_arm_animator"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="40_pause_menu"]
 [ext_resource type="AnimationLibrary" path="res://resources/animations/arms.tres" id="9_arm_anims"]
 [ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="10_melee"]
 [ext_resource type="Script" path="res://scripts/components/hotbar.gd" id="11_hotbar"]
@@ -49,6 +50,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 [node name="Camera3D" type="Camera3D" parent="CameraPivot" unique_id=692127463]
 unique_name_in_owner = true
 current = true
+
+[node name="PauseMenu" parent="CameraPivot/Camera3D" instance=ExtResource("40_pause_menu")]
+unique_name_in_owner = true
 
 [node name="Arms" type="Node3D" parent="CameraPivot/Camera3D"]
 unique_name_in_owner = true

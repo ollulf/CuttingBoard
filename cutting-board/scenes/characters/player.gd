@@ -178,10 +178,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		)
 		return
 
-	if event.is_action_pressed("ui_cancel"):
-		MouseGrab.release()
-		return
-
 	# Releases are handled before the capture guard so letting go while the mouse is
 	# free still finishes the throw instead of leaving the hand charging forever.
 	if event.is_action_released("grab_left"):
