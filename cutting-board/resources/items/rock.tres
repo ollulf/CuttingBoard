@@ -1,13 +1,18 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/rock.png" id="1_k5y8h"]
 [ext_resource type="Script" path="res://scripts/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_g10cq"]
+diffuse_texture = ExtResource("1_k5y8h")
+texture_filter = 1
 
 [resource]
 script = ExtResource("1_script")
 display_name = "Rock"
+icon = SubResource("CanvasTexture_g10cq")
 description = "A fist-sized stone. Good for one throw."
-grid_size = Vector2i(1, 1)
-world_scene_path = "res://scenes/items/rock.tscn"
 throwable = true
 weight = 1.0
 durability = 1
+world_scene_path = "res://scenes/items/rock.tscn"
