@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/vfx/mask_off_vision.gd" id="1_script"]
+[ext_resource type="Shader" path="res://assets/shaders/post/mask_off_vision.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vision"]
+shader = ExtResource("2_shader")
+
+[node name="MaskOffVision" type="CanvasLayer"]
+layer = -80
+visible = false
+script = ExtResource("1_script")
+
+[node name="View" type="ColorRect" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_vision")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
