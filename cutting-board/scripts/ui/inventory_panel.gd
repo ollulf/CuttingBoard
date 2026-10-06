@@ -726,8 +726,8 @@ func _stow_hand_to_grid(
 func _put_on(slot: int, from: Inventory, entry: InventoryEntry) -> void:
 	if from == null or entry == null:
 		return
-	if _equipment.equip(slot, entry.data, entry.durability):
-		from.remove(entry)
+	# An occupied slot swaps: what was worn goes into the grid in the new item's place.
+	_equipment.swap_from(slot, from, entry)
 
 
 ## Takes a worn item off into a grid, preferring the square it was dropped on and falling
@@ -797,7 +797,11 @@ func _accepts_wear(slot: int) -> bool:
 		return false
 	if _drag_entry == null or slot == _drag_wear:
 		return false
-	return _equipment.is_free(slot) and _equipment.accepts(slot, _drag_data)
+	if not _equipment.accepts(slot, _drag_data):
+		return false
+	# An occupied slot swaps, so the worn item needs somewhere to go in the dragged
+	# item's grid; without room the drop is refused rather than losing anything.
+	return _equipment.can_swap_from(slot, _inventory_for(_drag_side), _drag_entry)
 
 
 ## Whether a hotbar square will take what is being dragged. Links are made to items in
