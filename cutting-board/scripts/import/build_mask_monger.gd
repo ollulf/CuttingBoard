@@ -42,6 +42,8 @@ const RACK_MASKS := [
 ]
 ## The masks are drawn smaller than a worn one, as in the concept.
 const MASK_SCALE := 0.62
+## The whole figure is scaled up from the concept (about 2.3 m tall).
+const FIGURE_SCALE := 1.18
 
 var _root: Node3D
 var _materials := {}
@@ -52,6 +54,7 @@ func _init() -> void:
 	_root.name = "MaskMongerModel"
 	var model := _pivot(_root, "Model")
 	model.rotation.y = PI
+	model.scale = Vector3.ONE * FIGURE_SCALE
 	_build(model)
 	_own(_root)
 	var scene := PackedScene.new()
@@ -107,7 +110,7 @@ func _build(g: Node3D) -> void:
 	lamp.name = "Lamp"
 	lamp.light_color = FLAME
 	lamp.light_energy = 0.9
-	lamp.omni_range = 2.5
+	lamp.omni_range = 3.0
 	lamp.position = Vector3(0, -0.16, 0.1)
 	lantern.add_child(lamp)
 
