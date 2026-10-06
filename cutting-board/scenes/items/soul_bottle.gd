@@ -5,9 +5,9 @@ extends RigidBody3D
 ## an "O" mouth) now and then surfaces in it and is dragged off again
 ## (assets/shaders/soul_swirl.gdshader). The swirl drifts gently up and down.
 ##
-## Which bottle it is (vial, flask or jar) is only the Mesh node's mesh: the concepts are
-## assets/meshes/props/soul_bottle_a|b|c.res, built by scripts/import/build_soul_bottle.gd.
-## Every bottle leaves its hollow round the origin, where the swirl floats.
+## The bottle is a corked glass vial (assets/meshes/props/soul_bottle.res, built by
+## scripts/import/build_soul_bottle.gd); its hollow sits round the origin, where the swirl
+## floats.
 
 ## Soul colours. Amber-yellow lands on the retro palette's flame/amber and stays yellow;
 ## ember red has no red to land on there and comes out a burnt orange.
@@ -30,8 +30,12 @@ var _time := 0.0
 func _ready() -> void:
 	_time = randf() * bob_period
 	_glow.light_color = soul_colour
-	var material := _swirl.mesh.surface_get_material(0) as ShaderMaterial
+	# Each bottle gets its own copy of the swirl, started at its own point in time, so
+	# bottles side by side don't swirl and show their faces in step.
+	var material := _swirl.mesh.surface_get_material(0).duplicate() as ShaderMaterial
 	material.set_shader_parameter("soul_colour", soul_colour)
+	material.set_shader_parameter("seed", randf() * 100.0)
+	_swirl.material_override = material
 
 
 func _process(delta: float) -> void:

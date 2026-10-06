@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/items/carryable_base.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scenes/items/soul_bottle.gd" id="2_script"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_a.res" id="3_mesh"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle.res" id="3_mesh"]
 [ext_resource type="Resource" path="res://resources/items/soul_bottle.tres" id="4_item"]
 [ext_resource type="Shader" path="res://assets/shaders/soul_swirl.gdshader" id="5_swirl"]
 
