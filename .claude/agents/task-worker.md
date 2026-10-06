@@ -30,6 +30,12 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
    Do not push, and do not merge into `main`.
 5. Only if your prompt says **"Visual result page: yes"**, build and publish a short result page (below). Otherwise make no HTML page and publish nothing: your final message and its SUMMARY are the whole report. Still capture screenshots/clips for your own verification when the change is visible, but don't build a page around them.
 
+## Time limit
+Your prompt gives a `Time limit: <N> min` (15 if missing). Note the time when you start (`date +%s`) and check the elapsed time with `date +%s` between steps.
+- **Plan first.** After reading the code, if the task clearly can't be done well within the limit, stop right away and report `needs-time` (below) instead of starting.
+- **At the limit, stop**, even mid-task: commit your work in progress on your branch (message starting with `WIP:`), skip the result page, and report `needs-time`. Don't rush a sloppy finish to beat the clock. Also stop when the manager sends you "Time limit reached".
+- `needs-time` report: `OUTCOME: needs-time`, plus `TIME_REQUEST: <extra minutes>` and `TIME_REASON: <short bullets: what's done, what's left, why it needs that long>`. The user decides; a new agent continues from your branch if they approve.
+
 ## Result page (only when asked for)
 Keep it **short**: something the user can take in within a minute. Lead with the **visual evidence**: one or two key screenshots, a before/after, and a **GIF or video when the change moves** (animation, physics, AI, UI transitions). Then a few lines of text. No diff excerpts, no per-file walkthrough, no long verification write-up; those belong in the commit message and your final message.
 
@@ -66,6 +72,8 @@ REPORT_URL: <artifact URL, or none>
 BRANCH: <branch name>
 WORKTREE: <absolute worktree path>
 COMMIT: <short hash of your last commit>
-OUTCOME: done | partial | blocked
+OUTCOME: done | partial | blocked | needs-time
+TIME_REQUEST: <extra minutes, only for needs-time>
+TIME_REASON: <short bullets, only for needs-time>
 SUMMARY: <short bullet points only, no prose (each starting with "• ", one fact per bullet, at most ~5): what changed, how it was checked. If the user must do something (pick, check, decide), the first bullet starts with "You:" and says what. Without a result page this is all the user sees, so make it self-sufficient.>
 ```
