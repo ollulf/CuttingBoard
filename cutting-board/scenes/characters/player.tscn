@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://scripts/components/faction.gd" id="13_faction"]
 [ext_resource type="Resource" path="res://resources/factions/player.tres" id="14_player_faction"]
 [ext_resource type="PackedScene" path="res://scenes/characters/human_body.tscn" id="15_human_body"]
+[ext_resource type="Script" path="res://scripts/components/combat_tracker.gd" id="16_combat"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -134,3 +135,7 @@ script = ExtResource("12_health")
 unique_name_in_owner = true
 script = ExtResource("13_faction")
 data = ExtResource("14_player_faction")
+
+[node name="CombatTracker" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("16_combat")

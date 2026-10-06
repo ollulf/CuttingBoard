@@ -42,6 +42,10 @@ const HEART: Array[String] = [
 ## The concept keeps health on screen the whole time; on, the bar fades out at full
 ## health and comes back whenever it drops or show_for() asks for it.
 @export var hide_when_full := false
+## Follows the Health of whoever the HUD is instanced into, and stays on screen for as
+## long as their CombatTracker says they are fighting. Off for a bar that is pointed at
+## someone else with bind(), like the enemy's.
+@export var follow_owner := true
 @export_group("Timing")
 ## The fill snaps to a new value in `fill_steps` jumps over `fill_time` seconds.
 @export var fill_time := 0.5
@@ -79,10 +83,14 @@ func _ready() -> void:
 	set_process(false)
 	get_tree().root.size_changed.connect(_fit_to_window)
 	_fit_to_window()
-	if _health == null:
-		var found := _find_owner_health()
-		if found:
-			bind(found)
+	if follow_owner:
+		if _health == null:
+			var found := _find_owner_health()
+			if found:
+				bind(found)
+		var tracker := CombatTracker.find_for(self)
+		if tracker:
+			tracker.combat_changed.connect(set_forced_visible)
 	_update_visibility(true)
 
 

@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="4_invpanel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hotbar_panel.tscn" id="5_hotbar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/health_bar.tscn" id="6_healthbar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/target_bar.tscn" id="7_targetbar"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
@@ -63,6 +64,8 @@ layout_mode = 2
 size_flags_horizontal = 8
 
 [node name="HealthBar" parent="." instance=ExtResource("6_healthbar")]
+
+[node name="TargetBar" parent="." instance=ExtResource("7_targetbar")]
 
 [node name="InventoryPanel" parent="." instance=ExtResource("4_invpanel")]
 
