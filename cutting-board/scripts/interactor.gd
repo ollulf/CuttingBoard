@@ -11,6 +11,9 @@ signal item_stowed(data: ItemData)
 ## A container under the crosshair was opened. The interactor owns no UI, so it reports
 ## which inventory was opened and leaves putting a screen on it to whoever owns the HUD.
 signal container_opened(inventory: Inventory)
+## The player tried to take the item under the crosshair, but the inventory has no room
+## for it. The item stays where it is; this only lets the HUD say why.
+signal stow_refused(data: ItemData)
 
 @export var ray_length := 3.0
 @export var collision_mask := 1
@@ -39,6 +42,8 @@ signal container_opened(inventory: Inventory)
 ## let go otherwise.
 @export var throw_sound: SoundBank = preload("res://resources/audio/throw.tres")
 @export var drop_sound: SoundBank = preload("res://resources/audio/drop.tres")
+## Trying to take an item the inventory has no room for.
+@export var refused_sound: SoundBank = preload("res://resources/audio/ui_invalid.tres")
 @export_range(0.0, 1.0) var throw_sound_charge := 0.2
 @export_group("")
 
@@ -89,6 +94,10 @@ func get_hovered() -> Node3D:
 func interact(inventory: Inventory = null) -> void:
 	if stow_hovered(inventory):
 		return
+	var carryable := _get_component(get_hovered(), "Carryable") as Carryable
+	if carryable and inventory:
+		Sfx.play(refused_sound)
+		stow_refused.emit(carryable.item_data)
 	# A container is opened as well as used rather than instead of it, so a chest can
 	# still swing its lid or play a sound through its own Usable.
 	var container := get_hovered_container()
