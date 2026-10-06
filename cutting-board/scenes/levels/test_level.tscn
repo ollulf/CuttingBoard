@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/decoration/lantern_post.tscn" id="17_lantern"]
 [ext_resource type="PackedScene" path="res://scenes/vfx/wisp.tscn" id="18_wisp"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/night_loop.wav" id="19_night"]
+[ext_resource type="PackedScene" path="res://scenes/environment/bandit_camp/bandit_camp.tscn" id="20_camp"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -48,6 +49,9 @@ bus = &"Ambience"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 
 [node name="ValleyFoliage" parent="." unique_id=725114063 instance=ExtResource("15_foliage")]
+
+[node name="BanditCamp" parent="." instance=ExtResource("20_camp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 0, -68)
 
 [node name="RoadLanterns" type="Node3D" parent="."]
 
