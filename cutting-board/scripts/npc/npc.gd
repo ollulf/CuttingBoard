@@ -179,13 +179,8 @@ func throw_from(hand: HandSlot, launch: Vector3) -> void:
 		return
 	# The hand sits right at the body's side, so the item is kept from colliding with
 	# its own thrower until it has had a moment to clear it.
-	body.add_collision_exception_with(self)
+	HumanBody.keep_clear_of(body, self)
 	body.linear_velocity = launch
-	get_tree().create_timer(0.3).timeout.connect(
-		func() -> void:
-			if is_instance_valid(body):
-				body.remove_collision_exception_with(self)
-	)
 
 
 ## Lets go of whatever each hand holds, leaving it in the world at rest.

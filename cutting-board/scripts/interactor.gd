@@ -260,6 +260,7 @@ func _throw_from(hand: HandSlot, ratio: float) -> void:
 	# After return_to_world, so the body is unfrozen and will accept the velocity.
 	var body := item as RigidBody3D
 	if body:
+		HumanBody.keep_clear_of(body, get_owner())
 		body.linear_velocity = _throw_direction(item.global_position) * throw_speed * ratio
 
 
