@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-## The retro screen: renders the 3D world at a low internal resolution (about 320x180),
+## The retro screen: renders the 3D world at a low internal resolution (about 640x360),
 ## blows it up by a whole number with nearest filtering and runs it through the palette
 ## and dither grade. UI is drawn on higher canvas layers of the main window, so it stays
 ## sharp and undithered on top.
@@ -20,9 +20,15 @@ extends CanvasLayer
 		enabled = value
 		if is_node_ready():
 			_apply_enabled()
-## Height of the internal render in pixels. The window is divided by the largest whole
-## number that keeps the render at least this tall, so pixels are always square blocks.
-@export var target_height := 180
+## Height of the internal render in pixels: the one knob for how chunky the pixels are.
+## The window is divided by the whole number that brings the render closest to this
+## height, so pixels are always square blocks; the default 1280x720 window gets a 640x360
+## render blown up 2x. The vertex snap grid and the dither follow the render size.
+@export var render_height := 360:
+	set(value):
+		render_height = value
+		if is_node_ready():
+			_fit_to_window()
 ## Vertex snap grid as a multiple of the render size: 1 snaps to render pixels, lower
 ## values jitter more coarsely.
 @export var snap_scale := 1.0
@@ -83,12 +89,14 @@ func get_render_size() -> Vector2i:
 	return _render.size
 
 
-## Sizes the render to the window: the window's size divided by the largest whole
-## number that keeps the render at least `target_height` tall, rounded up, with the
-## blown-up image centred so any leftover pixels crop evenly off the edges.
+## Sizes the render to the window: the window's size divided by the whole number that
+## brings the render closest to `render_height`, rounded up, with the blown-up image
+## centred so any leftover pixels crop evenly off the edges. Rounding to the nearest
+## scale rather than down keeps windows a little short of a multiple (say 1000x700)
+## pixelated instead of falling back to a full-resolution render.
 func _fit_to_window() -> void:
 	var window := Vector2i(get_tree().root.get_visible_rect().size)
-	_scale = maxi(1, window.y / maxi(target_height, 1))
+	_scale = maxi(1, roundi(float(window.y) / maxi(render_height, 1)))
 	var render := Vector2i(ceili(float(window.x) / _scale), ceili(float(window.y) / _scale))
 	_render.size = render
 	_display.size = Vector2(render * _scale)

@@ -4,7 +4,7 @@
 
 [resource]
 shader = ExtResource("1_shader")
-shader_parameter/render_size = Vector2(320, 180)
+shader_parameter/render_size = Vector2(640, 360)
 shader_parameter/strength = 1.0
 shader_parameter/dither_spread = 0.1
 shader_parameter/exposure = 1.0

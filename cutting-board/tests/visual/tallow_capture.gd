@@ -8,6 +8,8 @@ extends Node
 ##
 ## Without --shots it only tours the cameras, which is still a quick check for script
 ## and shader errors. Needs a real window; under --headless nothing is saved.
+## Optional: --render-height=<px> overrides PsxScreen.render_height for comparing pixel
+## sizes, and --only=<name>,<name> limits the tour to shots whose names contain those.
 
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
@@ -30,6 +32,7 @@ const SHOTS := [
 ]
 
 var _shots_dir := ""
+var _only: PackedStringArray = []
 var _camera: Camera3D
 var _ui_layers: Array[Node] = []
 
@@ -38,6 +41,10 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+		elif arg.begins_with("--render-height="):
+			PsxScreen.render_height = arg.trim_prefix("--render-height=").to_int()
+		elif arg.begins_with("--only="):
+			_only = arg.trim_prefix("--only=").split(",", false)
 	var level := LEVEL.instantiate()
 	add_child(level)
 	_pose(VILLAGER.instantiate(), level, Vector3(-1.5, 0, -59.5), Vector3(-0.6, 0, -57.6))
@@ -62,6 +69,8 @@ func _pose(npc: Node3D, level: Node, at: Vector3, facing: Vector3) -> void:
 func _tour() -> void:
 	await _wait(1.5)
 	for shot in SHOTS:
+		if not _only.is_empty() and not Array(_only).any(func(part): return part in shot[0]):
+			continue
 		PsxScreen.enabled = shot[3]
 		for layer in _ui_layers:
 			layer.visible = shot[4]

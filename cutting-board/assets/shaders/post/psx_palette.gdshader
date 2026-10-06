@@ -9,7 +9,7 @@ shader_type canvas_item;
 // also how the art pitch's previews quantised them.
 
 // Size of the 3D render in pixels; PsxScreen keeps it up to date.
-uniform vec2 render_size = vec2(320.0, 180.0);
+uniform vec2 render_size = vec2(640.0, 360.0);
 
 // 0 shows the plain low-res render, 1 the fully quantised image.
 uniform float strength : hint_range(0.0, 1.0) = 1.0;
