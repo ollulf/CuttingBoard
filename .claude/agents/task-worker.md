@@ -67,5 +67,5 @@ BRANCH: <branch name>
 WORKTREE: <absolute worktree path>
 COMMIT: <short hash of your last commit>
 OUTCOME: done | partial | blocked
-SUMMARY: <2–4 plain sentences for the task card: what changed, how it was checked, and anything the user should check. Without a result page this is all the user sees, so make it self-sufficient.>
+SUMMARY: <short bullet points only, no prose (each starting with "• ", one fact per bullet, at most ~5): what changed, how it was checked. If the user must do something (pick, check, decide), the first bullet starts with "You:" and says what. Without a result page this is all the user sees, so make it self-sufficient.>
 ```
