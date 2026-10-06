@@ -39,7 +39,36 @@ body {
   padding-block: 24px 48px;
   min-height: 100%;
 }
-.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 16px; }
+.shell { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; align-items: start; }
+.wrap { display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 900px) { .shell { grid-template-columns: minmax(0, 1fr); } .tokens { order: 2; } }
+
+/* Token meter sidebar: one segmented pixel bar by token kind, then a ranked list per agent. */
+.tokens { display: grid; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 900px) { .tokens { position: static; } }
+.side-title { font: 700 13px/1 var(--px); text-transform: uppercase; letter-spacing: 1px; margin: 0; color: var(--dim); }
+.side-sub { font: 700 11px/1 var(--px); text-transform: uppercase; letter-spacing: 1px; margin: 6px 0 0; color: var(--dim); display: flex; gap: 8px; align-items: center; }
+.side-sub::after { content: ""; flex: 1; height: 2px; background: repeating-linear-gradient(90deg, var(--panel-hi) 0 4px, transparent 4px 8px); }
+.tok-big { font: 700 30px/1 var(--px); font-variant-numeric: tabular-nums; }
+.tok-bar { display: flex; height: 14px; background: var(--panel-lo); box-shadow: 0 0 0 2px var(--panel-lo); }
+.tok-bar span { display: block; height: 100%; min-width: 2px; }
+.k-read { background: #5f6ad8; } .k-write { background: var(--accent); } .k-in { background: var(--ok); } .k-out { background: var(--warn); }
+.tok-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font: 11px/1.3 var(--px); color: var(--dim); }
+.tok-legend li { display: flex; align-items: center; gap: 6px; }
+.tok-legend i { width: 8px; height: 8px; flex: none; }
+.tok-legend b { margin-left: auto; color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
+.tok-agents { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tok-agents li { display: grid; gap: 3px; min-width: 0; }
+.tok-agents .name { display: flex; gap: 6px; font-size: 14px; line-height: 1.2; min-width: 0; }
+.tok-agents .name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tok-agents .name b { margin-left: auto; font: 11px/1.3 var(--px); color: var(--dim); font-weight: 400; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tok-agents .mini { height: 6px; background: var(--panel-lo); }
+.tok-agents .mini span { display: block; height: 100%; background: var(--accent); }
+.tok-agents li.live .mini span { background: var(--work); }
+.tok-agents li.mgr .mini span { background: var(--warn); }
+.tok-empty { font-size: 14px; color: var(--dim); }
+.tok-foot { font: 10px/1.4 var(--px); color: var(--dim); margin: 0; text-transform: uppercase; }
+.tok-chip { font: 11px/1 var(--px); color: var(--dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* Pixel panel: hard 2px bevel, notched corners, no blur anywhere. */
 .panel {
@@ -152,6 +181,16 @@ details.done[open] > summary .group::before { content: "▾"; }
 details.done .list { margin-top: 6px; }
 </style>
 
+<div class="shell">
+<aside class="panel tokens" aria-labelledby="tokTitle">
+  <h2 class="side-title" id="tokTitle">Tokens today</h2>
+  <div class="tok-big" id="tokTotal">–</div>
+  <div class="tok-bar" id="tokBar" aria-hidden="true"></div>
+  <ul class="tok-legend" id="tokLegend"></ul>
+  <h3 class="side-sub">By agent</h3>
+  <ol class="tok-agents" id="tokAgents"><li class="tok-empty">No usage read yet. The manager updates this on every check.</li></ol>
+  <p class="tok-foot" id="tokFoot"></p>
+</aside>
 <div class="wrap">
   <section class="panel">
     <div class="titlebar">
@@ -172,6 +211,7 @@ details.done .list { margin-top: 6px; }
   <section class="panel" aria-label="Tasks">
     <div id="list"></div>
   </section>
+</div>
 </div>
 
 <script>
@@ -252,7 +292,7 @@ details.done .list { margin-top: 6px; }
     head.append(
       el("span", "status " + cls, label + (d.round > 1 && d.status !== "done" ? " · R" + d.round : "")),
       el("span", "task-title", d.title || "Untitled task"),
-      el("span", "when", ago(d.status === "done" ? d.mergedAt : d.updatedAt || d.createdAt))
+      el("span", "when", (taskTokens(d) ? fmt(taskTokens(d)) + " tok · " : "") + ago(d.status === "done" ? d.mergedAt : d.updatedAt || d.createdAt))
     );
     const toggle = () => { open.has(t.id) ? open.delete(t.id) : open.add(t.id); render(); };
     if (!needs) {
@@ -287,6 +327,8 @@ details.done .list { margin-top: 6px; }
     if (d.finishedAt && (d.status === "review" || d.status === "attention")) meta.push("finished " + ago(d.finishedAt));
     if (d.branch && d.status !== "done") meta.push(d.branch);
     if (d.mergeCommit) meta.push("merged as " + d.mergeCommit);
+    const tt = taskTokens(d);
+    if (tt) meta.push(fmt(tt) + " tokens" + (usage && usage.date ? " (" + usage.date + ")" : ""));
     body.append(el("div", "meta", meta.join(" · ")));
 
     const isBusy = busy.has(t.id) || !db;
@@ -355,6 +397,65 @@ details.done .list { margin-top: 6px; }
     return row;
   }
 
+  // ---- Token meter. meta/usage is written by the manager from the Claude Code logs. ----
+  let usage = null;
+  function fmt(n) {
+    if (!n) return "0";
+    if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 0 : 1) + "B";
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 1) + "k";
+    return String(n);
+  }
+  function agentIdsOf(d) {
+    const ids = Array.isArray(d.pastAgents) ? d.pastAgents.slice() : [];
+    if (d.agentId) ids.push(d.agentId);
+    return ids;
+  }
+  function taskTokens(d) {
+    if (!usage || !usage.agents) return 0;
+    return agentIdsOf(d).reduce((s, id) => s + ((usage.agents[id] && usage.agents[id].total) || 0), 0);
+  }
+  function renderTokens() {
+    const total = $("tokTotal"), bar = $("tokBar"), legend = $("tokLegend"), list = $("tokAgents"), foot = $("tokFoot");
+    if (!usage || !usage.total) return;
+    const t = usage.total;
+    total.textContent = fmt(t.total);
+    total.title = t.total.toLocaleString() + " tokens";
+    const parts = [
+      ["k-read", "Cache read", t.cacheRead],
+      ["k-write", "Cache write", t.cacheWrite],
+      ["k-in", "Input", t.input],
+      ["k-out", "Output", t.output],
+    ];
+    bar.replaceChildren(...parts.filter(p => p[2] > 0).map(([cls, , v]) => {
+      const s = el("span", cls); s.style.flexGrow = String(v); return s;
+    }));
+    legend.replaceChildren(...parts.map(([cls, name, v]) => {
+      const li = el("li"); li.append(el("i", cls), document.createTextNode(name), el("b", null, fmt(v))); return li;
+    }));
+
+    const byAgent = new Map();
+    for (const tk of tasks) for (const id of agentIdsOf(tk.data)) byAgent.set(id, tk.data);
+    const rows = [];
+    if (usage.manager && usage.manager.total) rows.push({ name: "Manager (Claude Code)", total: usage.manager.total, cls: "mgr" });
+    for (const [id, u] of Object.entries(usage.agents || {})) {
+      const d = byAgent.get(id);
+      rows.push({ name: d ? (d.title || "Untitled task") : "Earlier agent · " + id.slice(1, 7), total: u.total || 0, cls: d && d.status === "working" ? "live" : "" });
+    }
+    rows.sort((a, b) => b.total - a.total);
+    const max = rows.length ? rows[0].total : 1;
+    list.replaceChildren(...rows.map(r => {
+      const li = el("li", r.cls);
+      const name = el("div", "name"); name.append(el("span", null, r.name), el("b", null, fmt(r.total)));
+      name.title = r.name + " · " + r.total.toLocaleString() + " tokens";
+      const mini = el("div", "mini"); const fill = el("span"); fill.style.width = Math.max(2, Math.round(r.total / max * 100)) + "%"; mini.append(fill);
+      li.append(name, mini);
+      return li;
+    }));
+    if (!rows.length) list.replaceChildren(el("li", "tok-empty", "No usage yet today."));
+    foot.textContent = "From Claude Code logs · " + (usage.date || "") + " · read " + ago(usage.updatedAt);
+  }
+
   function renderReady() {
     const n = tasks.filter(t => t.data.status === "review" || t.data.status === "attention").length;
     $("ready").hidden = n === 0;
@@ -368,6 +469,7 @@ details.done .list { margin-top: 6px; }
 
   function render() {
     renderReady();
+    renderTokens();
     const box = $("list");
     const doneWasOpen = box.querySelector("details.done")?.open;
     box.replaceChildren();
@@ -451,6 +553,10 @@ details.done .list { margin-top: 6px; }
     );
     db.doc("meta/manager").onSnapshot(
       (snap) => { heartbeat = snap.exists ? snap.data() : null; renderManager(); },
+      () => {}
+    );
+    db.doc("meta/usage").onSnapshot(
+      (snap) => { usage = snap.exists ? snap.data() : null; render(); },
       () => {}
     );
   })();
