@@ -13,6 +13,11 @@ signal item_held(item: Node3D)
 signal item_released(item: Node3D)
 signal charge_changed(ratio: float)
 
+## Metadata stamped on an item as it leaves the hand: who let go of it, and when, in
+## seconds. DamageInfo.get_attacker reads it to credit a thrown item's hit to its thrower.
+const RELEASED_BY_META := &"released_by"
+const RELEASED_AT_META := &"released_at"
+
 ## Name shown for this hand in the inventory screen and on the hotbar.
 @export var display_name := "Hand"
 
@@ -114,6 +119,9 @@ func _clear_held() -> void:
 		item.tree_exiting.disconnect(_clear_held)
 	_held = null
 	_stop_charge()
+	if owner:
+		item.set_meta(RELEASED_BY_META, owner)
+		item.set_meta(RELEASED_AT_META, Time.get_ticks_msec() / 1000.0)
 	item_released.emit(item)
 
 
