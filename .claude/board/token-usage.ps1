@@ -70,12 +70,34 @@ foreach ($u in @($manager) + @($agents.Values)) {
     foreach ($k in $keys + "total") { $total[$k] += $u[$k] }
 }
 
+# Plan limits only reach the status line (.claude/board/statusline.ps1), which keeps the
+# latest session state here. Times become epoch ms like everything else on the board.
+$limits = [ordered]@{}
+$statusFile = Join-Path $env:LOCALAPPDATA "cuttingboard-board\statusline.json"
+if (Test-Path $statusFile) {
+    try {
+        $status = Get-Content -Raw $statusFile | ConvertFrom-Json
+        if ($status.rate_limits) {
+            foreach ($p in $status.rate_limits.PSObject.Properties) {
+                if ($null -eq $p.Value.used_percentage) { continue }
+                $limits[$p.Name] = [ordered]@{
+                    used     = [double]$p.Value.used_percentage
+                    resetsAt = if ($p.Value.resets_at) { [long]$p.Value.resets_at * 1000 } else { $null }
+                }
+            }
+        }
+        $limitsAt = [DateTimeOffset]::new((Get-Item $statusFile).LastWriteTimeUtc).ToUnixTimeMilliseconds()
+    } catch {}
+}
+
 $result = [ordered]@{
     date      = $today.ToString("yyyy-MM-dd")
     updatedAt = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
     total     = $total
     manager   = $manager
     agents    = $agents
+    limits    = $limits
+    limitsAt  = $limitsAt
 }
 $json = $result | ConvertTo-Json -Depth 5 -Compress
 if ($OutFile) { [System.IO.File]::WriteAllText($OutFile, $json) } else { $json }

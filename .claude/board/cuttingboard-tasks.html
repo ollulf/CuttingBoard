@@ -68,6 +68,16 @@ body {
 .tok-agents li.mgr .mini span { background: var(--warn); }
 .tok-empty { font-size: 14px; color: var(--dim); }
 .tok-foot { font: 10px/1.4 var(--px); color: var(--dim); margin: 0; text-transform: uppercase; }
+.limits { list-style: none; margin: 8px 0 6px; padding: 0; display: grid; gap: 10px; }
+.limits li { display: grid; gap: 4px; }
+.limits .top { display: flex; align-items: baseline; gap: 8px; }
+.limits .name { font: 11px/1 var(--px); color: var(--dim); text-transform: uppercase; }
+.limits .left { margin-left: auto; font: 700 18px/1 var(--px); font-variant-numeric: tabular-nums; }
+.limits .bar { height: 10px; background: var(--panel-lo); box-shadow: 0 0 0 2px var(--panel-lo); }
+.limits .bar span { display: block; height: 100%; background: var(--ok); }
+.limits li.low .bar span { background: var(--warn); } .limits li.low .left { color: var(--warn); }
+.limits li.out .bar span { background: var(--bad); } .limits li.out .left { color: var(--bad); }
+.limits .reset { font: 11px/1.2 var(--px); color: var(--dim); }
 .tok-chip { font: 11px/1 var(--px); color: var(--dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* Pixel panel: hard 2px bevel, notched corners, no blur anywhere. */
@@ -187,6 +197,10 @@ details.done .list { margin-top: 6px; }
 
 <div class="shell">
 <aside class="panel tokens" aria-labelledby="tokTitle">
+  <div id="limits" hidden>
+    <h2 class="side-title">Plan left</h2>
+    <ul class="limits" id="limitList"></ul>
+  </div>
   <h2 class="side-title" id="tokTitle">Tokens today</h2>
   <div class="tok-big" id="tokTotal">–</div>
   <div class="tok-bar" id="tokBar" aria-hidden="true"></div>
@@ -431,7 +445,36 @@ details.done .list { margin-top: 6px; }
     if (!usage || !usage.agents) return 0;
     return agentIdsOf(d).reduce((s, id) => s + ((usage.agents[id] && usage.agents[id].total) || 0), 0);
   }
+  const LIMIT_NAMES = { five_hour: "5-hour window", seven_day: "Weekly", seven_day_opus: "Weekly · Opus", seven_day_sonnet: "Weekly · Sonnet" };
+  function resetText(ms) {
+    if (!ms) return "";
+    const d = new Date(ms), now = new Date();
+    const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    const sameDay = d.toDateString() === now.toDateString();
+    const left = ms - Date.now();
+    const inText = left <= 0 ? "now" : left < 3600e3 ? Math.ceil(left / 60e3) + "m" : left < 86400e3 ? Math.floor(left / 3600e3) + "h " + Math.round((left % 3600e3) / 60e3) + "m" : Math.round(left / 86400e3) + "d";
+    return "Resets " + (sameDay ? time : d.toLocaleDateString(undefined, { weekday: "short" }) + " " + time) + " · in " + inText;
+  }
+  function renderLimits() {
+    const box = $("limits"), list = $("limitList");
+    const limits = usage && usage.limits ? Object.entries(usage.limits) : [];
+    box.hidden = limits.length === 0;
+    if (!limits.length) return;
+    list.replaceChildren(...limits.map(([key, l]) => {
+      const left = Math.max(0, Math.min(100, 100 - (l.used || 0)));
+      const li = el("li", left <= 5 ? "out" : left <= 25 ? "low" : "");
+      const top = el("div", "top");
+      top.append(el("span", "name", LIMIT_NAMES[key] || key.replace(/_/g, " ")), el("span", "left", Math.round(left) + "%"));
+      const bar = el("div", "bar"); const fill = el("span"); fill.style.width = left + "%"; bar.append(fill);
+      bar.setAttribute("role", "img"); bar.setAttribute("aria-label", Math.round(left) + "% left");
+      li.append(top, bar, el("span", "reset", resetText(l.resetsAt)));
+      return li;
+    }));
+  }
+  setInterval(() => { if (usage) renderLimits(); }, 60000);
+
   function renderTokens() {
+    renderLimits();
     const total = $("tokTotal"), bar = $("tokBar"), legend = $("tokLegend"), list = $("tokAgents"), foot = $("tokFoot");
     if (!usage || !usage.total) return;
     const t = usage.total;
