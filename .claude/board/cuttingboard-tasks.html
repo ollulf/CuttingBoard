@@ -1,4 +1,4 @@
-<title>CuttingBoard Tasks</title>
+<title>Tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;600&display=swap">
 <style>
@@ -84,6 +84,21 @@ button.go { background: var(--ok); color: #062b10; box-shadow: inset 2px 2px 0 #
 button.go:hover:not(:disabled) { background: #3cf065; }
 button:disabled { opacity: 0.5; cursor: default; }
 
+/* Review alert: a hard amber bar that blinks its marker, like a modal flag in a pixel editor. */
+.ready {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 10px 12px;
+  background: var(--warn); color: #2a1700; text-align: left;
+  box-shadow: inset 2px 2px 0 #ffd27a, inset -2px -2px 0 #a86a00;
+}
+.ready:hover:not(:disabled) { background: #ffb52e; }
+.ready .bang { width: 18px; height: 18px; background: #2a1700; color: var(--warn); display: grid; place-items: center; font: 700 13px/1 var(--px); flex: none; }
+.ready .go-to { margin-left: auto; font-size: 11px; }
+@media (prefers-reduced-motion: no-preference) {
+  .ready .bang { animation: bang 1s steps(1) infinite; }
+  .task.needs { animation: needs 1.2s steps(1) infinite; }
+}
+@keyframes bang { 50% { background: var(--warn); color: #2a1700; box-shadow: inset 0 0 0 2px #2a1700; } }
+@keyframes needs { 50% { box-shadow: inset 2px 2px 0 var(--panel-hi), inset -2px -2px 0 var(--panel-lo), -4px 0 0 #ffd27a; } }
 .notice { font: 13px/1.4 var(--px); color: var(--warn); margin: 0; text-transform: uppercase; }
 .err { color: var(--bad); font-size: 15px; margin: 6px 0 0; }
 
@@ -140,7 +155,7 @@ details.done .list { margin-top: 6px; }
 <div class="wrap">
   <section class="panel">
     <div class="titlebar">
-      <h1>Cutting<b>Board</b> Tasks</h1>
+      <h1>Tasks</h1>
       <div class="manager"><span class="led" id="led"></span><span id="managerText">Manager not checked in</span></div>
     </div>
     <form class="add" id="addForm">
@@ -148,6 +163,7 @@ details.done .list { margin-top: 6px; }
       <textarea class="field" id="newTask" rows="1" maxlength="2000" placeholder="Make bandits flee when they're below 20% health" required></textarea>
       <button class="primary" type="submit" id="addBtn">Add</button>
     </form>
+    <button class="ready" type="button" id="ready" hidden><span class="bang">!</span><span id="readyText"></span><span class="go-to">Show ▾</span></button>
     <p class="hint">Enter adds · Shift+Enter for a new line · Claude writes the agent's brief</p>
     <p class="err" id="addErr" hidden></p>
     <p class="notice" id="noDb" hidden>Storage isn't available in this view. Open the board on claude.ai while signed in.</p>
@@ -339,7 +355,19 @@ details.done .list { margin-top: 6px; }
     return row;
   }
 
+  function renderReady() {
+    const n = tasks.filter(t => t.data.status === "review" || t.data.status === "attention").length;
+    $("ready").hidden = n === 0;
+    $("readyText").textContent = n === 1 ? "1 task needs you" : n + " tasks need you";
+    document.title = n ? "(" + n + ") Tasks" : "Tasks";
+  }
+  $("ready").addEventListener("click", () => {
+    const first = document.querySelector(".task.needs");
+    if (first) { first.scrollIntoView({ block: "center" }); const h = first.querySelector("button"); if (h) h.focus({ preventScroll: true }); }
+  });
+
   function render() {
+    renderReady();
     const box = $("list");
     const doneWasOpen = box.querySelector("details.done")?.open;
     box.replaceChildren();
@@ -385,7 +413,7 @@ details.done .list { margin-top: 6px; }
     led.className = "led " + (stale ? "stale" : "live");
     txt.textContent = stale
       ? "Manager offline since " + ago(heartbeat.lastCheck)
-      : "Manager online · " + (heartbeat.running || 0) + "/3 agents";
+      : "Manager online · " + (heartbeat.running || 0) + "/5 agents";
   }
   setInterval(() => { renderManager(); }, 30000);
 

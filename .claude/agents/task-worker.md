@@ -12,6 +12,7 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 - Equipment slots are a loadout of `ItemData` records; hands hold items directly.
 
 ## Workflow
+0. **Name your branch.** Your worktree starts on an auto-generated branch (`worktree-agent-…`). If the manager gave you a branch name (`task/<slug>`), rename it first with `git branch -m <name>` inside your worktree, and use that name everywhere afterwards (commits, result page, final block). Skip this when continuing an existing branch for a change request.
 1. Read the relevant code before changing anything. If the task is ambiguous, make the most sensible choice and note it in the result page.
 2. Implement the task in your worktree.
 3. Verify what you can. Godot is at `F:\Fork\pvkk\engine\godot.exe`:
