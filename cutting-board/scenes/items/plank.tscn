@@ -1,0 +1,37 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://jejo6ahbgg58" path="res://scenes/environment/decoration/plank_1.tscn" id="1_mesh"]
+[ext_resource type="Script" uid="uid://jtqbca6mqo6" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" uid="uid://usfd7o5etjik" path="res://scripts/components/usable.gd" id="3_usable"]
+[ext_resource type="Script" uid="uid://ci8j6fh2yi3i7" path="res://scripts/components/destructible.gd" id="4_destructible"]
+[ext_resource type="Script" uid="uid://bjihoqfhsb0l2" path="res://scripts/components/impact_damage.gd" id="5_impact"]
+[ext_resource type="Resource" path="res://resources/items/plank.tres" id="6_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_plank"]
+size = Vector3(0.138, 2.709, 0.455)
+
+[node name="Plank" type="RigidBody3D"]
+mass = 14.0
+
+[node name="Mesh" parent="." instance=ExtResource("1_mesh")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.009, -0.4, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.954, 0)
+shape = SubResource("BoxShape3D_plank")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+item_data = ExtResource("6_item")
+impact_damage = 17
+
+[node name="Usable" type="Node" parent="."]
+script = ExtResource("3_usable")
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("4_destructible")
+durability = 160
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("5_impact")
+damage_per_speed = 3.0
