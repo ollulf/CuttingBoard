@@ -290,7 +290,10 @@ func _get_target() -> Node3D:
 	# Physics still reports a body that was freed earlier in the same frame — a barrel
 	# shattering on impact — and a freed node cannot even be passed to a typed
 	# parameter later on, so it is dropped at the source.
-	return collider if is_instance_valid(collider) else null
+	if not is_instance_valid(collider):
+		return null
+	# A fallen body is found by its limbs, but it is the character that gets searched.
+	return HumanBody.actor_of(collider) as Node3D
 
 
 func _is_interactable(node: Node3D) -> bool:

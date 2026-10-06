@@ -80,4 +80,6 @@ func _deal_damage_to(body: Node, excess: float) -> void:
 	var info := DamageInfo.new(roundi(_carryable.impact_damage * ratio), _body)
 	info.position = _body.global_position
 	info.direction = _impact_velocity.normalized()
+	# The thrown object's momentum, which is what it shoves its victim with.
+	info.knockback = _body.mass * _impact_velocity.length()
 	health.apply_damage(info)

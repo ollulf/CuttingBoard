@@ -12,7 +12,7 @@ albedo_color = Color(0.35, 0.5, 0.8, 1)
 starting_items = Array[ExtResource("3_item_data")]([ExtResource("4_rock")])
 
 [node name="Body" parent="Visual" index="0"]
-surface_material_override/0 = SubResource("StandardMaterial3D_villager")
+material = SubResource("StandardMaterial3D_villager")
 
 [node name="Faction" parent="." index="6"]
 data = ExtResource("2_faction")

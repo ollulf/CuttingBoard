@@ -23,7 +23,7 @@ extends CharacterBody3D
 @onready var melee: MeleeAttack = %MeleeAttack
 @onready var eyes: Node3D = %Eyes
 @onready var visual: Node3D = %Visual
-@onready var body_mesh: MeshInstance3D = %Body
+@onready var body: HumanBody = %Body
 @onready var collision_shape: CollisionShape3D = %CollisionShape3D
 @onready var hand_left: HandSlot = %HandSlotLeft
 @onready var hand_right: HandSlot = %HandSlotRight
@@ -209,48 +209,32 @@ func _equip_loadout() -> void:
 
 ## Being hit by someone is as good as seeing them: an NPC struck from behind turns to
 ## deal with whoever did it. A thrown item is not an actor, so it goes unattributed.
+##
+## A hit that does not kill also lands physically: the body flinches from the force at
+## the part that was struck, and the whole NPC is shoved back a little. The killing hit
+## is left to _on_died, which drops the body instead.
 func _on_damaged(info: DamageInfo) -> void:
 	var attacker := info.source as Node3D
 	if attacker and attacker != self and Faction.find_in(attacker):
 		memory.remember(attacker)
+	if health.is_alive():
+		body.flinch(info)
+		locomotion.push(body.get_knockback(info))
 
 
 ## Dead is for good: the NPC stops thinking, seeing and moving, lets go of what it held
-## and lies down where it fell. The body stays, with its inventory, for the player to
-## search.
-func _on_died(_info: DamageInfo) -> void:
+## and goes limp, falling the way the killing blow and its own momentum send it. The
+## body stays, with its inventory, for the player to search — the interaction ray finds
+## it by its limbs, so the standing capsule is switched off rather than left upright
+## where the NPC used to be.
+func _on_died(info: DamageInfo) -> void:
 	brain.shut_down()
 	locomotion.stop()
 	locomotion.set_physics_process(false)
 	sight.set_physics_process(false)
-	velocity = Vector3.ZERO
 	# Out of the actor group, so nobody keeps fighting or fleeing a corpse.
 	remove_from_group(Faction.GROUP)
 	drop_held()
-	_lie_down()
-
-
-## Tips the body forward onto the ground. Visual and collision are turned the same way
-## about the feet, and each is lifted by how far its front reaches — the model by its own
-## depth, the capsule by its radius — so neither ends up half inside the ground. The
-## collision has to stay where the body is drawn: that is what the player's interaction
-## ray hits to search it.
-func _lie_down() -> void:
-	var fall := create_tween().set_parallel()
-	fall.tween_property(visual, "rotation:x", -PI * 0.5, 0.4)
-	fall.tween_property(visual, "position:y", _front_depth(), 0.4)
-
-	var capsule := collision_shape.shape as CapsuleShape3D
-	var lift := capsule.radius if capsule else 0.0
-	var lying := Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(0.0, lift, 0.0))
-	collision_shape.transform = lying * collision_shape.transform
-
-
-## How far the drawn body reaches forward of its feet, which is how high it has to be
-## raised once it lies face down.
-func _front_depth() -> float:
-	var mesh := body_mesh.mesh if body_mesh else null
-	if mesh == null:
-		return 0.0
-	var bounds := body_mesh.transform * mesh.get_aabb()
-	return maxf(-bounds.position.z, 0.0)
+	collision_shape.set_deferred("disabled", true)
+	body.go_limp(info, velocity)
+	velocity = Vector3.ZERO

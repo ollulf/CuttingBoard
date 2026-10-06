@@ -25,6 +25,20 @@ extends CharacterBody3D
 ## How far the arms rise/fall in response to vertical velocity (jumping/falling).
 @export var arm_jump_lift := 0.15
 
+## How far a hit snaps the view away from its force, in radians per newton-second of the
+## impulse the body takes, up to the cap; and how quickly the view settles back.
+@export var hit_kick := 0.012
+@export var hit_kick_max := deg_to_rad(12.0)
+@export var hit_kick_recovery := 8.0
+## Seconds a hit leaves the player staggering, and how much grip on their own movement
+## they keep meanwhile, so the knockback carries rather than being walked straight out of.
+@export var stagger_time := 0.3
+@export_range(0.0, 1.0) var stagger_control := 0.05
+## Where the camera settles after death, relative to the fallen body: this far back
+## from it and this far above.
+@export var death_cam_distance := 2.2
+@export var death_cam_height := 1.4
+
 @onready var camera_pivot: Node3D = %CameraPivot
 @onready var collision_shape: CollisionShape3D = %CollisionShape3D
 ## The bob and jump lift are written to the pivots, never to the arms themselves: the
@@ -40,6 +54,11 @@ extends CharacterBody3D
 @onready var inventory: Inventory = %Inventory
 @onready var hotbar: Hotbar = %Hotbar
 @onready var pickup_sound: AudioStreamPlayer = %PickupSound
+@onready var camera: Camera3D = %Camera3D
+@onready var health: Health = %Health
+## The player's own body is never drawn while they are alive — the view is first person
+## and the arms are separate — and only falls into view on death.
+@onready var body: HumanBody = %Body
 @onready var hands: Array[HandSlot] = [hand_left, hand_right]
 
 const PITCH_LIMIT := deg_to_rad(89.0)
@@ -59,6 +78,12 @@ var _capsule: CapsuleShape3D
 ## opposed to holding Ctrl, which sprints only while it is down.
 var _sprint_latched := false
 var _last_forward_tap := -INF
+## The view's current knock from a hit, as a rotation of the camera, easing to nothing.
+var _kick := Vector3.ZERO
+var _stagger := 0.0
+var _dead := false
+## Where the death camera sits relative to the body it watches.
+var _death_cam_offset := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -80,9 +105,13 @@ func _ready() -> void:
 	hotbar.setup(inventory, hands, interactor)
 	# The blow lands when the animation says it does, not when the button was pressed.
 	arms.hit.connect(_on_arm_hit)
+	health.damaged.connect(_on_damaged)
+	health.died.connect(_on_died)
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _dead:
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		camera_pivot.rotation.x = clampf(
@@ -203,6 +232,9 @@ func _physics_process(delta: float) -> void:
 	elif _sprint_latched or Input.is_action_pressed("sprint"):
 		speed = sprint_speed
 	var accel := acceleration if is_on_floor() else air_acceleration
+	if _stagger > 0.0:
+		_stagger -= delta
+		accel *= stagger_control
 
 	var target := direction * speed
 	velocity.x = move_toward(velocity.x, target.x, accel * speed * delta)
@@ -213,8 +245,68 @@ func _physics_process(delta: float) -> void:
 	_update_arms(delta)
 
 
+func _process(delta: float) -> void:
+	if _dead:
+		_follow_body(delta)
+		return
+	_kick = _kick.lerp(Vector3.ZERO, 1.0 - exp(-hit_kick_recovery * delta))
+	camera.rotation = _kick
+
+
 func _on_item_stowed(_data: ItemData) -> void:
 	pickup_sound.play()
+
+
+## A hit that does not kill snaps the view away from the force — head back from a blow
+## to the face, sideways from one to the side — and knocks the player back a step. The
+## body itself is not drawn while alive, so there is no flinch to show.
+func _on_damaged(info: DamageInfo) -> void:
+	if not health.is_alive():
+		return
+	var impulse := body.get_impulse(info)
+	if not impulse.is_zero_approx():
+		var local := global_basis.inverse() * impulse.normalized()
+		var strength := minf(impulse.length() * hit_kick, hit_kick_max)
+		_kick += Vector3(local.z, 0.0, -local.x) * strength
+	velocity += body.get_knockback(info)
+	_stagger = stagger_time
+
+
+## Death drops the player where they stand: control stops, whatever was in hand falls,
+## and the body that was hidden all along goes limp under the killing blow while the
+## camera pulls back to watch it. There is no respawn yet; this is where it would start.
+func _on_died(info: DamageInfo) -> void:
+	_dead = true
+	set_physics_process(false)
+	interactor.set_physics_process(false)
+	for hand in hands:
+		interactor.drop_hand(hand)
+	arms.visible = false
+	collision_shape.set_deferred("disabled", true)
+	body.visible = true
+	body.go_limp(info, velocity)
+	velocity = Vector3.ZERO
+
+	# The camera leaves the head it was riding on and settles behind the body, on the
+	# side the player was looking from.
+	var back := camera.global_basis.z
+	back.y = 0.0
+	back = back.normalized() if not back.is_zero_approx() else global_basis.z
+	_death_cam_offset = back * death_cam_distance + Vector3.UP * death_cam_height
+	camera.top_level = true
+
+
+func _follow_body(delta: float) -> void:
+	var weight := 1.0 - exp(-2.5 * delta)
+	var focus := body.get_center()
+	camera.global_position = camera.global_position.lerp(focus + _death_cam_offset, weight)
+	var look := focus - camera.global_position
+	# Straight down the camera has no sensible up; it only passes through that on its
+	# first frames, while it is still above the body.
+	if look.length_squared() < 0.0001 or absf(look.normalized().dot(Vector3.UP)) > 0.99:
+		return
+	var aim := Basis.looking_at(look)
+	camera.global_basis = camera.global_basis.orthonormalized().slerp(aim, weight)
 
 
 ## Tapping W twice in quick succession latches a sprint that lasts as long as forward

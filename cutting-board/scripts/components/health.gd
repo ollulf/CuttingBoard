@@ -63,6 +63,9 @@ func reset() -> void:
 static func find_in(node: Node) -> Health:
 	if node == null or not is_instance_valid(node):
 		return null
+	# A body part — a flinching or fallen character's physical bone — is hit on behalf of
+	# the character it belongs to.
+	node = HumanBody.actor_of(node)
 	var direct := node.get_node_or_null("Health") as Health
 	if direct:
 		return direct
