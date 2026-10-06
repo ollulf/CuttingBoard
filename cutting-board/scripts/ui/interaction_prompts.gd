@@ -21,6 +21,8 @@ extends CanvasLayer
 @onready var _hand_right: HandSlot = %HandSlotRight
 @onready var _inventory: Inventory = %Inventory
 @onready var _hotbar: Hotbar = %Hotbar
+@onready var _equipment: Equipment = %Equipment
+@onready var _health: Health = %Health
 
 
 func _ready() -> void:
@@ -28,6 +30,8 @@ func _ready() -> void:
 	_inventory_panel.drop_requested.connect(_on_drop_requested)
 	var hands: Array[HandSlot] = [_hand_left, _hand_right]
 	_inventory_panel.bind_equipment(hands, _interactor)
+	_inventory_panel.bind_loadout(_equipment)
+	_inventory_panel.bind_health(_health)
 	# The bar draws itself from the hotbar; the inventory screen only needs to know
 	# where its squares are, so that items can be dragged onto them.
 	_hotbar_panel.bind(_hotbar)

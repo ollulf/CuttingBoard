@@ -1,18 +1,21 @@
 class_name InventoryPanel
 extends Control
 
-## The inventory screen: one or two grids of squares beside a column of hand slots, with
-## the hotbar along the bottom of the screen. It binds to any Inventory component, so the
-## same screen serves the player, a chest or a wagon. Opening a container puts that
-## container's grid up alongside the player's own, and dragging between the two grids is
-## what moves items in and out of it.
+## The inventory screen, laid out like a gear screen: what is near you on the left, the
+## character and what they wear and hold in the middle, the pack on the right, and the
+## player's health along the top, with the hotbar along the bottom of the screen. It
+## binds to any Inventory component, so the same screen serves the player, a chest or a
+## wagon. Opening a container puts that container's grid up in the left-hand panel, and
+## dragging between the two grids is what moves items in and out of it.
 ##
-## The three places an item can be are different in kind, and dragging between them is
-## how it gets from one to another. A grid square is storage, holding a record. A hand
-## slot is the hand itself: what is shown there is the live world object the player is
-## carrying, so dragging an item onto a hand puts the real thing in it straight away,
-## and dragging it off into the grid packs it away. A hotbar square is neither — it is
-## only a link to an item that stays in the grid, so that a number key can reach it.
+## The places an item can be are different in kind, and dragging between them is how it
+## gets from one to another. A grid square is storage, holding a record. A hand slot is
+## the hand itself: what is shown there is the live world object the player is carrying,
+## so dragging an item onto a hand puts the real thing in it straight away, and dragging
+## it off into the grid packs it away. A worn slot — mask, head, body, pack — holds a
+## record again, on the player's Equipment, and only takes its own kind of item. A
+## hotbar square is none of these — it is only a link to an item that stays in the grid,
+## so that a number key can reach it.
 ##
 ## Items do not stack: each one holds its own squares, so a drag always carries exactly
 ## one item. Dragging is done with the left mouse button, and a drag clear of the window
@@ -20,19 +23,24 @@ extends Control
 ## lies or in the middle of a drag, so a long item can be made to fit down a grid it will
 ## not fit across.
 
-## Edge length of one inventory square, in pixels.
-@export var cell_size := 44
+## Edge length of one inventory square, in pixels. Square plus gap is 48, which is 24
+## pixels of the 640 x 360 grid the UI is drawn to, so squares land on whole pixels.
+@export var cell_size := 46
 ## Gap drawn between squares, in pixels.
 @export var cell_gap := 2
-## Size of a hand slot, measured in inventory squares.
-@export var equip_slot_cells := Vector2i(3, 2)
 ## How long the cursor must be on an item before its tooltip appears, in seconds. The
 ## cursor does not have to be still: the wait runs while the mouse is moving.
 @export var tooltip_delay := 0.5
 ## Where the tooltip's corner sits relative to the cursor, in pixels.
 @export var tooltip_offset := Vector2(18, 20)
 @export var empty_cell_color := Color(1, 1, 1, 0.07)
-@export var item_color := Color(0.86, 0.68, 0.36, 0.85)
+@export var item_color := Color(0.66, 0.39, 0.16, 0.4)
+@export var item_border_color := Color(0.86, 0.68, 0.36, 0.6)
+@export var item_text_color := Color(0.96, 0.9, 0.76)
+## Outline of an empty equipment slot.
+@export var slot_border_color := Color(0.85, 0.79, 0.63, 0.18)
+## Outline of a hand that has something in it.
+@export var held_border_color := Color(0.55, 0.9, 0.55, 0.95)
 @export var valid_drop_color := Color(0.45, 0.85, 0.45, 0.35)
 @export var invalid_drop_color := Color(0.9, 0.35, 0.3, 0.35)
 ## Tint of the dragged ghost once it is clear of the window and would be dropped.
@@ -52,16 +60,35 @@ const NO_SIDE := -1
 ## that may be an open container rather than the player's own grid.
 signal drop_requested(inventory: Inventory, entry: InventoryEntry)
 
-@onready var _frame: Control = %Frame
-@onready var _title: Label = %PlayerTitle
+@onready var _window: Control = %Window
+@onready var _size_label: Label = %PlayerSize
 @onready var _grid: Control = %PlayerGrid
-@onready var _container_frame: Control = %ContainerFrame
 @onready var _container_title: Label = %ContainerTitle
+@onready var _container_size: Label = %ContainerSize
 @onready var _container_grid: Control = %ContainerGrid
-@onready var _equip_frame: Control = %EquipFrame
-@onready var _slots_box: VBoxContainer = %Slots
+@onready var _nearby_empty: Control = %NearbyEmpty
+@onready var _health_bar: ProgressBar = %HealthBar
+@onready var _health_value: Label = %HealthValue
+@onready var _figure: PaperDoll = %Figure
+@onready var _hand_boxes: Array[Panel] = [%LeftHandSlot, %RightHandSlot]
+@onready var _hand_labels: Array[Label] = [%LeftHandLabel, %RightHandLabel]
+## The box of each worn slot, by Equipment.Slot.
+@onready var _wear_boxes: Dictionary = {
+	Equipment.Slot.MASK: %MaskSlot,
+	Equipment.Slot.HEAD: %HeadSlot,
+	Equipment.Slot.BODY: %BodySlot,
+	Equipment.Slot.PACK: %PackSlot,
+}
 @onready var _tooltip: ItemTooltip = %ItemTooltip
 @onready var _tooltip_timer: Timer = %TooltipTimer
+
+## What an empty worn slot says, by Equipment.Slot.
+const WEAR_NAMES := {
+	Equipment.Slot.MASK: "Mask",
+	Equipment.Slot.HEAD: "Head",
+	Equipment.Slot.BODY: "Body",
+	Equipment.Slot.PACK: "Pack",
+}
 
 var _inventory: Inventory
 ## The container whose grid is up beside the player's, or null when none is open. The
@@ -69,24 +96,30 @@ var _inventory: Inventory
 var _container: Inventory
 var _interactor: Interactor
 var _hands: Array[HandSlot] = []
+## What the player is wearing. The screen only shows it and moves records in and out.
+var _equipment: Equipment
+var _health: Health
 ## The bar along the bottom and the panel drawing it. The bar is not part of this
 ## screen — it is on show the whole time — but this screen owns the mouse while it is
 ## open, so assigning items to the bar is hit-tested against the panel from here.
 var _hotbar: Hotbar
 var _hotbar_panel: HotbarPanel
 
-## Tiles by the entry or hand they were built for, so a dragged item can be dimmed.
+## Tiles by the entry, hand or worn slot's box they were built for, so a dragged item can
+## be dimmed.
 var _tiles: Dictionary = {}
 ## The clickable box of each hand slot, by hand.
 var _slot_boxes: Dictionary = {}
 
-## A drag carries one item, from any of the three places the screen holds items:
-## _drag_entry with _drag_side is set when it came out of a grid, _drag_hand when it came
-## out of a hand, and _drag_hotbar when it is a hotbar link being moved along the bar.
+## A drag carries one item, from any of the places the screen holds items: _drag_entry
+## with _drag_side is set when it came out of a grid, _drag_hand when it came out of a
+## hand, _drag_wear when it was taken off a worn slot, and _drag_hotbar when it is a
+## hotbar link being moved along the bar.
 var _drag_data: ItemData
 var _drag_entry: InventoryEntry
 var _drag_side := NO_SIDE
 var _drag_hand: HandSlot
+var _drag_wear := Equipment.NO_SLOT
 var _drag_hotbar := HotbarPanel.NO_SLOT
 ## Which way round the carried item currently lies. It starts as the entry was stored
 ## and can be turned mid-drag, so it is drag state rather than something read back off
@@ -136,13 +169,54 @@ func bind(inventory: Inventory) -> void:
 ## them, wherever it came from, which is what lets something picked up off the ground be
 ## dragged into the bag. The interactor is what turns a record into a world object and
 ## back again.
+## The screen has a box for a left and a right hand, which the first two hands fill.
 func bind_equipment(hands: Array[HandSlot], interactor: Interactor) -> void:
 	_hands = hands
 	_interactor = interactor
-	for hand in _hands:
+	_slot_boxes.clear()
+	for index in mini(_hands.size(), _hand_boxes.size()):
+		var hand := _hands[index]
+		_slot_boxes[hand] = _hand_boxes[index]
+		_hand_labels[index].text = hand.display_name
 		hand.item_held.connect(_rebuild.unbind(1))
 		hand.item_released.connect(_rebuild.unbind(1))
 	_rebuild()
+
+
+## Gives the panel the loadout to show in the worn slots around the figure.
+func bind_loadout(equipment: Equipment) -> void:
+	if _equipment and _equipment.changed.is_connected(_rebuild):
+		_equipment.changed.disconnect(_rebuild)
+	_equipment = equipment
+	if _equipment:
+		_equipment.changed.connect(_rebuild)
+	_figure.bind(_equipment)
+	_rebuild()
+
+
+## Gives the panel the health to show in its header.
+func bind_health(health: Health) -> void:
+	if _health and _health.changed.is_connected(_on_health_changed):
+		_health.changed.disconnect(_on_health_changed)
+	_health = health
+	if _health:
+		_health.changed.connect(_on_health_changed)
+	_show_health()
+
+
+func _on_health_changed(_current: int, _maximum: int) -> void:
+	_show_health()
+
+
+## Read off the component rather than taken from the signal alone, so that opening the
+## screen can refresh it too: the panel is bound before Health has run its own _ready
+## and filled itself up, and a value cached then would read as zero.
+func _show_health() -> void:
+	var current := _health.get_current() if _health else 0
+	var maximum := _health.max_health if _health else 0
+	_health_bar.max_value = maxi(maximum, 1)
+	_health_bar.value = current
+	_health_value.text = "%d / %d" % [current, maximum]
 
 
 ## Gives the panel the hotbar to assign items to, and the panel drawing it, which is
@@ -224,6 +298,7 @@ func open() -> void:
 	if _inventory == null:
 		return
 	_rebuild()
+	_show_health()
 	show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
@@ -319,6 +394,10 @@ func _begin_drag(pos: Vector2) -> void:
 	if hand:
 		_begin_hand_drag(hand, pos)
 		return
+	var wear := _wear_at(pos)
+	if wear != Equipment.NO_SLOT:
+		_begin_wear_drag(wear, pos)
+		return
 	var hotbar_index := _hotbar_at(pos)
 	if hotbar_index != HotbarPanel.NO_SLOT:
 		_begin_hotbar_drag(hotbar_index, pos)
@@ -359,6 +438,22 @@ func _begin_hand_drag(hand: HandSlot, pos: Vector2) -> void:
 	# Grabbed in the middle, since a hand has no square the cursor landed on.
 	_drag_grab_pixels = Vector2(_span(data.grid_size.x), _span(data.grid_size.y)) * 0.5
 	_dim_tile(hand)
+	_start_ghost(pos)
+
+
+## Taking something off. Like a hand, a worn slot has no squares for the cursor to have
+## landed on, so the item comes off upright and grabbed in the middle. It stays on until
+## it has somewhere to go.
+func _begin_wear_drag(slot: int, pos: Vector2) -> void:
+	var data := _equipment.get_item(slot)
+	if data == null:
+		return
+	_drag_wear = slot
+	_drag_data = data
+	_drag_rotated = false
+	_drag_grab_cell = Vector2i.ZERO
+	_drag_grab_pixels = Vector2(_span(data.grid_size.x), _span(data.grid_size.y)) * 0.5
+	_dim_tile(_wear_boxes[slot])
 	_start_ghost(pos)
 
 
@@ -418,6 +513,15 @@ func _update_drag(pos: Vector2) -> void:
 		_drop_hint.show()
 		return
 
+	var wear := _wear_at(pos)
+	if wear != Equipment.NO_SLOT:
+		var wear_box: Control = _wear_boxes[wear]
+		_drop_hint.position = wear_box.global_position - global_position
+		_drop_hint.size = wear_box.size
+		_drop_hint.color = valid_drop_color if _accepts_wear(wear) else invalid_drop_color
+		_drop_hint.show()
+		return
+
 	var slot := _slot_at(pos)
 	# A hotbar link has nowhere to land but the bar: dropped anywhere else it simply
 	# comes off, and there is no square to promise it.
@@ -440,11 +544,15 @@ func _end_drag(pos: Vector2) -> void:
 	var entry := _drag_entry
 	var from := _inventory_for(_drag_side)
 	var from_hand := _drag_hand
+	var from_wear := _drag_wear
 	var from_hotbar := _drag_hotbar
 	var rotated := _drag_rotated
 	var grab := _drag_grab_cell
 	var slot := _slot_at(pos)
 	var target_hand := _hand_at(pos)
+	var target_wear := _wear_at(pos)
+	# Judged while the drag is still running, since that is the state it reads.
+	var wear_ok := _accepts_wear(target_wear)
 	var target_hotbar := _hotbar_at(pos)
 	var outside := _is_outside_window(pos)
 	_cancel_drag()
@@ -467,11 +575,17 @@ func _end_drag(pos: Vector2) -> void:
 	if target_hand:
 		_drop_on_hand(target_hand, entry, from_hand)
 		return
+	if target_wear != Equipment.NO_SLOT:
+		if wear_ok:
+			_put_on(target_wear, from, entry)
+		return
 	if outside:
 		# Released clear of the window: out into the world it goes. An item in the hand
 		# is already a world object, so it is simply let go rather than rebuilt.
 		if from_hand:
 			_interactor.drop_hand(from_hand)
+		elif from_wear != Equipment.NO_SLOT:
+			_drop_worn(from_wear)
 		else:
 			drop_requested.emit(from, entry)
 		return
@@ -482,6 +596,9 @@ func _end_drag(pos: Vector2) -> void:
 	var cell: Vector2i = slot["cell"]
 	if from_hand:
 		_stow_hand_to_grid(from_hand, to, cell - grab, rotated)
+		return
+	if from_wear != Equipment.NO_SLOT:
+		_take_off(from_wear, to, cell - grab, rotated)
 		return
 	_place_item(from, entry, to, cell - grab, rotated)
 
@@ -545,6 +662,39 @@ func _stow_hand_to_grid(
 	_interactor.stow_held(hand, to, origin, rotated)
 
 
+## Puts an item from a grid on. The record moves out of the grid and onto the loadout,
+## wear and all; the grid only lets go of it once the slot has taken it.
+func _put_on(slot: int, from: Inventory, entry: InventoryEntry) -> void:
+	if from == null or entry == null:
+		return
+	if _equipment.equip(slot, entry.data, entry.durability):
+		from.remove(entry)
+
+
+## Takes a worn item off into a grid, preferring the square it was dropped on and falling
+## back to anywhere it fits, the same as an item crossing between grids. A grid with no
+## room leaves it on.
+func _take_off(slot: int, to: Inventory, origin: Vector2i, rotated: bool) -> void:
+	var data := _equipment.get_item(slot)
+	if to == null or data == null:
+		return
+	var durability := _equipment.get_durability(slot)
+	if not to.add_at(data, origin, durability, rotated):
+		var free := to.find_free_origin(data.footprint(rotated))
+		if free.x < 0 or not to.add_at(data, free, durability, rotated):
+			return
+	_equipment.unequip(slot)
+
+
+## Drops a worn item into the world, which only takes it off once it is out there: an
+## item with no world scene stays on rather than vanishing.
+func _drop_worn(slot: int) -> void:
+	if _interactor and _interactor.drop_item(
+		_equipment.get_item(slot), _equipment.get_durability(slot)
+	):
+		_equipment.unequip(slot)
+
+
 ## Clears drag state and its overlays; safe to call when no drag is running.
 func _cancel_drag() -> void:
 	if _ghost:
@@ -553,7 +703,7 @@ func _cancel_drag() -> void:
 	if _drop_hint:
 		_drop_hint.queue_free()
 		_drop_hint = null
-	for key in [_drag_entry, _drag_hand]:
+	for key in [_drag_entry, _drag_hand, _wear_boxes.get(_drag_wear)]:
 		var tile := _tiles.get(key) as Control
 		if tile:
 			tile.modulate.a = 1.0
@@ -561,6 +711,7 @@ func _cancel_drag() -> void:
 	_drag_entry = null
 	_drag_side = NO_SIDE
 	_drag_hand = null
+	_drag_wear = Equipment.NO_SLOT
 	_drag_hotbar = HotbarPanel.NO_SLOT
 	_drag_rotated = false
 
@@ -572,9 +723,22 @@ func _cancel_drag() -> void:
 func _accepts(hand: HandSlot) -> bool:
 	if hand == null or _drag_data == null or hand == _drag_hand:
 		return false
-	if _drag_hotbar != HotbarPanel.NO_SLOT:
+	# Something being taken off goes into a grid first: there is no path yet that turns a
+	# worn record straight into an object in the hand.
+	if _drag_hotbar != HotbarPanel.NO_SLOT or _drag_wear != Equipment.NO_SLOT:
 		return false
 	return hand.is_free() and not _drag_data.world_scene_path.is_empty()
+
+
+## Whether a worn slot will take what is being dragged: it has to be free, the item has
+## to be its kind, and it has to come out of a grid. An item in a hand is a live object
+## and would first have to be packed away into a record.
+func _accepts_wear(slot: int) -> bool:
+	if _equipment == null or _drag_data == null or slot == Equipment.NO_SLOT:
+		return false
+	if _drag_entry == null or slot == _drag_wear:
+		return false
+	return _equipment.is_free(slot) and _equipment.accepts(slot, _drag_data)
 
 
 ## Whether a hotbar square will take what is being dragged. Links are made to items in
@@ -662,7 +826,7 @@ func _place_tooltip(pos: Vector2) -> void:
 
 ## What the cursor is on, as {"source", "data", "durability"}, or an empty dictionary
 ## where there is no item. A hand reports what it is holding and a hotbar square what it
-## is linked to. The source is the entry, hand or square the item is in, and it is what
+## is linked to. The source is the entry, hand, slot or square the item is in, and it is what
 ## identifies this particular item — the record does not, since every copy of an item
 ## shares one, and the wear is not on the record for that same reason.
 func _hover_at(pos: Vector2) -> Dictionary:
@@ -672,6 +836,15 @@ func _hover_at(pos: Vector2) -> Dictionary:
 		if held == null:
 			return {}
 		return {"source": hand, "data": held, "durability": hand.get_durability()}
+	var wear := _wear_at(pos)
+	if wear != Equipment.NO_SLOT:
+		var worn := _equipment.get_item(wear)
+		if worn == null:
+			return {}
+		return {
+			"source": _wear_boxes[wear], "data": worn,
+			"durability": _equipment.get_durability(wear),
+		}
 	var hotbar_index := _hotbar_at(pos)
 	if hotbar_index != HotbarPanel.NO_SLOT:
 		var link := _hotbar.get_slot(hotbar_index)
@@ -693,11 +866,23 @@ func _rebuild() -> void:
 	if not is_node_ready() or _inventory == null:
 		return
 	_tiles.clear()
-	_container_frame.visible = _container != null
 	_rebuild_grid(Side.PLAYER)
+	_rebuild_nearby()
+	_rebuild_equipment()
+
+
+## The left-hand panel is always there, so the screen does not jump about as chests are
+## opened and shut; with nothing open it says so in place of a grid.
+func _rebuild_nearby() -> void:
+	_container_grid.visible = _container != null
+	_nearby_empty.visible = _container == null
 	if _container:
 		_rebuild_grid(Side.CONTAINER)
-	_rebuild_equipment()
+		return
+	for child in _container_grid.get_children():
+		child.queue_free()
+	_container_title.text = "Nearby"
+	_container_size.text = ""
 
 
 func _rebuild_grid(side: int) -> void:
@@ -707,13 +892,12 @@ func _rebuild_grid(side: int) -> void:
 		child.queue_free()
 
 	var cells := inventory.grid_size
+	var size_text := "%d x %d" % [cells.x, cells.y]
 	if side == Side.CONTAINER:
-		_container_title.text = "%s  (%d x %d)" % [inventory.get_display_name(), cells.x, cells.y]
+		_container_title.text = inventory.get_display_name()
+		_container_size.text = size_text
 	else:
-		_title.text = (
-			"Inventory  (%d x %d)    drag to move · onto a hand to hold · onto the bar"
-			+ " below for a key · right-click turns · drag out to drop"
-		) % [cells.x, cells.y]
+		_size_label.text = size_text
 	host.custom_minimum_size = Vector2(_span(cells.x), _span(cells.y))
 
 	for y in cells.y:
@@ -726,49 +910,62 @@ func _rebuild_grid(side: int) -> void:
 		_tiles[entry] = tile
 
 
+## Fills the boxes around the figure: the two hands with what they are holding, and the
+## worn slots with what the loadout has on. The boxes themselves are laid out in the
+## scene; only what is in them changes.
 func _rebuild_equipment() -> void:
-	for child in _slots_box.get_children():
-		child.queue_free()
-	_slot_boxes.clear()
-	_equip_frame.visible = not _hands.is_empty()
-
-	for hand in _hands:
-		var column := VBoxContainer.new()
-		column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		column.add_theme_constant_override("separation", 2)
-
-		var label := Label.new()
-		label.text = hand.display_name
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		column.add_child(label)
-
-		var box := PanelContainer.new()
-		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.custom_minimum_size = Vector2(_span(equip_slot_cells.x), _span(equip_slot_cells.y))
-		var style := StyleBoxFlat.new()
-		style.bg_color = empty_cell_color
-		style.set_corner_radius_all(4)
-		box.add_theme_stylebox_override("panel", style)
-
-		var centre := CenterContainer.new()
-		centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(centre)
-
+	for hand: HandSlot in _slot_boxes:
 		var data := hand.get_item_data()
-		if data:
-			var tile := _make_tile(data)
-			centre.add_child(tile)
-			_tiles[hand] = tile
-		else:
-			var empty := Label.new()
-			empty.text = "empty"
-			empty.modulate = Color(1, 1, 1, 0.35)
-			empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			centre.add_child(empty)
+		_fill_slot(_slot_boxes[hand], hand, data, "empty", data != null)
+	for slot in _wear_boxes:
+		var worn := _equipment.get_item(slot) if _equipment else null
+		_fill_slot(_wear_boxes[slot], _wear_boxes[slot], worn, WEAR_NAMES[slot], false)
 
-		column.add_child(box)
-		_slots_box.add_child(column)
-		_slot_boxes[hand] = box
+
+## Puts an item's tile in a slot box, or the slot's name when it is empty. A hand with
+## something in it is outlined, as its square on the hotbar is.
+func _fill_slot(box: Panel, key: Object, data: ItemData, empty_text: String, held: bool) -> void:
+	for child in box.get_children():
+		child.queue_free()
+	var style := StyleBoxFlat.new()
+	style.bg_color = empty_cell_color
+	style.set_border_width_all(2)
+	style.border_color = held_border_color if held else slot_border_color
+	box.add_theme_stylebox_override("panel", style)
+
+	if data == null:
+		var label := Label.new()
+		label.text = empty_text
+		label.modulate = Color(1, 1, 1, 0.3)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(label)
+		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		return
+	var tile := _make_slot_tile(data, box.size)
+	box.add_child(tile)
+	_tiles[key] = tile
+
+
+## An item's tile sized for a slot box rather than for the grid. It goes in upright when
+## it fits, turned when only that fits, and shrunk to fit when neither does — a barrel
+## in a hand is still a barrel, just drawn smaller. It is centred either way.
+func _make_slot_tile(data: ItemData, room: Vector2) -> Control:
+	var rotated := false
+	var cells := data.footprint(false)
+	var span := Vector2(_span(cells.x), _span(cells.y))
+	if span.x > room.x or span.y > room.y:
+		var turned := data.footprint(true)
+		var turned_span := Vector2(_span(turned.x), _span(turned.y))
+		if turned_span.x <= room.x and turned_span.y <= room.y:
+			rotated = true
+			span = turned_span
+	var tile := _make_tile(data, rotated)
+	var fit := minf(1.0, minf(room.x / span.x, room.y / span.y))
+	tile.scale = Vector2(fit, fit)
+	tile.position = ((room - span * fit) * 0.5).floor()
+	return tile
 
 
 func _make_cell(cell: Vector2i) -> ColorRect:
@@ -799,7 +996,8 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = item_color
-	style.set_corner_radius_all(4)
+	style.set_border_width_all(2)
+	style.border_color = item_border_color
 	tile.add_theme_stylebox_override("panel", style)
 
 	var content: Control
@@ -816,7 +1014,7 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 		label.clip_text = true
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_color_override("font_color", Color(0.1, 0.08, 0.05))
+		label.add_theme_color_override("font_color", item_text_color)
 		content = label
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.add_child(content)
@@ -824,14 +1022,13 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 	return tile
 
 
-## True when a panel-local point lies beyond the whole window, the open container, the
-## hand column and the hotbar included. The test is the frames rather than the grids, so
-## releasing on a margin or a title is a harmless miss while only a deliberate drag
-## clear of the window throws an item away.
+## True when a panel-local point lies beyond the whole window — header, all three panels
+## and the hotbar included. The test is the window rather than the grids, so releasing
+## on a margin or a title is a harmless miss while only a deliberate drag clear of the
+## window throws an item away.
 func _is_outside_window(pos: Vector2) -> bool:
-	for frame in [_frame, _container_frame, _equip_frame]:
-		if frame.visible and _local_rect(frame).has_point(pos):
-			return false
+	if _local_rect(_window).has_point(pos):
+		return false
 	if _hotbar_panel and _hotbar_panel.get_bar_rect().has_point(pos + global_position):
 		return false
 	return true
@@ -843,6 +1040,17 @@ func _hand_at(pos: Vector2) -> HandSlot:
 		if _local_rect(_slot_boxes[hand]).has_point(pos):
 			return hand
 	return null
+
+
+## The worn slot under a panel-local point, or Equipment.NO_SLOT. The slots only count
+## once there is a loadout behind them.
+func _wear_at(pos: Vector2) -> int:
+	if _equipment == null:
+		return Equipment.NO_SLOT
+	for slot in _wear_boxes:
+		if _local_rect(_wear_boxes[slot]).has_point(pos):
+			return slot
+	return Equipment.NO_SLOT
 
 
 ## The hotbar square under a panel-local point. The bar is a panel of its own rather
