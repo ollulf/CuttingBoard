@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
 [ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="2_faction"]
@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://resources/items/villager_mask.tres" id="5_mask"]
 [ext_resource type="Resource" uid="uid://d4k7e4lko40pm" path="res://resources/items/hammer.tres" id="6_hammer"]
 [ext_resource type="Resource" path="res://resources/items/saw.tres" id="7_saw"]
+[ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="8_glue"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_villager"]
 albedo_color = Color(0.35, 0.5, 0.8, 1)
@@ -16,6 +17,8 @@ starting_items = Array[ExtResource("3_item_data")]([ExtResource("4_rock")])
 weapon_pool = Array[ExtResource("3_item_data")]([ExtResource("6_hammer"), ExtResource("7_saw"), ExtResource("4_rock")])
 weapon_weights = Array[float]([3.0, 3.0, 2.0])
 bare_hands_weight = 2.0
+extra_items = Array[ExtResource("3_item_data")]([ExtResource("8_glue")])
+extra_item_chances = Array[float]([0.3])
 defend_allies_radius = 4.0
 
 [node name="Body" parent="Visual" index="0"]

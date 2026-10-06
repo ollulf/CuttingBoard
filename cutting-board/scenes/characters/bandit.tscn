@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
 [ext_resource type="Resource" path="res://resources/factions/bandits.tres" id="2_faction"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" uid="uid://d4k7e4lko40pm" path="res://resources/items/hammer.tres" id="4_hammer"]
 [ext_resource type="Resource" path="res://resources/items/rock.tres" id="5_rock"]
 [ext_resource type="Resource" path="res://resources/items/bandit_mask.tres" id="6_mask"]
+[ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="7_glue"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bandit"]
 albedo_color = Color(0.7, 0.2, 0.18, 1)
@@ -13,6 +14,8 @@ albedo_color = Color(0.7, 0.2, 0.18, 1)
 [node name="Bandit" instance=ExtResource("1_base")]
 right_hand_item = ExtResource("4_hammer")
 starting_items = Array[ExtResource("3_item_data")]([ExtResource("5_rock"), ExtResource("5_rock")])
+extra_items = Array[ExtResource("3_item_data")]([ExtResource("7_glue")])
+extra_item_chances = Array[float]([0.2])
 
 [node name="Body" parent="Visual" index="0"]
 material = SubResource("StandardMaterial3D_bandit")
