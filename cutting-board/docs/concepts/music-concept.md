@@ -8,6 +8,39 @@ original; nothing is taken from the film.
 Listen: `assets/audio/music/concepts/` (`leitmotif.ogg`, `village.ogg`, `outside.ogg`).
 Result page with players and a piano roll: https://claude.ai/artifact/6wcx8pN6eGh36yWHkvhEFn
 
+## Round 3: outside and combat, no retro, weirder
+
+Feedback on round 2: "go away from this retro feel... I always liked the outside version, so
+create an outside version and a combat version. A bit weirder and subtle, no high note
+melodies. Three variations." Files: `assets/audio/music/concepts/v3/<d|e|f>_<outside|combat>.ogg`,
+rendered with `--set=d,e,f` (rounds 1 and 2 still render byte-identical).
+
+- **Not retro any more**: 44.1 kHz stereo (constant-power panning per instrument), no
+  downsampling, a long synthesised convolution hall (early reflections plus a darkening
+  noise tail, convolved with ffmpeg `afir`) instead of the small Schroeder reverb, peaks
+  hardly squeezed. New instruments with slow random drift in pitch and pressure: bowed
+  wooden bars (optionally a detuned pair), a breathy bass flute, a hollow log blown like a
+  didgeridoo, a paired bass marimba, big slit drums, bark scrapes, seed-pod rattles,
+  groaning beams, woodpeckers and falling seeds.
+- **Low and subtle**: nothing melodic above D4; measured range of the melodic voices is
+  Ab1-A3 (52-220 Hz) across all six. The motif only shows up in low, broken pieces (its two
+  knocks, its leap turned into a tritone, the tumble). Odd meters: 5/4, 7/8, 12/8.
+- **Combat** builds from the Outside idea in the same set: a pulse of wood, a lean first
+  section, a denser middle (more layers, not louder) and a thin end that leads back into
+  the loop.
+
+| Set | Character | Outside | Combat |
+| --- | --- | --- | --- |
+| **D, the bowed hollow** | bowed wooden drones that sag to the tritone, a quarter-tone ghost, bass flute, far slit drum | 52 BPM 5/4, 81 s | 132 BPM 5/4 (3+3+4), 64 s: muffled slit-drum pulse, Eb2 grinding against D2 in the middle |
+| **E, the clockwork wood** | dry and close: hollow-log drone, woodpeckers in 3 against 5 against 7, low balafon with tritones | 84 BPM 5/4, 75 s | 150 BPM 7/8 (2+2+3), 67 s: limping slit/tongue drums, ticks, balafon ostinato |
+| **F, under the floorboards** | hardly any notes: wind through a hollow trunk, groaning beams, a far heartbeat in the knock rhythm, breath tones | 60 BPM, 72 s | 96 BPM 12/8, 70 s: lub-dub heartbeat against seed shakes in fours |
+
+Measured: outside cues -19 to -21 LUFS with 14-17 LU loudness range, combat -16 to -18 LUFS
+(5-8 LU); over 85 % of the energy below 250 Hz and under 0.2 % above 2.5 kHz (round 2's
+`c_outside`: 43 % / 55 % / 0.02 %); loop seams show no jump bigger than the samples around
+them. `.import` files have `loop=true` and BPM/beat counts (7/8 counted in eighths, 12/8 in
+dotted quarters). The mix favours the low end by design; check it on small speakers.
+
 ## Round 2: softer, woodier, three versions
 
 Feedback on round 1: "more soft, a bit more woodiness, 3 versions". Same motif, same
@@ -107,7 +140,7 @@ godot --headless --path cutting-board -s res://tools/audio/synth_music.gd -- --s
 godot --headless --path cutting-board --import
 ```
 
-`--set` picks versions (`r1`, `a`, `b`, `c`; all by default), `--only` picks cues. The
+`--set` picks versions (`r1`, `a`-`f`; all by default), `--only` picks cues, `--mute` leaves instruments out. The
 scores are text in `tools/audio/synth_music.gd` (`MOTIF` and the `_make_*` cue
 functions); a bar that doesn't add up to 16 sixteenths prints a warning. Needs `ffmpeg`
 on the PATH for the OGG encode (otherwise the WAVs stay in `user://music_render`).

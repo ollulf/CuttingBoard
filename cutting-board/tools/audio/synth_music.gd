@@ -1,16 +1,20 @@
 extends SceneTree
 
 ## Renders the music concept sketches in assets/audio/music/concepts from code: the wood
-## leitmotif and the two cues built on it (the village, and outside the village at night).
-## There are four sets of them: round 1 (`r1`, the festival take, in concepts/) and three
-## softer, woodier round-2 versions in concepts/v2/: `a` the lullaby (soft mallets), `b`
-## the workshop (wooden percussion forward) and `c` the forest night (airy and sparse).
+## leitmotif and the cues built on it. There are seven sets: round 1 (`r1`, the festival
+## take, in concepts/: leitmotif, village, outside the village at night); three softer,
+## woodier round-2 versions of those in concepts/v2/: `a` the lullaby (soft mallets), `b`
+## the workshop (wooden percussion forward) and `c` the forest night (airy and sparse); and
+## three round-3 takes in concepts/v3/ with only an outside cue and a combat cue each: `d`
+## the bowed hollow, `e` the clockwork wood and `f` under the floorboards (see Round 3).
 ##
 ##   godot --headless --path cutting-board -s res://tools/audio/synth_music.gd
 ##   godot --headless --path cutting-board -s res://tools/audio/synth_music.gd -- --set=a,b --only=village
+##   godot --headless --path cutting-board -s res://tools/audio/synth_music.gd -- --set=d --mute=bowed,bowedpair
 ##
 ## then `godot --headless --path cutting-board --import` to reimport. Needs ffmpeg on the
 ## PATH to write OGG Vorbis; without it the WAVs are left in user://music_render instead.
+## Round 3 needs it for its reverb too. `--mute` leaves instruments out, for balancing.
 ##
 ## Every instrument is made of wood (or at least sounds it): marimba and xylophone bars as
 ## sums of decaying inharmonic sines, wood and temple blocks, a slit log drum, hyoshigi
@@ -19,20 +23,24 @@ extends SceneTree
 ## board and a knocked door. Round 2 adds softer, rounder wood: a rubber-mallet marimba, a
 ## kalimba on a wooden box, a balafon with its gourd, a wooden tongue drum, felt-muffled
 ## blocks, a seed shaker, bamboo wind chimes, a wooden frog and a breathy low flute, most
-## of them coloured by the resonances of a wooden body (see _wood_body). No recorded
-## audio. Like synth_sfx.gd the output is lo-fi on purpose, mono 22 050 Hz, and the small
-## Schroeder reverb is a nod to the PS1 SPU's.
+## of them coloured by the resonances of a wooden body (see _wood_body). Round 3 adds bowed
+## wooden bars, a breathy bass flute, a hollow log blown like a didgeridoo, a paired bass
+## marimba, big slit drums, bark scrapes, seed-pod rattles, groaning beams, woodpeckers
+## and falling seeds. No recorded audio. Rounds 1 and 2 are lo-fi on purpose like
+## synth_sfx.gd, mono 22 050 Hz with a small Schroeder reverb that nods to the PS1 SPU's;
+## round 3 is 44.1 kHz stereo with a long convolution hall (see _finish_hifi).
 ##
 ## The scores are plain text, one token per note: `D5:2` is D5 for two sixteenths, `r:4`
 ## a rest, `Ab4/A4:4` a note that slides (or, on a struck bar, grace-notes) into another,
 ## a trailing `!` an accent and `|` a bar line. The leitmotif is MOTIF below; the cues
 ## quote it whole, transpose it, stretch it, flatten its fifth or play only some of its
 ## bars. Drum parts are sixteen-step patterns: `x` hit, `X` accent, `o` ghost, `.` rest.
+## Round 3 mostly places its notes by step from the start of the loop instead (see
+## _line_at), in 5/4, 7/8 and 12/8 as well as 4/4.
 ##
 ## The cues loop: every note and the reverb and echo tails are wrapped around the loop
 ## end onto its start, so the file loops without a seam or a crossfade.
 
-const RATE := 22050
 const ROOT := "res://assets/audio/music/concepts/"
 
 ## The leitmotif, in D min'yo (D F G A C): a double knock on wood, a cheeky leap up,
@@ -43,9 +51,23 @@ const MOTIF := "D5:2 D5:2 r:2 A5:4 G5:2 F5:2 G5:2 | D5:6 C5:2 A4:4 r:4 | D5:2 D5
 const ROOTS := [50, 50, 48, 45]
 
 ## Instruments that are blown, not struck: they hold for the note's length and can slide.
-const SUSTAINED := ["shinobue", "slidewhistle", "flute"]
+const SUSTAINED := ["shinobue", "slidewhistle", "flute", "bowed", "bowedpair", "breathflute", "hollowlog", "scrape", "rattle", "groan"]
+## Round 3's faders: every hit on these instruments is scaled by this much, which keeps the
+## drones and drums from swamping the small wooden sounds in all six cues at once.
+const R3_MIX := {
+	"bowed": 0.4, "bowedpair": 0.4, "hollowlog": 0.45, "thump": 0.45, "slit": 0.5, "tongue": 0.6,
+	"lowmarimba": 0.8, "tick": 1.8, "knock": 0.7, "knockfar": 0.9, "scrape": 2.2, "rattle": 2.8,
+	"groan": 2.0, "seedfall": 1.6, "balafon": 1.3, "breathflute": 1.3,
+}
+## The voices that carry notes rather than knocks, whose range the log reports (round 3
+## keeps them low).
+const MELODIC := ["marimba", "xylophone", "xylo_detuned", "shinobue", "shamisen", "softmarimba", "kalimba", "balafon", "tongue", "flute", "bowed", "bowedpair", "breathflute", "lowmarimba", "hollowlog"]
 
 var rng := RandomNumberGenerator.new()
+
+## Samples per second: 22 050 mono for the lo-fi rounds 1 and 2, 44 100 stereo for round 3.
+var _rate := 22050
+var _stereo := false
 
 ## The file the cue being rendered is written to, relative to ROOT and without extension.
 var _name := ""
@@ -55,15 +77,28 @@ var _damp := 0.35
 var _master_lp := 0.0
 var _drive := 1.3
 var _level := 0.84
-## The buses a cue is mixed into: dry, the reverb send and the echo send.
+## The buses a cue is mixed into: dry, the reverb send and the echo send; in stereo these
+## are the left channels and the `_r` ones the right.
 var _dry := PackedFloat32Array()
 var _verb := PackedFloat32Array()
 var _echo := PackedFloat32Array()
+var _dry_r := PackedFloat32Array()
+var _verb_r := PackedFloat32Array()
+var _echo_r := PackedFloat32Array()
+## In stereo: where each instrument stands, -1 (left) to 1 (right), and how far a hit may
+## stray from there.
+var _pans := {}
+var _pan_spread := 0.0
 ## Whether notes past the end wrap around to the start.
 var _loop := false
-## Seconds per sixteenth note.
+## Seconds per step (a sixteenth, unless a cue says otherwise) and steps per bar.
 var _step := 0.125
+var _meter := 16
+## The lowest and highest note played on a MELODIC voice in the cue, in MIDI.
+var _range := Vector2(INF, -INF)
 var _cache := {}
+## Instruments left out of the mix (`--mute=`), for listening to the rest while balancing.
+var _muted: PackedStringArray = []
 
 
 func _init() -> void:
@@ -74,24 +109,36 @@ func _init() -> void:
 			only = arg.trim_prefix("--only=").split(",")
 		elif arg.begins_with("--set="):
 			only_sets = arg.trim_prefix("--set=").split(",")
+		elif arg.begins_with("--mute="):
+			_muted = arg.trim_prefix("--mute=").split(",")
 	var sets := {
 		"r1": {"leitmotif": _make_leitmotif, "village": _make_village, "outside": _make_outside},
 		"a": {"leitmotif": _make_a_leitmotif, "village": _make_a_village, "outside": _make_a_outside},
 		"b": {"leitmotif": _make_b_leitmotif, "village": _make_b_village, "outside": _make_b_outside},
 		"c": {"leitmotif": _make_c_leitmotif, "village": _make_c_village, "outside": _make_c_outside},
+		"d": {"outside": _make_d_outside, "combat": _make_d_combat},
+		"e": {"outside": _make_e_outside, "combat": _make_e_combat},
+		"f": {"outside": _make_f_outside, "combat": _make_f_combat},
 	}
 	for version in sets:
 		if not only_sets.is_empty() and not only_sets.has(version):
 			continue
 		var cues: Dictionary = sets[version]
+		var round3: bool = version in ["d", "e", "f"]
+		_rate = 44100 if round3 else 22050
+		_stereo = round3
 		for cue in cues:
 			if not only.is_empty() and not only.has(cue):
 				continue
-			_name = cue if version == "r1" else "v2/%s_%s" % [version, cue]
+			_name = cue if version == "r1" else "%s/%s_%s" % ["v3" if round3 else "v2", version, cue]
 			rng.seed = hash(cue if version == "r1" else _name)
+			_range = Vector2(INF, -INF)
 			var started := Time.get_ticks_msec()
 			(cues[cue] as Callable).call()
-			print("%s  (%d ms)" % [_name, Time.get_ticks_msec() - started])
+			var notes := ""
+			if _range.x <= _range.y:
+				notes = ", melodic voices %s-%s (%.0f-%.0f Hz)" % [_note_name(_range.x), _note_name(_range.y), _freq(_range.x), _freq(_range.y)]
+			print("%s  (%d ms%s)" % [_name, Time.get_ticks_msec() - started, notes])
 	quit()
 
 
@@ -490,22 +537,337 @@ func _make_c_outside() -> void:
 	_finish(0.36, 3.2)
 
 
+# --- Round 3 ------------------------------------------------------------------------------
+# Out of the village, and into a fight, in three takes. Hi-fi now: 44.1 kHz stereo, a long
+# convolution hall instead of the PS1-ish reverb, nothing crushed. Weirder and quieter: no
+# tune on top, only textures, drones and knocks, with the motif in low, broken pieces
+# (nothing melodic above D4, about 294 Hz). The scores are written in steps from the start
+# of the loop, since the phrases don't keep to the bar lines.
+#
+# D, the bowed hollow: bowed wooden bars drone and sag, a bass flute breathes bits of the
+#    motif, slit drums thud far off. Both cues in 5/4.
+# E, the clockwork wood: dry and close. A hollow log drones like a didgeridoo, woodpeckers
+#    and ticks knock in 3 against 5 against 7, a low balafon picks at the motif with
+#    tritones. Outside in 5/4, combat in 7/8.
+# F, under the floorboards: hardly any notes. Wind through a hollow trunk, beams groaning,
+#    a far heartbeat in the rhythm of the knock, breath tones. Outside in a 4/4 that nothing
+#    keeps to, combat in 12/8.
+
+
+## Out of the village, take D: 52 BPM in 5/4, 14 bars (81 s). A bowed D2 that never quite
+## stops (the bow changes now and then), a bowed fifth above it that sags to the tritone
+## and back, and a ghost a quarter tone above the octave. A slit drum thuds somewhere left
+## with an echo. Somebody knocks; the woods answer from the right with one knock too many,
+## later from the left and then late, and the third time not at all. A bass flute breathes
+## the opening of the motif with its fifth sagging, then its second bar; the low marimba
+## knocks back and later tumbles down the end of it. Beams groan, seed pods rattle in the
+## wind, seeds drop.
+func _make_d_outside() -> void:
+	_begin(52.0, 14, true, 0.0, 20)
+	_r3_master(0.5)
+	_wind(0.01, 3, 90.0, 900.0)
+	for k in 4:
+		_hit("bowedpair", 38, k * 70, 0.36, 0.5, 75.0, -1, 0.0, -0.15 if k % 2 == 0 else 0.15)
+	_hit("bowed", 45, 30, 0.28, 0.6, 50.0, 44, 0.0, 0.35)
+	_hit("bowed", 45, 110, 0.24, 0.6, 40.0, -1, 0.0, -0.4)
+	_hit("bowed", 44, 180, 0.28, 0.6, 60.0, 45, 0.0, 0.35)
+	_hit("bowed", 50.5, 95, 0.1, 0.8, 40.0, -1, 0.0, 0.6)
+	_hit("bowed", 50.5, 240, 0.08, 0.8, 30.0, -1, 0.0, -0.6)
+	var thuds := [[0, 38], [33, 33], [75, 38], [88, 38], [140, 33], [187, 38], [230, 38], [262, 33]]
+	for th in thuds:
+		_hit("slit", th[1], th[0], 0.4, 0.6, 2.0, -1, 0.3, -0.45)
+	# Knock knock. The woods answer.
+	_knock_at([40, 42], 46, 0.55, -0.55, false)
+	_knock_at([52, 54, 59], 44, 0.35, 0.7, true)
+	_knock_at([160, 162], 46, 0.5, -0.55, false)
+	_knock_at([171, 173], 44, 0.3, -0.8, true)
+	_knock_at([186], 43, 0.22, 0.85, true)
+	_knock_at([240, 242], 46, 0.5, -0.55, false)
+	# The motif, low and broken.
+	_pans = {"breathflute": 0.3, "lowmarimba": -0.35, "groan": 0.5}
+	_hit("breathflute", 50, 60, 0.45, 0.6, 4.0)
+	_hit("breathflute", 50, 64, 0.4, 0.6, 4.0)
+	_hit("breathflute", 57, 70, 0.45, 0.6, 12.0, 56)
+	_hit("lowmarimba", 50, 100, 0.35, 0.5)
+	_hit("lowmarimba", 50, 103, 0.3, 0.5)
+	_line_at("breathflute", 120, "G3:6 F3:4 G3:4 D3:14 C3:4 A2:12", 0.4, 0.6)
+	_line_at("lowmarimba", 200, "F3:4 D3:4 C3:4 Ab2/A2:8 r:4 D2:6!", 0.45, 0.5)
+	_hit("slit", 38, 224, 0.45, 0.6, 2.0, -1, 0.3, -0.45)
+	_hit("groan", 37, 128, 0.22, 0.6, 30.0)
+	_hit("groan", 35, 250, 0.2, 0.6, 24.0, -1, 0.0, -0.6)
+	_hit("rattle", 91, 85, 0.12, 0.6, 12.0, -1, 0.0, 0.8)
+	_hit("rattle", 89, 205, 0.1, 0.6, 10.0, -1, 0.0, -0.8)
+	_seed_rain(8, 0.14)
+	_finish_hifi(0.55, 4.2, 4500.0)
+
+
+## Combat, take D: 132 BPM in 5/4 (3 + 3 + 4 eighths), 28 bars (64 s). A muffled slit drum
+## pulses under everything; a bowed D2 drones, its fifth sagging. Bars 0-11 keep it lean:
+## a knock that the woods answer, the low marimba knocking the motif's first notes, a scrape
+## of bark at the end of every other bar. Bars 12-23 tighten without getting louder: a
+## bowed Eb2 grinds a semitone above the drone, bowed bass notes push on the off-groups,
+## ticks run in sixteenths, a rattle swells into every fourth bar and the scrapes come
+## every bar. Bars 24-27 thin out again into the top of the loop.
+func _make_d_combat() -> void:
+	_begin(132.0, 28, true, 0.0, 20)
+	_r3_master(0.85)
+	_wind(0.006, 4, 120.0, 1200.0)
+	_pans = {"thump": 0.0, "slit": -0.25, "lowmarimba": -0.4, "scrape": 0.5, "tick": 0.35, "rattle": -0.6}
+	for bar in 28:
+		var b := bar * 20
+		_hit("thump", 38, b, 0.75, 0.25)
+		_hit("thump", 38, b + 6, 0.45, 0.25)
+		_hit("thump", 38, b + 12, 0.55, 0.25)
+		if bar % 2 == 1:
+			_hit("slit", 33, b + 16, 0.28, 0.35)
+		var mid := bar >= 12 and bar < 24
+		if mid or bar % 2 == 1:
+			_hit("scrape", 79, b + 16, 0.22 if mid else 0.16, 0.4, 4.0)
+		if mid:
+			_pattern_at("tick", b, "x.o.x.o.o.x.o.x.o.o.", 77, 0.12, 0.2)
+			_hit("bowed", 40 if bar % 2 == 0 else 39, b + 6, 0.22, 0.4, 5.0, -1, 0.0, 0.45)
+			_hit("bowed", 39, b + 12, 0.2, 0.4, 6.0, -1, 0.0, -0.45)
+			if bar % 4 == 3:
+				_hit("rattle", 88, b + 2, 0.16, 0.4, 18.0)
+	# The drone, bowed in four-bar strokes, and a fifth that sags.
+	for k in 7:
+		_hit("bowedpair", 38, k * 80, 0.42, 0.45, 84.0, -1, 0.0, -0.2 if k % 2 == 0 else 0.2)
+	for k in [0, 2, 5]:
+		_hit("bowed", 45, k * 80 + 20, 0.2, 0.5, 50.0, 44, 0.0, 0.3)
+	# Eb2 against the D2 in the middle section.
+	_hit("bowedpair", 39, 240, 0.22, 0.5, 120.0, -1, 0.0, 0.25)
+	_hit("bowedpair", 39, 355, 0.2, 0.5, 120.0, 38.5, 0.0, -0.25)
+	# Knock knock, and the woods; the low marimba knocks the motif.
+	_knock_at([72, 74], 46, 0.5, -0.55, false)
+	_knock_at([82, 84, 89], 44, 0.3, 0.75, true)
+	for bar in [2, 6, 10, 14, 18, 22]:
+		_line_at("lowmarimba", bar * 20 + 12, "D2:2 D2:3 A2:3", 0.45, 0.35)
+	_line_at("lowmarimba", 16 * 20, "D3:2 D3:2 r:2 A2:4 G2:2 F2:2 G2:2 r:4", 0.35, 0.35)
+	_line_at("lowmarimba", 20 * 20, "F2:2 D2:2 C2:2 Ab1/A1:4 r:6 D2:4!", 0.4, 0.35)
+	_finish_hifi(0.4, 2.6, 5000.0)
+
+
+## Out of the village, take E: 84 BPM in 5/4, 21 bars (75 s). A hollow log drones on D2 in
+## long breaths, its mouth moving. Three woodpeckers tick at their own pace, every 6, 10
+## and 14 sixteenths (3 against 5 against 7, meeting again only at the loop), each fading in
+## and out, and now and then one drums a roll far off. A wooden tongue drum walks round a
+## 7-step cycle. The balafon picks at the motif low and wrong: its leap turned into a
+## tritone down, a minor ninth, the tumble an octave below. Knocks, and the woods answer
+## with five; the second time a woodpecker answers instead. Seed rattles, seeds drop.
+func _make_e_outside() -> void:
+	_begin(84.0, 21, true, 0.0, 20)
+	_r3_master(0.8)
+	_wind(0.008, 3, 150.0, 1600.0)
+	for k in 4:
+		_hit("hollowlog", 38, k * 105, 0.42, 0.35, 100.0, -1, 0.0, 0.05)
+	var peckers := [[6, 79, -0.7, 0.0], [10, 74, 0.75, 1.0], [14, 70, 0.1, 2.0]]
+	for p in peckers:
+		for at in range(0, 420, p[0]):
+			var fade := pow(0.5 + 0.5 * sin(TAU * (at / 420.0 * 2.0 + p[3] / 3.0)), 2.0)
+			if fade > 0.08:
+				_hit("tick", p[1], at, 0.22 * fade, 0.45, 2.0, -1, 0.0, p[2])
+	for roll in [[37, 82, -0.8], [151, 80, 0.8], [290, 83, 0.6], [377, 81, -0.6]]:
+		_woodpecker(roll[0], roll[1], roll[2], 0.16)
+	var walk := [38, 33, 38, 36]
+	for k in 60:
+		_hit("tongue", walk[k % 4], k * 7, 0.22 if k % 4 == 0 else 0.15, 0.35, 2.0, -1, 0.0, -0.15)
+	_pans = {"balafon": -0.3, "knock": 0.5, "knockfar": -0.75, "rattle": 0.6}
+	_line_at("balafon", 40, "D3:2 D3:2 r:2 Ab2:6", 0.5, 0.45)
+	_line_at("balafon", 120, "G2:2 F2:2 G2:4 r:4 Eb3:6", 0.45, 0.45)
+	_line_at("balafon", 230, "D3:2 D3:2 r:2 A3:4 C3:2 A2:4 Ab2/A2:6", 0.45, 0.45)
+	_line_at("balafon", 330, "F2:3 D2:3 C2:3 Ab1/A1:6 r:3 D2:6!", 0.5, 0.45)
+	_knock_at([90, 92], 46, 0.5, 0.5, false)
+	_knock_at([100, 101.5, 103, 104.5, 106], 44, 0.25, -0.75, true)
+	_knock_at([300, 302], 46, 0.5, 0.5, false)
+	_woodpecker(309, 84, -0.85, 0.2)
+	_hit("rattle", 92, 170, 0.12, 0.45, 20.0)
+	_hit("rattle", 90, 360, 0.1, 0.45, 14.0, -1, 0.0, -0.5)
+	_seed_rain(6, 0.12)
+	_finish_hifi(0.35, 2.4, 5000.0)
+
+
+## Combat, take E: 150 BPM in 7/8 (2 + 2 + 3), 48 bars (67 s). The hollow log drones, a
+## slit drum and the tongue drum limp along the 7, dry ticks run in sixteenths. Bars 0-15:
+## that, a knock and the woods answering, a scrape every fourth bar. Bars 16-39: the balafon
+## loops the motif's opening low with a tritone in it, a second tick runs against the first,
+## the seed rattle shakes on every long group. Bars 40-47: drums, ticks and drone only.
+func _make_e_combat() -> void:
+	_begin(150.0, 48, true, 0.0, 14)
+	_r3_master(0.85)
+	_pans = {"slit": -0.2, "tongue": 0.2, "tick": 0.4, "balafon": -0.35, "rattle": 0.6, "scrape": -0.5}
+	for k in 12:
+		_hit("hollowlog", 38 if k % 3 != 2 else 36, k * 56, 0.4, 0.3, 54.0, -1, 0.0, 0.0)
+	for bar in 48:
+		var b := bar * 14
+		var mid := bar >= 16 and bar < 40
+		_hit("slit", 38, b, 0.7, 0.25)
+		_hit("tongue", 33, b + 4, 0.4, 0.25)
+		_hit("slit", 38, b + 8, 0.5, 0.25)
+		_hit("tongue", 36, b + 11, 0.3 if bar % 2 == 0 else 0.4, 0.25)
+		_pattern_at("tick", b, "x.o.x.o.x.o.o.", 77, 0.14, 0.2)
+		if mid:
+			_pattern_at("tick", b, "..x...x...x..x", 72, 0.1, 0.2)
+			_hit("rattle", 88, b + 8, 0.12, 0.3, 4.0)
+		if bar % 4 == 3:
+			_hit("scrape", 76, b + 9, 0.2, 0.35, 5.0)
+	for bar in range(16, 40, 2):
+		_line_at("balafon", bar * 14, "D2:2 D2:2 Ab2:2 r:2 G2:2 F2:2 r:2", 0.42, 0.3)
+		_line_at("balafon", bar * 14 + 14, "D2:2 D2:2 r:2 r:2 C3:2 A2:2 r:2", 0.36 if bar < 32 else 0.42, 0.3)
+	_knock_at([42, 44], 46, 0.5, -0.5, false)
+	_knock_at([52, 53.5, 55, 56.5, 58], 44, 0.25, 0.75, true)
+	_finish_hifi(0.25, 1.8, 5500.0)
+
+
+## Out of the village, take F: 60 BPM, 18 bars of 4/4 (72 s), though nothing keeps to them.
+## Hardly any notes: wind blowing across a hollow trunk sounds its odd resonances, a beam
+## groans, seeds drop, and somewhere far off a heartbeat thumps in the rhythm of the knock,
+## on a cycle of its own. A bass flute breathes a few low tones, mostly air: D3, Ab2
+## creeping up to A2, D3 sagging a quarter tone, and the two knocks. The low marimba plays
+## three notes in the whole loop. Somebody knocks; the heartbeat answers.
+func _make_f_outside() -> void:
+	_begin(60.0, 18, true)
+	_r3_master(0.6)
+	_wind(0.03, 2, 50.0, 1400.0, [92.0, 196.0, 311.0])
+	_wind(0.006, 3, 300.0, 2500.0)
+	_pans = {"breathflute": -0.25, "lowmarimba": 0.35, "thump": 0.55}
+	for at in [0, 44, 77, 121, 154, 198, 231, 275]:
+		_hit("thump", 38, at, 0.38, 0.55)
+		_hit("thump", 38, at + 1.5, 0.26, 0.55)
+	_hit("breathflute", 50, 10, 0.4, 0.65, 12.0)
+	_hit("breathflute", 44, 58, 0.38, 0.65, 16.0, 45)
+	_hit("breathflute", 53, 120, 0.3, 0.65, 10.0)
+	_hit("breathflute", 50, 170, 0.4, 0.65, 20.0, 49.5)
+	_hit("breathflute", 50, 230, 0.35, 0.65, 3.0)
+	_hit("breathflute", 50, 234, 0.32, 0.65, 3.0)
+	_hit("lowmarimba", 38, 96, 0.4, 0.55)
+	_hit("lowmarimba", 44, 100, 0.32, 0.55)
+	_hit("lowmarimba", 48, 252, 0.3, 0.55)
+	_hit("bowed", 33, 140, 0.3, 0.5, 60.0, -1, 0.0, -0.1)
+	_hit("groan", 34, 30, 0.3, 0.6, 24.0, -1, 0.0, -0.6)
+	_hit("groan", 31, 135, 0.28, 0.6, 30.0, -1, 0.0, 0.4)
+	_hit("groan", 37, 205, 0.22, 0.6, 20.0, -1, 0.0, -0.2)
+	_knock_at([180, 182], 46, 0.45, -0.6, false)
+	_hit("thump", 38, 187, 0.3, 0.6, 2.0, -1, 0.0, 0.8)
+	_hit("thump", 38, 188.5, 0.22, 0.6, 2.0, -1, 0.0, 0.8)
+	_seed_rain(12, 0.13)
+	_finish_hifi(0.6, 5.0, 3500.0)
+
+
+## Combat, take F: 96 BPM in 12/8, 28 bars (70 s). The heartbeat drives it, lub-dub on
+## beats one and three (the knock again), against seed shakes and ticks in fours, three to
+## the bar. A bowed D2 throbs on the downbeat with a short Eb2 on the last beat. Bars 0-11:
+## that, wind through the trunk, a beam groaning every fourth bar. Bars 12-23: the heart
+## gets ghost beats, the bowed bass glides between A1 and Ab1, the bass flute breathes the
+## knock and the tritone in short bursts and bark is scraped at the end of every other bar.
+## Bars 24-27: heart, shakes and wind, into the top.
+func _make_f_combat() -> void:
+	_begin(96.0, 28, true, 0.0, 12, 3)
+	_r3_master(0.85)
+	_wind(0.02, 4, 50.0, 1400.0, [92.0, 196.0, 311.0])
+	_pans = {"thump": 0.0, "rattle": 0.5, "tick": -0.45, "breathflute": -0.25, "scrape": 0.55, "groan": -0.5}
+	for bar in 28:
+		var b := bar * 12
+		var mid := bar >= 12 and bar < 24
+		for beat in [0, 6]:
+			_hit("thump", 38, b + beat, 0.75 if beat == 0 else 0.6, 0.3)
+			_hit("thump", 38, b + beat + 1, 0.45, 0.3)
+		if mid:
+			_hit("thump", 38, b + 3, 0.22, 0.3)
+			_hit("thump", 38, b + 10, 0.25, 0.3)
+		for q in [0, 4, 8]:
+			_hit("rattle", 90, b + q, 0.12 if q == 0 else 0.09, 0.25, 1.5)
+			_hit("tick", 75, b + q + 2, 0.1, 0.3)
+		if bar < 24:
+			_hit("bowed", 38, b, 0.3, 0.35, 5.0, -1, 0.0, -0.2)
+			_hit("bowed", 39, b + 9, 0.18, 0.35, 2.5, -1, 0.0, 0.2)
+		if bar % 4 == 2:
+			_hit("groan", 33, b + 4, 0.2, 0.5, 8.0)
+		if mid and bar % 2 == 1:
+			_hit("scrape", 78, b + 9, 0.2, 0.35, 3.0)
+	for k in 3:
+		_hit("bowedpair", 33, (12 + k * 4) * 12, 0.22, 0.4, 46.0, 32, 0.0, 0.3)
+	for bar in [13, 17, 21]:
+		_line_at("breathflute", bar * 12 + 2, "D3:1 D3:1 r:1 Ab2:2", 0.4, 0.45)
+	for bar in [3, 15, 23]:
+		_line_at("lowmarimba", bar * 12 + 10, "D2:1 D2:1", 0.4, 0.35)
+	_finish_hifi(0.4, 2.8, 4000.0)
+
+
+## The round-3 master: the peaks barely squeezed and normalised to `level`. The levels are
+## set so the outside cues measure about -19 to -21 LUFS and the fights about -16 to -18.
+func _r3_master(level: float) -> void:
+	_drive = 0.3
+	_level = level
+
+
+## Like _line, but from step `at` and without bar lines.
+func _line_at(inst: String, at: float, text: String, vel: float, verb: float, echo := 0.0) -> void:
+	for token in text.split(" ", false):
+		var accent := token.ends_with("!")
+		var parts := token.trim_suffix("!").split(":")
+		var steps := float(parts[1])
+		if parts[0] != "r":
+			var pitches := parts[0].split("/")
+			var glide := float(_midi(pitches[1])) if pitches.size() > 1 else -1.0
+			_hit(inst, _midi(pitches[0]), at, vel * (1.25 if accent else 1.0), verb, steps, glide, echo)
+		at += steps
+
+
+## Like _pattern, for one bar from step `at`.
+func _pattern_at(inst: String, at: int, pattern: String, midi: int, vel: float, verb: float) -> void:
+	for s in pattern.length():
+		var c := pattern[s]
+		if c != ".":
+			_hit(inst, midi, at + s, vel * (1.3 if c == "X" else 0.45 if c == "o" else 1.0), verb, 1.0)
+
+
+## Knocks on wood at each of `steps`, tuned to `midi`, at `pan`; `far` puts them out in the
+## trees, with more room around them.
+func _knock_at(steps: Array, midi: int, vel: float, pan: float, far: bool) -> void:
+	for s in steps:
+		_hit("knockfar" if far else "knock", midi, s, vel, 0.75 if far else 0.3, 2.0, -1, 0.0, pan)
+
+
+## A woodpecker drumming a roll at step `at`: a dozen fast ticks that speed up and fade.
+func _woodpecker(at: float, midi: int, pan: float, vel: float) -> void:
+	var t := at
+	for k in 12:
+		_hit("tick", midi, t, vel * (1.0 - k * 0.06), 0.7, 2.0, -1, 0.0, pan)
+		t += (0.055 - k * 0.002) / _step
+
+
+## `count` seeds dropping at random through the loop, anywhere around the listener.
+func _seed_rain(count: int, vel: float) -> void:
+	var total := _dry.size() / float(_rate) / _step
+	for k in count:
+		_hit("seedfall", 72 + k, rng.randf_range(0.0, total), vel * rng.randf_range(0.5, 1.0), 0.7, 2.0, -1, 0.0, rng.randf_range(-0.9, 0.9))
+
+
 # --- Sequencing ---------------------------------------------------------------------------
 
 
-## Starts a cue `bars` of 4/4 long at `bpm`. A looping cue wraps everything that rings
-## past its end; a one-shot gets `tail` seconds to ring out instead.
-func _begin(bpm: float, bars: int, loop: bool, tail := 0.0) -> void:
-	_step = 60.0 / bpm / 4.0
+## Starts a cue `bars` long at `bpm`. A bar is `meter` steps, `per_beat` of them to a beat:
+## sixteen sixteenths by default, so 4/4; 20 and 4 make 5/4, 14 and 4 make 7/8 and 12 and
+## 3 make 12/8. A looping cue wraps everything that rings past its end; a one-shot gets
+## `tail` seconds to ring out instead.
+func _begin(bpm: float, bars: int, loop: bool, tail := 0.0, meter := 16, per_beat := 4) -> void:
+	_step = 60.0 / bpm / per_beat
+	_meter = meter
 	_loop = loop
 	_damp = 0.35
 	_master_lp = 0.0
 	_drive = 1.3
 	_level = 0.84
-	var n := _seconds(bars * 16 * _step + tail)
+	_pans = {}
+	_pan_spread = 0.0
+	var n := _seconds(bars * meter * _step + tail)
 	_dry = _silence_samples(n)
 	_verb = _silence_samples(n)
 	_echo = _silence_samples(n)
+	if _stereo:
+		_dry_r = _silence_samples(n)
+		_verb_r = _silence_samples(n)
+		_echo_r = _silence_samples(n)
 
 
 ## A softer master for the round-2 cues: a darker reverb (`damp`), a low-pass over the whole
@@ -521,7 +883,7 @@ func _warm(damp: float, lowpass: float) -> void:
 ## semitones, `stretch` scales its durations, and `pitch_map` moves pitch classes, e.g.
 ## {9: -1} flattens every A; `echo` sends it to the echo too.
 func _line(inst: String, bar: int, text: String, vel: float, verb: float, transpose := 0, stretch := 1.0, pitch_map := {}, echo := 0.0) -> void:
-	var at := float(bar * 16)
+	var at := float(bar * _meter)
 	for measure in text.split("|"):
 		var length := 0.0
 		for token in measure.strip_edges().split(" ", false):
@@ -535,48 +897,73 @@ func _line(inst: String, bar: int, text: String, vel: float, verb: float, transp
 				var glide := _mapped(_midi(pitches[1]) + transpose, pitch_map) if pitches.size() > 1 else -1
 				_hit(inst, midi, at, vel * (1.25 if accent else 1.0), verb, steps * stretch, glide, echo)
 			at += steps * stretch
-		if not is_equal_approx(length, 16.0):
-			push_warning("%s: a bar of %s sixteenths in '%s'" % [inst, length, measure])
+		if not is_equal_approx(length, _meter):
+			push_warning("%s: a bar of %s steps in '%s'" % [inst, length, measure])
 
 
-## Plays a sixteen-step pattern (repeated if shorter than `bars`) on `inst` at `midi`.
+## Plays a one-bar step pattern (repeated if shorter than `bars`) on `inst` at `midi`.
 func _pattern(inst: String, bar: int, bars: int, pattern: String, midi: int, vel: float, verb: float, echo := 0.0) -> void:
-	for s in bars * 16:
+	for s in bars * _meter:
 		var c := pattern[s % pattern.length()]
 		if c != ".":
 			var v := vel * (1.3 if c == "X" else 0.45 if c == "o" else 1.0)
-			_hit(inst, midi, bar * 16 + s, v, verb, 1.0, -1, echo)
+			_hit(inst, midi, bar * _meter + s, v, verb, 1.0, -1, echo)
 
 
-## One note: `inst` at `midi` (sliding to `glide` if it is not -1) at sixteenth `at`,
-## `steps` long. Struck instruments get a few milliseconds of slop and a little
-## velocity jitter, so the groove doesn't sound like a sequencer.
-func _hit(inst: String, midi: float, at: float, vel: float, verb: float, steps := 2.0, glide := -1, echo := 0.0) -> void:
+## One note: `inst` at `midi` (sliding to `glide` if it is not -1) at step `at`, `steps`
+## long. Struck instruments get a few milliseconds of slop and a little velocity jitter,
+## so the groove doesn't sound like a sequencer. In stereo the note stands at `pan`, or
+## where `_pans` puts its instrument, give or take `_pan_spread`.
+func _hit(inst: String, midi: float, at: float, vel: float, verb: float, steps := 2.0, glide := -1.0, echo := 0.0, pan := INF) -> void:
+	if inst in _muted:
+		return
 	var sustained := inst in SUSTAINED
 	var length := steps * _step
 	var t := at * _step
+	if inst in MELODIC:
+		_range = Vector2(minf(_range.x, minf(midi, glide if glide >= 0 else midi)), maxf(_range.y, maxf(midi, glide)))
+	if _stereo:
+		vel *= float(R3_MIX.get(inst, 1.0))
+		if pan == INF:
+			pan = float(_pans.get(inst, 0.0))
+		if _pan_spread > 0.0:
+			pan += rng.randf_range(-_pan_spread, _pan_spread)
 	if not sustained:
 		t += rng.randf_range(-0.004, 0.004)
 		vel *= rng.randf_range(0.9, 1.05)
 		if glide >= 0:
 			# A struck bar can't slide: play the first pitch as a grace note.
-			_mix_bus(_note(inst, midi, length, -1), t - _step * 0.5, vel * 0.7, verb, echo)
+			_mix_bus(_note(inst, midi, length, -1), t - _step * 0.5, vel * 0.7, verb, echo, pan)
 			midi = glide
-	_mix_bus(_note(inst, midi, length, glide if sustained else -1), t, vel, verb, echo)
+	_mix_bus(_note(inst, midi, length, glide if sustained else -1.0), t, vel, verb, echo, pan)
 
 
-func _mix_bus(x: PackedFloat32Array, t: float, vel: float, verb: float, echo: float) -> void:
+## Mixes a note into the buses at `t` seconds. In stereo it is panned with constant power;
+## its reverb send sits halfway to the middle, so the room is around it, not only on its side.
+func _mix_bus(x: PackedFloat32Array, t: float, vel: float, verb: float, echo: float, pan := 0.0) -> void:
 	var offset := _seconds(maxf(t, 0.0))
-	_mix_wrap(_dry, x, offset, vel)
+	if not _stereo:
+		_mix_wrap(_dry, x, offset, vel)
+		if verb > 0.0:
+			_mix_wrap(_verb, x, offset, vel * verb)
+		if echo > 0.0:
+			_mix_wrap(_echo, x, offset, vel * echo)
+		return
+	var side := (clampf(pan, -1.0, 1.0) + 1.0) * PI * 0.25
+	_mix_wrap(_dry, x, offset, vel * cos(side) * sqrt(2.0))
+	_mix_wrap(_dry_r, x, offset, vel * sin(side) * sqrt(2.0))
 	if verb > 0.0:
-		_mix_wrap(_verb, x, offset, vel * verb)
+		var room := (clampf(pan, -1.0, 1.0) * 0.5 + 1.0) * PI * 0.25
+		_mix_wrap(_verb, x, offset, vel * verb * cos(room) * sqrt(2.0))
+		_mix_wrap(_verb_r, x, offset, vel * verb * sin(room) * sqrt(2.0))
 	if echo > 0.0:
-		_mix_wrap(_echo, x, offset, vel * echo)
+		_mix_wrap(_echo, x, offset, vel * echo * cos(side) * sqrt(2.0))
+		_mix_wrap(_echo_r, x, offset, vel * echo * sin(side) * sqrt(2.0))
 
 
 ## A rendered note, cached by everything that shapes it.
-func _note(inst: String, midi: float, length: float, glide: int) -> PackedFloat32Array:
-	var key := "%s %s %.3f %d" % [inst, midi, length if inst in SUSTAINED else 0.0, glide]
+func _note(inst: String, midi: float, length: float, glide: float) -> PackedFloat32Array:
+	var key := "%s %s %.3f %s" % [inst, midi, length if inst in SUSTAINED else 0.0, glide]
 	if not _cache.has(key):
 		_cache[key] = _render(inst, _freq(midi), length, _freq(glide) if glide >= 0 else 0.0)
 	return _cache[key]
@@ -647,6 +1034,35 @@ func _render(inst: String, f: float, length: float, glide: float) -> PackedFloat
 			return _lowpass(_creak(), 1400.0, 0.7)
 		"softmukkuri":
 			return _lowpass(_mukkuri(f), 1100.0, 0.7)
+		# Round 3: low, bowed, breathed and scraped wood.
+		"bowed":
+			return _bowed(f, length, glide, 0.0, minf(1.2, length * 0.3))
+		"bowedpair":
+			return _bowed(f, length, glide, 7.0, minf(2.5, length * 0.4))
+		"breathflute":
+			return _breath_flute(f, length, glide)
+		"hollowlog":
+			return _hollow_log(f, length)
+		"lowmarimba":
+			return _low_marimba(f)
+		"slit":
+			return _slit(f, 2200.0)
+		"thump":
+			return _slit(f, 800.0)
+		"knock":
+			return _wood_knock(f, false)
+		"knockfar":
+			return _wood_knock(f, true)
+		"tick":
+			return _tick(f)
+		"scrape":
+			return _scrape(length, f)
+		"rattle":
+			return _rattle(length, f)
+		"groan":
+			return _groan(f, length)
+		"seedfall":
+			return _seed_fall()
 	push_error("unknown instrument " + inst)
 	return PackedFloat32Array()
 
@@ -713,8 +1129,8 @@ func _belly(f: float) -> PackedFloat32Array:
 	var out := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
-		phase += TAU * f * (1.0 + 0.4 * exp(-t / 0.025)) / RATE
+		var t := float(i) / _rate
+		phase += TAU * f * (1.0 + 0.4 * exp(-t / 0.025)) / _rate
 		out[i] = (sin(phase) + 0.15 * sin(2.0 * phase)) * exp(-t / 0.17) * minf(1.0, t / 0.002)
 	_mix(out, _shape(_lowpass(_noise(0.03), 900.0, 0.7), 0.001, 0.008), 0, 0.5)
 	return out
@@ -732,9 +1148,9 @@ func _taiko() -> PackedFloat32Array:
 ## the sawari comes from softly clipping the string's motion.
 func _shamisen(f: float) -> PackedFloat32Array:
 	var n := _seconds(0.7)
-	var period := float(RATE) / f
+	var period := float(_rate) / f
 	var size := int(period) + 2
-	var line := _noise(float(size) / RATE)
+	var line := _noise(float(size) / _rate)
 	var out := _silence_samples(n)
 	var pos := 0
 	for i in n:
@@ -760,13 +1176,13 @@ func _shinobue(f: float, length: float, glide: float) -> PackedFloat32Array:
 	var out := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		var target := f
 		if glide > 0.0 and t > length * 0.45:
 			target = f * pow(glide / f, clampf((t - length * 0.45) / (length * 0.4), 0.0, 1.0))
 		var scoop := pow(2.0, -exp(-t / 0.018) / 12.0)
 		var vibrato := 1.0 + 0.007 * sin(TAU * 5.6 * t) * clampf((t - 0.22) / 0.3, 0.0, 1.0)
-		phase += TAU * target * scoop * vibrato / RATE
+		phase += TAU * target * scoop * vibrato / _rate
 		var env := minf(1.0, t / 0.025) * clampf((length + 0.06 - t) / 0.06, 0.0, 1.0)
 		var tone := sin(phase) + 0.3 * sin(2.0 * phase) + 0.12 * sin(3.0 * phase) + 0.04 * sin(4.0 * phase)
 		var chiff := exp(-t / 0.02)
@@ -781,9 +1197,9 @@ func _slide_whistle(from: float, to: float, length: float) -> PackedFloat32Array
 	var out := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		var k := pow(t / length, 1.6)
-		phase += TAU * from * pow(to / from, k) * (1.0 + 0.012 * sin(TAU * 6.5 * t)) / RATE
+		phase += TAU * from * pow(to / from, k) * (1.0 + 0.012 * sin(TAU * 6.5 * t)) / _rate
 		var env := minf(1.0, t / 0.05) * minf(1.0, (length - t) / 0.04) * (0.5 + 0.5 * k)
 		out[i] = env * (sin(phase) + 0.08 * sin(2.0 * phase) + air[i] * 0.08)
 	return out
@@ -797,12 +1213,12 @@ func _mukkuri(f: float) -> PackedFloat32Array:
 	var reed := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		phase = fposmod(phase + f / RATE, 1.0)
+		phase = fposmod(phase + f / _rate, 1.0)
 		reed[i] = 1.0 if phase < 0.12 else -0.14
 	var freqs := PackedFloat32Array()
 	freqs.resize(n)
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		freqs[i] = 350.0 + 1300.0 * pow(sin(PI * minf(t / 0.45, 1.0)), 2.0)
 	var out := _filter_swept(reed, "bandpass", freqs, 7.0)
 	_mix(out, _partials(length, f, [1.0], [0.3], [0.3], 0.0), 0, 1.0)
@@ -817,9 +1233,9 @@ func _creak() -> PackedFloat32Array:
 	var pulses := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		var rate := 38.0 + 30.0 * sin(TAU * 0.9 * t + 1.0) + 14.0 * sin(TAU * 3.1 * t)
-		phase += rate / RATE
+		phase += rate / _rate
 		if phase >= 1.0:
 			phase -= 1.0
 			pulses[i] = rng.randf_range(0.6, 1.0)
@@ -906,10 +1322,10 @@ func _wood_frog() -> PackedFloat32Array:
 	var pulses := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		if t > 0.38:
 			break
-		phase += (22.0 + 20.0 * t / 0.38) / RATE
+		phase += (22.0 + 20.0 * t / 0.38) / _rate
 		if phase >= 1.0:
 			phase -= 1.0
 			pulses[i] = rng.randf_range(0.7, 1.0)
@@ -930,13 +1346,13 @@ func _soft_flute(f: float, length: float, glide: float) -> PackedFloat32Array:
 	var out := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		var target := f
 		if glide > 0.0 and t > length * 0.45:
 			target = f * pow(glide / f, clampf((t - length * 0.45) / (length * 0.45), 0.0, 1.0))
 		var scoop := pow(2.0, -exp(-t / 0.05) / 24.0)
 		var vibrato := 1.0 + 0.005 * sin(TAU * 4.8 * t) * clampf((t - 0.35) / 0.4, 0.0, 1.0)
-		phase += TAU * target * scoop * vibrato / RATE
+		phase += TAU * target * scoop * vibrato / _rate
 		var env := minf(1.0, t / 0.07) * clampf((length + 0.15 - t) / 0.15, 0.0, 1.0)
 		var tone := sin(phase) + 0.1 * sin(2.0 * phase) + 0.025 * sin(3.0 * phase)
 		var puff := exp(-t / 0.06)
@@ -963,6 +1379,261 @@ func _wood_body(x: PackedFloat32Array, modes: Array, q: float, gain: float) -> P
 	return out
 
 
+# --- Round 3: low, bowed, breathed and scraped wood ---------------------------------------
+# Rendered at 44.1 kHz and with more care than the lo-fi rounds: slow random drift in pitch
+# and pressure (see _wander), noise layers shaped by the tone, paired voices a few cents
+# apart and the resonances of a wooden body under almost everything.
+
+
+## A wooden bar or plank bowed with a rosined bow, the way players bow marimba bars: the
+## bar locks into its fundamental, so the tone is round, with a few soft harmonics, the
+## bar's own inharmonic mode and the rasp of the bow riding on top. Bow pressure
+## wanders, so the note breathes, and the bar rings on a little once the bow lifts.
+## `detune` (cents) adds a second bow on a twin bar that far off, which beats slowly against
+## the first; `swell` is the attack in seconds; with `glide` the note bends there over its
+## second half.
+func _bowed(f: float, length: float, glide: float, detune: float, swell: float) -> PackedFloat32Array:
+	var total := length + 1.2
+	var n := _seconds(total)
+	var pressure := _wander(total, 1.2)
+	var flutter := _wander(total, 25.0)
+	var rasp := _rms_norm(_bandpass(_noise(total), clampf(f * 3.0, 250.0, 2400.0), 1.4))
+	var twin := pow(2.0, detune / 1200.0)
+	var out := _silence_samples(n)
+	var p1 := rng.randf() * TAU
+	var p2 := rng.randf() * TAU
+	for i in n:
+		var t := float(i) / _rate
+		var target := f
+		if glide > 0.0:
+			target = f * pow(glide / f, smoothstep(length * 0.5, length * 0.9, t))
+		p1 += TAU * target / _rate
+		p2 += TAU * target * twin / _rate
+		var attack := smoothstep(0.0, swell, t)
+		var ring := 1.0 if t < length else exp(-(t - length) / 0.4)
+		var bow := 1.0 if t < length else exp(-(t - length) / 0.04)
+		var push := 0.8 + 0.2 * pressure[i]
+		var tone := sin(p1) + 0.3 * sin(2.0 * p1) + 0.14 * sin(3.0 * p1) + 0.06 * sin(4.0 * p1) + 0.04 * sin(3.93 * p1)
+		if detune != 0.0:
+			tone = (tone + 0.45 * (sin(p2) + 0.3 * sin(2.0 * p2) + 0.14 * sin(3.0 * p2))) * 0.7
+		out[i] = attack * push * (ring * tone * (1.0 + 0.04 * flutter[i]) + bow * rasp[i] * 0.07)
+	out = _wood_body(out, [165.0, 380.0, 840.0], 3.0, 0.25)
+	return _lowpass(out, 2600.0, 0.7)
+
+
+## A low bamboo flute played breathy, close to a bass shakuhachi: the air comes first and
+## the tone grows out of it with a quarter-tone scoop. The breath noise puffs with every
+## cycle of the tone, as it does in a real flute, the pitch drifts by a few cents, a slow
+## vibrato comes in late, and there is air on top of it all. With `glide` it slides there
+## over the second half of the note.
+func _breath_flute(f: float, length: float, glide: float) -> PackedFloat32Array:
+	var total := length + 0.35
+	var n := _seconds(total)
+	var air := _rms_norm(_bandpass(_noise(total), clampf(f * 2.0, 150.0, 1800.0), 1.2))
+	var hiss := _rms_norm(_lowpass(_highpass(_noise(total), 700.0, 0.7), 4000.0, 0.7))
+	var drift := _wander(total, 0.8)
+	var out := _silence_samples(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / _rate
+		var target := f
+		if glide > 0.0:
+			target = f * pow(glide / f, smoothstep(length * 0.45, length * 0.9, t))
+		var scoop := pow(2.0, -exp(-t / 0.09) / 24.0)
+		var vibrato := 1.0 + 0.004 * sin(TAU * 4.6 * t) * smoothstep(0.5, 1.2, t) + 0.0025 * drift[i]
+		phase += TAU * target * scoop * vibrato / _rate
+		var release := clampf((length + 0.3 - t) / 0.3, 0.0, 1.0)
+		var tone := sin(phase) + 0.22 * sin(2.0 * phase) + 0.07 * sin(3.0 * phase) + 0.02 * sin(4.0 * phase)
+		var puff := 0.55 + 0.45 * sin(phase)
+		out[i] = release * (smoothstep(0.03, 0.25, t) * tone * 0.6 + smoothstep(0.0, 0.05, t) * (air[i] * puff * 0.14 + hiss[i] * 0.03))
+	return _lowpass(out, 3200.0, 0.7)
+
+
+## A hollow log blown like a didgeridoo (they are eucalyptus trunks hollowed by termites):
+## buzzing lips at `f` drive the long wooden tube, and the player's mouth moves its two
+## formants slowly, which is most of what you hear. The buzz wavers with the lips.
+func _hollow_log(f: float, length: float) -> PackedFloat32Array:
+	var total := length + 0.3
+	var n := _seconds(total)
+	var mouth := _wander(total, 0.35)
+	var lips := _wander(total, 6.0)
+	var buzz := _silence_samples(n)
+	var f1 := PackedFloat32Array()
+	var f2 := PackedFloat32Array()
+	f1.resize(n)
+	f2.resize(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / _rate
+		phase += TAU * f * (1.0 + 0.004 * lips[i]) / _rate
+		var env := smoothstep(0.0, 0.15, t) * clampf((total - t) / 0.3, 0.0, 1.0)
+		buzz[i] = pow(0.5 + 0.5 * sin(phase), 6.0) * env * (0.85 + 0.15 * lips[i])
+		f1[i] = 430.0 + 170.0 * mouth[i]
+		f2[i] = 1300.0 - 320.0 * mouth[i]
+	buzz = _highpass(buzz, 30.0, 0.7)
+	var out := _silence_samples(n)
+	_mix(out, _lowpass(buzz, f * 2.5, 0.7), 0, 0.6)
+	_mix(out, _filter_swept(buzz, "bandpass", f1, 5.0), 0, 4.0)
+	_mix(out, _filter_swept(buzz, "bandpass", f2, 7.0), 0, 1.6)
+	return _peak_norm(_lowpass(out, 2500.0, 0.7), 0.6)
+
+
+## A bass marimba with padded mallets, its notes doubled on a second bar tuned six cents
+## away, as gamelan pairs are, so long low notes shimmer slowly instead of standing still.
+func _low_marimba(f: float) -> PackedFloat32Array:
+	var out := _soft_marimba(f)
+	_mix(out, _soft_marimba(f * 1.0035), 0, 0.7)
+	return out
+
+
+## A big slit log drum: a tongue cut into a hollowed trunk, hit with a padded beater. A low
+## mode with its wooden partials that bends down a little as it settles, the thud of the
+## beater, and the trunk's cavity booming under it; `lowpass` is how hard the beater is.
+func _slit(f: float, lowpass: float) -> PackedFloat32Array:
+	var out := _partials(2.5, f, [1.0, 2.45, 4.1, 6.6], [1.0, 0.5, 0.25, 0.1], [0.6, 0.25, 0.1, 0.05], 0.035)
+	_mix(out, _shape(_rms_norm(_lowpass(_noise(0.12), 260.0, 0.7)), 0.002, 0.025), 0, 0.25)
+	out = _wood_body(out, [85.0, 190.0, 430.0], 5.0, 0.6)
+	return _lowpass(_shape(out, 0.0015, 100.0), lowpass, 0.7)
+
+
+## A knuckle on a hollow trunk or a door, tuned to `f`; `far` puts it out in the trees:
+## duller, softer at the start.
+func _wood_knock(f: float, far: bool) -> PackedFloat32Array:
+	var out := _partials(0.4, f, [1.0, 1.6, 2.3, 3.9], [1.0, 0.7, 0.5, 0.2], [0.08, 0.055, 0.035, 0.02], 0.02)
+	_mix(out, _shape(_rms_norm(_lowpass(_noise(0.05), 700.0, 0.8)), 0.0005, 0.012), 0, 0.12)
+	_mix(out, _shape(_rms_norm(_bandpass(_noise(0.01), 2200.0, 1.5)), 0.0002, 0.002), 0, 0.04)
+	out = _wood_body(out, [f * 0.8, 260.0], 4.0, 0.3)
+	return _lowpass(_shape(out, 0.003, 100.0), 750.0, 0.7) if far else out
+
+
+## A small dry tick, a twig or a beak on hard wood: a short hollow block, rounded off.
+func _tick(f: float) -> PackedFloat32Array:
+	return _lowpass(_block(f, [1.0, 2.6, 4.3], [0.025, 0.01, 0.005], 0.0), 3500.0, 0.7)
+
+
+## A seed or a twig dropping somewhere onto the forest floor: a tick and a smaller bounce.
+func _seed_fall() -> PackedFloat32Array:
+	var f := rng.randf_range(700.0, 1300.0)
+	var out := _tick(f)
+	var bounce := _tick(f * rng.randf_range(1.05, 1.2))
+	out.resize(out.size() + _seconds(0.15))
+	_mix(out, bounce, _seconds(rng.randf_range(0.06, 0.12)), 0.35)
+	return out
+
+
+## A stick drawn slowly along ridged bark, a guiro made of a branch: every ridge it slips
+## over is a tiny impulse that rings the wood at `f` and its modes. The rate wanders as the
+## hand slows and hurries, and the stroke swells and fades over `length`.
+func _scrape(length: float, f: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var hand := _wander(length, 3.0)
+	var pulses := _silence_samples(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / _rate
+		phase += (24.0 * (0.8 + 0.5 * t / length) + 7.0 * hand[i]) / _rate
+		if phase >= 1.0:
+			phase -= 1.0
+			pulses[i] = rng.randf_range(0.5, 1.0)
+	var out := _bandpass(pulses, f, 7.0)
+	_mix(out, _bandpass(pulses, f * 2.3, 9.0), 0, 0.5)
+	_mix(out, _bandpass(pulses, f * 0.48, 5.0), 0, 0.7)
+	_mix(out, _rms_norm(_bandpass(_noise(length), f, 1.0)), 0, 0.01)
+	for i in n:
+		out[i] *= pow(sin(PI * float(i) / n), 0.8)
+	return _peak_norm(_lowpass(out, 3500.0, 0.7), 0.6)
+
+
+## A dry seed pod, or nutshells on a string, shaken for `length`: seeds strike the shell at
+## random, each click ringing its hollow at about `f`. The shake swells and fades.
+func _rattle(length: float, f: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var env := _ramp(n, 0.35, 0.45)
+	var clicks := _silence_samples(n)
+	for i in n:
+		if rng.randf() < 220.0 * env[i] / _rate:
+			clicks[i] = rng.randf_range(0.3, 1.0) * (1.0 if rng.randf() < 0.5 else -1.0)
+	var out := _bandpass(clicks, f, 2.5)
+	_mix(out, _bandpass(clicks, f * 1.9, 3.0), 0, 0.5)
+	_mix(out, _bandpass(clicks, f * 0.5, 2.0), 0, 0.4)
+	return _peak_norm(_lowpass(out, 4500.0, 0.7), 0.6)
+
+
+## A beam in an old wooden house groaning under a load: stick-slip like the creak, but slow
+## and low, a buzzing train of slips at about `f` a second whose rate wanders, ringing the
+## beam's resonances.
+func _groan(f: float, length: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var load := _wander(length, 0.9)
+	var pulses := _silence_samples(n)
+	var phase := 0.0
+	for i in n:
+		phase += f * (1.0 + 0.22 * load[i]) / _rate
+		if phase >= 1.0:
+			phase -= 1.0
+			pulses[i] = rng.randf_range(0.6, 1.0)
+	var out := _bandpass(pulses, 190.0, 9.0)
+	_mix(out, _bandpass(pulses, 430.0, 10.0), 0, 0.8)
+	_mix(out, _bandpass(pulses, 960.0, 9.0), 0, 0.4)
+	_mix(out, _bandpass(pulses, 2100.0, 8.0), 0, 0.12)
+	var env := _ramp(n, 0.35, 0.4)
+	for i in n:
+		out[i] *= env[i] * (0.7 + 0.3 * load[i])
+	return _peak_norm(_lowpass(out, 2400.0, 0.7), 0.6)
+
+
+## Slow random drift, `hz` fast, between -1 and 1: noise through two low-passes.
+func _wander(length: float, hz: float) -> PackedFloat32Array:
+	return _peak_norm(_lowpass(_lowpass(_noise(length + 0.5), hz, 0.6), hz, 0.6).slice(0, _seconds(length)), 1.0)
+
+
+func _rms_norm(x: PackedFloat32Array) -> PackedFloat32Array:
+	var sum := 0.0
+	for v in x:
+		sum += v * v
+	var rms := sqrt(sum / maxf(x.size(), 1.0))
+	var out := x.duplicate()
+	if rms > 0.0:
+		for i in out.size():
+			out[i] /= rms
+	return out
+
+
+func _peak_norm(x: PackedFloat32Array, level: float) -> PackedFloat32Array:
+	var top := 0.0
+	for v in x:
+		top = maxf(top, absf(v))
+	var out := x.duplicate()
+	if top > 0.0:
+		for i in out.size():
+			out[i] *= level / top
+	return out
+
+
+## Wind under the whole round-3 cue, different in each ear: noise between `low` and `high`
+## Hz at `level`, swelling `gusts` times over the loop (a whole number, so it meets itself).
+## With `modes` it blows across a hollow trunk instead, and rings its resonances.
+func _wind(level: float, gusts: int, low: float, high: float, modes := []) -> void:
+	var n := _dry.size()
+	for bus in [_dry, _dry_r]:
+		# Filtered twice over and the second pass kept, so the noise has no seam either.
+		var raw := _noise(float(n) / _rate)
+		raw.append_array(raw)
+		var air := _highpass(_lowpass(raw, high, 0.5), low, 0.7)
+		if not modes.is_empty():
+			var hollow := _silence_samples(air.size())
+			for m in modes:
+				_mix(hollow, _bandpass(air, m, 8.0), 0, 1.0)
+			_mix(hollow, air, 0, 0.15)
+			air = hollow
+		air = _rms_norm(air.slice(n))
+		var phase := rng.randf_range(-0.4, 0.4)
+		for i in n:
+			var t := float(i) / n
+			var swell := 0.35 + 0.65 * pow(0.5 + 0.5 * sin(TAU * gusts * t - PI * 0.5 + phase), 2.0)
+			bus[i] += air[i] * level * swell
+
+
 ## Wooden wind chimes over `bars` bars from `bar`: in each bar, with chance `chance`, a
 ## gust knocks a few bamboo tubes together.
 func _chimes(bar: int, bars: int, chance: float, vel: float) -> void:
@@ -980,7 +1651,7 @@ func _chimes(bar: int, bars: int, chance: float, vel: float) -> void:
 ## `gusts` times over it (a whole number, so a loop meets itself).
 func _air(level: float, gusts: int) -> void:
 	var n := _dry.size()
-	var wind := _highpass(_lowpass(_noise(float(n + 2) / RATE), 700.0, 0.5), 120.0, 0.7)
+	var wind := _highpass(_lowpass(_noise(float(n + 2) / _rate), 700.0, 0.5), 120.0, 0.7)
 	for i in n:
 		var t := float(i) / n
 		var swell := 0.45 + 0.55 * pow(0.5 + 0.5 * sin(TAU * gusts * t - PI * 0.5), 2.0)
@@ -1015,17 +1686,17 @@ func _partials(length: float, f: float, ratios: Array, amps: Array, decays: Arra
 	var out := _silence_samples(n)
 	for m in ratios.size():
 		var freq: float = f * ratios[m]
-		if freq >= RATE * 0.45:
+		if freq >= _rate * 0.45:
 			continue
 		var amp: float = amps[m]
 		var decay: float = decays[m]
 		var phase := rng.randf() * TAU
 		for i in n:
-			var t := float(i) / RATE
+			var t := float(i) / _rate
 			var e := exp(-t / decay)
 			if e < 0.0005:
 				break
-			phase += TAU * freq * (1.0 + drop * exp(-t / 0.03)) / RATE
+			phase += TAU * freq * (1.0 + drop * exp(-t / 0.03)) / _rate
 			out[i] += sin(phase) * e * amp * minf(1.0, t / 0.0006)
 	return out
 
@@ -1039,7 +1710,7 @@ func _reverb(x: PackedFloat32Array, time: float, damp: float) -> PackedFloat32Ar
 		input.append_array(x)
 	var wet := _silence_samples(input.size())
 	for delay in [778, 808, 745, 711]:
-		var g := pow(0.001, float(delay) / (time * RATE))
+		var g := pow(0.001, float(delay) / (time * _rate))
 		var buf := _silence_samples(delay)
 		var lp := 0.0
 		for i in input.size():
@@ -1088,7 +1759,7 @@ func _noise(length: float) -> PackedFloat32Array:
 func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32Array:
 	var out := x.duplicate()
 	for i in out.size():
-		var t := float(i) / RATE
+		var t := float(i) / _rate
 		var a := minf(1.0, t / maxf(attack, 0.0001))
 		var d := exp(-maxf(t - attack, 0.0) / maxf(decay, 0.0001))
 		out[i] *= a * d
@@ -1139,7 +1810,7 @@ func _filter_swept(x: PackedFloat32Array, type: String, freqs: PackedFloat32Arra
 	var a2 := 0.0
 	for i in x.size():
 		if i % 8 == 0:
-			var w0 := TAU * clampf(freqs[i], 20.0, RATE * 0.45) / RATE
+			var w0 := TAU * clampf(freqs[i], 20.0, _rate * 0.45) / _rate
 			var cw := cos(w0)
 			var alpha := sin(w0) / (2.0 * q)
 			var a0 := 1.0 + alpha
@@ -1185,8 +1856,12 @@ func _mix_wrap(into: PackedFloat32Array, x: PackedFloat32Array, offset: int, gai
 		_mix(into, x, offset, gain)
 		return
 	var n := into.size()
-	for i in x.size():
-		into[(offset + i) % n] += x[i] * gain
+	var start := offset % n
+	var first := mini(x.size(), n - start)
+	for i in first:
+		into[start + i] += x[i] * gain
+	for i in range(first, x.size()):
+		into[(start + i) % n] += x[i] * gain
 
 
 func _silence(length: float) -> PackedFloat32Array:
@@ -1201,7 +1876,7 @@ func _silence_samples(n: int) -> PackedFloat32Array:
 
 
 func _seconds(length: float) -> int:
-	return int(round(length * RATE))
+	return int(round(length * _rate))
 
 
 func _midi(name: String) -> int:
@@ -1225,11 +1900,19 @@ func _freq(midi: float) -> float:
 	return 440.0 * pow(2.0, (midi - 69.0) / 12.0)
 
 
+## `midi` as a note name, e.g. 50 -> D3, with a + for a quarter tone above.
+func _note_name(midi: float) -> String:
+	var names := ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
+	var k := int(floor(midi))
+	return "%s%d%s" % [names[k % 12], int(k / 12.0) - 1, "+" if midi - k >= 0.25 else ""]
+
+
 # --- Output -------------------------------------------------------------------------------
 
 
 ## Sums the buses through the reverb (`wet` of it) and, if anything was sent there, the
-## echo; squeezes the peaks a little, normalises and writes the cue.
+## echo; squeezes the peaks a little, normalises and writes the cue. Round 3 goes through
+## _finish_hifi instead.
 func _finish(wet: float, room := 1.6) -> void:
 	var out := _dry.duplicate()
 	var verb := _reverb(_verb, room, _damp)
@@ -1276,9 +1959,146 @@ func _softclip(x: PackedFloat32Array, drive: float) -> PackedFloat32Array:
 	return out
 
 
-## Writes a 16-bit mono WAV to user://music_render and encodes it to OGG Vorbis in the
-## concepts folder with ffmpeg; without ffmpeg the WAV stays where it is.
-func _write(cue: String, x: PackedFloat32Array) -> void:
+
+
+## The round-3 master, in stereo and without the lo-fi: the reverb send goes through a
+## convolution hall `room` seconds long (see _hall), the echo bounces a little differently
+## on each side, the peaks are hardly touched and the cue is normalised and written.
+func _finish_hifi(wet: float, room: float, bright: float) -> void:
+	var left := _dry.duplicate()
+	var right := _dry_r.duplicate()
+	var verb := _convolve(_verb, _verb_r, _hall(room, bright))
+	var echoes := []
+	for v in _echo:
+		if v != 0.0:
+			echoes = [_delay(_echo, _step * 6.0, 0.4), _delay(_echo_r, _step * 6.0 + 0.031, 0.4)]
+			break
+	for i in left.size():
+		left[i] += verb[0][i] * wet
+		right[i] += verb[1][i] * wet
+		if not echoes.is_empty():
+			left[i] += echoes[0][i] * 0.5
+			right[i] += echoes[1][i] * 0.5
+	# Rumble under 45 Hz only muddies small speakers; filtered twice over on a loop, as in _finish.
+	for side in [left, right]:
+		var input: PackedFloat32Array = side.duplicate()
+		if _loop:
+			input.append_array(side)
+		input = _highpass(input, 45.0, 0.6)
+		for i in side.size():
+			side[i] = input[input.size() - side.size() + i]
+	var out := _interleave(left, right)
+	out = _softclip(out, _drive)
+	var top := 0.0
+	for v in out:
+		top = maxf(top, absf(v))
+	for i in out.size():
+		out[i] *= _level / top
+	_write(_name, out, 2)
+	_cache.clear()
+
+
+## A hall for round 3 to play in, made up rather than measured: a few early reflections off
+## near walls in the first 80 ms, then a dense tail of noise that dies away (60 dB down after
+## `seconds`) and darkens as it does, since air and wood soak up the highs first; it starts
+## out low-passed at `bright` Hz. Each ear gets different noise, so the tail is wide. The
+## two impulse responses are scaled to unit energy.
+func _hall(seconds: float, bright: float) -> Array:
+	var irs := []
+	var length := seconds * 1.15
+	var n := _seconds(length)
+	for ch in 2:
+		var tail := _noise(length)
+		var cut := PackedFloat32Array()
+		cut.resize(n)
+		var pre := 0.012 + 0.007 * ch
+		for i in n:
+			var t := float(i) / _rate
+			tail[i] *= exp(-6.9 * t / seconds) * smoothstep(pre, pre + 0.08, t)
+			cut[i] = 300.0 + bright * exp(-t / (seconds * 0.3))
+		tail = _highpass(_filter_swept(tail, "lowpass", cut, 0.6), 70.0, 0.6)
+		var early := _silence_samples(n)
+		for k in 10:
+			var at := rng.randf_range(0.003, 0.08)
+			early[_seconds(at)] += (1.0 - at / 0.09) * (1.0 if rng.randf() < 0.5 else -1.0)
+		early = _lowpass(early, bright * 1.3, 0.7)
+		var ir := _scaled_energy(tail, 0.85)
+		_mix(ir, _scaled_energy(early, 0.15), 0, 1.0)
+		irs.append(ir)
+	return irs
+
+
+## `x` scaled so the sum of its squares is `energy`.
+func _scaled_energy(x: PackedFloat32Array, energy: float) -> PackedFloat32Array:
+	var sum := 0.0
+	for v in x:
+		sum += v * v
+	var out := x.duplicate()
+	for i in out.size():
+		out[i] *= sqrt(energy / sum)
+	return out
+
+
+## Convolves a stereo pair with a pair of impulse responses, left with left and right with
+## right, through ffmpeg's afir (convolution is far too slow in GDScript). A loop goes in
+## twice and the second pass comes back, so the tail of its end already rings into its start.
+func _convolve(left: PackedFloat32Array, right: PackedFloat32Array, irs: Array) -> Array:
+	var dir := ProjectSettings.globalize_path("user://music_render/tmp/")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var l := left.duplicate()
+	var r := right.duplicate()
+	if _loop:
+		l.append_array(left)
+		r.append_array(right)
+	_write_float_wav(dir + "send.wav", _interleave(l, r))
+	_write_float_wav(dir + "hall.wav", _interleave(irs[0], irs[1]))
+	var output := []
+	var code := OS.execute("ffmpeg", ["-y", "-loglevel", "error", "-i", dir + "send.wav", "-i", dir + "hall.wav", "-filter_complex", "[0][1]afir=gtype=none:irnorm=-1:irgain=1[o]", "-map", "[o]", "-f", "f32le", "-c:a", "pcm_f32le", dir + "wet.raw"], output, true)
+	if code != 0:
+		push_error("ffmpeg could not convolve the reverb (%d): %s" % [code, "".join(output)])
+		return [_silence_samples(left.size()), _silence_samples(left.size())]
+	var wet := FileAccess.get_file_as_bytes(dir + "wet.raw").to_float32_array()
+	var out := [_silence_samples(left.size()), _silence_samples(left.size())]
+	var skip := l.size() - left.size()
+	for i in left.size():
+		out[0][i] = wet[(skip + i) * 2]
+		out[1][i] = wet[(skip + i) * 2 + 1]
+	return out
+
+
+func _interleave(left: PackedFloat32Array, right: PackedFloat32Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(left.size() * 2)
+	for i in left.size():
+		out[i * 2] = left[i]
+		out[i * 2 + 1] = right[i]
+	return out
+
+
+## A 32-bit float stereo WAV, for passing buses to ffmpeg.
+func _write_float_wav(path: String, x: PackedFloat32Array) -> void:
+	var data := x.to_byte_array()
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_buffer("RIFF".to_ascii_buffer())
+	file.store_32(36 + data.size())
+	file.store_buffer("WAVEfmt ".to_ascii_buffer())
+	file.store_32(16)
+	file.store_16(3)
+	file.store_16(2)
+	file.store_32(_rate)
+	file.store_32(_rate * 8)
+	file.store_16(8)
+	file.store_16(32)
+	file.store_buffer("data".to_ascii_buffer())
+	file.store_32(data.size())
+	file.store_buffer(data)
+	file.close()
+
+
+## Writes a 16-bit WAV (mono, or `channels` interleaved) to user://music_render and encodes
+## it to OGG Vorbis in the concepts folder with ffmpeg; without ffmpeg the WAV stays where
+## it is.
+func _write(cue: String, x: PackedFloat32Array, channels := 1) -> void:
 	var wav := ProjectSettings.globalize_path("user://music_render/%s.wav" % cue)
 	DirAccess.make_dir_recursive_absolute(wav.get_base_dir())
 	var data := PackedByteArray()
@@ -1291,10 +2111,10 @@ func _write(cue: String, x: PackedFloat32Array) -> void:
 	file.store_buffer("WAVEfmt ".to_ascii_buffer())
 	file.store_32(16)
 	file.store_16(1)
-	file.store_16(1)
-	file.store_32(RATE)
-	file.store_32(RATE * 2)
-	file.store_16(2)
+	file.store_16(channels)
+	file.store_32(_rate)
+	file.store_32(_rate * 2 * channels)
+	file.store_16(2 * channels)
 	file.store_16(16)
 	file.store_buffer("data".to_ascii_buffer())
 	file.store_32(data.size())
@@ -1303,6 +2123,7 @@ func _write(cue: String, x: PackedFloat32Array) -> void:
 	var ogg := ProjectSettings.globalize_path(ROOT + cue + ".ogg")
 	DirAccess.make_dir_recursive_absolute(ogg.get_base_dir())
 	var output := []
-	var code := OS.execute("ffmpeg", ["-y", "-loglevel", "error", "-i", wav, "-c:a", "libvorbis", "-q:a", "3", ogg], output, true)
+	var quality := "3" if channels == 1 else "4"
+	var code := OS.execute("ffmpeg", ["-y", "-loglevel", "error", "-i", wav, "-c:a", "libvorbis", "-q:a", quality, ogg], output, true)
 	if code != 0:
 		push_warning("ffmpeg failed (%d), left the WAV at %s: %s" % [code, wav, "".join(output)])
