@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/characters/masks/villager_mask.tscn" id="1_mesh"]
 [ext_resource type="Script" uid="uid://jtqbca6mqo6" path="res://scripts/components/carryable.gd" id="2_carryable"]
 [ext_resource type="Resource" path="res://resources/items/villager_mask.tres" id="3_item"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="4_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="5_impact"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_face"]
 size = Vector3(0.22, 0.28, 0.06)
@@ -19,3 +21,10 @@ shape = SubResource("BoxShape3D_face")
 [node name="Carryable" type="Node" parent="."]
 script = ExtResource("2_carryable")
 item_data = ExtResource("3_item")
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("4_destructible")
+durability = 40
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("5_impact")

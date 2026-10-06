@@ -7,6 +7,11 @@ extends NpcAction
 
 ## How keen it is to fight any enemy it knows of. 0 never fights.
 @export_range(0.0, 1.0) var aggression := 0.8
+## How keen it is to fight back against someone it holds a grudge against — whoever
+## hurt it. Used when keener than aggression, so a timid NPC still answers a blow.
+## Keep it plus the Brain's commitment bonus below FleeAction's wounded_score, or a
+## badly hurt NPC will not break off to run.
+@export_range(0.0, 1.0) var retaliation := 0.75
 ## Flat distance from which it swings, in metres. Keep it inside MeleeAttack.reach.
 @export var attack_range := 1.3
 ## Closer than this, flat, it steps back while it keeps swinging, so it does not end
@@ -24,7 +29,7 @@ var _until_blow := 0.0
 
 
 func score(npc: Npc) -> float:
-	return aggression if npc.get_attack_target() else 0.0
+	return npc.fight_score(npc.get_attack_target(), aggression, retaliation)
 
 
 func enter(npc: Npc) -> void:

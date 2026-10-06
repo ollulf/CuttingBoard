@@ -16,6 +16,7 @@ extends CanvasLayer
 @onready var _inventory_panel: InventoryPanel = $InventoryPanel
 @onready var _hotbar_panel: HotbarPanel = $HotbarPanel
 @onready var _hurt_overlay: HurtOverlay = $HurtOverlay
+@onready var _mend_overlay: MendOverlay = $MendOverlay
 @onready var _funhouse_mirror: FunhouseMirror = $FunhouseMirror
 
 @onready var _interactor: Interactor = %Interactor
@@ -39,6 +40,7 @@ func _ready() -> void:
 	_hotbar_panel.bind(_hotbar)
 	_inventory_panel.bind_hotbar(_hotbar, _hotbar_panel)
 	_hurt_overlay.bind(_health)
+	_mend_overlay.bind(_health)
 	_funhouse_mirror.bind(_hurt_overlay)
 	_interactor.container_opened.connect(_inventory_panel.open_container)
 	_interactor.hover_changed.connect(_refresh.unbind(1))
@@ -58,15 +60,19 @@ func _refresh() -> void:
 
 
 ## An empty hand pointed at something loose picks it up on a plain click; otherwise it
-## swings what it is holding, or puts it on if it is worn. Shift works the world with it.
+## swings what it is holding, puts it on if it is worn, or uses it if it is used from the
+## hand (glue). Shift works the world with it.
 func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
 	var held := hand.get_item_data()
+	var usable := Usable.find_in(hand.get_held())
 	if hand.is_free() and _hovering_carryable():
 		prompt.show_prompt(key, "Pick up")
 	elif held and held.is_weapon():
 		prompt.show_prompt(key, "Swing %s" % held.display_name)
 	elif Equipment.slot_for(held) != Equipment.NO_SLOT:
 		prompt.show_prompt(key, "Put on %s" % held.display_name)
+	elif held and usable and usable.is_used_in_hand():
+		prompt.show_prompt(key, "%s %s" % [usable.held_verb, held.display_name])
 	elif not hand.is_free():
 		prompt.show_prompt("Shift+" + key, "Drop")
 	else:

@@ -11,6 +11,10 @@ extends NpcAction
 ## AttackTarget's aggression plus the Brain's commitment bonus, so an NPC already
 ## fighting up close still breaks off to throw while it has ammunition.
 @export_range(0.0, 1.0) var eagerness := 0.95
+## Score against someone it holds a grudge against, when keener than eagerness. Keep it
+## above AttackTarget's retaliation plus the commitment bonus for the same reason, and
+## below FleeAction's wounded_score minus that bonus so the badly hurt still run.
+@export_range(0.0, 1.0) var retaliation := 0.88
 ## Closer than this an enemy is not thrown at. Keep it small: the point is that rocks
 ## come before melee, not instead of it.
 @export var min_range := 1.0
@@ -32,20 +36,19 @@ var _timer := 0.0
 
 
 func score(npc: Npc) -> float:
-	if eagerness <= 0.0:
-		return 0.0
 	var target := npc.get_attack_target()
-	if target == null or npc.memory.seconds_since_seen(target) > in_sight_window:
+	var keenness := npc.fight_score(target, eagerness, retaliation)
+	if keenness <= 0.0 or npc.memory.seconds_since_seen(target) > in_sight_window:
 		return 0.0
 	var distance := npc.flat_distance_to(target.global_position)
 	if distance < min_range or distance > max_range:
 		return 0.0
 	# Mid wind-up the item is already out of the inventory, but still to be thrown.
 	if _is_holding_item():
-		return eagerness
+		return keenness
 	if npc.find_throwable() == null or npc.get_free_hand() == null:
 		return 0.0
-	return eagerness
+	return keenness
 
 
 func enter(npc: Npc) -> void:
