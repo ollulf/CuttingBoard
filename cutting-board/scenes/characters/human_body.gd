@@ -18,6 +18,10 @@ extends Node3D
 ## shapes and joint limits there; what this script exports is tuned on the instance.
 
 signal went_limp
+## The worn mask took a blow to the head and has `durability` left.
+signal mask_damaged(durability: int)
+## The worn mask split and fell off in pieces; the face beneath is bare.
+signal mask_broken
 
 ## Overrides the model's material, which is how one body tells a villager from a bandit.
 @export var material: Material:
@@ -28,9 +32,12 @@ signal went_limp
 ## The mask worn over the face, which is how one faction tells itself from another in the
 ## dark. Its worn_scene is instanced onto the head bone, origin at `mask_offset` from the
 ## bone, facing forward (-Z). Changing it on a living body swaps the face, which is how
-## the player's body keeps up with what is in their Mask slot.
+## the player's body keeps up with what is in their Mask slot. Setting the mask it already
+## wears changes nothing, so the face keeps its cracks.
 @export var mask: MaskData:
 	set(value):
+		if value == mask:
+			return
 		mask = value
 		if is_node_ready() and not _limp:
 			_put_on_mask()
@@ -45,6 +52,12 @@ signal went_limp
 @export var mask_pop_impulse := 0.6
 ## Seconds a mask that came off passes through the body it came off, to get clear of it.
 @export var mask_clear_time := 0.5
+## A hit this far or more above the base of the skull, along the head bone, is a hit on
+## the head, and wears the mask down as well as hurting its wearer.
+@export var head_hit_height := 0.0
+## Heard and seen where the mask was as it breaks: a BreakBurst scene, like a crate's.
+@export var mask_break_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
+@export var mask_break_effect: PackedScene = preload("res://scenes/vfx/break_burst.tscn")
 ## Hits in a game land harder than physics says they should: every impulse a hit puts
 ## into the bones is multiplied by this.
 @export var impulse_scale := 2.5
@@ -96,6 +109,14 @@ var _face: Node3D
 ## come off once that entry is taken.
 var _face_entry: InventoryEntry
 var _face_inventory: Inventory
+
+## What the worn mask has left, on the scale of its MaskData.durability. Putting a mask on
+## starts it at full; whoever keeps the mask's wear elsewhere — the player's Equipment —
+## sets it straight after. The face shows a crack once half of it is gone.
+var mask_durability := 0:
+	set(value):
+		mask_durability = value
+		_show_wear()
 
 
 func _ready() -> void:
@@ -335,6 +356,76 @@ func _put_on_mask() -> void:
 	_face = mask.worn_scene.instantiate() as Node3D
 	_face.position = mask_offset
 	attachment.add_child(_face)
+	mask_durability = mask.durability
+
+
+## Whether a hit landing at `point` is a hit on the head: at or above the base of the
+## skull, wherever the head is posed. A hit that recorded no point is not.
+func is_head_hit(point: Vector3) -> bool:
+	var head := skeleton.find_bone("Head")
+	if point.is_zero_approx() or head < 0:
+		return false
+	var frame := skeleton.global_transform * skeleton.get_bone_global_pose(head)
+	return (frame.affine_inverse() * point).y >= head_hit_height
+
+
+## A blow to the head lands on the mask too: it wears down by the damage dealt, cracks
+## once half of it is gone, and breaks off the face when nothing is left. Like flinch(),
+## the character's own script calls this when its Health is damaged; a mask authored with
+## no durability never breaks.
+func hit_mask(info: DamageInfo) -> void:
+	if _limp or _face == null or info == null or info.amount <= 0 or mask.durability <= 0:
+		return
+	if not is_head_hit(info.position):
+		return
+	mask_durability = maxi(mask_durability - info.amount, 0)
+	mask_damaged.emit(mask_durability)
+	if mask_durability == 0:
+		_break_mask()
+
+
+## The mask splits and falls from the face in pieces, leaving nothing to pick up. Seen
+## from behind it — the player's own, in first person — it is only heard: the pieces
+## would fill the view.
+func _break_mask() -> void:
+	var face := _face
+	_face = null
+	Sfx.play_at(mask_break_sound, face.global_position)
+	var camera := get_viewport().get_camera_3d()
+	var from_inside := camera != null and get_actor().is_ancestor_of(camera)
+	if mask_break_effect and not from_inside:
+		var burst := mask_break_effect.instantiate() as Node3D
+		burst.top_level = true
+		if burst is BreakBurst:
+			# The pieces fall to the wearer's feet, not to the bottom of the face.
+			(burst as BreakBurst).setup(face, global_position.y)
+		else:
+			burst.position = face.global_position
+		var tree := get_tree()
+		(tree.current_scene if tree.current_scene else tree.root).add_child(burst)
+	face.queue_free()
+	mask = null
+	mask_broken.emit()
+
+
+## Draws the worn mask's wear on its face: nothing above half, then a crack running
+## further down it the less is left.
+func _show_wear() -> void:
+	if _face == null or mask == null or mask.durability <= 0:
+		return
+	var ratio := float(mask_durability) / mask.durability
+	var crack := 0.0 if ratio > 0.5 else remap(ratio, 0.5, 0.0, 0.4, 1.0)
+	for node in _face.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		var shaded := mi.material_override as ShaderMaterial
+		if shaded == null:
+			var authored := mi.get_active_material(0) as ShaderMaterial
+			if authored == null or crack == 0.0:
+				continue
+			# A copy of its own, so one cracked face does not crack every mask of its kind.
+			shaded = authored.duplicate()
+			mi.material_override = shaded
+		shaded.set_shader_parameter(&"crack", crack)
 
 
 ## The mask comes away from a falling body as the item it is — the same object as one
@@ -348,6 +439,8 @@ func _knock_off_mask(face: Node3D, info: DamageInfo, carried_velocity: Vector3) 
 	if level == null or loose == null:
 		return
 	level.add_child(loose)
+	# A battered mask is still battered once it is off.
+	Destructible.write(loose, mask_durability)
 	# The item's mesh is the worn face at its origin, so it leaves from exactly where the
 	# face was drawn.
 	loose.global_transform = at
@@ -369,7 +462,7 @@ func _leave_mask_on() -> bool:
 	var inventory := get_actor().get_node_or_null("Inventory") as Inventory
 	if inventory == null or mask == null:
 		return false
-	_face_entry = inventory.store(mask)
+	_face_entry = inventory.store(mask, mask_durability)
 	if _face_entry == null:
 		return false
 	_face_inventory = inventory

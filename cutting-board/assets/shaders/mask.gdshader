@@ -28,6 +28,9 @@ uniform float eye_slant = 0.25;
 uniform float mouth_y = 0.5;
 uniform vec2 mouth_size = vec2(0.32, 0.045);
 uniform float grain_density = 22.0;
+// How far a crack has run down from the brow, 0..1: none at 0, the whole face split at 1.
+// HumanBody sets it on a worn mask that has taken a beating; materials leave it at 0.
+uniform float crack : hint_range(0.0, 1.0) = 0.0;
 
 varying vec3 psx_uv;
 
@@ -79,6 +82,15 @@ void fragment() {
 			eye(p, eye_center, eye_slant));
 	float mouth = step(abs(p.x), mouth_size.x) * step(abs(p.y - mouth_y), mouth_size.y);
 	holes = max(holes, mouth);
+	// The crack: a zigzag split from the brow down across the face, as far as `crack`
+	// says, widest where it started. The wood around it darkens as it spreads.
+	if (crack > 0.0) {
+		float run = (p.y + 1.0) * 0.5;
+		float line = 0.12 + p.y * 0.2 + (abs(fract(p.y * 3.5) - 0.5) - 0.25) * 0.22;
+		float split = step(abs(p.x - line), mix(0.05, 0.015, run)) * step(run, crack);
+		holes = max(holes, split);
+		colour *= 1.0 - crack * 0.3;
+	}
 
 	ALBEDO = mix(colour, hole_color.rgb, holes);
 	EMISSION = colour * self_glow * (1.0 - holes) + eye_glow.rgb * eye_glow_energy * holes;

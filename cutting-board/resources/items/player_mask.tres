@@ -18,4 +18,5 @@ icon = SubResource("CanvasTexture_p7hj7")
 item_type = 2
 description = "Grey-green wood, worn smooth. Nobody else's face looks like this one."
 weight = 0.3
+durability = 50
 world_scene_path = "res://scenes/items/player_mask.tscn"

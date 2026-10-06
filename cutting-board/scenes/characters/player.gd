@@ -138,6 +138,12 @@ func _ready() -> void:
 	# this script was ready to hear about it.
 	equipment.changed.connect(_wear_mask)
 	_wear_mask()
+	# The other way round, a blow to the face wears the mask on the body, and the Mask
+	# slot keeps the score: what it has left, and nothing at all once it breaks.
+	body.mask_damaged.connect(
+		func(durability: int) -> void: equipment.set_durability(Equipment.Slot.MASK, durability)
+	)
+	body.mask_broken.connect(func() -> void: equipment.unequip(Equipment.Slot.MASK))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -237,6 +243,7 @@ func wear_held(hand: HandSlot) -> bool:
 ## The hidden body keeps the face the player has on, ready for when it falls.
 func _wear_mask() -> void:
 	body.mask = equipment.get_item(Equipment.Slot.MASK) as MaskData
+	body.mask_durability = equipment.get_durability(Equipment.Slot.MASK)
 
 
 ## Throws a blow with one arm. What the hand is holding chooses the animation, which is
@@ -327,6 +334,8 @@ func _on_item_stowed(_data: ItemData) -> void:
 ## to the face, sideways from one to the side — and knocks the player back a step. The
 ## body itself is not drawn while alive, so there is no flinch to show.
 func _on_damaged(info: DamageInfo) -> void:
+	# Even the killing blow: a mask it breaks is not left to fall with the body.
+	body.hit_mask(info)
 	if not health.is_alive():
 		return
 	Sfx.play(hurt_sound)

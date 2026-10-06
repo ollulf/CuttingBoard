@@ -226,6 +226,8 @@ func _on_damaged(info: DamageInfo) -> void:
 	var attacker := info.source as Node3D
 	if attacker and attacker != self and Faction.find_in(attacker):
 		memory.remember(attacker)
+	# Before the body can fall: a mask the killing blow breaks does not come off whole.
+	body.hit_mask(info)
 	if health.is_alive():
 		# A beat after the blow rather than on top of it: the grunt is a reaction, and
 		# it keeps the two from stacking into one loud thump.

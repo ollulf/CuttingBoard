@@ -24,8 +24,9 @@ var _lifetime := LIFETIME
 
 
 ## Reads size and material off the object about to be freed. Call before adding the
-## burst to the tree.
-func setup(source: Node3D) -> void:
+## burst to the tree. The pieces land on the bottom of the object unless `floor_y` says
+## where the ground is — for something that breaks in mid-air, like a mask on a face.
+func setup(source: Node3D, floor_y := NAN) -> void:
 	var box := AABB(source.global_position, Vector3.ZERO)
 	var material: Material
 	for mesh_instance in source.find_children("*", "MeshInstance3D", true, false):
@@ -38,9 +39,24 @@ func setup(source: Node3D) -> void:
 			if material == null and mi.mesh.get_surface_count() > 0:
 				material = mi.get_active_material(0)
 	position = box.get_center()
-	_floor_y = box.position.y
-	_spawn_shards(box.size, material)
+	_floor_y = box.position.y if is_nan(floor_y) else floor_y
+	_spawn_shards(box.size, _solid(material))
 	_spawn_dust(box.size)
+
+
+## A material the shards can wear. The mask shader draws a face on a flat quad and cuts
+## away everything outside its oval, which on a splinter would be most of it, so a mask
+## breaks into plain pieces of its own wood instead.
+static func _solid(material: Material) -> Material:
+	var shader := material as ShaderMaterial
+	if shader == null:
+		return material
+	var wood = shader.get_shader_parameter(&"wood_color")
+	if not wood is Color:
+		return material
+	var flat := StandardMaterial3D.new()
+	flat.albedo_color = wood
+	return flat
 
 
 ## A small spray of splinters off a body that took a hit, instead of a whole break: thin

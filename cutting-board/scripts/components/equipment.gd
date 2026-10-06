@@ -58,6 +58,15 @@ func get_durability(slot: int) -> int:
 	return _durability.get(slot, -1)
 
 
+## Records what the worn item has left after it took some wear on the body, such as a
+## mask struck in the face. Ignored for an empty slot.
+func set_durability(slot: int, durability: int) -> void:
+	if is_free(slot) or get_durability(slot) == durability:
+		return
+	_durability[slot] = durability
+	changed.emit()
+
+
 func is_free(slot: int) -> bool:
 	return not _items.has(slot)
 
