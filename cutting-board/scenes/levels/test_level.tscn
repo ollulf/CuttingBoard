@@ -9,6 +9,9 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/training_dummy.tscn" id="7_dummy"]
 [ext_resource type="PackedScene" path="res://scenes/props/chest.tscn" id="8_chest"]
 [ext_resource type="PackedScene" path="res://scenes/items/rock.tscn" id="9_rock"]
+[ext_resource type="Script" path="res://scripts/level/auto_bake_navigation.gd" id="10_navbake"]
+[ext_resource type="PackedScene" path="res://scenes/characters/villager.tscn" id="11_villager"]
+[ext_resource type="PackedScene" path="res://scenes/characters/bandit.tscn" id="12_bandit"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -35,6 +38,12 @@ size = Vector3(2, 1, 2)
 [sub_resource type="BoxShape3D" id="BoxShape3D_box"]
 size = Vector3(2, 1, 2)
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_level"]
+geometry_source_geometry_mode = 1
+geometry_source_group_name = &"navigation_source"
+agent_radius = 0.4
+agent_max_climb = 0.3
+
 [node name="TestLevel" type="Node3D" unique_id=408145003]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1906193929]
@@ -44,7 +53,7 @@ environment = SubResource("Environment_1")
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
 shadow_enabled = true
 
-[node name="Ground" type="StaticBody3D" parent="." unique_id=272265108]
+[node name="Ground" type="StaticBody3D" parent="." unique_id=272265108 groups=["navigation_source"]]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1710344613]
 mesh = SubResource("PlaneMesh_ground")
@@ -53,7 +62,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_ground")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1575756470]
 shape = SubResource("WorldBoundaryShape3D_ground")
 
-[node name="Step" type="StaticBody3D" parent="." unique_id=1948015408]
+[node name="Step" type="StaticBody3D" parent="." unique_id=1948015408 groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.5, -5)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Step" unique_id=386015226]
@@ -62,7 +71,7 @@ mesh = SubResource("BoxMesh_box")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Step" unique_id=616717470]
 shape = SubResource("BoxShape3D_box")
 
-[node name="Step2" type="StaticBody3D" parent="." unique_id=236739825]
+[node name="Step2" type="StaticBody3D" parent="." unique_id=236739825 groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.5, -8)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Step2" unique_id=537268569]
@@ -77,10 +86,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 [node name="CarryableBase" parent="." unique_id=1680223564 instance=ExtResource("2_yautc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.678698, 0.15, -2.1022735)
 
-[node name="house_1x2" parent="." unique_id=1658554690 instance=ExtResource("3_fr1um")]
+[node name="house_1x2" parent="." unique_id=1658554690 instance=ExtResource("3_fr1um") groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1388183, 0.011931408, -3.2692165)
 
-[node name="tree_1_large" parent="." unique_id=394365836 instance=ExtResource("4_v45ci")]
+[node name="tree_1_large" parent="." unique_id=394365836 instance=ExtResource("4_v45ci") groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.1923075, 0.5999272, 12.464374)
 
 [node name="Barrel" parent="." unique_id=1388112633 instance=ExtResource("5_6xh4u")]
@@ -124,3 +133,19 @@ transform = Transform3D(-0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, -0.8660254, -1.2, 
 
 [node name="Rock5" parent="." instance=ExtResource("9_rock")]
 transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -0.8, 0.1, -1.6)
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_level")
+script = ExtResource("10_navbake")
+
+[node name="Villager" parent="." instance=ExtResource("11_villager")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 3)
+
+[node name="Villager2" parent="." instance=ExtResource("11_villager")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 2)
+
+[node name="Bandit" parent="." instance=ExtResource("12_bandit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 14)
+
+[node name="Bandit2" parent="." instance=ExtResource("12_bandit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 12)

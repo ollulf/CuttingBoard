@@ -1,10 +1,11 @@
 class_name MeleeAttack
 extends Node
 
-## Resolves a blow thrown by the first-person arms: raycasts from the camera and damages
-## whatever is within reach. It is driven by ArmAnimator's hit signal rather than by the
-## click, so the damage always lands on the frame the arm reaches out — retiming the
-## animation retimes the hit.
+## Resolves a blow: raycasts forward from the node it sits under and damages whatever is
+## within reach. On the player that node is the camera, and the blow is driven by
+## ArmAnimator's hit signal rather than by the click, so the damage always lands on the
+## frame the arm reaches out — retiming the animation retimes the hit. An NPC puts it
+## under its eyes and calls strike() itself.
 
 ## How far a blow reaches, in metres. Shorter than the interaction ray on purpose: there
 ## should be a step you can pick something up from but not punch it from.
@@ -16,23 +17,28 @@ extends Node
 ## Impulse handed to a struck rigid body, so a punch visibly shoves a barrel about.
 @export var knockback := 2.5
 
-@onready var _camera: Camera3D = get_parent()
+## What the blow is aimed along: its position is where the swing starts, its -Z where it goes.
+@onready var _aim: Node3D = get_parent()
 
 
-## Strikes whatever is in front of the camera with what this hand is holding.
+## Strikes whatever is in front of the aim with what this hand is holding. A null hand is
+## a bare fist.
 func strike(hand: HandSlot) -> void:
-	var target := _target()
-	if target == null:
+	var hit := _cast()
+	if hit.is_empty():
 		return
+	var target: Node3D = hit["collider"]
 	var damage := _damage_for(hand)
 	if damage <= 0:
 		return
-	var direction := -_camera.global_transform.basis.z
+	var direction := -_aim.global_transform.basis.z
 
 	var health := Health.find_in(target)
 	if health:
 		var info := DamageInfo.new(damage, get_owner())
-		info.position = target.global_position
+		# Where the blow landed, not the victim's origin: a character's origin is at its
+		# feet, and the damage number would come up out of the ground.
+		info.position = hit["position"]
 		info.direction = direction
 		health.apply_damage(info)
 	else:
@@ -62,10 +68,12 @@ func _damage_for(hand: HandSlot) -> int:
 	return carryable.impact_damage
 
 
-func _target() -> Node3D:
-	var space_state := _camera.get_world_3d().direct_space_state
-	var origin := _camera.global_position
-	var end := origin - _camera.global_transform.basis.z * reach
+## What the blow meets, as the ray result — "collider" and the "position" it was struck
+## at — or an empty dictionary when it meets nothing.
+func _cast() -> Dictionary:
+	var space_state := _aim.get_world_3d().direct_space_state
+	var origin := _aim.global_position
+	var end := origin - _aim.global_transform.basis.z * reach
 	var query := PhysicsRayQueryParameters3D.create(origin, end, collision_mask)
 	# The ray starts inside the attacker's own capsule, so the body is excluded rather
 	# than left to swallow every blow at point-blank range.
@@ -74,4 +82,4 @@ func _target() -> Node3D:
 		query.exclude = [own_body.get_rid()]
 	var result := space_state.intersect_ray(query)
 	var collider := result.get("collider") as Node3D
-	return collider if is_instance_valid(collider) else null
+	return result if is_instance_valid(collider) else {}

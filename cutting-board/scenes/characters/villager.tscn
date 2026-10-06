@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
+[ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="2_faction"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="3_item_data"]
+[ext_resource type="Resource" path="res://resources/items/rock.tres" id="4_rock"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_villager"]
+albedo_color = Color(0.35, 0.5, 0.8, 1)
+
+[node name="Villager" instance=ExtResource("1_base")]
+starting_items = Array[ExtResource("3_item_data")]([ExtResource("4_rock")])
+
+[node name="Body" parent="Visual" index="0"]
+surface_material_override/0 = SubResource("StandardMaterial3D_villager")
+
+[node name="Faction" parent="." index="6"]
+data = ExtResource("2_faction")
+
+[node name="Inventory" parent="." index="7"]
+display_name = "Villager"
+
+[node name="Flee" parent="Brain" index="1"]
+cowardice = 1.0
+
+[node name="AttackTarget" parent="Brain" index="2"]
+aggression = 0.0
+
+[node name="ThrowAtTarget" parent="Brain" index="3"]
+eagerness = 0.0

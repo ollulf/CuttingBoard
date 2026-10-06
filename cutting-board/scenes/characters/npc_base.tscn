@@ -1,0 +1,110 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
+[ext_resource type="Script" path="res://scripts/npc/sight.gd" id="2_sight"]
+[ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="3_melee"]
+[ext_resource type="Script" path="res://scripts/npc/locomotion.gd" id="4_locomotion"]
+[ext_resource type="Script" path="res://scripts/npc/memory.gd" id="5_memory"]
+[ext_resource type="Script" path="res://scripts/components/faction.gd" id="6_faction"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="7_health"]
+[ext_resource type="Script" path="res://scripts/npc/brain.gd" id="8_brain"]
+[ext_resource type="Script" path="res://scripts/npc/actions/wander_action.gd" id="9_wander"]
+[ext_resource type="Script" path="res://scripts/npc/actions/flee_action.gd" id="10_flee"]
+[ext_resource type="Script" path="res://scripts/npc/actions/attack_target_action.gd" id="11_attack"]
+[ext_resource type="Script" path="res://scripts/npc/actions/throw_at_target_action.gd" id="15_throw"]
+[ext_resource type="Script" path="res://scripts/hand_slot.gd" id="12_hand_slot"]
+[ext_resource type="Script" path="res://scripts/components/inventory.gd" id="13_inventory"]
+[ext_resource type="ArrayMesh" uid="uid://j5gd1xacugu0" path="res://assets/meshes/characters/human_base.obj" id="14_human"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
+radius = 0.3
+height = 1.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Npc" type="CharacterBody3D"]
+script = ExtResource("1_npc")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_npc")
+
+[node name="Visual" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
+unique_name_in_owner = true
+transform = Transform3D(-1.27, 0, 0, 0, 1.27, 0, 0, 0, -1.27, 0, 0, 0)
+mesh = ExtResource("14_human")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="HandSlotRight" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.95, -0.15)
+script = ExtResource("12_hand_slot")
+display_name = "Right Hand"
+
+[node name="HandSlotLeft" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.34, 0.95, -0.15)
+script = ExtResource("12_hand_slot")
+display_name = "Left Hand"
+
+[node name="Eyes" type="Node3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="Sight" type="Node" parent="Eyes"]
+unique_name_in_owner = true
+script = ExtResource("2_sight")
+
+[node name="MeleeAttack" type="Node" parent="Eyes"]
+unique_name_in_owner = true
+script = ExtResource("3_melee")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+unique_name_in_owner = true
+path_desired_distance = 0.5
+target_desired_distance = 0.5
+height = 1.7
+radius = 0.35
+
+[node name="Locomotion" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_locomotion")
+
+[node name="Memory" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("5_memory")
+
+[node name="Faction" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("6_faction")
+
+[node name="Inventory" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("13_inventory")
+grid_size = Vector2i(4, 4)
+
+[node name="Health" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("7_health")
+max_health = 60
+
+[node name="Brain" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("8_brain")
+
+[node name="Wander" type="Node" parent="Brain"]
+script = ExtResource("9_wander")
+
+[node name="Flee" type="Node" parent="Brain"]
+script = ExtResource("10_flee")
+
+[node name="AttackTarget" type="Node" parent="Brain"]
+script = ExtResource("11_attack")
+
+[node name="ThrowAtTarget" type="Node" parent="Brain"]
+script = ExtResource("15_throw")

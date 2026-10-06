@@ -17,6 +17,10 @@ enum Type { MISC, WEAPON }
 ## naming a set that has no animation for the action being played, falls back to the
 ## unarmed set, so an item only needs this once it has animations of its own.
 @export var animation_set: StringName = &""
+## Whether this is something to throw — a rock rather than a hammer. NPCs reach for these
+## in their inventory to open a fight at range. Anything can still be thrown by hand;
+## this only says it is meant to be.
+@export var throwable := false
 ## What the item weighs, in kilograms. Authored here rather than read off the world
 ## scene, because that scene is freed the moment the item is stowed and only this record
 ## survives in the inventory. Keep it in step with the RigidBody3D's mass, which is the

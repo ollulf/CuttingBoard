@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
+[ext_resource type="Resource" path="res://resources/factions/bandits.tres" id="2_faction"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="3_item_data"]
+[ext_resource type="Resource" uid="uid://d4k7e4lko40pm" path="res://resources/items/hammer.tres" id="4_hammer"]
+[ext_resource type="Resource" path="res://resources/items/rock.tres" id="5_rock"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bandit"]
+albedo_color = Color(0.7, 0.2, 0.18, 1)
+
+[node name="Bandit" instance=ExtResource("1_base")]
+right_hand_item = ExtResource("4_hammer")
+starting_items = Array[ExtResource("3_item_data")]([ExtResource("5_rock"), ExtResource("5_rock")])
+
+[node name="Body" parent="Visual" index="0"]
+surface_material_override/0 = SubResource("StandardMaterial3D_bandit")
+
+[node name="MeleeAttack" parent="Eyes" index="1"]
+unarmed_damage = 10
+
+[node name="Faction" parent="." index="6"]
+data = ExtResource("2_faction")
+
+[node name="Inventory" parent="." index="7"]
+display_name = "Bandit"
+
+[node name="Flee" parent="Brain" index="1"]
+cowardice = 0.0
+flee_below_health = 0.0
+
+[node name="AttackTarget" parent="Brain" index="2"]
+aggression = 0.8

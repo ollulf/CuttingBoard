@@ -28,6 +28,11 @@ func is_alive() -> bool:
 	return _current > 0
 
 
+## What is left as a fraction of the maximum, 0..1.
+func get_ratio() -> float:
+	return float(_current) / maxf(float(max_health), 1.0)
+
+
 func apply_damage(info: DamageInfo) -> void:
 	if info == null or info.amount <= 0 or invulnerable or not is_alive():
 		return
@@ -65,3 +70,12 @@ static func find_in(node: Node) -> Health:
 		if child is Health:
 			return child
 	return null
+
+
+## Whether `node` is still standing. Something with no Health cannot die, so it counts as
+## alive for as long as it exists.
+static func is_node_alive(node: Node) -> bool:
+	if node == null or not is_instance_valid(node):
+		return false
+	var health := find_in(node)
+	return health == null or health.is_alive()

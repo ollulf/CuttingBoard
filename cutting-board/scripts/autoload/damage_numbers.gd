@@ -22,6 +22,16 @@ const DURABILITY_COLOR := Color(0.7, 0.78, 0.9)
 
 func _ready() -> void:
 	get_tree().node_added.connect(_on_node_added)
+	# The level the game starts in enters the tree together with this autoload, before
+	# its _ready runs, so everything placed in that level was announced before anything
+	# was listening. Those are hooked here; node_added covers whatever comes after.
+	_hook_tree(get_tree().root)
+
+
+func _hook_tree(node: Node) -> void:
+	_on_node_added(node)
+	for child in node.get_children():
+		_hook_tree(child)
 
 
 ## Every component is hooked exactly once, however many times it is announced. A node is

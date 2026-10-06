@@ -11,6 +11,9 @@
 [ext_resource type="AnimationLibrary" path="res://resources/animations/arms.tres" id="9_arm_anims"]
 [ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="10_melee"]
 [ext_resource type="Script" path="res://scripts/components/hotbar.gd" id="11_hotbar"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="12_health"]
+[ext_resource type="Script" path="res://scripts/components/faction.gd" id="13_faction"]
+[ext_resource type="Resource" path="res://resources/factions/player.tres" id="14_player_faction"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -112,3 +115,12 @@ bus = &"SFX"
 [node name="Hotbar" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("11_hotbar")
+
+[node name="Health" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("12_health")
+
+[node name="Faction" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("13_faction")
+data = ExtResource("14_player_faction")

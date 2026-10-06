@@ -86,12 +86,21 @@ func interact(inventory: Inventory = null) -> void:
 
 
 ## The inventory of the container under the crosshair, or null if what is there is not
-## one. A carryable object's own inventory does not count: pointing at a sack means
-## picking it up, and its contents come with it.
+## one.
 func get_hovered_container() -> Inventory:
-	if _get_component(_hovered, "Carryable") != null:
+	return _container_of(_hovered)
+
+
+## A carryable object's own inventory does not count: pointing at a sack means picking
+## it up, and its contents come with it. Nor does a living one's — an NPC's pockets are
+## its own until it is dead, and only then is the body something to search.
+func _container_of(node: Node3D) -> Inventory:
+	if _get_component(node, "Carryable") != null:
 		return null
-	return _get_component(_hovered, "Inventory") as Inventory
+	var health := Health.find_in(node)
+	if health and health.is_alive():
+		return null
+	return _get_component(node, "Inventory") as Inventory
 
 
 ## True if the hovered object is carryable and there is room for it in `inventory`.
@@ -288,7 +297,7 @@ func _is_interactable(node: Node3D) -> bool:
 	return (
 		_get_component(node, "Carryable") != null
 		or _get_component(node, "Usable") != null
-		or _get_component(node, "Inventory") != null
+		or _container_of(node) != null
 	)
 
 

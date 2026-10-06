@@ -8,5 +8,6 @@ display_name = "Rock"
 description = "A fist-sized stone. Good for one throw."
 grid_size = Vector2i(1, 1)
 world_scene_path = "res://scenes/items/rock.tscn"
+throwable = true
 weight = 1.0
 durability = 1
