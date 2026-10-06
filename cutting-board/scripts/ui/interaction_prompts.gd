@@ -19,6 +19,14 @@ extends CanvasLayer
 @onready var _mend_overlay: MendOverlay = $MendOverlay
 @onready var _funhouse_mirror: FunhouseMirror = $FunhouseMirror
 @onready var _cheat_menu: CheatMenu = $CheatMenu
+## Flashed under the crosshair when an item will not fit in the inventory.
+@onready var _refused_label: Label = $RefusedLabel
+
+## How long the "Inventory full" message stays up, then how long it takes to fade.
+const REFUSED_HOLD := 1.0
+const REFUSED_FADE := 0.5
+
+var _refused_tween: Tween
 
 @onready var _interactor: Interactor = %Interactor
 @onready var _hand_left: HandSlot = %HandSlotLeft
@@ -51,6 +59,8 @@ func _ready() -> void:
 	_hand_right.item_held.connect(_refresh.unbind(1))
 	_hand_right.item_released.connect(_refresh.unbind(1))
 	_inventory.changed.connect(_refresh)
+	_interactor.stow_refused.connect(_on_stow_refused)
+	_refused_label.modulate.a = 0.0
 	_refresh()
 
 
@@ -94,6 +104,16 @@ func _update_interact_prompt() -> void:
 		_interact_prompt.show_prompt("E", "Inventory full")
 	else:
 		_interact_prompt.hide()
+
+
+## Every press restarts the message rather than stacking another copy of it.
+func _on_stow_refused(_data: ItemData) -> void:
+	if _refused_tween:
+		_refused_tween.kill()
+	_refused_label.modulate.a = 1.0
+	_refused_tween = create_tween()
+	_refused_tween.tween_interval(REFUSED_HOLD)
+	_refused_tween.tween_property(_refused_label, "modulate:a", 0.0, REFUSED_FADE)
 
 
 ## An item dragged clear of the inventory window goes back into the world in front of
