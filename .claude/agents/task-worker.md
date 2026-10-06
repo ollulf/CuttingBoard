@@ -19,7 +19,8 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 2. Implement the task in your worktree.
 3. Verify what you can. Godot is at `F:\Fork\pvkk\engine\godot.exe`:
    - `godot.exe --headless --path cutting-board --quit` (or `--check-only -s <script>`) catches parse and load errors.
-   - For anything visible, take screenshots with a real window (not `--headless`), e.g. `godot.exe --path cutting-board res://tests/visual/tallow_capture.tscn -- --shots=<dir> --only=<names>`, or write a small capture scene under `cutting-board/tests/` for the feature. Before/after shots are the best evidence: capture `main` from the main checkout `F:/Fork/CuttingBoard` before your change only if it costs little.
+   - For anything visible, take screenshots with a real window (not `--headless`), e.g. `tallow_capture.tscn -- --shots=<dir> --only=<names>` (launched with the recipe below), or write a small capture scene under `cutting-board/tests/` for the feature. Before/after shots are the best evidence: capture `main` from the main checkout `F:/Fork/CuttingBoard` before your change only if it costs little.
+   - **Never steal the user's mouse or focus.** Every windowed Godot run (screenshots too) must use Movie Maker and an off-screen window: `godot.exe --path cutting-board --position -10000,-10000 --write-movie <scratch>/out.avi [--fixed-fps 30 --resolution 960x540 --quit-after N] res://tests/visual/<scene>.tscn [-- <scene args>]`. For screenshot-only runs point `--write-movie` at a throwaway `.avi`. Under Movie Maker the project won't capture the mouse (`MouseGrab`) or take focus (`window/size/no_focus.movie`). Never set `Input.mouse_mode` directly; use `MouseGrab`.
    - Never claim something was tested that wasn't.
 4. Commit your work on the worktree's branch with a clear message ending with:
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
@@ -30,7 +31,7 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 Keep it **short**: something the user can take in within a minute. Lead with the **visual evidence**: one or two key screenshots, a before/after, and a **GIF or video when the change moves** (animation, physics, AI, UI transitions). Then a few lines of text. No diff excerpts, no per-file walkthrough, no long verification write-up; those belong in the commit message and your final message.
 
 Recording motion:
-- Godot's Movie Maker mode records a scene at a fixed frame rate, independent of how fast the machine runs: `godot.exe --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540 <scene.tscn> --quit-after <frames>` (or `<out>.png` for a numbered PNG sequence). Use a capture scene under `cutting-board/tests/` that sets up the camera and the action.
+- Godot's Movie Maker mode records a scene at a fixed frame rate, independent of how fast the machine runs: the recipe below with `--write-movie <out>.avi --fixed-fps 30 --resolution 960x540 --quit-after <frames>` (or `<out>.png` for a numbered PNG sequence). Use a capture scene under `cutting-board/tests/` that sets up the camera and the action.
 - ffmpeg is installed (`ffmpeg` on PATH via WinGet). Convert to:
   - **MP4 video** for longer or detailed clips: `ffmpeg -i in.avi -c:v libx264 -pix_fmt yuv420p -crf 28 -preset slow -an -movflags +faststart out.mp4`. Embed with `<video autoplay loop muted playsinline controls src="data:video/mp4;base64,…">`.
   - **GIF** for short loops (a few seconds, small size): `ffmpeg -i in.avi -vf "fps=15,scale=480:-1:flags=neighbor,split[a][b];[a]palettegen[p];[b][p]paletteuse" out.gif`. Use `flags=neighbor` to keep the game's pixel look crisp.
