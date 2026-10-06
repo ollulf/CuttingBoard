@@ -8,6 +8,9 @@ extends Node
 ##         res://tests/visual/hurt_capture.tscn --quit-after 420
 ##
 ## --die ends on a killing blow instead of the heal. --no-retro turns the PS1 screen off.
+## --clip=light|heavy|low plays a short run for one case of the fun-house mirror instead:
+## one light hit, one heavy hit, or a drop to critical health, a hold there, and a heal.
+## --no-mirror turns the FunhouseMirror off, for comparison.
 
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
@@ -20,12 +23,18 @@ const TIMELINE := [
 	[8.0, 15],
 	[11.5, -60],
 ]
+const CLIPS := {
+	"light": [[0.5, 8]],
+	"heavy": [[0.5, 22]],
+	"low": [[0.5, 70], [2.5, 18], [9.0, -60]],
+}
 
 var _die := false
 var _player: Node3D
 var _health: Health
 var _time := 0.0
 var _next := 0
+var _timeline: Array = TIMELINE
 
 
 func _ready() -> void:
@@ -34,18 +43,23 @@ func _ready() -> void:
 			_die = true
 		elif arg == "--no-retro":
 			PsxScreen.enabled = false
+		elif arg.begins_with("--clip="):
+			_timeline = CLIPS[arg.trim_prefix("--clip=")]
 	var level := LEVEL.instantiate()
 	add_child(level)
 	_player = level.get_node("Player")
 	_health = Health.find_in(_player)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if "--no-mirror" in OS.get_cmdline_user_args():
+		var mirror := _player.find_child("FunhouseMirror", true, false) as FunhouseMirror
+		mirror.enabled = false
 
 
 func _process(delta: float) -> void:
 	_time += delta
-	if _next >= TIMELINE.size():
+	if _next >= _timeline.size():
 		return
-	var step: Array = TIMELINE[_next]
+	var step: Array = _timeline[_next]
 	if _time < step[0]:
 		return
 	_next += 1

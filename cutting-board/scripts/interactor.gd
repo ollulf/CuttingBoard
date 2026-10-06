@@ -271,6 +271,7 @@ func _throw_from(hand: HandSlot, ratio: float) -> void:
 	# After return_to_world, so the body is unfrozen and will accept the velocity.
 	var body := item as RigidBody3D
 	if body:
+		HumanBody.keep_clear_of(body, get_owner())
 		body.linear_velocity = _throw_direction(item.global_position) * throw_speed * ratio
 	if ratio >= throw_sound_charge:
 		Sfx.play(throw_sound, linear_to_db(clampf(ratio, 0.5, 1.0)))

@@ -46,6 +46,10 @@ func strike(hand: HandSlot) -> void:
 	var direction := -_aim.global_transform.basis.z
 
 	var health := Health.find_in(target)
+	# The ray already passes through the attacker's own body; this is the backstop for
+	# any part of it that was missed, since a blow on yourself is never what was meant.
+	if health and health == Health.find_in(get_owner()):
+		return
 	# A heavier blow lands louder: a hammer over a fist.
 	var weight := linear_to_db(clampf(damage / 15.0, 0.7, 1.15))
 	Sfx.play_at(hit_body_sound if health else hit_object_sound, hit["position"], weight)
@@ -102,11 +106,13 @@ func _cast() -> Dictionary:
 	var origin := _aim.global_position
 	var end := origin - _aim.global_transform.basis.z * reach
 	var query := PhysicsRayQueryParameters3D.create(origin, end, collision_mask)
-	# The ray starts inside the attacker's own capsule, so the body is excluded rather
-	# than left to swallow every blow at point-blank range.
-	var own_body := get_owner() as CollisionObject3D
-	if own_body:
-		query.exclude = [own_body.get_rid()]
+	# The ray starts inside the attacker's own capsule and passes its own arms and
+	# chest, whose physical bones follow the animated pose. All of them are excluded,
+	# or they would swallow blows at point-blank range — or take them.
+	var exclude: Array[RID] = []
+	for collider in HumanBody.colliders_of(get_owner()):
+		exclude.append(collider.get_rid())
+	query.exclude = exclude
 	var result := space_state.intersect_ray(query)
 	var collider := result.get("collider") as Node3D
 	return result if is_instance_valid(collider) else {}

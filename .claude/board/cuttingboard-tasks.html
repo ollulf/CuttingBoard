@@ -158,6 +158,19 @@ button:disabled { opacity: 0.5; cursor: default; }
 .status { font: 700 11px/1 var(--px); text-transform: uppercase; padding: 5px 7px 5px 6px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--panel-lo); color: var(--idle); min-width: 0; }
 .status::before { content: ""; width: 6px; height: 6px; background: currentColor; flex: none; }
 .status.queued { color: var(--idle); }
+label.check { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font: 700 11px/1 var(--px); text-transform: uppercase; color: var(--dim); cursor: pointer; }
+label.check input { appearance: none; width: 14px; height: 14px; margin: 0; background: var(--panel-lo); box-shadow: inset 2px 2px 0 #0d0e11, inset -2px -2px 0 var(--panel-hi); cursor: pointer; }
+label.check input:checked { background: var(--accent); box-shadow: inset 2px 2px 0 #8fd6ff, inset -2px -2px 0 #1677b3; }
+label.check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Effort the manager chose for the agent: pixel signal bars, one lit for low, two for medium. */
+.badges { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.effort { display: inline-flex; align-items: flex-end; gap: 2px; padding: 4px 6px; background: var(--panel-lo); font: 700 10px/1 var(--px); color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+.effort i { display: block; width: 3px; background: var(--panel-hi); }
+.effort i:nth-child(1) { height: 4px; } .effort i:nth-child(2) { height: 7px; } .effort i:nth-child(3) { height: 10px; }
+.effort.low i:nth-child(1) { background: var(--ok); }
+.effort.medium i:nth-child(-n+2) { background: var(--warn); }
+.effort.high i { background: var(--bad); }
+.effort b { margin-left: 4px; font-weight: 700; }
 .status.working { color: var(--work); }
 .status.review { color: var(--warn); }
 .status.attention { color: var(--bad); }
@@ -208,8 +221,6 @@ details.done .list { margin-top: 6px; }
   <div class="tok-big" id="tokTotal">–</div>
   <div class="tok-bar" id="tokBar" aria-hidden="true"></div>
   <ul class="tok-legend" id="tokLegend"></ul>
-  <h3 class="side-sub">By agent</h3>
-  <ol class="tok-agents" id="tokAgents"><li class="tok-empty">No usage read yet. The manager updates this on every check.</li></ol>
   <p class="tok-foot" id="tokFoot"></p>
 </aside>
 <div class="wrap">
@@ -224,7 +235,8 @@ details.done .list { margin-top: 6px; }
       <button class="primary" type="submit" id="addBtn">Add</button>
     </form>
     <button class="ready" type="button" id="ready" hidden><span class="bang">!</span><span id="readyText"></span><span class="go-to">Show ▾</span></button>
-    <p class="hint">Enter adds · Shift+Enter for a new line · Claude writes the agent's brief</p>
+    <label class="check" for="wantVisual"><input type="checkbox" id="wantVisual"><span>Visual result page when done</span></label>
+    <p class="hint">Enter adds · Shift+Enter for a new line · Claude writes the agent's brief · without a visual page you get a short summary on the task</p>
     <p class="err" id="addErr" hidden></p>
     <p class="notice" id="noDb" hidden>Storage isn't available in this view. Open the board on claude.ai while signed in.</p>
   </section>
@@ -278,6 +290,20 @@ details.done .list { margin-top: 6px; }
     if (h < 24) return h + "h ago";
     return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   }
+  const EFFORT = { low: "Low", medium: "Med", high: "High" };
+  function effortBadge(effort) {
+    const e = el("span", "effort " + effort);
+    e.title = "Agent effort: " + effort;
+    e.append(el("i"), el("i"), el("i"), el("b", null, EFFORT[effort] || effort));
+    return e;
+  }
+  // The status badge, followed by the effort the manager picked once the task has one.
+  function statusWithEffort(status, effort) {
+    if (!effort) return status;
+    const wrap = el("span", "badges");
+    wrap.append(status, effortBadge(effort));
+    return wrap;
+  }
   function block(label, node) {
     const b = el("div", "block");
     b.append(el("span", "label", label), node);
@@ -311,7 +337,7 @@ details.done .list { margin-top: 6px; }
     head.setAttribute("aria-expanded", String(isOpen));
     const [label, cls] = STATUS[d.status] || [d.status, "queued"];
     head.append(
-      el("span", "status " + cls, label + (d.round > 1 && d.status !== "done" ? " · R" + d.round : "")),
+      statusWithEffort(el("span", "status " + cls, label + (d.round > 1 && d.status !== "done" ? " · R" + d.round : "")), d.effort),
       el("span", "task-title", d.title || "Untitled task"),
       el("span", "when", (taskTokens(d) ? fmt(taskTokens(d)) + " tok · " : "") + ago(d.status === "done" ? d.mergedAt : d.updatedAt || d.createdAt))
     );
@@ -350,6 +376,7 @@ details.done .list { margin-top: 6px; }
     }
     if (d.feedback && d.round > 1 && d.status !== "done") body.append(block("Your change request", el("p", "text", d.feedback)));
     if (d.answer && d.status !== "done") body.append(block("Your answer", el("p", "text", d.answer)));
+    if (d.effort) body.append(block("Effort", el("p", "text", (EFFORT[d.effort] || d.effort) + (d.effortReason ? ": " + d.effortReason : ""))));
     body.append(block("Agent brief", d.instructions
       ? el("p", "text", d.instructions)
       : el("p", "text muted", "Claude writes this when the task is picked up.")));
@@ -394,6 +421,11 @@ details.done .list { margin-top: 6px; }
       actions.append(ap, ch);
     }
     if (d.status === "todo") {
+      // Whether the agent should finish with a visual result page; only changeable before it starts.
+      const vis = el("button", d.visual ? "primary" : null, d.visual ? "Visual page: on" : "Visual page: off");
+      vis.type = "button"; vis.disabled = isBusy; vis.setAttribute("aria-pressed", String(!!d.visual));
+      vis.onclick = () => write(t.id, () => ref().update({ visual: !d.visual, updatedAt: Date.now() }));
+      actions.append(vis);
       const rm = el("button", null, "Remove");
       rm.type = "button"; rm.disabled = isBusy;
       rm.onclick = () => write(t.id, () => ref().delete());
@@ -478,7 +510,7 @@ details.done .list { margin-top: 6px; }
 
   function renderTokens() {
     renderLimits();
-    const total = $("tokTotal"), bar = $("tokBar"), legend = $("tokLegend"), list = $("tokAgents"), foot = $("tokFoot");
+    const total = $("tokTotal"), bar = $("tokBar"), legend = $("tokLegend"), foot = $("tokFoot");
     if (!usage || !usage.total) return;
     const t = usage.total;
     total.textContent = fmt(t.total);
@@ -495,26 +527,6 @@ details.done .list { margin-top: 6px; }
     legend.replaceChildren(...parts.map(([cls, name, v]) => {
       const li = el("li"); li.append(el("i", cls), document.createTextNode(name), el("b", null, fmt(v))); return li;
     }));
-
-    const byAgent = new Map();
-    for (const tk of tasks) for (const id of agentIdsOf(tk.data)) byAgent.set(id, tk.data);
-    const rows = [];
-    if (usage.manager && usage.manager.total) rows.push({ name: "Manager (Claude Code)", total: usage.manager.total, cls: "mgr" });
-    for (const [id, u] of Object.entries(usage.agents || {})) {
-      const d = byAgent.get(id);
-      rows.push({ name: d ? (d.title || "Untitled task") : "Earlier agent · " + id.slice(1, 7), total: u.total || 0, cls: d && d.status === "working" ? "live" : "" });
-    }
-    rows.sort((a, b) => b.total - a.total);
-    const max = rows.length ? rows[0].total : 1;
-    list.replaceChildren(...rows.map(r => {
-      const li = el("li", r.cls);
-      const name = el("div", "name"); name.append(el("span", null, r.name), el("b", null, fmt(r.total)));
-      name.title = r.name + " · " + r.total.toLocaleString() + " tokens";
-      const mini = el("div", "mini"); const fill = el("span"); fill.style.width = Math.max(2, Math.round(r.total / max * 100)) + "%"; mini.append(fill);
-      li.append(name, mini);
-      return li;
-    }));
-    if (!rows.length) list.replaceChildren(el("li", "tok-empty", "No usage yet today."));
     foot.textContent = "From Claude Code logs · " + (usage.date || "") + " · read " + ago(usage.updatedAt);
   }
 
@@ -596,8 +608,8 @@ details.done .list { margin-top: 6px; }
     const now = Date.now();
     try {
       const id = "t" + now.toString(36);
-      await db.collection("tasks").doc(id).set({ title, status: "todo", createdAt: now, updatedAt: now, round: 1 });
-      field.value = ""; grow();
+      await db.collection("tasks").doc(id).set({ title, status: "todo", createdAt: now, updatedAt: now, round: 1, visual: $("wantVisual").checked });
+      field.value = ""; grow(); $("wantVisual").checked = false;
       pingManager(id, title);
     } catch (e) {
       $("addErr").textContent = e && e.code === "invalid_argument" ? "You can't add tasks to this board." : "The task didn't save. Try again in a moment.";

@@ -119,7 +119,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.678698, 0.15, -2.1022735)
 [node name="house_1x2" parent="." unique_id=1658554690 instance=ExtResource("3_fr1um") groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1388183, 0.011931408, -3.2692165)
 
-[node name="tree_1_large" parent="." unique_id=394365836 instance=ExtResource("4_v45ci") groups=["navigation_source"]]
+[node name="tree_1_large" parent="." unique_id=394365836 instance=ExtResource("4_v45ci")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.1923075, 0.5999272, 12.464374)
 
 [node name="Barrel" parent="." unique_id=1388112633 instance=ExtResource("5_6xh4u")]

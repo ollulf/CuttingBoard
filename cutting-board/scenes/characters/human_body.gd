@@ -347,6 +347,44 @@ func _knock_off_mask(mask: Node3D, info: DamageInfo, carried_velocity: Vector3) 
 	loose.apply_torque_impulse(Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 0.02)
 
 
+## Everything of `actor` that a ray or a thrown object could run into: its own collision
+## body, and every physical bone of every body it wears. An animated body keeps its
+## bones in the physics world, following the pose, so an attacker's own arms and chest
+## sit right in the path of its blows and throws — this is what they are kept out of.
+static func colliders_of(actor: Node) -> Array[CollisionObject3D]:
+	var colliders: Array[CollisionObject3D] = []
+	if actor == null or not is_instance_valid(actor):
+		return colliders
+	if actor is CollisionObject3D:
+		colliders.append(actor)
+	for bone in actor.find_children("*", "PhysicalBone3D", true, false):
+		colliders.append(bone)
+	return colliders
+
+
+## Keeps `item` from colliding with `actor` — its capsule and its limbs alike — for
+## `seconds`, so something just thrown clears the hand and the body it left from
+## instead of landing on its own thrower.
+static func keep_clear_of(item: PhysicsBody3D, actor: Node, seconds := 0.3) -> void:
+	var own_ids: Array[int] = []
+	for collider in colliders_of(actor):
+		item.add_collision_exception_with(collider)
+		own_ids.append(collider.get_instance_id())
+	# Held by id rather than captured: the item may break, or the thrower die and be
+	# freed, before the timer runs.
+	var item_id := item.get_instance_id()
+	item.get_tree().create_timer(seconds).timeout.connect(
+		func() -> void:
+			var thrown := instance_from_id(item_id) as PhysicsBody3D
+			if thrown == null:
+				return
+			for id in own_ids:
+				var collider := instance_from_id(id) as Node
+				if collider:
+					thrown.remove_collision_exception_with(collider)
+	)
+
+
 ## The character a collider belongs to. A fallen or flinching body's bones are colliders
 ## in their own right, so whatever a ray or an impact finds is passed through here to get
 ## back to the character that carries the Health, the Inventory and the rest. Anything

@@ -8,9 +8,12 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/health_bar.tscn" id="6_healthbar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hurt_overlay.tscn" id="6_hurt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/target_bar.tscn" id="7_targetbar"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/funhouse_mirror.tscn" id="8_mirror"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
+
+[node name="FunhouseMirror" parent="." instance=ExtResource("8_mirror")]
 
 [node name="HurtOverlay" parent="." instance=ExtResource("6_hurt")]
 
