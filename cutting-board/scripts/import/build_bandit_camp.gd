@@ -21,7 +21,8 @@ const LANTERN := preload("res://scenes/environment/decoration/lantern.tscn")
 const ROCK := preload("res://scenes/environment/foliage/rocks/1_rock.tscn")
 const ROCK_2 := preload("res://scenes/environment/foliage/rocks/2_rock.tscn")
 const CHEST := preload("res://scenes/props/chest.tscn")
-const ROCK_ITEM := preload("res://scenes/items/rock.tscn")
+const BANDIT := preload("res://scenes/characters/bandit.tscn")
+const ROCK_ITEM :=preload("res://scenes/items/rock.tscn")
 const BANDIT_MASK_MESH := preload("res://scenes/characters/masks/bandit_mask.tscn")
 const VILLAGER_MASK_MESH := preload("res://scenes/characters/masks/villager_mask.tscn")
 
@@ -53,11 +54,14 @@ func _init() -> void:
 	_build_den()
 	_build_lookout()
 	_build_yard()
+	_group("Bandits")
 
 	var scene := PackedScene.new()
 	var err := scene.pack(_root)
 	if err == OK:
 		err = ResourceSaver.save(scene, OUT)
+	if err == OK:
+		err = _append_bandits()
 	print("bandit camp -> %s (%s)" % [OUT, error_string(err)])
 	quit(0 if err == OK else 1)
 
@@ -228,6 +232,41 @@ func _build_yard() -> void:
 	_add(BOX_2.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(0.8, 0, -5.6), -0.2, ["navigation_source"], stash)
 	_add(SACK.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(4.6, 0, -3.8), 0.9, [], stash)
 	_add(ROCK.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(5.6, 0, 3.4), 0.0, ["navigation_source"], stash)
+
+
+## The five bandits, each the stock bandit tuned for its role through the existing NPC
+## exports: wander radius around its home, sight range, cowardice, defend allies. The
+## NPC scripts need autoloads that a -s run doesn't have, so the bandits are written as
+## plain scene text (instances with property overrides) after the scene is saved.
+func _append_bandits() -> Error:
+	var lookout_at := Vector3(1, 0, -1).normalized() * 4.6 + Vector3.UP * 6.2
+	# name, position, yaw, wander radius, sight metres, flee below health, hears allies
+	var roles := [
+		["Lookout", lookout_at, PI * 0.75, 0.0, 25.0, 0.0, false],
+		["GateGuardNorth", Vector3(-9.6, 0, -2.2), PI * 0.5, 2.0, 15.0, 0.0, false],
+		["GateGuardSouth", Vector3(-9.6, 0, 2.2), PI * 0.5, 2.0, 15.0, 0.0, false],
+		["Cook", Vector3(-4.6, 0, 4.4), 0.0, 2.5, 12.0, 0.6, false],
+		["Sleeper", Vector3(0.6, 0, 0.6), 0.0, 0.5, 4.0, 0.0, true],
+	]
+	var text := FileAccess.get_file_as_string(OUT)
+	var header_end := text.find("\n\n[", text.find("[ext_resource"))
+	text = text.insert(header_end, "\n[ext_resource type=\"PackedScene\" path=\"%s\" id=\"bandit\"]" % BANDIT.resource_path)
+	for role in roles:
+		var path := "Bandits/%s" % role[0]
+		text += "\n[node name=\"%s\" parent=\"Bandits\" instance=ExtResource(\"bandit\")]\n" % role[0]
+		text += "transform = %s\n" % var_to_str(Transform3D(Basis(Vector3.UP, role[2]), role[1]))
+		text += "defend_allies_radius = 14.0\n"
+		if role[6]:
+			text += "hears_allies = true\n"
+		text += "\n[node name=\"Sight\" parent=\"%s/Eyes\" index=\"0\"]\nview_distance = %s\n" % [path, role[4]]
+		text += "\n[node name=\"Wander\" parent=\"%s/Brain\" index=\"0\"]\nradius = %s\n" % [path, role[3]]
+		if role[5] > 0.0:
+			text += "\n[node name=\"Flee\" parent=\"%s/Brain\" index=\"1\"]\ncowardice = 1.0\nflee_below_health = %s\n" % [path, role[5]]
+	var file := FileAccess.open(OUT, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(text)
+	return OK
 
 
 func _group(group_name: String, parent: Node = null) -> Node3D:

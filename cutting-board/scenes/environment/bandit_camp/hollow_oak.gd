@@ -11,8 +11,8 @@ const BARK := preload("res://assets/materials/environment/foliage/tree_strange_1
 @export var inner_radius := 2.6
 @export var height := 9.0
 ## Opening half-widths in radians. West (PI) is the door, east (0) the back crack.
-@export var door_half_angle := 0.33
-@export var crack_half_angle := 0.12
+@export var door_half_angle := 0.5
+@export var crack_half_angle := 0.16
 
 
 func _ready() -> void:
