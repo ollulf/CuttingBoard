@@ -37,6 +37,7 @@ Parse the block at the end of its reply. Update the task: `status: review` (or `
 2. `git merge --no-edit <branch>`. On a conflict: `git merge --abort`, set `attention` with a `note` listing the conflicting files, and stop. Don't resolve conflicts unasked.
 3. `git worktree remove <worktree>` then `git branch -d <branch>`. Never pass `--force` to either.
 4. Set `status: done`, `mergedAt`, `mergeCommit` (short hash of `main`), and clear `note`. Never push.
+5. Stop watching the task's result page (and any concept page it published) with `ArtifactComments` `watch` `on: false`. The session holds at most 10 artifact watches, and the board's own watch must keep its slot for instant pickup.
 
 ### Outside the board
 If the user gives a task directly in the terminal, handle it the same way: spawn a `task-worker` and add a matching card to the board so it shows up in the lanes.

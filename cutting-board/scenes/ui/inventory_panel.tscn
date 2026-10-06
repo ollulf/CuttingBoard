@@ -1,7 +1,37 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/inventory_panel.gd" id="1_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_tooltip.tscn" id="2_tooltip"]
+[ext_resource type="FontFile" path="res://assets/fonts/Cubix_Mystical.ttf" id="3_mystical"]
+[ext_resource type="Script" path="res://scripts/ui/paper_doll.gd" id="4_doll"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
+bg_color = Color(0.039, 0.031, 0.055, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.859, 0.678, 0.361, 0.45)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_bg"]
+bg_color = Color(0.027, 0.02, 0.039, 0.75)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.027, 0.02, 0.039, 0.95)
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_fill"]
+bg_color = Color(0.698, 0.227, 0.18, 1)
+border_width_top = 2
+border_color = Color(0.902, 0.349, 0.302, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_dim"]
+font_color = Color(0.78, 0.788, 0.859, 0.6)
 
 [node name="InventoryPanel" type="Control"]
 visible = false
@@ -25,105 +55,298 @@ color = Color(0, 0, 0, 0.55)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -96.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Row" type="HBoxContainer" parent="Center"]
+[node name="Window" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
 
-[node name="ContainerFrame" type="PanelContainer" parent="Center/Row"]
-unique_name_in_owner = true
-visible = false
+[node name="Header" type="HBoxContainer" parent="Center/Window"]
 layout_mode = 2
-size_flags_vertical = 0
 mouse_filter = 2
+theme_override_constants/separation = 24
 
-[node name="Margin" type="MarginContainer" parent="Center/Row/ContainerFrame"]
+[node name="Heading" type="Label" parent="Center/Window/Header"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 mouse_filter = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
-
-[node name="Rows" type="VBoxContainer" parent="Center/Row/ContainerFrame/Margin"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 10
-
-[node name="ContainerTitle" type="Label" parent="Center/Row/ContainerFrame/Margin/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 2
-text = "Chest"
-
-[node name="ContainerGrid" type="Control" parent="Center/Row/ContainerFrame/Margin/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Frame" type="PanelContainer" parent="Center/Row"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 0
-mouse_filter = 2
-
-[node name="Margin" type="MarginContainer" parent="Center/Row/Frame"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
-
-[node name="Rows" type="VBoxContainer" parent="Center/Row/Frame/Margin"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 10
-
-[node name="PlayerTitle" type="Label" parent="Center/Row/Frame/Margin/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.831, 0.541, 1)
+theme_override_fonts/font = ExtResource("3_mystical")
+theme_override_font_sizes/font_size = 32
 text = "Inventory"
 
-[node name="PlayerGrid" type="Control" parent="Center/Row/Frame/Margin/Rows"]
+[node name="Vitals" type="VBoxContainer" parent="Center/Window/Header"]
+custom_minimum_size = Vector2(144, 0)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="HealthRow" type="HBoxContainer" parent="Center/Window/Header/Vitals"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="HealthLabel" type="Label" parent="Center/Window/Header/Vitals/HealthRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.78, 0.788, 0.859, 0.75)
+text = "Health"
+
+[node name="HealthValue" type="Label" parent="Center/Window/Header/Vitals/HealthRow"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
+theme_override_colors/font_color = Color(0.78, 0.788, 0.859, 0.75)
+text = "100 / 100"
 
-[node name="EquipFrame" type="PanelContainer" parent="Center/Row"]
+[node name="HealthBar" type="ProgressBar" parent="Center/Window/Header/Vitals"]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 0
-mouse_filter = 2
-
-[node name="Margin" type="MarginContainer" parent="Center/Row/EquipFrame"]
+custom_minimum_size = Vector2(144, 6)
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_bar_fill")
+step = 1.0
+value = 100.0
+show_percentage = false
 
-[node name="Rows" type="VBoxContainer" parent="Center/Row/EquipFrame/Margin"]
+[node name="CloseHint" type="Label" parent="Center/Window/Header"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+text = "Tab  close"
+label_settings = SubResource("LabelSettings_dim")
+
+[node name="Row" type="HBoxContainer" parent="Center/Window"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="ContainerFrame" type="PanelContainer" parent="Center/Window/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(310, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_frame")
+
+[node name="Margin" type="MarginContainer" parent="Center/Window/Row/ContainerFrame"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="Center/Window/Row/ContainerFrame/Margin"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="EquipTitle" type="Label" parent="Center/Row/EquipFrame/Margin/Rows"]
+[node name="TitleRow" type="HBoxContainer" parent="Center/Window/Row/ContainerFrame/Margin/Rows"]
 layout_mode = 2
 mouse_filter = 2
-text = "Hands"
 
-[node name="Slots" type="VBoxContainer" parent="Center/Row/EquipFrame/Margin/Rows"]
+[node name="ContainerTitle" type="Label" parent="Center/Window/Row/ContainerFrame/Margin/Rows/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.831, 0.541, 1)
+theme_override_fonts/font = ExtResource("3_mystical")
+text = "Nearby"
+
+[node name="ContainerSize" type="Label" parent="Center/Window/Row/ContainerFrame/Margin/Rows/TitleRow"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 8
+label_settings = SubResource("LabelSettings_dim")
+
+[node name="ContainerGrid" type="Control" parent="Center/Window/Row/ContainerFrame/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NearbyEmpty" type="Label" parent="Center/Window/Row/ContainerFrame/Margin/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(286, 0)
+layout_mode = 2
+mouse_filter = 2
+text = "Nothing open. Open a chest and what is inside shows up here."
+label_settings = SubResource("LabelSettings_dim")
+autowrap_mode = 3
+
+[node name="EquipFrame" type="PanelContainer" parent="Center/Window/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_frame")
+
+[node name="Margin" type="MarginContainer" parent="Center/Window/Row/EquipFrame"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="Center/Window/Row/EquipFrame/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="EquipTitle" type="Label" parent="Center/Window/Row/EquipFrame/Margin/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.831, 0.541, 1)
+theme_override_fonts/font = ExtResource("3_mystical")
+text = "Equipment"
+
+[node name="Doll" type="Control" parent="Center/Window/Row/EquipFrame/Margin/Rows"]
+custom_minimum_size = Vector2(324, 378)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Figure" type="Control" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 102.0
+offset_right = 222.0
+offset_bottom = 264.0
+mouse_filter = 2
+script = ExtResource("4_doll")
+
+[node name="MaskSlot" type="Panel" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 0
+offset_right = 94.0
+offset_bottom = 94.0
+mouse_filter = 2
+
+[node name="HeadSlot" type="Panel" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 0
+offset_left = 230.0
+offset_right = 324.0
+offset_bottom = 94.0
+mouse_filter = 2
+
+[node name="PackSlot" type="Panel" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 0
+offset_top = 108.0
+offset_right = 94.0
+offset_bottom = 250.0
+mouse_filter = 2
+
+[node name="BodySlot" type="Panel" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 0
+offset_left = 230.0
+offset_top = 108.0
+offset_right = 324.0
+offset_bottom = 250.0
+mouse_filter = 2
+
+[node name="LeftHandLabel" type="Label" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 262.0
+offset_right = 142.0
+offset_bottom = 280.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.75)
+text = "Left Hand"
+
+[node name="LeftHandSlot" type="Panel" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 0
+offset_top = 284.0
+offset_right = 142.0
+offset_bottom = 378.0
+mouse_filter = 2
+
+[node name="RightHandLabel" type="Label" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 182.0
+offset_top = 262.0
+offset_right = 324.0
+offset_bottom = 280.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.75)
+text = "Right Hand"
+
+[node name="RightHandSlot" type="Panel" parent="Center/Window/Row/EquipFrame/Margin/Rows/Doll"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 0
+offset_left = 182.0
+offset_top = 284.0
+offset_right = 324.0
+offset_bottom = 378.0
+mouse_filter = 2
+
+[node name="Frame" type="PanelContainer" parent="Center/Window/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_frame")
+
+[node name="Margin" type="MarginContainer" parent="Center/Window/Row/Frame"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="Center/Window/Row/Frame/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="TitleRow" type="HBoxContainer" parent="Center/Window/Row/Frame/Margin/Rows"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="PlayerTitle" type="Label" parent="Center/Window/Row/Frame/Margin/Rows/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.831, 0.541, 1)
+theme_override_fonts/font = ExtResource("3_mystical")
+text = "Pack"
+
+[node name="PlayerSize" type="Label" parent="Center/Window/Row/Frame/Margin/Rows/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+label_settings = SubResource("LabelSettings_dim")
+
+[node name="PlayerGrid" type="Control" parent="Center/Window/Row/Frame/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Hint" type="Label" parent="Center/Window"]
+layout_mode = 2
+mouse_filter = 2
+text = "drag to move · onto a slot to wear or hold · onto the bar below for a key · right-click turns · drag out to drop"
+label_settings = SubResource("LabelSettings_dim")
+horizontal_alignment = 1
 
 [node name="TooltipTimer" type="Timer" parent="."]
 unique_name_in_owner = true

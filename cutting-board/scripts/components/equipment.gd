@@ -1,0 +1,82 @@
+class_name Equipment
+extends Node
+
+## What the player is wearing: one item each on the face, the head, the body and the
+## back. Like the inventory it keeps ItemData records rather than world objects — a worn
+## coat is a loadout entry, not a thing in the scene — and unlike the hands it never
+## spawns anything. Each slot takes only its own kind of item, read off
+## ItemData.item_type, so a hood cannot go on as a mask.
+##
+## Wearing something has no effect yet. A pack does not change what the grid holds and a
+## mask is not drawn on anyone; this is only the loadout those will read from.
+
+signal changed
+
+enum Slot { MASK, HEAD, BODY, PACK }
+const NO_SLOT := -1
+
+## The kind of item each slot takes.
+const SLOT_TYPES := {
+	Slot.MASK: ItemData.Type.MASK,
+	Slot.HEAD: ItemData.Type.HEAD,
+	Slot.BODY: ItemData.Type.BODY,
+	Slot.PACK: ItemData.Type.PACK,
+}
+
+## What each slot holds, by slot; a slot that is not in here is empty.
+var _items: Dictionary = {}
+## Wear of each worn item. It is kept beside the record and not on it for the same
+## reason InventoryEntry keeps it: an ItemData is shared by every copy of the item.
+var _durability: Dictionary = {}
+
+
+## The slot an item would go in, or NO_SLOT for anything that is not worn.
+static func slot_for(data: ItemData) -> int:
+	if data == null:
+		return NO_SLOT
+	for slot in SLOT_TYPES:
+		if SLOT_TYPES[slot] == data.item_type:
+			return slot
+	return NO_SLOT
+
+
+func get_item(slot: int) -> ItemData:
+	return _items.get(slot)
+
+
+## What the worn item has left, or -1 when the slot is empty.
+func get_durability(slot: int) -> int:
+	return _durability.get(slot, -1)
+
+
+func is_free(slot: int) -> bool:
+	return not _items.has(slot)
+
+
+## Whether `data` is the kind of item `slot` takes, whether or not the slot is free.
+func accepts(slot: int, data: ItemData) -> bool:
+	return data != null and SLOT_TYPES.has(slot) and SLOT_TYPES[slot] == data.item_type
+
+
+## Puts an item on. Refused when the slot is taken or the item is the wrong kind, so the
+## caller only lets go of its own copy once this has said yes. `durability` is what this
+## particular item has left, or -1 for a fresh one.
+func equip(slot: int, data: ItemData, durability: int = -1) -> bool:
+	if not is_free(slot) or not accepts(slot, data):
+		return false
+	_items[slot] = data
+	_durability[slot] = durability if durability >= 0 else data.durability
+	changed.emit()
+	return true
+
+
+## Takes off whatever a slot is wearing and hands back the record, or null when it was
+## empty. The wear is lost with it, so read get_durability() first.
+func unequip(slot: int) -> ItemData:
+	var data: ItemData = _items.get(slot)
+	if data == null:
+		return null
+	_items.erase(slot)
+	_durability.erase(slot)
+	changed.emit()
+	return data
