@@ -66,6 +66,7 @@ func _init() -> void:
 		"monger_cork": _make_monger_corks,
 		"monger_clink": _make_monger_clinks,
 		"monger_babble": _make_monger_babble,
+		"monger_hum_loop": _make_monger_hum,
 		# Ambience.
 		"night_loop": _make_night_loop,
 		"fair_murmur_loop": _make_fair_murmur,
@@ -482,6 +483,34 @@ func _make_lantern_crackle() -> void:
 			var sizzle := _shape(_bandpass(_noise(0.05), 3500.0, 1.0), 0.002, 0.025)
 			_mix(out, sizzle, _seconds(at), 0.2 * size)
 	_save_loop("ambience/lantern_crackle_loop", out, loop, fade, 0.6)
+
+
+## The Mask-Monger's puppet humming to itself, heard while the player is bare-faced so the
+## Monger can be found by ear: a slow lullaby in A minor, a hummed "mm" (a sine with soft
+## second and third partials, a little vibrato) behind a closed mouth (lowpass).
+func _make_monger_hum() -> void:
+	var loop := 9.6
+	var fade := 0.4
+	var length := loop + fade
+	var out := _silence(length)
+	# [semitones above A3, start beat, beats]; 0.6 s a beat, 16 beats a loop.
+	var tune := [[7, 0, 2], [10, 2, 1], [12, 3, 1], [10, 4, 2], [7, 6, 2],
+			[5, 8, 2], [3, 10, 1], [5, 11, 1], [7, 12, 3], [0, 15, 1]]
+	for note: Array in tune:
+		var freq := 220.0 * pow(2.0, float(note[0]) / 12.0)
+		var dur: float = note[2] * 0.6 + 0.25
+		var n := _seconds(dur)
+		var x := PackedFloat32Array()
+		x.resize(n)
+		var phase := rng.randf() * TAU
+		for i in n:
+			var t := float(i) / RATE
+			phase += TAU * freq * (1.0 + 0.006 * sin(TAU * 5.0 * t)) / RATE
+			var env := minf(1.0, t / 0.12) * minf(1.0, (dur - t) / 0.25)
+			x[i] = (sin(phase) + 0.3 * sin(2.0 * phase) + 0.12 * sin(3.0 * phase)) * env
+		_mix(out, x, _seconds(float(note[1]) * 0.6), 1.0)
+	out = _lowpass(out, 900.0, 0.7)
+	_save_loop("sfx/monger_hum_loop", out, loop, fade, 0.5)
 
 
 # --- Recipes: the Mask-Monger's burn ritual -----------------------------------------------
