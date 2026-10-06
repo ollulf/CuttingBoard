@@ -18,6 +18,11 @@ extends Node
 ## A new target nearer than this to the current one keeps the current path, so chasing
 ## a moving actor does not ask for a fresh path every frame.
 @export var repath_distance := 0.5
+## Seconds a push leaves the body staggering, its footing weakened so the shove carries
+## it back instead of being walked straight out of.
+@export var stagger_time := 0.35
+## How much grip on its own movement a staggering body keeps, 0..1 of acceleration.
+@export_range(0.0, 1.0) var stagger_control := 0.1
 
 @onready var _body: CharacterBody3D = owner
 @onready var _agent: NavigationAgent3D = %NavigationAgent3D
@@ -27,6 +32,7 @@ var _moving := false
 var _running := false
 var _facing := Vector3.ZERO
 var _has_facing := false
+var _stagger := 0.0
 
 
 ## Sets off toward `position`, at a run when `run` is true.
@@ -57,6 +63,14 @@ func clear_facing() -> void:
 	_has_facing = false
 
 
+## Shoves the body by `velocity` — a hit knocking it back — and leaves it staggering.
+func push(velocity: Vector3) -> void:
+	if velocity.is_zero_approx():
+		return
+	_body.velocity += velocity
+	_stagger = stagger_time
+
+
 func _physics_process(delta: float) -> void:
 	if not _body.is_on_floor():
 		_body.velocity += _body.get_gravity() * delta
@@ -70,8 +84,12 @@ func _physics_process(delta: float) -> void:
 			desired = direction * (run_speed if _running else walk_speed)
 
 	var speed := maxf(desired.length(), walk_speed)
-	_body.velocity.x = move_toward(_body.velocity.x, desired.x, acceleration * speed * delta)
-	_body.velocity.z = move_toward(_body.velocity.z, desired.z, acceleration * speed * delta)
+	var accel := acceleration
+	if _stagger > 0.0:
+		_stagger -= delta
+		accel *= stagger_control
+	_body.velocity.x = move_toward(_body.velocity.x, desired.x, accel * speed * delta)
+	_body.velocity.z = move_toward(_body.velocity.z, desired.z, accel * speed * delta)
 	_body.move_and_slide()
 
 	_turn(delta)
@@ -92,6 +110,10 @@ func _turn(delta: float) -> void:
 	var heading := Vector3.ZERO
 	if _has_facing:
 		heading = _flat(_facing - _body.global_position)
+	elif _stagger > 0.0:
+		# Being shoved is not walking: a body knocked back does not turn to face the way
+		# it is sliding.
+		return
 	else:
 		heading = _flat(_body.velocity)
 	if heading.length_squared() < 0.01:

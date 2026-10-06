@@ -14,9 +14,19 @@ var source: Node
 ## Where the hit landed and which way it was travelling, for knockback and effects.
 var position: Vector3
 var direction: Vector3
+## How hard the hit shoves, as an impulse in newton-seconds along direction: the weight
+## behind a blow, the momentum of a thrown item. Whatever gets knocked about by it — a
+## body flinching or falling, a character staggering back — reads it from here. Zero is
+## a hit with no push behind it.
+var knockback := 0.0
 
 
 func _init(p_amount: int, p_source: Node = null, p_type: Type = Type.BLUNT) -> void:
 	amount = p_amount
 	source = p_source
 	type = p_type
+
+
+## The push as a vector: knockback along the direction of travel.
+func get_impulse() -> Vector3:
+	return direction.normalized() * knockback

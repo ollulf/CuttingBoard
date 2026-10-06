@@ -16,6 +16,9 @@ extends Node
 @export_range(0, 999) var unarmed_damage := 8
 ## Impulse handed to a struck rigid body, so a punch visibly shoves a barrel about.
 @export var knockback := 2.5
+## Impulse a blow drives into a character, in newton-seconds per point of damage, so a
+## hammer rocks a body further than a fist does. Carried on the hit as its knockback.
+@export var knockback_per_damage := 0.8
 
 ## What the blow is aimed along: its position is where the swing starts, its -Z where it goes.
 @onready var _aim: Node3D = get_parent()
@@ -40,6 +43,7 @@ func strike(hand: HandSlot) -> void:
 		# feet, and the damage number would come up out of the ground.
 		info.position = hit["position"]
 		info.direction = direction
+		info.knockback = damage * knockback_per_damage
 		health.apply_damage(info)
 	else:
 		# Nothing alive to hurt, so the blow wears the object down instead. That is what
@@ -51,6 +55,11 @@ func strike(hand: HandSlot) -> void:
 	var body := target as RigidBody3D
 	if body:
 		body.apply_central_impulse(direction * knockback)
+	# A fallen body's limbs are physical too, so a corpse can be shoved about like a
+	# barrel.
+	var bone := target as PhysicalBone3D
+	if bone:
+		bone.apply_impulse(direction * knockback, hit["position"] - bone.global_position)
 
 
 ## What this hand hits for: the held item's own impact damage, or a bare fist. An item

@@ -14,7 +14,7 @@ right_hand_item = ExtResource("4_hammer")
 starting_items = Array[ExtResource("3_item_data")]([ExtResource("5_rock"), ExtResource("5_rock")])
 
 [node name="Body" parent="Visual" index="0"]
-surface_material_override/0 = SubResource("StandardMaterial3D_bandit")
+material = SubResource("StandardMaterial3D_bandit")
 
 [node name="MeleeAttack" parent="Eyes" index="1"]
 unarmed_damage = 10
