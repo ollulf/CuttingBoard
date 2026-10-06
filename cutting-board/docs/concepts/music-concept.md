@@ -8,6 +8,39 @@ original; nothing is taken from the film.
 Listen: `assets/audio/music/concepts/` (`leitmotif.ogg`, `village.ogg`, `outside.ogg`).
 Result page with players and a piano roll: https://claude.ai/artifact/6wcx8pN6eGh36yWHkvhEFn
 
+## Round 2: softer, woodier, three versions
+
+Feedback on round 1: "more soft, a bit more woodiness, 3 versions". Same motif, same
+generator, three alternative takes rendered side by side (round 1 kept for comparison) in
+`assets/audio/music/concepts/v2/` as `<a|b|c>_<leitmotif|village|outside>.ogg`.
+
+What changed for all three:
+
+- **Softer**: rubber/yarn-mallet marimba, felt-muffled blocks, padded beaters (slower
+  attacks of 2-4 ms instead of under 1 ms), low-passed instruments and a low-passed master,
+  a darker and longer reverb, the peaks barely squeezed, slower tempos (54-96 BPM instead
+  of 76-112). No taiko, belly drum, hyoshigi, shamisen, shrill shinobue or slide whistle.
+  Measured: mean spectral centroid about 400-470 Hz against about 750-1130 Hz in round 1,
+  energy above 2.5 kHz down from 0.2-0.9 % to under 0.1 %, while the 0.8-2.5 kHz band where
+  a wooden "tok" sits stays at a similar share.
+- **Woodier**: new instruments with hollow, resonant bodies: a kalimba on a wooden box, a
+  balafon with its gourd (and a very soft buzz from the membrane), a wooden tongue drum,
+  bamboo wind chimes, a carved wooden frog, a seed shaker, and a breathy low flute in place
+  of the shinobue. Most of them go through `_wood_body`, which adds the ringing modes of a
+  box or gourd under every strike.
+
+The versions:
+
+| | Character | Lead | Under it | The wink | Tempos (village / outside) |
+| --- | --- | --- | --- | --- | --- |
+| **A, lullaby** | soft mallets, rocking, warm | kalimba, soft marimba, low flute | marimba bass, kalimba picking, felt block, shaker, chimes | the slide in bar 4, a muffled bonk | 84 / 60 |
+| **B, workshop** | woody percussion up front, busier | balafon, tongue drum | tongue-drum bass, slit drum, felt blocks, felt temple-block knock fills, shaker, a creak | a low-passed jaw-harp "boing" under the bonk | 96 / 72 |
+| **C, forest night** | airy, sparse, lots of space | breathy low flute far off, kalimba | wind in the leaves, marimba roll pad, tongue-drum pulse, bamboo chimes | a wooden frog croaking | 72 / 54 |
+
+Lengths: leitmotifs 26-33 s; loops 46-53 s, seamless like round 1, with `loop=true` and
+the BPM and beat count in their `.import` files. Outside keeps the round-1 ideas (the fifth
+sagging to a tritone, the motif at half speed and out of tune, knocks the woods answer).
+
 ## The motif
 
 D min'yo pentatonic (D F G A C), 4 bars of 4/4. Durations are sixteenths, `/` is a slide
@@ -70,18 +103,21 @@ its start. Their `.import` files have `loop=true` and the BPM/beat count set.
 
 ```
 godot --headless --path cutting-board -s res://tools/audio/synth_music.gd
-godot --headless --path cutting-board -s res://tools/audio/synth_music.gd -- --only=village
+godot --headless --path cutting-board -s res://tools/audio/synth_music.gd -- --set=a,b --only=village
 godot --headless --path cutting-board --import
 ```
 
-The scores are text in `tools/audio/synth_music.gd` (`MOTIF` and the `_make_*` cue
+`--set` picks versions (`r1`, `a`, `b`, `c`; all by default), `--only` picks cues. The
+scores are text in `tools/audio/synth_music.gd` (`MOTIF` and the `_make_*` cue
 functions); a bar that doesn't add up to 16 sixteenths prints a warning. Needs `ffmpeg`
 on the PATH for the OGG encode (otherwise the WAVs stay in `user://music_render`).
-A full run takes about 35 s.
+A full run takes about 2 min 15 s (round 2 alone about 1 min 40 s). Re-rendering round 1
+gives the same audio, though the OGG bytes differ (stream serial numbers).
 
 ## Next steps
 
-- Listen and tune (tempo, mix, which instruments carry the motif).
+- Pick a direction (A, B or C, or a mix of them), then listen and tune (tempo, mix, which
+  instruments carry the motif).
 - Wire them in: play `village.ogg` on the `Music` bus inside the village and crossfade
   to `outside.ogg` when the player leaves it (the two placeholder licensed tracks stay
   until then).
