@@ -1,6 +1,7 @@
 [gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
+[ext_resource type="Script" path="res://scripts/components/health_regen.gd" id="99_regen"]
 [ext_resource type="Script" path="res://scripts/npc/sight.gd" id="2_sight"]
 [ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="3_melee"]
 [ext_resource type="Script" path="res://scripts/npc/locomotion.gd" id="4_locomotion"]
@@ -91,6 +92,9 @@ grid_size = Vector2i(4, 4)
 unique_name_in_owner = true
 script = ExtResource("7_health")
 max_health = 60
+
+[node name="HealthRegen" type="Node" parent="."]
+script = ExtResource("99_regen")
 
 [node name="Brain" type="Node" parent="."]
 unique_name_in_owner = true

@@ -150,6 +150,15 @@ func hold_grudge(actor: Node3D) -> void:
 	memory.remember(actor)
 
 
+## Whether this NPC is fighting or fleeing right now, or still holds a grudge. HealthRegen
+## waits for this to clear before healing.
+func is_in_combat() -> bool:
+	var action := brain.get_current_action()
+	if action is AttackTargetAction or action is ThrowAtTargetAction or action is FleeAction:
+		return true
+	return not get_grudges().is_empty()
+
+
 func has_grudge_against(actor: Node3D) -> bool:
 	return get_grudges().has(actor)
 
