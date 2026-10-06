@@ -60,6 +60,8 @@ extends CharacterBody3D
 @export var hotbar_sound: SoundBank = preload("res://resources/audio/ui_hotbar.tres")
 ## Putting on something held in the hand — a mask taken off a body.
 @export var wear_sound: SoundBank = preload("res://resources/audio/ui_equip.tres")
+## A click with something used from the hand that refused — glue while unhurt.
+@export var refuse_sound: SoundBank = preload("res://resources/audio/ui_invalid.tres")
 @export_group("")
 
 @onready var camera_pivot: Node3D = %CameraPivot
@@ -206,14 +208,27 @@ func _use_hotbar(event: InputEvent) -> void:
 ## the obvious reading of clicking on a barrel. Shift always works the world — grabbing
 ## what is under the crosshair, or winding up a throw with what is already held.
 ##
-## A plain click with something wearable in hand puts it on. A click with nothing to grab
-## is a blow. Putting the punch last means it costs none of the existing gestures: it
-## happens exactly when the click would otherwise have done nothing at all.
+## A plain click with something wearable in hand puts it on, and with something used from
+## the hand — glue — uses it. A click with nothing to grab is a blow. Putting the punch
+## last means it costs none of the existing gestures: it happens exactly when the click
+## would otherwise have done nothing at all.
 func _use_hand(hand: HandSlot, event: InputEvent) -> void:
 	if _is_grab_modifier(event) or (hand.is_free() and interactor.has_grabbable()):
 		interactor.grab_or_charge(hand)
-	elif not wear_held(hand):
+	elif not wear_held(hand) and not use_held(hand):
 		_punch(hand)
+
+
+## Uses what a hand is holding on the player, if it is something used from the hand.
+## Returns false, touching nothing, when it is not; a use the item refuses still counts
+## as handled, so a click with glue at full health never turns into a punch.
+func use_held(hand: HandSlot) -> bool:
+	var usable := Usable.find_in(hand.get_held())
+	if usable == null or not usable.is_used_in_hand():
+		return false
+	if not usable.use(self):
+		Sfx.play(refuse_sound)
+	return true
 
 
 ## Puts on what a hand is holding, if it is something worn — a mask picked up off a body.

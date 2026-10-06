@@ -50,6 +50,7 @@ func _init() -> void:
 		"grab": _make_grabs,
 		"draw": _make_draws,
 		"stow": _make_stows,
+		"glue": _make_glue,
 		# World.
 		"impact_wood": _make_wood_impacts,
 		"impact_stone": _make_stone_impacts,
@@ -244,6 +245,22 @@ func _make_stows() -> void:
 		_mix(out, slide, 0, 0.6)
 		_mix(out, _shape(_lowpass(_noise(0.1), 320.0, 0.7), 0.003, 0.05), _seconds(length - 0.03), 0.8)
 		_save("sfx/stow_%d" % (take + 1), out, 0.8)
+
+
+## Wood glue worked into a split: a few sticky smears, each a short wet squelch of noise
+## sliding down in pitch, then the low creak of the grain drawing back together.
+func _make_glue() -> void:
+	for take in 2:
+		var out := _silence(0.6)
+		var at := 0.0
+		for smear in rng.randi_range(3, 4):
+			var length := rng.randf_range(0.05, 0.08)
+			var squelch := _sweep(_noise(length), rng.randf_range(1300.0, 1800.0), rng.randf_range(450.0, 650.0), 4.0)
+			_mix(out, _shape(squelch, 0.006, length * 0.35), _seconds(at), rng.randf_range(0.6, 1.0))
+			at += rng.randf_range(0.05, 0.09)
+		var creak := _grains(_tone(0.28, rng.randf_range(170.0, 200.0), rng.randf_range(115.0, 135.0), 0.25), 0.55, 0.005)
+		_mix(out, _shape(creak, 0.04, 0.12), _seconds(at + 0.03), 0.45)
+		_save("sfx/glue_%d" % (take + 1), _softclip(out, 1.2), 0.8)
 
 
 # --- Recipes: world -----------------------------------------------------------------------

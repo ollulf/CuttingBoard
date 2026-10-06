@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/items/carryable_usable_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scenes/items/wood_glue.gd" id="2_script"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/wood_glue_a.res" id="3_mesh"]
+[ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="4_item"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_glue"]
+height = 0.17
+radius = 0.075
+
+[node name="WoodGlue" instance=ExtResource("1_base")]
+mass = 0.6
+script = ExtResource("2_script")
+metadata/icon_pose = Basis(1, 0, 0, 0, 0.76604444, -0.64278764, 0, 0.64278764, 0.76604444)
+
+[node name="MeshInstance3D" parent="." index="0"]
+mesh = ExtResource("3_mesh")
+
+[node name="CollisionShape3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, 0)
+shape = SubResource("CylinderShape3D_glue")
+
+[node name="Carryable" parent="." index="2"]
+item_data = ExtResource("4_item")
+impact_damage = 4
+
+[node name="Usable" parent="." index="3"]
+unique_name_in_owner = true
+uses_remaining = 1
+held_verb = "Apply"
+
+[node name="Destructible" parent="." index="4"]
+durability = 40

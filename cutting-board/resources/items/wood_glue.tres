@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bjrr8mcr66f3a" path="res://assets/ui/icons/items/wood_glue.png" id="1_x4nsv"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_a0shm"]
+diffuse_texture = ExtResource("1_x4nsv")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Wood Glue"
+icon = SubResource("CanvasTexture_a0shm")
+description = "Hide glue, warmed soft. Worked into a split, it draws the grain back together."
+weight = 0.6
+durability = 40
+world_scene_path = "res://scenes/items/wood_glue.tscn"
