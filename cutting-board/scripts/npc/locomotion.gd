@@ -63,6 +63,12 @@ func clear_facing() -> void:
 	_has_facing = false
 
 
+## Whether the body is being kept facing something, which is the sign it is dealing with
+## it — an enemy, a throw's target — rather than idling.
+func has_facing() -> bool:
+	return _has_facing
+
+
 ## Shoves the body by `velocity` — a hit knocking it back — and leaves it staggering.
 func push(velocity: Vector3) -> void:
 	if velocity.is_zero_approx():
