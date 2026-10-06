@@ -94,9 +94,18 @@ func _villager_grudge() -> void:
 func _bandit() -> void:
 	var bandit := _spawn(BANDIT, Vector3(0, 0.05, -5))
 	await _physics_frames(5)
-	var waited := await _wait_for_cue(COMBAT, 12.0)
+	# How long the bandit takes to spot the player depends on where it wanders and when its
+	# brain re-plans, and some of that runs on the wall clock, which under --fixed-fps and
+	# CPU load drifts against game time, so wait on the fight itself with a wide limit.
+	var waited := await _wait_for_cue(COMBAT, 40.0)
 	print("  bandit: Combat after %.2f s" % waited)
 	_check("bandit going for the player: Combat", _music.get_cue() == COMBAT)
+	var settle := 0.0
+	while settle < 5.0 and not _is_fighting(bandit):
+		await get_tree().physics_frame
+		settle += get_physics_process_delta_time()
+		_pin_player()
+	_check("bandit going for the player: attacking", _is_fighting(bandit))
 	bandit.health.apply_damage(DamageInfo.new(99999, _player))
 	await _wait(0.5)
 	_check("bandit dead: Combat held through the grace time", _music.get_cue() == COMBAT)
