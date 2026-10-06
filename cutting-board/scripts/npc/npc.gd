@@ -24,6 +24,13 @@ extends CharacterBody3D
 @export var bare_hands_weight := 0.0
 @export_group("")
 
+@export_group("Random Extra Items")
+## Items that may go in the pockets at spawn, each rolled on its own. A full inventory skips it.
+@export var extra_items: Array[ItemData] = []
+## Chance (0-1) for each extra_items entry, matched by position. A missing chance counts as 0.
+@export var extra_item_chances: Array[float] = []
+@export_group("")
+
 @export_group("Grudges")
 ## Seconds a grudge against whoever hurt this NPC lasts, counted from the latest hit.
 ## While it lasts the attacker is fought like an enemy, whatever its faction. It also
@@ -304,6 +311,18 @@ func _equip_loadout() -> void:
 	equip(left_hand_item, hand_left)
 	for data in starting_items:
 		inventory.add(data)
+	for data in pick_extra_items():
+		inventory.add(data)
+
+
+## One roll per extra_items entry against its chance; returns the ones that came up.
+func pick_extra_items() -> Array[ItemData]:
+	var picked: Array[ItemData] = []
+	for i in extra_items.size():
+		var chance := extra_item_chances[i] if i < extra_item_chances.size() else 0.0
+		if extra_items[i] and randf() < chance:
+			picked.append(extra_items[i])
+	return picked
 
 
 ## One draw from weapon_pool by weapon_weights, or null for bare hands.
