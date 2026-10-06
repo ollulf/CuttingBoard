@@ -20,6 +20,7 @@
   --bad: #ff4d6d;
   --work: #29adff;
   --idle: #8a8d9b;
+  --merge: #c77dff;     /* merging: violet, apart from working blue */
   --px: "Silkscreen", "Courier New", monospace;
   --body: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
   color-scheme: dark;
@@ -161,6 +162,8 @@ button:disabled { opacity: 0.5; cursor: default; }
 .status.review { color: var(--warn); }
 .status.attention { color: var(--bad); }
 .status.done { color: var(--ok); }
+.status.merging { color: var(--merge); }
+@media (prefers-reduced-motion: no-preference) { .status.merging::before { animation: pulse 0.5s steps(2) infinite; } }
 @media (prefers-reduced-motion: no-preference) { .status.working::before { animation: pulse 0.8s steps(2) infinite; } }
 @keyframes pulse { 50% { opacity: 0.25; } }
 .row-top { display: flex; align-items: stretch; }
@@ -239,7 +242,7 @@ details.done .list { margin-top: 6px; }
     changes:   ["Queued · changes", "queued"],
     working:   ["Working", "working"],
     review:    ["Review", "review"],
-    approved:  ["Merging", "working"],
+    approved:  ["Merging", "merging"],
     attention: ["Needs you", "attention"],
     done:      ["Merged", "done"],
   };
