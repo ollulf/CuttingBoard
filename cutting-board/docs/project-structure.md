@@ -4,7 +4,7 @@
 addons/                  third-party plugins (installed via AssetLib)
 assets/                  raw + imported art assets
   animations/            .res / imported animation libraries
-  audio/{music,sfx,ui,ambience}   sfx/ui/ambience mostly synthesised by tools/audio
+  audio/{music,sfx,ui,ambience}   sfx/ui/ambience and music/concepts synthesised by tools/audio; music/outside+combat played by the Music autoload
   environment/{hdri,sky} panorama HDRIs, sky materials
   fonts/
   materials/{characters,environment,props}   .tres StandardMaterial3D / ShaderMaterial
@@ -24,7 +24,7 @@ scenes/                  .tscn files
 scripts/                 .gd files not owned by a single scene
   autoload/ components/ resources/ ui/ utils/
 tests/                   GUT / gdUnit test scenes and scripts
-tools/                   editor/CLI tooling (tools/audio/synth_sfx.gd regenerates the synth sounds)
+tools/                   editor/CLI tooling (tools/audio/synth_sfx.gd and synth_music.gd regenerate the synth sounds and music sketches)
 docs/
 ```
 
