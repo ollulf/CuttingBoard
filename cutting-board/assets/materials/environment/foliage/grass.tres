@@ -6,16 +6,16 @@
 [resource]
 render_priority = 0
 shader = ExtResource("1_uibgx")
-shader_parameter/wind_enabled = false
+shader_parameter/wind_enabled = true
 shader_parameter/albedo = Color(0.5017, 0.58, 0.493, 1)
 shader_parameter/texture_albedo = ExtResource("1_oysvd")
 shader_parameter/alpha_scissor_threshold = 0.5
 shader_parameter/albedo_texture_size = Vector2i(128, 128)
 shader_parameter/wind_direction = Vector3(1, 0, 0.3)
 shader_parameter/wind_strength = 1.0
-shader_parameter/wind_frequency = 1.0
-shader_parameter/bend_top_amount = 0.3
+shader_parameter/wind_frequency = 1.6
+shader_parameter/bend_top_amount = 0.25
 shader_parameter/bend_power = 1.5
-shader_parameter/height_scale = 2.0
-shader_parameter/base_rigidity = 0.3
-shader_parameter/wind_max_distance = 400.0
+shader_parameter/height_scale = 1.0
+shader_parameter/base_rigidity = 0.1
+shader_parameter/wind_max_distance = 80.0
