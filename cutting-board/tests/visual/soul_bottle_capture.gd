@@ -21,6 +21,8 @@ const CONCEPTS := {
 
 var _shots_dir := ""
 var _tour := "concepts"
+## --colour=ember shows the red soul instead of the default amber.
+var _colour := ""
 var _camera: Camera3D
 
 
@@ -28,6 +30,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+		elif arg.begins_with("--colour="):
+			_colour = arg.trim_prefix("--colour=")
 		elif arg.begins_with("--tour="):
 			_tour = arg.trim_prefix("--tour=")
 	_stage()
@@ -69,6 +73,8 @@ func _run() -> void:
 	for key in CONCEPTS:
 		var bottle := BOTTLE.instantiate() as RigidBody3D
 		bottle.freeze = true
+		if _colour == "ember":
+			bottle.soul_colour = bottle.EMBER
 		add_child(bottle)
 		(bottle.get_node("MeshInstance3D") as MeshInstance3D).mesh = CONCEPTS[key]
 		bottle.position = Vector3.UP * _lift(CONCEPTS[key])
@@ -76,7 +82,7 @@ func _run() -> void:
 	if _tour == "idle":
 		for i in row.size():
 			row[i].visible = i == 0
-		_look(Vector3(0.0, 0.14, 0.45), Vector3(0.0, 0.07, 0.0))
+		_look(Vector3(0.0, row[0].position.y + 0.03, 0.3), row[0].position)
 		await _wait(6.0)
 		get_tree().quit()
 		return
@@ -85,6 +91,8 @@ func _run() -> void:
 			other.visible = other == row[i]
 		_look(Vector3(-0.16, 0.2, 0.55), Vector3(0.0, 0.07, 0.0))
 		await _shot("%s_close" % CONCEPTS.keys()[i])
+		_look(Vector3(0.0, row[i].position.y + 0.03, 0.3), row[i].position)
+		await _shot("%s_face" % CONCEPTS.keys()[i])
 	for i in row.size():
 		row[i].visible = true
 		row[i].position.x = 0.22 * (i - 1)

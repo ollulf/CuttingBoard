@@ -4,12 +4,22 @@
 [ext_resource type="Script" path="res://scenes/items/soul_bottle.gd" id="2_script"]
 [ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_a.res" id="3_mesh"]
 [ext_resource type="Resource" path="res://resources/items/soul_bottle.tres" id="4_item"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_wisp.res" id="5_wisp"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_face.res" id="6_face"]
+[ext_resource type="Shader" path="res://assets/shaders/soul_swirl.gdshader" id="5_swirl"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_bottle"]
 height = 0.22
 radius = 0.065
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_swirl"]
+render_priority = 1
+shader = ExtResource("5_swirl")
+
+[sub_resource type="SphereMesh" id="SphereMesh_swirl"]
+material = SubResource("ShaderMaterial_swirl")
+radius = 0.029
+height = 0.06
+radial_segments = 16
+rings = 8
 
 [node name="SoulBottle" instance=ExtResource("1_base")]
 mass = 0.3
@@ -32,17 +42,13 @@ durability = 10
 [node name="Wisp" type="Node3D" parent="." index="5"]
 unique_name_in_owner = true
 
-[node name="Body" type="MeshInstance3D" parent="Wisp"]
-cast_shadow = 0
-mesh = ExtResource("5_wisp")
-
-[node name="Face" type="MeshInstance3D" parent="Wisp"]
+[node name="Swirl" type="MeshInstance3D" parent="Wisp"]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 cast_shadow = 0
-mesh = ExtResource("6_face")
+mesh = SubResource("SphereMesh_swirl")
 
 [node name="Glow" type="OmniLight3D" parent="Wisp"]
-light_color = Color(0.62, 1, 0.82, 1)
-light_energy = 0.3
+unique_name_in_owner = true
+light_color = Color(1, 0.72, 0.16, 1)
+light_energy = 0.35
 omni_range = 0.5
