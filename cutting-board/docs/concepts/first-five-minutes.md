@@ -1,5 +1,27 @@
 # First five minutes (concept)
 
+## Round 2: Assembled in the dark (2026-10-07)
+The opening as the user described it, up to reaching the Mask-Monger (dialogue comes later).
+The artifact page has a browser animatic with synthesized stand-in sounds.
+1. **Total black (0:00 to 0:32):** no picture. You hear the Builder assembling you, positioned
+   around you: room tone, hum, knock, saw, pegs, glue, hand-plane, mutter, last peg, silence.
+2. **Born (0:32 to 0:38):** recommended **heart-knock**: two knocks on your chest, the third
+   comes from inside as a woody heartbeat, and each beat pushes the grain out from the centre.
+   Alternatives: a seam of light, a reed-whistle breath.
+3. **Black swirl shadow (0:38 to 0:44):** the mask-off grain at full strength; mouse look only.
+4. **Fall (0:44 to 0:52):** spawn ~40 m up over a meadow 25 to 30 m outside the village, in a
+   clear line to the market. The grain streams upward, wind rises, the existing land sound plays.
+   The camera stays level (motion sickness). The player has no fall damage.
+5. **Only the Mask-Monger:** his silhouette, lantern and mask rack glow through the grain; his
+   puppet hums a positional tune; footsteps change on the path. At ~2.5 m he lifts his lantern.
+   Stop.
+- Skip: hold Esc to jump to the landing; a dev setting skips the whole opening.
+- Build tasks (~15 min each): opening flag and start; workshop sound banks; cue timeline;
+  heart-knock pulse uniform; sky spawn and fall; Monger glow through the grain; puppet hum;
+  arrival trigger, skip and a check test.
+
+## Round 1
+
 Round 1, 2026-10-07. Brainstorm for the opening: you start as a faceless "nobody" and a
 **Builder** makes you (the Builder's identity is still open). Each opening ends on the bandits'
 masks and the Mask-Monger. The page with storyboards and a comparison table is the artifact
