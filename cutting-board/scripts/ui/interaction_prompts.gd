@@ -25,6 +25,9 @@ extends CanvasLayer
 ## How long the "Inventory full" message stays up, then how long it takes to fade.
 const REFUSED_HOLD := 1.0
 const REFUSED_FADE := 0.5
+## The prompts join this group so that something whose offer changes on its own (the
+## Mask-Monger finishing a ritual) can ask them to redraw: `call_group(GROUP, "refresh")`.
+const GROUP := &"interaction_prompts"
 
 var _refused_tween: Tween
 
@@ -38,6 +41,7 @@ var _refused_tween: Tween
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	_inventory_panel.bind(_inventory)
 	_cheat_menu.bind(_inventory)
 	_inventory_panel.drop_requested.connect(_on_drop_requested)
@@ -62,6 +66,10 @@ func _ready() -> void:
 	_inventory.changed.connect(_refresh)
 	_interactor.stow_refused.connect(_on_stow_refused)
 	_refused_label.modulate.a = 0.0
+	_refresh()
+
+
+func refresh() -> void:
 	_refresh()
 
 
@@ -96,6 +104,8 @@ func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
 
 func _update_interact_prompt() -> void:
 	var container := _interactor.get_hovered_container()
+	var usable := Usable.find_in(_interactor.get_hovered())
+	var offer := usable.get_prompt(_interactor.get_owner()) if usable else ""
 	if _interactor.can_stow_hovered(_inventory):
 		_interact_prompt.show_prompt("E", "Take")
 	elif container:
@@ -103,6 +113,8 @@ func _update_interact_prompt() -> void:
 	elif _hovering_carryable():
 		# Carryable but refused, which at this point only means the grid is full.
 		_interact_prompt.show_prompt("E", "Inventory full")
+	elif not offer.is_empty():
+		_interact_prompt.show_prompt("E", offer)
 	else:
 		_interact_prompt.hide()
 

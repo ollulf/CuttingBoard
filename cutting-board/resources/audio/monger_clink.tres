@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SoundBank" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sound_bank.gd" id="1_bank"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monger_clink_1.wav" id="2_take"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monger_clink_2.wav" id="3_take"]
+
+[resource]
+script = ExtResource("1_bank")
+streams = Array[AudioStream]([ExtResource("2_take"), ExtResource("3_take")])
+volume_db = -7
+volume_jitter_db = 1
+pitch = 1.0
+pitch_jitter = 0.06
+bus = &"SFX"
+cooldown = 0
+unit_size = 3
+max_distance = 25

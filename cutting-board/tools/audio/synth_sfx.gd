@@ -58,6 +58,14 @@ func _init() -> void:
 		"break_stone": _make_stone_breaks,
 		# Interface.
 		"ui": _make_ui,
+		# The Mask-Monger's burn ritual.
+		"monger_take": _make_monger_takes,
+		"monger_toss": _make_monger_tosses,
+		"monger_ignite": _make_monger_ignite,
+		"monger_soul": _make_monger_soul,
+		"monger_cork": _make_monger_corks,
+		"monger_clink": _make_monger_clinks,
+		"monger_babble": _make_monger_babble,
 		# Ambience.
 		"night_loop": _make_night_loop,
 		"fair_murmur_loop": _make_fair_murmur,
@@ -474,6 +482,117 @@ func _make_lantern_crackle() -> void:
 			var sizzle := _shape(_bandpass(_noise(0.05), 3500.0, 1.0), 0.002, 0.025)
 			_mix(out, sizzle, _seconds(at), 0.2 * size)
 	_save_loop("ambience/lantern_crackle_loop", out, loop, fade, 0.6)
+
+
+# --- Recipes: the Mask-Monger's burn ritual -----------------------------------------------
+
+
+## The puppet snatching the mask: two quick hollow wooden clacks, like a puppet's jaw
+## snapping shut on it.
+func _make_monger_takes() -> void:
+	for take in 2:
+		var out := _silence(0.24)
+		for hit in 2:
+			var f0 := rng.randf_range(380.0, 520.0) * (1.25 if hit == 1 else 1.0)
+			var at := _seconds(0.07 * hit)
+			_mix(out, _modes(0.14, [f0, f0 * 2.7, f0 * 4.9], [0.05, 0.03, 0.015], [1.0, 0.5, 0.3]), at, 0.8 - hit * 0.2)
+			_mix(out, _shape(_bandpass(_noise(0.02), 2500.0, 1.0), 0.0003, 0.006), at, 0.7)
+		_save("sfx/monger_take_%d" % (take + 1), _softclip(out, 1.3), 0.9)
+
+
+## Flinging the mask up: a whoosh that rises in pitch as it climbs, with the wobble of a
+## spinning thing in it.
+func _make_monger_tosses() -> void:
+	for take in 2:
+		var length := rng.randf_range(0.42, 0.5)
+		var out := _whoosh(length, 300.0, rng.randf_range(1400.0, 1800.0), 1900.0, 1.4, 0.55)
+		for i in out.size():
+			out[i] *= 0.65 + 0.35 * sin(TAU * 14.0 * i / RATE)
+		_save("sfx/monger_toss_%d" % (take + 1), out, 0.8)
+
+
+## The lantern catching the mask: a soft low whump of air drawn in, then a dry crackle
+## of wood shavings catching that thins out.
+func _make_monger_ignite() -> void:
+	var out := _silence(1.1)
+	var whump := _filter_swept(_noise(0.35), "lowpass", _glide_freqs(0.35, 120.0, 700.0), 0.9)
+	_mix(out, _shape(whump, 0.03, 0.14), 0, 1.0)
+	_mix(out, _tone(0.3, 90.0, 55.0, 0.15), 0, 0.6)
+	var crackle := _grains(_highpass(_noise(1.0), 1800.0, 0.7), 0.25, 0.003)
+	_mix(out, _shape(crackle, 0.05, 0.35), _seconds(0.08), 0.7)
+	var pops := _grains(_bandpass(_noise(1.0), 900.0, 1.2), 0.04, 0.008)
+	_mix(out, _shape(pops, 0.05, 0.3), _seconds(0.1), 0.6)
+	_save("sfx/monger_ignite", _softclip(out, 1.2), 0.9)
+
+
+## The soul spiralling down into the vial: a breathy ghost whistle that swoops up and
+## warbles, like blowing over a bottle; eerie but silly.
+func _make_monger_soul() -> void:
+	var length := 1.3
+	var n := _seconds(length)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / n
+		var freq := lerpf(520.0, 1150.0, sin(t * PI * 0.5)) * (1.0 + 0.04 * sin(TAU * 6.0 * i / RATE))
+		phase += TAU * freq / RATE
+		out[i] = sin(phase) * pow(sin(t * PI), 0.7)
+	var air := _filter_swept(_noise(length), "bandpass", _glide_freqs(length, 520.0, 1150.0), 6.0)
+	for i in n:
+		air[i] *= pow(sin(float(i) / n * PI), 0.7)
+	_mix(out, air, 0, 1.4)
+	_save("sfx/monger_soul", out, 0.7)
+
+
+## The cork going into the vial: the pop of a small cavity with a quick upward flick.
+func _make_monger_corks() -> void:
+	for take in 2:
+		var out := _silence(0.16)
+		_mix(out, _tone(0.1, rng.randf_range(380.0, 460.0), rng.randf_range(900.0, 1100.0), 0.03), 0, 0.9)
+		_mix(out, _shape(_bandpass(_noise(0.03), 1800.0, 1.2), 0.0005, 0.008), 0, 0.6)
+		_save("sfx/monger_cork_%d" % (take + 1), out, 0.85)
+
+
+## The vial landing at the giver's feet: a small thud under a bright glassy clink, and a
+## second smaller one as it settles.
+func _make_monger_clinks() -> void:
+	for take in 2:
+		var out := _silence(0.5)
+		var f0 := rng.randf_range(2300.0, 2900.0)
+		_mix(out, _shape(_lowpass(_noise(0.08), 300.0, 0.7), 0.002, 0.03), 0, 0.6)
+		_mix(out, _modes(0.4, [f0, f0 * 1.58, f0 * 2.43], [0.12, 0.08, 0.05], [1.0, 0.5, 0.3]), 0, 0.6)
+		_mix(out, _modes(0.3, [f0 * 1.05, f0 * 1.6], [0.08, 0.05], [1.0, 0.4]), _seconds(rng.randf_range(0.11, 0.15)), 0.3)
+		_save("sfx/monger_clink_%d" % (take + 1), out, 0.85)
+
+
+## The puppet's voice: squeaky blips of babble, a few quick syllables bouncing in pitch
+## (takes 1-2), and a rising "ooh!" gasp for the flare (take 3, played on its own).
+func _make_monger_babble() -> void:
+	var vowels := [[300.0, 2300.0, 3000.0], [700.0, 1200.0, 2600.0], [450.0, 900.0, 2600.0], [550.0, 1800.0, 2600.0]]
+	for take in 2:
+		var out := _silence(0.7)
+		var at := 0
+		for syl in rng.randi_range(4, 5):
+			var f0 := rng.randf_range(330.0, 480.0)
+			var length := rng.randf_range(0.07, 0.11)
+			var v: Array = vowels[rng.randi() % vowels.size()]
+			_mix(out, _voice(length, f0, f0 * rng.randf_range(0.8, 1.3), v, 0.008, length * 0.6), at, 0.8)
+			at += _seconds(length + rng.randf_range(0.01, 0.03))
+		_save("sfx/monger_babble_%d" % (take + 1), out, 0.8)
+	var gasp := _silence(0.5)
+	_mix(gasp, _voice(0.42, 300.0, 620.0, [450.0, 900.0, 2600.0], 0.03, 0.2), 0, 1.0)
+	_save("sfx/monger_gasp", gasp, 0.8)
+
+
+## Per-sample filter frequencies gliding linearly from `from` to `to` over `length`.
+func _glide_freqs(length: float, from: float, to: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var freqs := PackedFloat32Array()
+	freqs.resize(n)
+	for i in n:
+		freqs[i] = lerpf(from, to, float(i) / n)
+	return freqs
 
 
 # --- Building blocks ----------------------------------------------------------------------

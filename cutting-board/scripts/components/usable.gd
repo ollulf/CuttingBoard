@@ -29,6 +29,13 @@ func use(by: Node) -> bool:
 	return true
 
 
+## What the interact prompt offers `by` when this object is under the crosshair ("Give
+## mask"), or "" for no prompt. Plain Usables offer none; a trade like the Mask-Monger's
+## overrides it.
+func get_prompt(_by: Node) -> String:
+	return ""
+
+
 func is_used_in_hand() -> bool:
 	return not held_verb.is_empty()
 
