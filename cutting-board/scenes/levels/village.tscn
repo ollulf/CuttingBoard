@@ -45,6 +45,11 @@
 [ext_resource type="PackedScene" path="res://scenes/items/plank.tscn" id="42_plank"]
 [ext_resource type="PackedScene" path="res://scenes/items/oil_lamp.tscn" id="43_oil_lamp"]
 [ext_resource type="PackedScene" path="res://scenes/items/wood_glue.tscn" id="44_wood_glue"]
+[ext_resource type="PackedScene" path="res://scenes/characters/mask_monger_model.tscn" id="45_mask_monger"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_monger"]
+radius = 0.55
+height = 2.3
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -112,6 +117,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.6, 0, 3.4)
 
 [node name="Barrel1_2" parent="Market" unique_id=1362248138 instance=ExtResource("11_ann8j")]
 transform = Transform3D(0.76604444, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.76604444, 9.3, 0, 4.4)
+
+[node name="MaskMonger" type="StaticBody3D" parent="Market" groups=["navigation_source"]]
+transform = Transform3D(0.9, 0, -0.43, 0, 1, 0, 0.43, 0, 0.9, 2.6, 0, 8.4)
+
+[node name="MaskMongerModel" parent="Market/MaskMonger" instance=ExtResource("45_mask_monger")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Market/MaskMonger"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
+shape = SubResource("CapsuleShape3D_monger")
 
 [node name="Lanterns" type="Node3D" parent="." unique_id=1259108471]
 
