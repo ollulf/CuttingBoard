@@ -5,7 +5,7 @@ extends Node3D
 ## hollow inside stays walkable and the navmesh bakes through the openings.
 
 const SEGMENTS := 20
-const BARK := preload("res://assets/materials/environment/foliage/tree_strange_1_bark.tres")
+const BARK_TEXTURE := preload("res://assets/textures/environment/trees/tree_strange_1_bark.png")
 
 @export var outer_radius := 3.5
 @export var inner_radius := 2.6
@@ -64,8 +64,13 @@ func _build() -> void:
 		var i1t := d1 * inner_radius + Vector3.UP * (h1 - 0.3)
 		var u0 := float(i) / SEGMENTS * 4.0
 		var u1 := float(i + 1) / SEGMENTS * 4.0
+		# Per-segment shade so the bark reads as ridges; the inside is darker.
+		var shade := 0.8 + 0.2 * fposmod(sin(i * 12.9898) * 43758.5453, 1.0)
+		st.set_color(Color(shade, shade * 0.95, shade * 0.9))
 		_quad(st, o0b, o1b, o1t, o0t, u0, u1, h0 / 3.0)   # outside
+		st.set_color(Color(shade * 0.55, shade * 0.5, shade * 0.45))
 		_quad(st, i0b, i1b, i1t, i0t, u0, u1, h0 / 3.0)   # inside
+		st.set_color(Color(shade * 0.75, shade * 0.65, shade * 0.55))
 		_quad(st, o0t, o1t, i1t, i0t, u0, u1, 0.3)        # broken rim
 		# Side faces where an opening starts or ends.
 		if _is_open(mid - step):
@@ -85,8 +90,19 @@ func _build() -> void:
 	mesh_instance.name = "TrunkMesh"
 	mesh_instance.set_meta(&"generated", true)
 	mesh_instance.mesh = st.commit()
-	mesh_instance.material_override = BARK
+	mesh_instance.material_override = _bark_material()
 	add_child(mesh_instance)
+
+
+## Opaque bark: the shared foliage bark material is alpha-scissored, which cut
+## see-through holes into the trunk walls. Culling stays on since every quad
+## already has both windings.
+func _bark_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = BARK_TEXTURE
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	mat.vertex_color_use_as_albedo = true
+	return mat
 
 
 ## Adds a quad with both windings, so it shows from either side without a
