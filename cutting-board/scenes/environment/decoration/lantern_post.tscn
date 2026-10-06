@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Material" path="res://assets/materials/environment/dark_planks.tres" id="1_planks"]
 [ext_resource type="PackedScene" path="res://scenes/environment/decoration/lantern.tscn" id="2_lantern"]
 [ext_resource type="Script" path="res://scripts/components/light_flicker.gd" id="3_flicker"]
 [ext_resource type="Script" path="res://scripts/components/ambient_sound.gd" id="4_ambient"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/lantern_crackle_loop.wav" id="5_crackle"]
+[ext_resource type="Script" path="res://scripts/components/lamp_swing.gd" id="6_swing"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_post"]
 material = ExtResource("1_planks")
@@ -27,11 +28,15 @@ mesh = SubResource("BoxMesh_post")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0)
 mesh = SubResource("BoxMesh_foot")
 
-[node name="Lantern" parent="." instance=ExtResource("2_lantern")]
+[node name="Swing" type="Node3D" parent="."]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, -0.1)
+script = ExtResource("6_swing")
 
-[node name="Light" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -1.3)
+[node name="Lantern" parent="Swing" instance=ExtResource("2_lantern")]
+
+[node name="Light" type="OmniLight3D" parent="Swing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -1.2)
 light_color = Color(1, 0.66, 0.26, 1)
 light_energy = 2.4
 omni_range = 11.0
