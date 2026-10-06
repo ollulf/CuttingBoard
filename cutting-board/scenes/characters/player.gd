@@ -39,6 +39,21 @@ extends CharacterBody3D
 @export var death_cam_distance := 2.2
 @export var death_cam_height := 1.4
 
+@export_group("Stamina")
+## Drained every second the player is actually sprinting.
+@export var sprint_cost := 15.0
+## Once a sprint has run the pool dry, it can't start again until this much is back, so
+## an empty pool doesn't flicker between running and walking.
+@export var sprint_recover := 20.0
+@export var jump_cost := 15.0
+## A blow with an empty hand.
+@export var punch_cost := 6.0
+## A swing with a weapon: this much, plus swing_cost_per_kg for every kilogram the weapon
+## weighs, so a hammer tires faster than a saw. A blow that can't be paid is not thrown.
+@export var swing_cost := 12.0
+@export var swing_cost_per_kg := 1.5
+@export_group("")
+
 @export_group("Sounds")
 ## Footsteps, one per arm bob: at walking pace, sprinting, and crouched.
 @export var step_sound: SoundBank = preload("res://resources/audio/step_walk.tres")
@@ -80,6 +95,7 @@ extends CharacterBody3D
 @onready var hotbar: Hotbar = %Hotbar
 @onready var camera: Camera3D = %Camera3D
 @onready var health: Health = %Health
+@onready var stamina: Stamina = %Stamina
 @onready var equipment: Equipment = %Equipment
 ## The player's own body is never drawn while they are alive — the view is first person
 ## and the arms are separate — and only falls into view on death.
@@ -103,6 +119,8 @@ var _capsule: CapsuleShape3D
 ## opposed to holding Ctrl, which sprints only while it is down.
 var _sprint_latched := false
 var _last_forward_tap := -INF
+## Set when a sprint emptied the stamina pool; sprinting waits until sprint_recover is back.
+var _winded := false
 ## The view's current knock from a hit, as a rotation of the camera, easing to nothing.
 var _kick := Vector3.ZERO
 var _stagger := 0.0
@@ -268,9 +286,21 @@ func _punch(hand: HandSlot) -> void:
 	var held := hand.get_item_data()
 	if not hand.is_free() and (held == null or not held.is_weapon()):
 		return
+	var cost := blow_cost(held)
+	if not stamina.can_spend(cost):
+		return
 	var arm := ArmAnimator.Arm.LEFT if hand == hand_left else ArmAnimator.Arm.RIGHT
 	if arms.play_action(&"punch", arm, held):
+		stamina.try_spend(cost)
 		melee.play_swing()
+
+
+## What a blow with `held` costs in stamina: a fist the least, a weapon more the heavier
+## it is.
+func blow_cost(held: ItemData) -> float:
+	if held == null:
+		return punch_cost
+	return swing_cost + held.weight * swing_cost_per_kg
 
 
 func _on_arm_hit(arm: int) -> void:
@@ -302,7 +332,7 @@ func _physics_process(delta: float) -> void:
 	if controlling and Input.is_action_just_pressed("jump"):
 		if _crouching:
 			_crouching = false
-		elif is_on_floor() and _crouch_amount < 0.01:
+		elif is_on_floor() and _crouch_amount < 0.01 and stamina.try_spend(jump_cost):
 			velocity.y = jump_velocity
 			Sfx.play(jump_sound)
 
@@ -314,7 +344,9 @@ func _physics_process(delta: float) -> void:
 	var speed := walk_speed
 	if _crouch_amount > 0.01:
 		speed = lerpf(walk_speed, crouch_speed, _crouch_amount)
-	elif _sprint_latched or Input.is_action_pressed("sprint"):
+	elif _update_sprint_stamina(
+			(_sprint_latched or Input.is_action_pressed("sprint")) and not direction.is_zero_approx(),
+			delta):
 		speed = sprint_speed
 	var accel := acceleration if is_on_floor() else air_acceleration
 	if _stagger > 0.0:
@@ -417,6 +449,18 @@ func _update_sprint_latch(controlling: bool) -> void:
 	if now - _last_forward_tap <= double_tap_window:
 		_sprint_latched = true
 	_last_forward_tap = now
+
+
+## Pays for a sprint the player is asking for and returns whether it goes on. Running
+## the pool dry leaves the player winded: back to a walk until sprint_recover is back.
+func _update_sprint_stamina(wanted: bool, delta: float) -> bool:
+	if _winded and stamina.get_current() >= sprint_recover:
+		_winded = false
+	if not wanted or _winded:
+		return false
+	if not stamina.drain(sprint_cost * delta):
+		_winded = true
+	return true
 
 
 ## Moves the body toward its target height. Standing up is refused while something is
