@@ -65,6 +65,8 @@ var _bottle: RigidBody3D
 var _arm_rest: Basis
 var _lantern_rest: Basis
 var _mask_start := Vector3.ZERO
+## The bottle's collision layer and mask, put back once it is let go.
+var _bottle_layers := Vector2i.ZERO
 var _bottle_ground := Vector3.ZERO
 ## Which beats have already played their sound.
 var _cues := {}
@@ -178,6 +180,8 @@ func _finish() -> void:
 	_bottle = null
 	if is_instance_valid(bottle):
 		bottle.scale = Vector3.ONE
+		bottle.collision_layer = _bottle_layers.x
+		bottle.collision_mask = _bottle_layers.y
 		bottle.freeze = false
 	ritual_finished.emit(bottle)
 
@@ -234,6 +238,9 @@ func _build_effects() -> void:
 	_bottle = reward.spawn() as RigidBody3D
 	if _bottle:
 		_bottle.freeze = true
+		_bottle_layers = Vector2i(_bottle.collision_layer, _bottle.collision_mask)
+		_bottle.collision_layer = 0
+		_bottle.collision_mask = 0
 		_bottle.visible = false
 		scene.add_child(_bottle)
 
@@ -368,6 +375,9 @@ func _freeze(node: Node3D) -> void:
 	var body := node as RigidBody3D
 	if body:
 		body.freeze = true
+		# Flown through the giver and the Monger, it must not shove either of them.
+		body.collision_layer = 0
+		body.collision_mask = 0
 	# Nobody can grab the mask back out of the air.
 	var carryable := node.get_node_or_null("Carryable")
 	if carryable:
