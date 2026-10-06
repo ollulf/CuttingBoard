@@ -18,6 +18,7 @@ The manager's prompt gives you: the task title, the task branch `<branch>`, and 
    - `godot.exe --headless --path cutting-board --import`, then `godot.exe --headless --path cutting-board --quit`: no script/parse errors (first-import font noise is fine; run `--quit` twice if needed).
    - **Run the test scenes in parallel**, not one after another: start every `cutting-board/tests/*.tscn` as its own background process with a time limit (`timeout 300 godot.exe --headless --fixed-fps 60 --path cutting-board res://tests/<name>.tscn > <scratch>/<name>.log 2>&1 &`, no `--quit-after`), `wait` for all, then confirm each log ends with `0 failure(s)` or all `PASS`.
    - Never open a windowed Godot run.
+   - **Use your own scratch folder**: put scripts and logs in a scratchpad subfolder named after your merge branch (e.g. `<scratchpad>/<branch>-merge/`). Other agents share the scratchpad, so never run a script you didn't write there.
 4. Commit any generated `.uid` files the checks created for tracked scripts, and commit the merge (message ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
 5. Confirm `git merge-base --is-ancestor main HEAD` succeeds (main can fast-forward to you).
 
