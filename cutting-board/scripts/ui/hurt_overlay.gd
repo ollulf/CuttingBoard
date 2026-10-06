@@ -5,6 +5,15 @@ extends ColorRect
 ## as the hit was hard, that fades out again; and while health is low, a red edge that
 ## stays and slowly pulses, stronger and quicker the closer death is. The look itself is
 ## in hurt_vignette.gdshader; this only decides how much of it to show.
+##
+## The same numbers drive the other hurt effects, such as the FunhouseMirror warping the
+## world: they read the flash and the lingering level from here and listen for `struck`
+## and `mended`, so every effect agrees on how bad a hit was and how close death is.
+
+## A hit landed; `share` is the part of max health it took, 0..1.
+signal struck(share: float)
+## Health went up again: a heal, or a reset to full.
+signal mended
 
 ## Below this share of health the edge stays red between hits.
 @export_range(0.0, 1.0) var low_ratio := 0.3
@@ -28,6 +37,9 @@ var _low := 0.0
 var _low_target := 0.0
 var _pulse_rate := 0.0
 var _phase := 0.0
+## 0 just under low_ratio, 1 at critical_ratio and below; 0 while not low at all.
+var _danger := 0.0
+var _last_current := -1
 
 
 func _ready() -> void:
@@ -52,6 +64,21 @@ func _process(delta: float) -> void:
 	_apply()
 
 
+## The current hit flash, 0..1, fading after each hit.
+func get_flash() -> float:
+	return _flash
+
+
+## How much of the lingering low-health level is showing, 0..1, without the pulse.
+func get_low() -> float:
+	return _low
+
+
+## How close to critical the health is, 0..1; see `_danger`.
+func get_danger() -> float:
+	return _danger
+
+
 func _apply() -> void:
 	# The pulse dips to 60% of the lingering strength and back; a flash rides on top.
 	var pulse := 0.8 + 0.2 * cos(_phase * TAU)
@@ -66,20 +93,26 @@ func _apply() -> void:
 func _on_damaged(info: DamageInfo) -> void:
 	var share := float(info.amount) / maxf(float(_health.max_health), 1.0)
 	_flash = clampf(maxf(_flash, min_flash + share * flash_per_damage), 0.0, 1.0)
+	struck.emit(clampf(share, 0.0, 1.0))
 
 
 func _on_changed(current: int, maximum: int) -> void:
 	var ratio := float(current) / maxf(float(maximum), 1.0)
+	var rose := _last_current >= 0 and current > _last_current
+	_last_current = current
+	if rose:
+		mended.emit()
 	if ratio >= low_ratio or current <= 0:
 		_low_target = 0.0
+		_danger = 0.0
 		if ratio >= 1.0:
 			# Back to full is a reset or a full heal; nothing is left to show.
 			_flash = 0.0
 			_low = 0.0
 		return
-	var danger := clampf(inverse_lerp(low_ratio, critical_ratio, ratio), 0.0, 1.0)
-	_low_target = lerpf(0.45, 1.0, danger)
-	_pulse_rate = lerpf(low_pulse_rate, critical_pulse_rate, danger)
+	_danger = clampf(inverse_lerp(low_ratio, critical_ratio, ratio), 0.0, 1.0)
+	_low_target = lerpf(0.45, 1.0, _danger)
+	_pulse_rate = lerpf(low_pulse_rate, critical_pulse_rate, _danger)
 	# Dropping into low health shows the edge at once instead of easing up to it.
 	_low = maxf(_low, _low_target * 0.8)
 
@@ -89,6 +122,7 @@ func _on_changed(current: int, maximum: int) -> void:
 func _on_died(_info: DamageInfo) -> void:
 	_low_target = 0.0
 	_low = 0.0
+	_danger = 0.0
 	_flash = 1.0
 
 

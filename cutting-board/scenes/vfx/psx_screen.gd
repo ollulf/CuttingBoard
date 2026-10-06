@@ -89,6 +89,12 @@ func get_render_size() -> Vector2i:
 	return _render.size
 
 
+## Where the blown-up render sits in the window, in window pixels. It can reach a few
+## pixels past the window's edges when the window is not a whole multiple of the render.
+func get_display_rect() -> Rect2:
+	return Rect2(_display.position, _display.size)
+
+
 ## Sizes the render to the window: the window's size divided by the whole number that
 ## brings the render closest to `render_height`, rounded up, with the blown-up image
 ## centred so any leftover pixels crop evenly off the edges. Rounding to the nearest
