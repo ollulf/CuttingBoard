@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 DamageNumbers="*res://scripts/autoload/damage_numbers.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 HitSplinters="*res://scripts/autoload/hit_splinters.gd"
+Music="*res://scripts/autoload/music.gd"
 PsxScreen="*res://scenes/vfx/psx_screen.tscn"
 
 [display]

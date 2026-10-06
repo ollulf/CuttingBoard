@@ -8,6 +8,22 @@ original; nothing is taken from the film.
 Listen: `assets/audio/music/concepts/` (`leitmotif.ogg`, `village.ogg`, `outside.ogg`).
 Result page with players and a piano roll: https://claude.ai/artifact/6wcx8pN6eGh36yWHkvhEFn
 
+## Round 4: take E in the game
+
+Take E is the game's music: `assets/audio/music/outside.ogg` and `combat.ogg` are copies
+of `concepts/v3/e_outside.ogg` and `e_combat.ogg`, imported as loops (the concept files
+stay). The `Music` autoload (`scripts/autoload/music.gd`) plays them on the Music bus,
+which has no effects, so the hall and the dynamics come through as rendered.
+
+Outside plays by default. The player's CombatTracker emits `targeted_changed` when some
+NPC starts or stops going for the player, which means chasing it or throwing at it (the
+rule the enemy health bar already uses). On `true` the music crossfades to Combat
+(`fade_time`, 1.5 s, equal power), and Combat starts from the top of its loop. After
+`combat_grace` (5 s) without any NPC going for the player, it fades back to Outside, which
+resumes where it paused. Dead NPCs and NPCs whose grudge ran out drop out on their own.
+The player's own blows (on a dummy, say) don't count. Checked by `tests/music_check.tscn`.
+Recorded in `tests/visual/music_capture.tscn`.
+
 ## Round 3: outside and combat, no retro, weirder
 
 Feedback on round 2: "go away from this retro feel... I always liked the outside version, so

@@ -15,6 +15,10 @@ extends Node
 signal combat_changed(in_combat: bool)
 ## The enemy whose bar to show, or null when there is none.
 signal target_changed(target: Node3D)
+## Whether some NPC is going for the owner right now — chasing it or throwing at it —
+## checked every scan_interval. Unlike combat_changed it has no linger and ignores the
+## owner's own blows; the Music autoload switches to its combat cue on it.
+signal targeted_changed(targeted: bool)
 
 ## Seconds after the last blow, or the last NPC coming for the owner, that a fight ends.
 @export var linger := 6.0
@@ -32,6 +36,7 @@ var _has_target := false
 ## Time left to show a dead target's empty bar, or below zero while it is alive.
 var _dead_left := -1.0
 var _scan_left := 0.0
+var _targeted := false
 ## Item that just left a hand -> [who let go, when], so a thrown rock is credited to
 ## its thrower rather than to the rock.
 var _thrown := {}
@@ -46,6 +51,10 @@ func _ready() -> void:
 
 func is_in_combat() -> bool:
 	return _in_combat
+
+
+func is_targeted() -> bool:
+	return _targeted
 
 
 func get_target() -> Node3D:
@@ -160,6 +169,9 @@ func _keep_fighting() -> void:
 func _scan() -> void:
 	_prune_thrown()
 	var attacker := _nearest_attacker()
+	if _targeted != (attacker != null):
+		_targeted = attacker != null
+		targeted_changed.emit(_targeted)
 	if attacker == null:
 		return
 	_keep_fighting()
