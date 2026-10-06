@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/vfx/funhouse_mirror.tscn" id="8_mirror"]
 [ext_resource type="PackedScene" path="res://scenes/ui/mend_overlay.tscn" id="9_mend"]
 [ext_resource type="PackedScene" path="res://scenes/ui/cheat_menu.tscn" id="10_cheats"]
+[ext_resource type="Script" path="res://scripts/ui/stamina_bar.gd" id="11_stamina"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
@@ -94,6 +95,16 @@ layout_mode = 2
 size_flags_horizontal = 8
 
 [node name="HealthBar" parent="." instance=ExtResource("6_healthbar")]
+
+[node name="StaminaBar" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("11_stamina")
 
 [node name="TargetBar" parent="." instance=ExtResource("7_targetbar")]
 

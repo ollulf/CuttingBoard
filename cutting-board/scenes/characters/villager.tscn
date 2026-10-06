@@ -20,6 +20,7 @@ bare_hands_weight = 2.0
 extra_items = Array[ExtResource("3_item_data")]([ExtResource("8_glue")])
 extra_item_chances = Array[float]([0.3])
 defend_allies_radius = 4.0
+name_pool = Array[String](["Knotty Ned", "Birchwick", "Old Spoke", "Mabel Burl", "Tom Dowel", "Elma Sap", "Pinewhistle", "Grainy Gus", "Widow Lathe", "Chip"])
 
 [node name="Body" parent="Visual" index="0"]
 material = SubResource("StandardMaterial3D_villager")

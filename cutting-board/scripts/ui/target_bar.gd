@@ -8,9 +8,15 @@ extends HealthBar
 ## Which enemy, and when, is the player's CombatTracker's call; this only shows it. When
 ## the tracker lets the target go the bar fades out still showing its last state, so a
 ## kill reads as the bar running out before it disappears.
+##
+## Out of combat the same bar names the NPC the player walks up to and looks at, tinted
+## by its attitude: blood for a hostile one, neutral gray for a friendly one. A combat target
+## always wins over it.
 
 const NAME_FONT := preload("res://assets/fonts/Cubix_Mystical.ttf")
 const NAME_COLOR := Color("#d9c9a0")
+const FRIEND := Color("#8a8580")
+const FRIEND_HI := Color("#b4aea6")
 
 ## Distance of the name from the top edge, in render pixels.
 @export var top := 12
@@ -19,24 +25,55 @@ const NAME_COLOR := Color("#d9c9a0")
 
 var _target_name := ""
 var _has_target := false
+var _friendly := false
+var _tracker: CombatTracker
 
 
 func _ready() -> void:
 	super()
-	var tracker := CombatTracker.find_for(self)
-	if tracker:
-		tracker.target_changed.connect(show_target)
-		show_target(tracker.get_target())
+	_tracker = CombatTracker.find_for(self)
+	if _tracker:
+		_tracker.target_changed.connect(_refresh.unbind(1))
+		_tracker.nearby_changed.connect(_refresh.unbind(1))
+		_refresh()
 
 
-## Puts `target`'s name and health up, or fades the bar out for null.
-func show_target(target: Node3D) -> void:
+## Shows the combat target, or else the NPC close by, or fades out with neither.
+func _refresh() -> void:
+	var target := _tracker.get_target()
+	if target:
+		show_target(target)
+	else:
+		show_target(_tracker.get_nearby(), true)
+
+
+## Puts `target`'s name and health up, or fades the bar out for null. `by_attitude`
+## tints the bar gray when `target` is no enemy of the player.
+func show_target(target: Node3D, by_attitude := false) -> void:
 	_has_target = target != null
 	if _has_target:
 		_target_name = CombatTracker.name_of(target)
+		_friendly = by_attitude and not _is_hostile(target)
 		bind(Health.find_in(target))
 	_update_visibility()
 	queue_redraw()
+
+
+func is_friendly() -> bool:
+	return _has_target and _friendly
+
+
+func get_target_name() -> String:
+	return _target_name if _has_target else ""
+
+
+## Whether `target` is out for the player: an enemy side, or a grudge against it.
+func _is_hostile(target: Node3D) -> bool:
+	var player := _tracker.get_parent()
+	var faction := Faction.find_in(target)
+	if faction and faction.is_hostile_to(player):
+		return true
+	return target is Npc and (target as Npc).has_grudge_against(player as Node3D)
 
 
 func _update_visibility(instant := false) -> void:
@@ -73,5 +110,5 @@ func _draw() -> void:
 	var fill_w := roundf(bar.size.x * _fill)
 	_rect(bar.position.x, bar.position.y, trail_w, bar.size.y, FLAME)
 	if fill_w > 0:
-		_rect(bar.position.x, bar.position.y, fill_w, bar.size.y, BLOOD)
-		_rect(bar.position.x, bar.position.y, fill_w, 1, BLOOD_HI)
+		_rect(bar.position.x, bar.position.y, fill_w, bar.size.y, FRIEND if _friendly else BLOOD)
+		_rect(bar.position.x, bar.position.y, fill_w, 1, FRIEND_HI if _friendly else BLOOD_HI)
