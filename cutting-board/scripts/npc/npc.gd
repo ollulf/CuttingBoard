@@ -14,6 +14,18 @@ extends CharacterBody3D
 @export var left_hand_item: ItemData
 @export var starting_items: Array[ItemData] = []
 
+@export_group("Sounds")
+## Grunts from behind the mask when hit, and the last one when killed.
+@export var hurt_sound: SoundBank = preload("res://resources/audio/npc_hurt.tres")
+## Seconds between a blow landing and the grunt it gets out of the NPC.
+@export var hurt_sound_delay := 0.07
+@export var death_sound: SoundBank = preload("res://resources/audio/npc_death.tres")
+## The body hitting the ground, this many seconds after the killing blow.
+@export var body_fall_sound: SoundBank = preload("res://resources/audio/body_fall.tres")
+@export var body_fall_delay := 0.55
+@export var throw_sound: SoundBank = preload("res://resources/audio/throw.tres")
+@export_group("")
+
 @onready var locomotion: Locomotion = %Locomotion
 @onready var memory: Memory = %Memory
 @onready var faction: Faction = %Faction
@@ -94,6 +106,7 @@ func strike_at(target: Node3D) -> void:
 	var aim_point := target.global_position + Vector3.UP * sight.target_height
 	if not eyes.global_position.is_equal_approx(aim_point):
 		eyes.look_at(aim_point)
+	melee.play_swing()
 	melee.strike(get_weapon_hand())
 
 
@@ -181,6 +194,7 @@ func throw_from(hand: HandSlot, launch: Vector3) -> void:
 	# its own thrower until it has had a moment to clear it.
 	body.add_collision_exception_with(self)
 	body.linear_velocity = launch
+	Sfx.play_at(throw_sound, body.global_position)
 	get_tree().create_timer(0.3).timeout.connect(
 		func() -> void:
 			if is_instance_valid(body):
@@ -218,6 +232,13 @@ func _on_damaged(info: DamageInfo) -> void:
 	if attacker and attacker != self and Faction.find_in(attacker):
 		memory.remember(attacker)
 	if health.is_alive():
+		# A beat after the blow rather than on top of it: the grunt is a reaction, and
+		# it keeps the two from stacking into one loud thump.
+		get_tree().create_timer(hurt_sound_delay).timeout.connect(
+			func() -> void:
+				if is_instance_valid(eyes) and health.is_alive():
+					Sfx.play_at(hurt_sound, eyes.global_position)
+		)
 		body.flinch(info)
 		locomotion.push(body.get_knockback(info))
 
@@ -238,3 +259,9 @@ func _on_died(info: DamageInfo) -> void:
 	collision_shape.set_deferred("disabled", true)
 	body.go_limp(info, velocity)
 	velocity = Vector3.ZERO
+	Sfx.play_at(death_sound, eyes.global_position)
+	get_tree().create_timer(body_fall_delay).timeout.connect(
+		func() -> void:
+			if is_instance_valid(body):
+				Sfx.play_at(body_fall_sound, body.get_center())
+	)

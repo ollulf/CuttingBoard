@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://scenes/levels/lighting/tallow_fair_lighting.tscn" id="16_lighting"]
 [ext_resource type="PackedScene" path="res://scenes/environment/decoration/lantern_post.tscn" id="17_lantern"]
 [ext_resource type="PackedScene" path="res://scenes/vfx/wisp.tscn" id="18_wisp"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/night_loop.wav" id="19_night"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -34,6 +35,12 @@ agent_max_climb = 0.3
 [node name="TestLevel" type="Node3D" unique_id=408145003]
 
 [node name="Lighting" parent="." unique_id=1906193929 instance=ExtResource("16_lighting")]
+
+[node name="NightAmbience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("19_night")
+volume_db = -17.0
+autoplay = true
+bus = &"Ambience"
 
 [node name="Terrain" parent="." unique_id=272265108 instance=ExtResource("13_terrain")]
 

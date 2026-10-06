@@ -16,6 +16,11 @@ signal changed
 ## the right's, which is what makes 1-3 and 4-6 read as two hands rather than six keys.
 const SLOTS_PER_HAND := 3
 
+## An item coming out of the bag into a hand, and going back into it. Heard however it
+## happens — a number key, the stow key or a drag on the inventory screen.
+@export var draw_sound: SoundBank = preload("res://resources/audio/draw.tres")
+@export var stow_sound: SoundBank = preload("res://resources/audio/stow.tres")
+
 var _slots: Array[HotbarSlot] = []
 var _inventory: Inventory
 var _hands: Array[HandSlot] = []
@@ -143,6 +148,7 @@ func hold_entry(entry: InventoryEntry, hand: HandSlot) -> bool:
 	if slot:
 		slot.take_into_hand(item, entry)
 	_inventory.remove(entry)
+	Sfx.play(draw_sound)
 	changed.emit()
 	return true
 
@@ -226,6 +232,7 @@ func _bank(
 		return false
 	if slot:
 		slot.return_to_grid(entry)
+	Sfx.play(stow_sound)
 	changed.emit()
 	return true
 

@@ -46,6 +46,21 @@ extends Control
 ## Tint of the dragged ghost once it is clear of the window and would be dropped.
 @export var eject_color := Color(1.0, 0.85, 0.55, 0.9)
 
+@export_group("Sounds")
+## The satchel opening and closing with the screen.
+@export var open_sound: SoundBank = preload("res://resources/audio/ui_open.tres")
+@export var close_sound: SoundBank = preload("res://resources/audio/ui_close.tres")
+## Lifting an item onto the cursor, and setting it down in a grid or on the hotbar.
+@export var pick_sound: SoundBank = preload("res://resources/audio/ui_pick.tres")
+@export var place_sound: SoundBank = preload("res://resources/audio/ui_place.tres")
+## Putting an item on. A drop on a hand is heard as the item being drawn instead.
+@export var equip_sound: SoundBank = preload("res://resources/audio/ui_equip.tres")
+## Letting go somewhere the item cannot go.
+@export var invalid_sound: SoundBank = preload("res://resources/audio/ui_invalid.tres")
+## Letting go clear of the window, out into the world.
+@export var drop_sound: SoundBank = preload("res://resources/audio/ui_drop.tres")
+@export_group("")
+
 const NO_CELL := Vector2i(-1, -1)
 
 ## The two grids the screen can show. A cell index on its own does not say which
@@ -299,11 +314,15 @@ func open() -> void:
 		return
 	_rebuild()
 	_show_health()
+	if not visible:
+		Sfx.play(open_sound)
 	show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func close() -> void:
+	if visible:
+		Sfx.play(close_sound)
 	_cancel_drag()
 	_clear_hover()
 	# A container is only open for as long as the screen showing it is.
@@ -476,6 +495,7 @@ func _begin_hotbar_drag(index: int, pos: Vector2) -> void:
 
 
 func _start_ghost(pos: Vector2) -> void:
+	Sfx.play(pick_sound)
 	_ghost = _make_tile(_drag_data, _drag_rotated)
 	_ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_ghost)
@@ -555,6 +575,7 @@ func _end_drag(pos: Vector2) -> void:
 	var wear_ok := _accepts_wear(target_wear)
 	var target_hotbar := _hotbar_at(pos)
 	var outside := _is_outside_window(pos)
+	_play_drop_sound(from_hotbar, target_hand, target_wear, target_hotbar, slot, outside)
 	_cancel_drag()
 
 	if from_hotbar != HotbarPanel.NO_SLOT:
@@ -601,6 +622,41 @@ func _end_drag(pos: Vector2) -> void:
 		_take_off(from_wear, to, cell - grab, rotated)
 		return
 	_place_item(from, entry, to, cell - grab, rotated)
+
+
+## What letting go of a drag sounds like, judged the same way the drop hint was drawn
+## under the cursor, so a red hint is the refusal buzz and a green one a placement. Read
+## while the drag is still running, since that is the state the checks look at.
+##
+## Drops on a hand, and items dragged out of one into the player's grid, say nothing
+## here: the hotbar plays the item being drawn or put away for those.
+func _play_drop_sound(
+	from_hotbar: int, target_hand: HandSlot, target_wear: int,
+	target_hotbar: int, slot: Dictionary, outside: bool
+) -> void:
+	if target_hotbar != HotbarPanel.NO_SLOT:
+		if from_hotbar != HotbarPanel.NO_SLOT or _accepts_link(target_hotbar):
+			Sfx.play(place_sound)
+		else:
+			Sfx.play(invalid_sound)
+	elif from_hotbar != HotbarPanel.NO_SLOT:
+		# A link dragged off the bar simply comes off.
+		Sfx.play(place_sound)
+	elif target_hand:
+		# Back onto the hand it came from is a change of mind, not a mistake.
+		if target_hand != _drag_hand and not _accepts(target_hand):
+			Sfx.play(invalid_sound)
+	elif target_wear != Equipment.NO_SLOT:
+		Sfx.play(equip_sound if _accepts_wear(target_wear) else invalid_sound)
+	elif outside:
+		Sfx.play(drop_sound)
+	elif slot.is_empty():
+		# A miss over the window: the item goes back where it was.
+		Sfx.play(place_sound, -6.0)
+	elif not _can_drop_at(slot["side"], slot["cell"]):
+		Sfx.play(invalid_sound)
+	elif _drag_hand == null or _inventory_for(slot["side"]) != _inventory:
+		Sfx.play(place_sound)
 
 
 ## Puts a dragged item down on a grid square. Within one grid that is a plain

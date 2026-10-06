@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://b7tjn3n22jqbt" path="res://scenes/ui/HUD.tscn" id="4_prompts"]
 [ext_resource type="PackedScene" path="res://scenes/ui/charge_bar.tscn" id="5_charge_bar"]
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="6_inventory"]
-[ext_resource type="AudioStream" uid="uid://b40cxrp7u8m7h" path="res://assets/audio/sfx/pick_up.wav" id="7_pickup"]
 [ext_resource type="Script" path="res://scripts/components/arm_animator.gd" id="8_arm_animator"]
 [ext_resource type="AnimationLibrary" path="res://resources/animations/arms.tres" id="9_arm_anims"]
 [ext_resource type="Script" path="res://scripts/components/melee_attack.gd" id="10_melee"]
@@ -118,11 +117,6 @@ script = ExtResource("10_melee")
 unique_name_in_owner = true
 script = ExtResource("6_inventory")
 grid_size = Vector2i(6, 8)
-
-[node name="PickupSound" type="AudioStreamPlayer" parent="."]
-unique_name_in_owner = true
-stream = ExtResource("7_pickup")
-bus = &"SFX"
 
 [node name="Hotbar" type="Node" parent="."]
 unique_name_in_owner = true
