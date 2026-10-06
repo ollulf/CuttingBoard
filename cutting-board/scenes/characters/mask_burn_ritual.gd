@@ -33,15 +33,25 @@ const SOUL_SHADER := preload("res://assets/shaders/soul_swirl.gdshader")
 @export var landing_distance := 0.7
 
 @export_group("Sounds")
-## The toss, the lantern catching it, the cork going in and the lob to the ground.
-@export var toss_sound: SoundBank = preload("res://resources/audio/swing.tres")
-@export var ignite_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
-@export var cork_sound: SoundBank = preload("res://resources/audio/ui_place.tres")
+## One per beat, all synthesised in tools/audio/synth_sfx.gd: the puppet clacking shut
+## on the mask, the toss, the lantern catching it (with the puppet's gasp), the soul's
+## whistle down into the vial, the cork, the lob, the vial clinking on the ground and the
+## puppet's pleased babble.
+@export var take_sound: SoundBank = preload("res://resources/audio/monger_take.tres")
+@export var toss_sound: SoundBank = preload("res://resources/audio/monger_toss.tres")
+@export var ignite_sound: SoundBank = preload("res://resources/audio/monger_ignite.tres")
+@export var gasp_sound: SoundBank = preload("res://resources/audio/monger_gasp.tres")
+@export var soul_sound: SoundBank = preload("res://resources/audio/monger_soul.tres")
+@export var cork_sound: SoundBank = preload("res://resources/audio/monger_cork.tres")
 @export var lob_sound: SoundBank = preload("res://resources/audio/throw.tres")
+@export var clink_sound: SoundBank = preload("res://resources/audio/monger_clink.tres")
+@export var babble_sound: SoundBank = preload("res://resources/audio/monger_babble.tres")
 @export_group("")
 
 signal ritual_started(mask: ItemData)
 signal ritual_finished(bottle: Node3D)
+## A beat's sound was played, `at` seconds into the ritual.
+signal sound_cued(bank: SoundBank, at: float)
 
 @onready var _npc: Npc = get_parent()
 @onready var _model: Node3D = %Body
@@ -184,6 +194,9 @@ func _finish() -> void:
 		bottle.collision_mask = _bottle_layers.y
 		bottle.freeze = false
 	ritual_finished.emit(bottle)
+	# The "Give mask" offer is back; redraw the prompt without the crosshair having to
+	# leave and come back.
+	get_tree().call_group(&"interaction_prompts", &"refresh")
 
 
 
@@ -355,10 +368,15 @@ func _process(delta: float) -> void:
 			_bottle.scale = Vector3.ONE
 			_bottle.rotation.z = (1.0 - k) * 0.6
 
-	_cue(TOSS, toss_sound, apex)
+	_cue(0.0, take_sound, hand)
+	_cue(TOSS, toss_sound, hand)
 	_cue(IGNITE, ignite_sound, apex)
+	_cue(IGNITE + 0.05, gasp_sound, hand)
+	_cue(SPIRAL - 0.2, soul_sound, apex)
 	_cue(BOTTLE_UP + 0.8, cork_sound, hand)
 	_cue(SET_DOWN, lob_sound, hand)
+	_cue(SET_DOWN + 0.3, babble_sound, hand)
+	_cue(SET_DOWN + 0.6, clink_sound, _bottle_ground)
 
 	if t > END:
 		_finish()
@@ -369,6 +387,7 @@ func _cue(at: float, bank: SoundBank, where: Vector3) -> void:
 	if _time >= at and not _cues.has(at):
 		_cues[at] = true
 		Sfx.play_at(bank, where)
+		sound_cued.emit(bank, at)
 
 
 func _freeze(node: Node3D) -> void:

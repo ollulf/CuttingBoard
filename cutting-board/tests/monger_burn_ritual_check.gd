@@ -44,6 +44,11 @@ func _run() -> void:
 	_check("refused without a mask", not ritual.use(player))
 
 	# A mask in hand.
+	var cues: Array[float] = []
+	var cue_times: Array[float] = []
+	ritual.sound_cued.connect(func(_bank: SoundBank, at: float) -> void:
+		cues.append(at)
+		cue_times.append(ritual._time))
 	interactor.spawn_into_hand(MASK, -1, hand)
 	_check("offers \"Give mask\" with a mask in hand", ritual.get_prompt(player) == "Give mask")
 	_check("takes the mask", ritual.use(player))
@@ -55,6 +60,10 @@ func _run() -> void:
 	await _until_done(ritual)
 	_check("the ritual finishes", not ritual.is_playing())
 	_check("the Brain is back", monger.brain.is_physics_processing())
+	var on_beat := cues.size() == 9
+	for i in cues.size():
+		on_beat = on_beat and cue_times[i] - cues[i] < 0.1
+	_check("each beat's sound fires once, on its beat (%d)" % cues.size(), on_beat)
 	await _physics_frames(60)
 	var bottles := _bottles()
 	_check("exactly one soul bottle", bottles.size() == 1)

@@ -25,6 +25,9 @@ extends CanvasLayer
 ## How long the "Inventory full" message stays up, then how long it takes to fade.
 const REFUSED_HOLD := 1.0
 const REFUSED_FADE := 0.5
+## The prompts join this group so that something whose offer changes on its own (the
+## Mask-Monger finishing a ritual) can ask them to redraw: `call_group(GROUP, "refresh")`.
+const GROUP := &"interaction_prompts"
 
 var _refused_tween: Tween
 
@@ -38,6 +41,7 @@ var _refused_tween: Tween
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	_inventory_panel.bind(_inventory)
 	_cheat_menu.bind(_inventory)
 	_inventory_panel.drop_requested.connect(_on_drop_requested)
@@ -62,6 +66,10 @@ func _ready() -> void:
 	_inventory.changed.connect(_refresh)
 	_interactor.stow_refused.connect(_on_stow_refused)
 	_refused_label.modulate.a = 0.0
+	_refresh()
+
+
+func refresh() -> void:
 	_refresh()
 
 
