@@ -4,7 +4,7 @@
 addons/                  third-party plugins (installed via AssetLib)
 assets/                  raw + imported art assets
   animations/            .res / imported animation libraries
-  audio/{music,sfx,ui}
+  audio/{music,sfx,ui,ambience}   sfx/ui/ambience mostly synthesised by tools/audio
   environment/{hdri,sky} panorama HDRIs, sky materials
   fonts/
   materials/{characters,environment,props}   .tres StandardMaterial3D / ShaderMaterial
@@ -18,11 +18,13 @@ resources/               gameplay .tres data
   environments/          WorldEnvironment .tres
   input/                 input remap / action resources
   physics_materials/     PhysicsMaterial .tres
+  audio/                 SoundBank .tres: one per game sound, played via the Sfx autoload
 scenes/                  .tscn files
   characters/ components/ levels/ props/ ui/ vfx/
 scripts/                 .gd files not owned by a single scene
   autoload/ components/ resources/ ui/ utils/
 tests/                   GUT / gdUnit test scenes and scripts
+tools/                   editor/CLI tooling (tools/audio/synth_sfx.gd regenerates the synth sounds)
 docs/
 ```
 

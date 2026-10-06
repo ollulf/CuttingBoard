@@ -16,6 +16,8 @@ const MAX_DURABILITY := 9999
 
 @export var indestructible := false
 @export_range(0, 9999) var durability := 100
+## Heard where the object was as it comes apart.
+@export var break_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
 
 
 func _ready() -> void:
@@ -46,7 +48,8 @@ static func write(node: Node, durability: int) -> void:
 
 
 func damage(amount: int) -> void:
-	if indestructible or amount <= 0:
+	# Already broken: several contacts in one step can each try to finish it off.
+	if indestructible or amount <= 0 or durability == 0:
 		return
 	# Report what was really lost, not what was asked for: a hit that overkills a
 	# nearly broken object should read as the durability it had left.
@@ -55,5 +58,7 @@ func damage(amount: int) -> void:
 	var node := get_parent() as Node3D
 	damaged.emit(lost, node.global_position if node else Vector3.ZERO)
 	if durability == 0:
+		if node:
+			Sfx.play_at(break_sound, node.global_position)
 		destroyed.emit()
 		get_parent().queue_free()

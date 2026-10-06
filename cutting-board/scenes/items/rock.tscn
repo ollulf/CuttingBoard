@@ -5,6 +5,8 @@
 [ext_resource type="Script" uid="uid://ci8j6fh2yi3i7" path="res://scripts/components/destructible.gd" id="3_destructible"]
 [ext_resource type="Script" uid="uid://bjihoqfhsb0l2" path="res://scripts/components/impact_damage.gd" id="4_impact"]
 [ext_resource type="Resource" path="res://resources/items/rock.tres" id="5_item"]
+[ext_resource type="Resource" path="res://resources/audio/break_stone.tres" id="6_break"]
+[ext_resource type="Resource" path="res://resources/audio/impact_stone.tres" id="7_impact_sound"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
 size = Vector3(0.234, 0.092, 0.295)
@@ -25,6 +27,8 @@ impact_damage = 10
 [node name="Destructible" type="Node" parent="." unique_id=1510413382]
 script = ExtResource("3_destructible")
 durability = 1
+break_sound = ExtResource("6_break")
 
 [node name="ImpactDamage" type="Node" parent="." unique_id=572602908]
 script = ExtResource("4_impact")
+impact_sound = ExtResource("7_impact_sound")

@@ -1,21 +1,83 @@
-[gd_resource type="AudioBusLayout" load_steps=0 format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://etes4fb6iiuu"]
+
+[sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_master"]
+resource_name = "HardLimiter"
+ceiling_db = -0.5
+
+[sub_resource type="AudioEffectDistortion" id="AudioEffectDistortion_sfx"]
+resource_name = "Distortion"
+mode = 2
+drive = 0.42
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_sfx"]
+resource_name = "LowPassFilter"
+cutoff_hz = 9000.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_sfx"]
+resource_name = "Reverb"
+predelay_msec = 40.0
+predelay_feedback = 0.2
+room_size = 0.35
+damping = 0.65
+spread = 0.6
+hipass = 0.25
+wet = 0.12
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_voices"]
+resource_name = "LowPassFilter"
+cutoff_hz = 6000.0
+
+[sub_resource type="AudioEffectDistortion" id="AudioEffectDistortion_ui"]
+resource_name = "Distortion"
+mode = 2
+drive = 0.35
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_ambience"]
+resource_name = "LowPassFilter"
+cutoff_hz = 8000.0
 
 [resource]
-bus/0/name = &"Master"
-bus/0/solo = false
-bus/0/mute = false
-bus/0/bypass_fx = false
-bus/0/volume_db = 0.0
-bus/0/send = &""
+bus/0/effect/0/effect = SubResource("AudioEffectHardLimiter_master")
+bus/0/effect/0/enabled = true
 bus/1/name = &"SFX"
 bus/1/solo = false
 bus/1/mute = false
 bus/1/bypass_fx = false
 bus/1/volume_db = 0.0
 bus/1/send = &"Master"
-bus/2/name = &"Music"
+bus/1/effect/0/effect = SubResource("AudioEffectDistortion_sfx")
+bus/1/effect/0/enabled = true
+bus/1/effect/1/effect = SubResource("AudioEffectLowPassFilter_sfx")
+bus/1/effect/1/enabled = true
+bus/1/effect/2/effect = SubResource("AudioEffectReverb_sfx")
+bus/1/effect/2/enabled = true
+bus/2/name = &"Voices"
 bus/2/solo = false
 bus/2/mute = false
 bus/2/bypass_fx = false
 bus/2/volume_db = 0.0
-bus/2/send = &"Master"
+bus/2/send = &"SFX"
+bus/2/effect/0/effect = SubResource("AudioEffectLowPassFilter_voices")
+bus/2/effect/0/enabled = true
+bus/3/name = &"UI"
+bus/3/solo = false
+bus/3/mute = false
+bus/3/bypass_fx = false
+bus/3/volume_db = -2.0
+bus/3/send = &"Master"
+bus/3/effect/0/effect = SubResource("AudioEffectDistortion_ui")
+bus/3/effect/0/enabled = true
+bus/4/name = &"Ambience"
+bus/4/solo = false
+bus/4/mute = false
+bus/4/bypass_fx = false
+bus/4/volume_db = -4.0
+bus/4/send = &"Master"
+bus/4/effect/0/effect = SubResource("AudioEffectLowPassFilter_ambience")
+bus/4/effect/0/enabled = true
+bus/5/name = &"Music"
+bus/5/solo = false
+bus/5/mute = false
+bus/5/bypass_fx = false
+bus/5/volume_db = 0.0
+bus/5/send = &"Master"

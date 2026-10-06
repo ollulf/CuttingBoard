@@ -39,6 +39,27 @@ extends CharacterBody3D
 @export var death_cam_distance := 2.2
 @export var death_cam_height := 1.4
 
+@export_group("Sounds")
+## Footsteps, one per arm bob: at walking pace, sprinting, and crouched.
+@export var step_sound: SoundBank = preload("res://resources/audio/step_walk.tres")
+@export var run_step_sound: SoundBank = preload("res://resources/audio/step_run.tres")
+@export var crouch_step_sound: SoundBank = preload("res://resources/audio/step_crouch.tres")
+@export var jump_sound: SoundBank = preload("res://resources/audio/jump.tres")
+## Coming down from a jump or a fall. A drop slower than land_speed only makes a step.
+@export var land_sound: SoundBank = preload("res://resources/audio/land.tres")
+## Falling speed, in metres per second, from which touching down is a landing.
+@export var land_speed := 3.0
+@export var hurt_sound: SoundBank = preload("res://resources/audio/player_hurt.tres")
+@export var death_sound: SoundBank = preload("res://resources/audio/player_death.tres")
+## The body hitting the ground after death, this many seconds after the killing blow.
+@export var body_fall_sound: SoundBank = preload("res://resources/audio/body_fall.tres")
+@export var body_fall_delay := 0.55
+## Something going into the inventory off the ground.
+@export var pickup_sound: SoundBank = preload("res://resources/audio/pickup.tres")
+## The tick of a number key that did something.
+@export var hotbar_sound: SoundBank = preload("res://resources/audio/ui_hotbar.tres")
+@export_group("")
+
 @onready var camera_pivot: Node3D = %CameraPivot
 @onready var collision_shape: CollisionShape3D = %CollisionShape3D
 ## The bob and jump lift are written to the pivots, never to the arms themselves: the
@@ -53,7 +74,6 @@ extends CharacterBody3D
 @onready var hand_right: HandSlot = %HandSlotRight
 @onready var inventory: Inventory = %Inventory
 @onready var hotbar: Hotbar = %Hotbar
-@onready var pickup_sound: AudioStreamPlayer = %PickupSound
 @onready var camera: Camera3D = %Camera3D
 @onready var health: Health = %Health
 ## The player's own body is never drawn while they are alive — the view is first person
@@ -84,6 +104,9 @@ var _stagger := 0.0
 var _dead := false
 ## Where the death camera sits relative to the body it watches.
 var _death_cam_offset := Vector3.ZERO
+## Which foot plant of the arm bob was last heard, so each one makes exactly one step.
+var _last_step := 0
+var _was_on_floor := true
 
 
 func _ready() -> void:
@@ -160,7 +183,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _use_hotbar(event: InputEvent) -> void:
 	for index in hotbar.slot_count():
 		if event.is_action_pressed("hotbar_%d" % (index + 1)):
-			hotbar.use(index)
+			if hotbar.use(index):
+				Sfx.play(hotbar_sound)
 			return
 
 
@@ -186,7 +210,8 @@ func _punch(hand: HandSlot) -> void:
 	if not hand.is_free() and (held == null or not held.is_weapon()):
 		return
 	var arm := ArmAnimator.Arm.LEFT if hand == hand_left else ArmAnimator.Arm.RIGHT
-	arms.play_action(&"punch", arm, held)
+	if arms.play_action(&"punch", arm, held):
+		melee.play_swing()
 
 
 func _on_arm_hit(arm: int) -> void:
@@ -220,6 +245,7 @@ func _physics_process(delta: float) -> void:
 			_crouching = false
 		elif is_on_floor() and _crouch_amount < 0.01:
 			velocity.y = jump_velocity
+			Sfx.play(jump_sound)
 
 	var input_dir := Vector2.ZERO
 	if controlling:
@@ -240,7 +266,10 @@ func _physics_process(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, target.x, accel * speed * delta)
 	velocity.z = move_toward(velocity.z, target.z, accel * speed * delta)
 
+	# Read before moving: touching down zeroes the fall the landing is judged by.
+	var falling := -velocity.y
 	move_and_slide()
+	_update_landing(falling)
 
 	_update_arms(delta)
 
@@ -254,7 +283,7 @@ func _process(delta: float) -> void:
 
 
 func _on_item_stowed(_data: ItemData) -> void:
-	pickup_sound.play()
+	Sfx.play(pickup_sound)
 
 
 ## A hit that does not kill snaps the view away from the force — head back from a blow
@@ -263,6 +292,7 @@ func _on_item_stowed(_data: ItemData) -> void:
 func _on_damaged(info: DamageInfo) -> void:
 	if not health.is_alive():
 		return
+	Sfx.play(hurt_sound)
 	var impulse := body.get_impulse(info)
 	if not impulse.is_zero_approx():
 		var local := global_basis.inverse() * impulse.normalized()
@@ -286,6 +316,10 @@ func _on_died(info: DamageInfo) -> void:
 	body.visible = true
 	body.go_limp(info, velocity)
 	velocity = Vector3.ZERO
+	Sfx.play(death_sound)
+	get_tree().create_timer(body_fall_delay).timeout.connect(
+		func() -> void: Sfx.play_at(body_fall_sound, body.get_center())
+	)
 
 	# The camera leaves the head it was riding on and settles behind the body, on the
 	# side the player was looking from.
@@ -355,12 +389,42 @@ func _apply_height() -> void:
 	camera_pivot.position.y = height + _eye_offset
 
 
+## A footstep each time the arm bob reaches the bottom of a swing, which is where a foot
+## comes down, so the steps keep time with the arms at any speed. Crouched steps are the
+## quietest and a sprint the loudest.
+func _update_steps(horizontal_speed: float) -> void:
+	var plant := floori((_bob_time - PI * 0.5) / PI)
+	if plant == _last_step:
+		return
+	_last_step = plant
+	if _crouch_amount > 0.5:
+		Sfx.play(crouch_step_sound)
+	elif horizontal_speed > walk_speed + 0.5:
+		Sfx.play(run_step_sound)
+	else:
+		Sfx.play(step_sound)
+
+
+## Touching down after being in the air: a real drop lands with both feet, louder the
+## harder it was; stepping off a kerb just makes a step.
+func _update_landing(falling: float) -> void:
+	var on_floor := is_on_floor()
+	if on_floor and not _was_on_floor:
+		if falling >= land_speed:
+			var hardness := clampf(falling / (land_speed * 2.5), 0.3, 1.0)
+			Sfx.play(land_sound, linear_to_db(hardness))
+		elif falling > 1.0:
+			Sfx.play(step_sound)
+	_was_on_floor = on_floor
+
+
 func _update_arms(delta: float) -> void:
 	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
 
 	# Swing the arms while actually walking on the ground; settle otherwise.
 	if is_on_floor() and horizontal_speed > 0.1:
 		_bob_time += delta * arm_bob_frequency * (horizontal_speed / walk_speed)
+		_update_steps(horizontal_speed)
 	var bob_amount := arm_bob_amplitude * clampf(horizontal_speed / walk_speed, 0.0, 1.5) if is_on_floor() else 0.0
 	var bob_offset := sin(_bob_time) * bob_amount
 
