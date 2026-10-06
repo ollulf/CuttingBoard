@@ -4,6 +4,9 @@ Live mock-ups: https://claude.ai/artifact/WrSmnzRYCgq3quVn9ayaZf
 
 **State:** when the player unequips the mask in the inventory, the 3D world view goes black. The inventory UI stays fully visible on top, and a "spirit world" shader plays behind it: what a puppet sees without a face.
 
+## Round 3: built (grain only)
+The user dropped the faces: only A's grain background is in the game. `scenes/vfx/mask_off_vision.tscn` (on the player) is a CanvasLayer at -80, above PsxScreen's display (-100) and the FunhouseMirror (-90), below the HUD and inventory. It follows `Equipment.changed`: an empty Mask slot (taken off in the inventory or broken) fades the world to black with the grain (`assets/shaders/post/mask_off_vision.gdshader`: 180 retro rows, 4x4 dither, six bands) in 0.6 s; a mask going on fades it out. The player can still walk blind. It hides while the game is paused so the pause menu's mask stays readable. Test: `tests/mask_off_vision_check.tscn`.
+
 ## Round 2: A2 · Whittler oddities (chosen direction)
 A's background stays as it is (wood grain, PS1 low-res, dither, inventory on top, fade). The faces are replaced by weird but goofy spirit Whittlers based on the creature castes (`creature-concepts`): a lopsided face, the Totem Warden's three faces orbiting a pole, the Crook-Neck's upside-down face on a swinging neck, a face that splits into two, knot eyes that drift off the face, Backwards Jack's empty mask with a face peeking from behind, hands cupping a face, and the Chiseller's chest face with six arms. All of them blink and look at the cursor. Two variants:
 - **Whittler parade**: three rows walk sideways through the grain at fixed, capped sizes.
