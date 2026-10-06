@@ -43,6 +43,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/fair_murmur_loop.wav" id="41_murmur"]
 [ext_resource type="PackedScene" path="res://scenes/items/saw.tscn" id="42_saw"]
 [ext_resource type="PackedScene" path="res://scenes/items/plank.tscn" id="42_plank"]
+[ext_resource type="PackedScene" path="res://scenes/items/oil_lamp.tscn" id="43_oil_lamp"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -202,6 +203,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 0.46875, 17.8)
 
 [node name="Saw" parent="WagonYard" unique_id=1739204511 instance=ExtResource("42_saw")]
 transform = Transform3D(-0.07338695, -0.9848078, -0.1573787, 0.9063078, 0, -0.42261836, 0.41619778, -0.17364818, 0.892539, 3.92, 0.955, 18.05)
+
+[node name="OilLamp" parent="WagonYard" instance=ExtResource("43_oil_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.55, 0.95, 17.55)
 
 [node name="Farm" type="Node3D" parent="." unique_id=502573557]
 

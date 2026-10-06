@@ -1,0 +1,126 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="1_carryable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="2_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="3_impact"]
+[ext_resource type="Script" path="res://scripts/components/light_flicker.gd" id="4_flicker"]
+[ext_resource type="Resource" path="res://resources/items/oil_lamp.tres" id="5_item"]
+
+[sub_resource type="StandardMaterial3D" id="Material_brass"]
+albedo_color = Color(0.58, 0.42, 0.18, 1)
+metallic = 0.6
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Material_glass"]
+transparency = 1
+albedo_color = Color(1, 0.8, 0.5, 0.35)
+emission_enabled = true
+emission = Color(1, 0.62, 0.25, 1)
+emission_energy_multiplier = 0.35
+roughness = 0.2
+
+[sub_resource type="StandardMaterial3D" id="Material_flame"]
+shading_mode = 0
+albedo_color = Color(1, 0.75, 0.35, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_base"]
+material = SubResource("Material_brass")
+top_radius = 0.06
+bottom_radius = 0.075
+height = 0.03
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_font"]
+material = SubResource("Material_brass")
+top_radius = 0.045
+bottom_radius = 0.065
+height = 0.06
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_chimney"]
+material = SubResource("Material_glass")
+top_radius = 0.032
+bottom_radius = 0.05
+height = 0.13
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_cap"]
+material = SubResource("Material_brass")
+top_radius = 0.02
+bottom_radius = 0.04
+height = 0.03
+radial_segments = 8
+rings = 1
+
+[sub_resource type="TorusMesh" id="Mesh_handle"]
+material = SubResource("Material_brass")
+inner_radius = 0.045
+outer_radius = 0.055
+rings = 12
+ring_segments = 4
+
+[sub_resource type="PrismMesh" id="Mesh_flame"]
+material = SubResource("Material_flame")
+size = Vector3(0.02, 0.045, 0.02)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lamp"]
+size = Vector3(0.15, 0.27, 0.15)
+
+[node name="OilLamp" type="RigidBody3D"]
+mass = 1.5
+
+[node name="Mesh" type="Node3D" parent="."]
+
+[node name="Base" type="MeshInstance3D" parent="Mesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+mesh = SubResource("Mesh_base")
+
+[node name="Font" type="MeshInstance3D" parent="Mesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+mesh = SubResource("Mesh_font")
+
+[node name="Chimney" type="MeshInstance3D" parent="Mesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.155, 0)
+mesh = SubResource("Mesh_chimney")
+
+[node name="Cap" type="MeshInstance3D" parent="Mesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.235, 0)
+mesh = SubResource("Mesh_cap")
+
+[node name="Handle" type="MeshInstance3D" parent="Mesh"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.255, 0)
+mesh = SubResource("Mesh_handle")
+
+[node name="Flame" type="MeshInstance3D" parent="Mesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0)
+mesh = SubResource("Mesh_flame")
+cast_shadow = 0
+
+[node name="Light" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+light_color = Color(1, 0.66, 0.26, 1)
+light_energy = 1.3
+omni_range = 6.0
+omni_attenuation = 1.3
+script = ExtResource("4_flicker")
+amount = 0.22
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.135, 0)
+shape = SubResource("BoxShape3D_lamp")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("1_carryable")
+item_data = ExtResource("5_item")
+impact_damage = 6
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("2_destructible")
+durability = 60
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("3_impact")
+damage_per_speed = 1.0
