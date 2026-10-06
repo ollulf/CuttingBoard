@@ -46,6 +46,14 @@ signal went_limp
 ## to a body of this mass. Read through get_knockback() by whoever moves the character.
 @export var knockback_scale := 3.0
 
+## Whether something poses this body every frame, as an NPC's BodyAnimator does. Its
+## physical bones then follow the animated pose instead of staying in the rest pose.
+@export var animated := false:
+	set(value):
+		animated = value
+		if is_node_ready() and not _limp and not physical_bones.is_simulating_physics():
+			_settle_physical_bones()
+
 @export_group("Flinch")
 ## The bone that stays animated while the rest of the body flinches, keeping the
 ## character standing on it.
@@ -93,8 +101,7 @@ func _ready() -> void:
 	var actor := get_actor() as CollisionObject3D
 	if actor and actor != self:
 		physical_bones.physical_bones_add_collision_exception(actor.get_rid())
-	# Idle bones only trail the skeleton; the simulator wakes up when there is a hit.
-	physical_bones.active = false
+	_settle_physical_bones()
 	_apply_material()
 	_put_on_mask()
 
@@ -113,6 +120,14 @@ func is_limp() -> bool:
 func get_center() -> Vector3:
 	var middle := _find_bone(&"Spine")
 	return middle.global_position if middle else global_position + Vector3.UP
+
+
+## The vector from a bone's head to its far end — the knee to the sole, the elbow to the
+## fingertips — in the body's rest frame. Read off the bone's physical body, which the
+## builder centres halfway along it.
+func get_bone_tail(bone_name: StringName) -> Vector3:
+	var bone := _find_bone(bone_name)
+	return bone.body_offset.origin * 2.0 if bone else Vector3.ZERO
 
 
 ## The impulse `info` puts into this body, scaled and capped.
@@ -209,9 +224,19 @@ func _end_flinch() -> void:
 	if _limp:
 		return
 	physical_bones.physical_bones_stop_simulation()
-	physical_bones.active = false
+	_settle_physical_bones()
 	for bone in _bones:
 		_restore_authored(bone)
+
+
+## Puts the simulator back to rest between hits. On a body that is not animated it sleeps
+## and the bones stay where the rest pose put them. On an animated one it keeps running
+## with no influence on the pose, which is what carries the bones along with the
+## animation — so a hit lands on the limb where it is drawn, and a flinch or a fall starts
+## from the pose the body was really in.
+func _settle_physical_bones() -> void:
+	physical_bones.influence = 0.0
+	physical_bones.active = animated
 
 
 func _restore_authored(bone: PhysicalBone3D) -> void:
