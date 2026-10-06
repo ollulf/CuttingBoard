@@ -46,6 +46,9 @@ extends CharacterBody3D
 @export var defend_allies_radius := 0.0
 ## Seen this recently counts as having the victim in sight, for defend_allies_radius.
 @export var defend_sight_window := 0.6
+## Hears allies fight: takes up a nearby ally's grudge (their defend_allies_radius)
+## without having the victim in sight, like a sleeper woken by the noise.
+@export var hears_allies := false
 @export_group("")
 
 @export_group("Sounds")
@@ -376,7 +379,7 @@ func _rally_allies(attacker: Node3D) -> void:
 			continue
 		if global_position.distance_to(ally.global_position) > defend_allies_radius:
 			continue
-		if ally.memory.seconds_since_seen(self) > defend_sight_window:
+		if not ally.hears_allies and ally.memory.seconds_since_seen(self) > defend_sight_window:
 			continue
 		ally.hold_grudge(attacker)
 
