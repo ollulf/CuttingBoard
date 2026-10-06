@@ -301,8 +301,31 @@ func _assign_icon(data: ItemData, item_name: String) -> void:
 	canvas.diffuse_texture = texture
 	canvas.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	data.icon = canvas
+	var uid := ResourceLoader.get_resource_uid(data.resource_path)
 	ResourceSaver.save(data, data.resource_path)
+	_restore_uids(data.resource_path, uid)
 	print("assigned %s" % png)
+
+
+## Outside the editor the saver writes no uids at all, neither the file's own nor those of
+## what it refers to, so a scene that names the item by uid would lose track of it. Puts
+## them back into the saved text: the file's old uid, and each reference's from its file.
+func _restore_uids(path: String, own_uid: int) -> void:
+	var lines := FileAccess.get_file_as_string(path).split("\n")
+	var ref_path := RegEx.create_from_string(" path=\"([^\"]+)\"")
+	for i in lines.size():
+		var line := lines[i]
+		if line.contains(" uid=\""):
+			continue
+		if line.begins_with("[gd_resource ") and own_uid != ResourceUID.INVALID_ID:
+			lines[i] = line.trim_suffix("]") + " uid=\"%s\"]" % ResourceUID.id_to_text(own_uid)
+		elif line.begins_with("[ext_resource "):
+			var found := ref_path.search(line)
+			var ref_uid := ResourceLoader.get_resource_uid(found.get_string(1)) if found else ResourceUID.INVALID_ID
+			if ref_uid != ResourceUID.INVALID_ID:
+				lines[i] = line.replace(" path=", " uid=\"%s\" path=" % ResourceUID.id_to_text(ref_uid))
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string("\n".join(lines))
 
 
 func _png_path(item_name: String) -> String:
