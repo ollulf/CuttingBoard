@@ -33,6 +33,9 @@ extends Control
 @export var item_color := Color(0.86, 0.68, 0.36, 0.85)
 @export var key_color := Color(1, 1, 1, 0.55)
 @export var caption_color := Color(1, 1, 1, 0.45)
+## The worn-mask square between the hands: its bare-face glyph and its wear bar.
+@export var bare_face_color := Color(1, 1, 1, 0.25)
+@export var wear_color := Color(0.85, 0.3, 0.2, 0.9)
 
 const NO_SLOT := -1
 
@@ -42,10 +45,19 @@ var _hotbar: Hotbar
 ## The drawn square of each slot, by slot index, so the inventory screen can hit-test
 ## and highlight them without knowing how the bar is laid out.
 var _boxes: Array[Control] = []
+var _equipment: Equipment
+## The square between the two hands showing the face the player wears. Built once and
+## put back between the groups on every rebuild; it is not one of _boxes, so nothing can
+## be dragged onto it.
+var _mask_box: PanelContainer
+var _mask_icon: TextureRect
+var _bare_label: Label
+var _wear_bar: ColorRect
 
 
 func _ready() -> void:
 	_groups.add_theme_constant_override("separation", group_gap)
+	_build_mask_box()
 
 
 ## Points the bar at a hotbar and keeps it in step with it.
@@ -58,6 +70,31 @@ func bind(hotbar: Hotbar) -> void:
 	if _hotbar:
 		_hotbar.changed.connect(_rebuild)
 	_rebuild()
+
+
+## Shows the face in this loadout's Mask slot between the hands, kept in step with it.
+func bind_equipment(equipment: Equipment) -> void:
+	if _equipment == equipment:
+		return
+	if _equipment and _equipment.changed.is_connected(_refresh_mask):
+		_equipment.changed.disconnect(_refresh_mask)
+	_equipment = equipment
+	if _equipment:
+		_equipment.changed.connect(_refresh_mask)
+	_refresh_mask()
+
+
+## The texture the mask square shows, or null for a bare face.
+func get_mask_texture() -> Texture2D:
+	return _mask_icon.texture if _mask_icon and _mask_icon.visible else null
+
+
+func is_bare_face() -> bool:
+	return _bare_label != null and _bare_label.visible
+
+
+func is_mask_worn_down() -> bool:
+	return _wear_bar != null and _wear_bar.visible
 
 
 ## The slot under a point in screen coordinates, or NO_SLOT where there is none.
@@ -91,6 +128,8 @@ func get_bar_rect() -> Rect2:
 func _rebuild() -> void:
 	if not is_node_ready():
 		return
+	if _mask_box.get_parent() == _groups:
+		_groups.remove_child(_mask_box)
 	for child in _groups.get_children():
 		child.queue_free()
 	_boxes.clear()
@@ -123,6 +162,8 @@ func _rebuild() -> void:
 		column.add_child(caption)
 
 		_groups.add_child(column)
+		if first == 0:
+			_groups.add_child(_mask_box)
 
 
 ## One square: the key it answers to in the corner, and whatever it is linked to filling
@@ -194,3 +235,54 @@ func _make_item(data: ItemData) -> Control:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.add_child(label)
 	return tile
+
+
+## The mask square: the worn face's icon, a dim ring for a bare face, and a short red
+## bar along the bottom once the mask is under half its wear, where the crack shows.
+func _build_mask_box() -> void:
+	_mask_box = PanelContainer.new()
+	_mask_box.name = "MaskBox"
+	_mask_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mask_box.custom_minimum_size = Vector2(slot_size, slot_size)
+	# Level with the squares, clear of the captions under them.
+	_mask_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_mask_box.add_theme_stylebox_override("panel", slot_style)
+
+	_mask_icon = TextureRect.new()
+	_mask_icon.custom_minimum_size = Vector2(slot_size - 4, slot_size - 4)
+	_mask_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_mask_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_mask_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mask_box.add_child(_mask_icon)
+
+	_bare_label = Label.new()
+	_bare_label.text = "o"
+	_bare_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bare_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_bare_label.add_theme_font_size_override("font_size", font_size * 2)
+	_bare_label.add_theme_color_override("font_color", bare_face_color)
+	_bare_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mask_box.add_child(_bare_label)
+
+	_wear_bar = ColorRect.new()
+	_wear_bar.color = wear_color
+	_wear_bar.custom_minimum_size = Vector2(0, 2)
+	_wear_bar.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_wear_bar.size_flags_vertical = Control.SIZE_SHRINK_END
+	_wear_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mask_box.add_child(_wear_bar)
+	_refresh_mask()
+
+
+func _refresh_mask() -> void:
+	if _mask_box == null:
+		return
+	var mask: ItemData = _equipment.get_item(Equipment.Slot.MASK) if _equipment else null
+	_mask_icon.texture = mask.icon if mask else null
+	_mask_icon.visible = mask != null
+	_bare_label.visible = mask == null
+	var share := 1.0
+	if mask and mask.durability > 0:
+		share = clampf(float(_equipment.get_durability(Equipment.Slot.MASK)) / mask.durability, 0.0, 1.0)
+	_wear_bar.visible = share < 0.5
+	_wear_bar.custom_minimum_size.x = roundi((slot_size - 4) * share)
