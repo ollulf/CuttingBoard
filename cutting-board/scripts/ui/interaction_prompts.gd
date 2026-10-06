@@ -48,6 +48,7 @@ func _ready() -> void:
 	# The bar draws itself from the hotbar; the inventory screen only needs to know
 	# where its squares are, so that items can be dragged onto them.
 	_hotbar_panel.bind(_hotbar)
+	_hotbar_panel.bind_equipment(_equipment)
 	_inventory_panel.bind_hotbar(_hotbar, _hotbar_panel)
 	_hurt_overlay.bind(_health)
 	_mend_overlay.bind(_health)
