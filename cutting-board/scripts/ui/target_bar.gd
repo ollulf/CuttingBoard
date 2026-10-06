@@ -10,13 +10,13 @@ extends HealthBar
 ## kill reads as the bar running out before it disappears.
 ##
 ## Out of combat the same bar names the NPC the player walks up to and looks at, tinted
-## by its attitude: blood for a hostile one, green for a friendly one. A combat target
+## by its attitude: blood for a hostile one, neutral gray for a friendly one. A combat target
 ## always wins over it.
 
 const NAME_FONT := preload("res://assets/fonts/Cubix_Mystical.ttf")
 const NAME_COLOR := Color("#d9c9a0")
-const FRIEND := Color("#5e9a48")
-const FRIEND_HI := Color("#8cc46e")
+const FRIEND := Color("#8a8580")
+const FRIEND_HI := Color("#b4aea6")
 
 ## Distance of the name from the top edge, in render pixels.
 @export var top := 12
@@ -48,7 +48,7 @@ func _refresh() -> void:
 
 
 ## Puts `target`'s name and health up, or fades the bar out for null. `by_attitude`
-## tints the bar green when `target` is no enemy of the player.
+## tints the bar gray when `target` is no enemy of the player.
 func show_target(target: Node3D, by_attitude := false) -> void:
 	_has_target = target != null
 	if _has_target:
