@@ -153,6 +153,10 @@ button:disabled { opacity: 0.5; cursor: default; }
 .status.done { color: var(--ok); }
 @media (prefers-reduced-motion: no-preference) { .status.working::before { animation: pulse 0.8s steps(2) infinite; } }
 @keyframes pulse { 50% { opacity: 0.25; } }
+.row-top { display: flex; align-items: stretch; }
+.row-top .row-head { flex: 1; min-width: 0; }
+button.clear { flex: none; margin: 6px 8px 6px 0; padding: 6px 10px; font-size: 11px; color: var(--dim); }
+button.clear:hover:not(:disabled) { color: var(--ink); }
 @media (max-width: 560px) {
   .row-head { grid-template-columns: minmax(0, 1fr) auto; }
   .row-head .status { grid-column: 1 / -1; justify-self: start; }
@@ -299,7 +303,19 @@ details.done .list { margin-top: 6px; }
       head.onclick = toggle;
       head.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
     }
-    row.append(head);
+    if (d.status === "done") {
+      // Merged tasks can be cleared off the list; their work stays in git history.
+      const top = el("div", "row-top");
+      const clear = el("button", "clear", busy.has(t.id) ? "…" : "Clear");
+      clear.type = "button";
+      clear.disabled = busy.has(t.id) || !db;
+      clear.setAttribute("aria-label", "Clear merged task: " + (d.title || "Untitled task"));
+      clear.onclick = () => { open.delete(t.id); write(t.id, () => db.collection("tasks").doc(t.id).delete()); };
+      top.append(head, clear);
+      row.append(top);
+    } else {
+      row.append(head);
+    }
     if (!isOpen) return row;
 
     const body = el("div", "body");

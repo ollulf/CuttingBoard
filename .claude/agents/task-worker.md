@@ -25,9 +25,16 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 5. Build and publish the result page (below).
 
 ## Result page
-The page is what the user looks at to decide whether to approve, so lead with **visual evidence**: screenshots, before/after comparisons, short GIF-like image sequences, diagrams of how the system works. Text supports the visuals, not the other way round.
+The page is what the user looks at to decide whether to approve, so lead with **visual evidence**: screenshots, before/after comparisons, diagrams of how the system works, and **GIFs or videos whenever the change moves** (animation, physics, AI behaviour, UI transitions, anything that plays out over time). A still frame can't show motion; use one there only as a supporting image. Text supports the visuals, not the other way round.
 
-Write one **self-contained** HTML file (inline CSS, images embedded as base64 `data:` URIs, no external scripts; keep it under 12 MB; downscale or use JPEG for large shots) to the main checkout:
+Recording motion:
+- Godot's Movie Maker mode records a scene at a fixed frame rate, independent of how fast the machine runs: `godot.exe --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540 <scene.tscn> --quit-after <frames>` (or `<out>.png` for a numbered PNG sequence). Use a capture scene under `cutting-board/tests/` that sets up the camera and the action.
+- ffmpeg is installed (`ffmpeg` on PATH via WinGet). Convert to:
+  - **MP4 video** for longer or detailed clips: `ffmpeg -i in.avi -c:v libx264 -pix_fmt yuv420p -crf 28 -preset slow -an -movflags +faststart out.mp4`. Embed with `<video autoplay loop muted playsinline controls src="data:video/mp4;base64,…">`.
+  - **GIF** for short loops (a few seconds, small size): `ffmpeg -i in.avi -vf "fps=15,scale=480:-1:flags=neighbor,split[a][b];[a]palettegen[p];[b][p]paletteuse" out.gif`. Use `flags=neighbor` to keep the game's pixel look crisp.
+- Keep each clip a few seconds long and the whole page within budget. Prefer MP4 over GIF when a GIF would pass ~3 MB.
+
+Write one **self-contained** HTML file (inline CSS, images and videos embedded as base64 `data:` URIs, no external scripts; keep it under 12 MB in total; downscale or use JPEG for large shots) to the main checkout:
 
 `F:/Fork/CuttingBoard/task-reports/<YYYY-MM-DD>-<short-task-slug>.html`
 
