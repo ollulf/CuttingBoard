@@ -52,7 +52,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 unique_name_in_owner = true
 current = true
 
-[node name="PauseMenu" parent="CameraPivot/Camera3D" instance=ExtResource("40_pause_menu")]
+[node name="PauseMenu" parent="CameraPivot/Camera3D" node_paths=PackedStringArray("vision") instance=ExtResource("40_pause_menu")]
+vision = NodePath("../../../MaskOffVision")
 unique_name_in_owner = true
 
 [node name="Arms" type="Node3D" parent="CameraPivot/Camera3D"]

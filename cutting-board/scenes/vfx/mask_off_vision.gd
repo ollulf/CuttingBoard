@@ -9,7 +9,8 @@ extends CanvasLayer
 ## Like FunhouseMirror this layer sits above PsxScreen's display and below the HUD, so it
 ## covers only the world and the inventory and HUD stay on top. The player can still
 ## walk about blind. While the game is paused it hides, so the pause menu's own mask,
-## which is drawn in the world, can still be read.
+## which is drawn in the world, can still be read; the pause menu draws the same look on
+## a sheet behind that mask instead, carrying on from `amount` and `grain_time`.
 
 ## Whose Mask slot to follow.
 @export var equipment: Equipment
@@ -21,7 +22,7 @@ extends CanvasLayer
 ## 0 while a mask is worn, 1 while the face is bare.
 var amount := 0.0
 var _target := 0.0
-var _time := 0.0
+var grain_time := 0.0
 
 
 func _ready() -> void:
@@ -40,7 +41,7 @@ func _notification(what: int) -> void:
 
 
 func _process(delta: float) -> void:
-	_time += delta
+	grain_time += delta
 	amount = move_toward(amount, _target, delta / maxf(fade_time, 0.001))
 	_apply()
 
@@ -56,4 +57,4 @@ func _apply() -> void:
 	set_process(amount != _target or _target > 0.0)
 	var material := _view.material as ShaderMaterial
 	material.set_shader_parameter("fade", amount)
-	material.set_shader_parameter("time", _time)
+	material.set_shader_parameter("time", grain_time)
