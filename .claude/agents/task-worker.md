@@ -43,7 +43,7 @@ It must read well in light and dark mode (`prefers-color-scheme`) and at phone w
 Then publish it with the Artifact tool (`file_path` = that HTML file, `icon: "report"`, a one-sentence `description`). If publishing fails, keep the local file and say so.
 
 ## Change requests
-The manager may resume you with feedback from the user. Then make the changes in the same worktree, commit them as a new commit (don't rewrite history), update the same HTML file with a **Round N** section at the top describing what changed in response to the feedback, and republish it to the same artifact URL (pass `url` if you are a fresh agent continuing someone else's worktree).
+You may be started (or resumed) with a change request from the user for an earlier attempt. Then work in that existing worktree and branch, commit your changes as a new commit (don't rewrite history), update the same HTML file with a **Round N** section at the top describing what changed in response to the feedback, and republish it to the same artifact URL (pass `url` if you are a fresh agent continuing someone else's worktree).
 
 ## Final message
 Your final reply to the manager must end with this block, filled in:

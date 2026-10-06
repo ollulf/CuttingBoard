@@ -132,15 +132,15 @@ details.done-list .stack { display: grid; gap: 10px; }
 <script>
 (function () {
   const LANES = {
-    todo: ["todo"],
-    work: ["working", "changes"],
+    todo: ["changes", "todo"],
+    work: ["working"],
     review: ["review", "approved", "attention"],
     done: ["done"],
   };
   const CHIP = {
     todo: ["Queued", ""],
     working: ["Agent working", "working"],
-    changes: ["Changes requested", "working"],
+    changes: ["Changes requested", "attention"],
     review: ["Ready for review", "review"],
     approved: ["Approved, merging", "review"],
     attention: ["Needs attention", "attention"],
@@ -209,7 +209,7 @@ details.done-list .stack { display: grid; gap: 10px; }
     }
     if (d.summary && d.status !== "todo") c.append(el("p", "summary", d.summary));
     if (d.note && (d.status === "attention" || d.status === "working" || d.status === "changes")) c.append(el("p", "note", d.note));
-    if (d.feedback && (d.status === "changes" || d.status === "working")) c.append(el("p", "feedback", "Your note: " + d.feedback));
+    if (d.feedback && (d.status === "changes" || (d.status === "working" && d.round > 1))) c.append(el("p", "feedback", "Your note: " + d.feedback));
 
     if (d.reportUrl || d.reportPath) {
       const r = el("div", "report");
@@ -225,7 +225,7 @@ details.done-list .stack { display: grid; gap: 10px; }
     const meta = el("div", "meta");
     const line = (s) => { if (s) meta.append(el("span", null, s)); };
     line("Added " + ago(d.createdAt));
-    if (d.status === "working" && d.startedAt) line("Started " + ago(d.startedAt));
+    if ((d.status === "working" || d.status === "changes") && d.startedAt) line("Started " + ago(d.startedAt));
     if (d.status === "review" && d.finishedAt) line("Finished " + ago(d.finishedAt));
     if (d.status === "done" && d.mergedAt) line("Merged " + ago(d.mergedAt) + (d.mergeCommit ? " · " + d.mergeCommit : ""));
     if (d.branch && d.status !== "done") line(d.branch);
@@ -262,7 +262,7 @@ details.done-list .stack { display: grid; gap: 10px; }
       ta.placeholder = "The bandits flee too early, wait until 20% health.";
       ta.value = drafts[t.id] || "";
       ta.oninput = () => { drafts[t.id] = ta.value; };
-      const send = el("button", "primary", "Send back to agent"); send.type = "submit"; send.disabled = isBusy;
+      const send = el("button", "primary", "Queue for a new agent"); send.type = "submit"; send.disabled = isBusy;
       f.append(lab, ta, send);
       f.onsubmit = (ev) => {
         ev.preventDefault();
@@ -303,7 +303,8 @@ details.done-list .stack { display: grid; gap: 10px; }
     const asc = (a, b) => (a.data.createdAt || 0) - (b.data.createdAt || 0);
     const desc = (a, b) => (b.data.mergedAt || b.data.updatedAt || 0) - (a.data.mergedAt || a.data.updatedAt || 0);
     const doneOpen = document.querySelector("details.done-list")?.open;
-    fill("todo", by("todo").sort(asc), "No queued tasks. Add one above and the manager picks it up within about two minutes.");
+    const queue = (a, b) => (b.data.status === "changes") - (a.data.status === "changes") || asc(a, b);
+    fill("todo", by("todo").sort(queue),"No queued tasks. Add one above and the manager picks it up within about two minutes.");
     fill("work", by("work").sort(asc), "No agents running.");
     fill("review", by("review").sort(asc), "Nothing waiting for you. Finished tasks land here with a link to their result page.");
     fill("done", by("done").sort(desc), "Approved tasks show up here once they're merged into main.");
