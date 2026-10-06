@@ -1,8 +1,28 @@
 # Currency concepts: Valley Purse
 
-Rounds 1 and 2, 2026-10-06. Twelve currency ideas for a valley where every creature is made of wood. The
+Rounds 1 to 3, 2026-10-06/07. Currency ideas for a valley where every creature is made of wood. The
 concept page, with pixel mock-ups in the Tallow Fair palette and a comparison table, is the
 artifact https://claude.ai/artifact/BDPua9VUyUBSzgsxQF6jfZ. This file is a short text copy.
+
+Current pick: **Rings** as daily money, **Sap** for barter, **Stonewood** as the top coin.
+
+## Round 3 (the mask trade)
+
+What the Mask-Monger gives you for masks you bring him. Every ritual takes the mask out of the
+world, so the mask trade is the valley's main sink. **Recommendation:** *Unwhittling* for
+everyday masks (pays Rings) plus the *Rootshrine offering* for rare masks (pays Stonewood, which
+makes him the tunable gate on the top coin). Sap stays out: healing shouldn't be buyable with loot.
+
+| Ritual | He does | You get | Mask matters | Risk |
+|---|---|---|---|---|
+| **Unwhittling** | Carves the mask down to its heart on a lathe; shavings become incense | Rings (about one per growth ring) | Broken = half or less; elder wood = more | Feels like a pawn shop unless the ritual sells it |
+| **Rootshrine offering** | Hangs it in the Elder Tree, which petrifies it overnight | Stonewood (chip, or a Stone ring for rare masks) | Broken refused; rare/leader masks pay most | Too many rare masks flood Stonewood; one per night |
+| **Kiln of Faces** | Burns it in his kiln | Face-Ash: brief disguise as that faction | Ash keeps the faction; whole mask = more pinches | Needs a disguise system; keep the fire a pottery kiln |
+| **Forgetting Smoke** | Burns it as incense in a censer | That faction forgives you | Must be that faction's mask; captains clear more | Needs reputation; can make crime cheap |
+| **Spirit Rack** | Hangs it on his rack to rest | Echo Hollow (named NPC) or Spirit Knot | Named masks give unique echoes; broken is fine | Pays quest items, not money |
+| **Unfacing** | Sands the faction off two masks | One blank mask to paint | 2 in, 1 out; broken can't be unfaced | Undercuts earned faction masks; needs paint UI |
+
+Each ritual has a puppet beat on the page (e.g. it counts the rings out loud and loses count).
 
 ## Round 2 (stone and spirit)
 
