@@ -1,7 +1,7 @@
 extends Node
 
 ## Headless checks for the worn-mask square between the hands on the hotbar: it shows
-## the worn mask's icon, follows a swap, a mask breaking off and a bare face, and shows
+## the worn mask's icon, follows a swap, a mask breaking off and a bare face (nothing shown), and shows
 ## the wear bar once the mask is under half. Prints PASS/FAIL per check and quits with
 ## the number of failures as the exit code.
 ##
@@ -21,7 +21,7 @@ func _ready() -> void:
 	add_child(panel)
 	panel.bind_equipment(equipment)
 
-	_check("bare face at start", panel.is_bare_face() and panel.get_mask_texture() == null)
+	_check("bare face at start shows nothing", panel.is_bare_face() and panel.get_mask_texture() == null and not panel.is_mask_worn_down())
 
 	equipment.equip(Equipment.Slot.MASK, BANDIT_MASK)
 	_check("bandit mask has an icon to show", BANDIT_MASK.icon != null)

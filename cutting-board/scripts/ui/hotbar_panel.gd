@@ -33,8 +33,8 @@ extends Control
 @export var item_color := Color(0.86, 0.68, 0.36, 0.85)
 @export var key_color := Color(1, 1, 1, 0.55)
 @export var caption_color := Color(1, 1, 1, 0.45)
-## The worn-mask square between the hands: its bare-face glyph and its wear bar.
-@export var bare_face_color := Color(1, 1, 1, 0.25)
+## The worn-mask marker between the hands: its size in squares, and its wear line.
+@export var mask_scale := 2
 @export var wear_color := Color(0.85, 0.3, 0.2, 0.9)
 
 const NO_SLOT := -1
@@ -52,7 +52,6 @@ var _equipment: Equipment
 var _mask_box: PanelContainer
 var _mask_icon: TextureRect
 var _mask_shadow: TextureRect
-var _bare_label: Control
 var _wear_bar: ColorRect
 
 
@@ -91,7 +90,7 @@ func get_mask_texture() -> Texture2D:
 
 
 func is_bare_face() -> bool:
-	return _bare_label != null and _bare_label.visible
+	return _mask_icon != null and not _mask_icon.visible
 
 
 func is_mask_worn_down() -> bool:
@@ -239,38 +238,35 @@ func _make_item(data: ItemData) -> Control:
 
 
 ## The worn-mask marker: just the face's icon floating between the hands (no slot frame,
-## it is a readout, not a button), a faint face outline for a bare face, and a thin red
-## line under the icon once the mask is under half its wear.
+## it is a readout, not a button), nothing at all for a bare face, and a thin red line
+## under the icon once the mask is under half its wear. It keeps its space while bare so
+## the hands don't shift when a mask comes off.
 func _build_mask_box() -> void:
+	var side := slot_size * mask_scale
 	_mask_box = PanelContainer.new()
 	_mask_box.name = "MaskBox"
 	_mask_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mask_box.custom_minimum_size = Vector2(slot_size, slot_size)
-	# Level with the squares, clear of the captions under them.
+	_mask_box.custom_minimum_size = Vector2(side, side)
+	# Level with the squares' tops.
 	_mask_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_mask_box.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
 	# A dark copy of the icon, nudged down-right, keeps it readable on bright ground.
 	var shadow_holder := MarginContainer.new()
 	shadow_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shadow_holder.add_theme_constant_override("margin_left", 1)
-	shadow_holder.add_theme_constant_override("margin_top", 1)
-	_mask_shadow = _make_mask_rect()
+	shadow_holder.add_theme_constant_override("margin_left", mask_scale)
+	shadow_holder.add_theme_constant_override("margin_top", mask_scale)
+	_mask_shadow = _make_mask_rect(side)
 	_mask_shadow.modulate = Color(0, 0, 0, 0.45)
 	shadow_holder.add_child(_mask_shadow)
 	_mask_box.add_child(shadow_holder)
 
-	_mask_icon = _make_mask_rect()
+	_mask_icon = _make_mask_rect(side)
 	_mask_box.add_child(_mask_icon)
-
-	_bare_label = Control.new()
-	_bare_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_bare_label.draw.connect(_draw_bare_face)
-	_mask_box.add_child(_bare_label)
 
 	_wear_bar = ColorRect.new()
 	_wear_bar.color = wear_color
-	_wear_bar.custom_minimum_size = Vector2(0, 1)
+	_wear_bar.custom_minimum_size = Vector2(0, mask_scale)
 	_wear_bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_wear_bar.size_flags_vertical = Control.SIZE_SHRINK_END
 	_wear_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -278,23 +274,13 @@ func _build_mask_box() -> void:
 	_refresh_mask()
 
 
-func _make_mask_rect() -> TextureRect:
+func _make_mask_rect(side: int) -> TextureRect:
 	var rect := TextureRect.new()
-	rect.custom_minimum_size = Vector2(slot_size - 4, slot_size - 4)
+	rect.custom_minimum_size = Vector2(side - 4 * mask_scale, side - 4 * mask_scale)
 	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rect
-
-
-## A faint face outline (head and two eyes), centred in the marker.
-func _draw_bare_face() -> void:
-	var c := _bare_label.size / 2.0
-	var r := minf(_bare_label.size.x, _bare_label.size.y) * 0.3
-	var eye := maxf(r * 0.12, 0.75)
-	_bare_label.draw_arc(c, r, 0.0, TAU, 24, bare_face_color, 1.0)
-	_bare_label.draw_circle(c + Vector2(-r * 0.38, -r * 0.15), eye, bare_face_color)
-	_bare_label.draw_circle(c + Vector2(r * 0.38, -r * 0.15), eye, bare_face_color)
 
 
 func _refresh_mask() -> void:
@@ -305,9 +291,8 @@ func _refresh_mask() -> void:
 	_mask_icon.visible = mask != null
 	_mask_shadow.texture = _mask_icon.texture
 	_mask_shadow.visible = mask != null
-	_bare_label.visible = mask == null
 	var share := 1.0
 	if mask and mask.durability > 0:
 		share = clampf(float(_equipment.get_durability(Equipment.Slot.MASK)) / mask.durability, 0.0, 1.0)
 	_wear_bar.visible = share < 0.5
-	_wear_bar.custom_minimum_size.x = roundi((slot_size - 8) * share)
+	_wear_bar.custom_minimum_size.x = roundi((slot_size - 8) * mask_scale * share)
