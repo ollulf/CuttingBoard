@@ -4,7 +4,7 @@
 [ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="2_faction"]
 [ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="3_item_data"]
 [ext_resource type="Resource" path="res://resources/items/rock.tres" id="4_rock"]
-[ext_resource type="PackedScene" path="res://scenes/characters/masks/villager_mask.tscn" id="5_mask"]
+[ext_resource type="Resource" path="res://resources/items/villager_mask.tres" id="5_mask"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_villager"]
 albedo_color = Color(0.35, 0.5, 0.8, 1)
@@ -14,7 +14,7 @@ starting_items = Array[ExtResource("3_item_data")]([ExtResource("4_rock")])
 
 [node name="Body" parent="Visual" index="0"]
 material = SubResource("StandardMaterial3D_villager")
-mask_scene = ExtResource("5_mask")
+mask = ExtResource("5_mask")
 
 [node name="Faction" parent="." index="6"]
 data = ExtResource("2_faction")

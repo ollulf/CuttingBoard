@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/saw.res" id="1_mesh"]
+[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="3_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="4_impact"]
+[ext_resource type="Resource" path="res://resources/items/saw.tres" id="5_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_saw"]
+size = Vector3(0.03, 0.215, 0.635)
+
+[node name="Saw" type="RigidBody3D"]
+mass = 1.5
+metadata/icon_pose = Basis(-0.0339503, 0.4698463, -0.8820952, 0.21130916, 0.86602545, 0.45315394, 0.9768295, -0.17101005, -0.12868464)
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.90630776, 0.21130913, 0.36599815, 0, 0.8660254, -0.5, -0.42261827, 0.45315388, 0.7848855, 0, 0, 0)
+mesh = ExtResource("1_mesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.90630776, 0.21130913, 0.36599815, 0, 0.8660254, -0.5, -0.42261827, 0.45315388, 0.7848855, -0.09575349, 0.16256571, -0.205344)
+shape = SubResource("BoxShape3D_saw")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+item_data = ExtResource("5_item")
+impact_damage = 14
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("3_destructible")
+durability = 150
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("4_impact")

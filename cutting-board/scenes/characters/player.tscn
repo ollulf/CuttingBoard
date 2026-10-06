@@ -18,6 +18,8 @@
 [ext_resource type="Script" path="res://scripts/components/combat_tracker.gd" id="16_combat"]
 [ext_resource type="ArrayMesh" path="res://assets/meshes/characters/fp_arm_left.res" id="17_arm_left"]
 [ext_resource type="ArrayMesh" path="res://assets/meshes/characters/fp_arm_right.res" id="18_arm_right"]
+[ext_resource type="Resource" path="res://resources/items/player_mask.tres" id="19_player_mask"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="20_item_data"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -125,6 +127,7 @@ script = ExtResource("12_health")
 [node name="Equipment" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("16_equipment")
+starting_items = Array[ExtResource("20_item_data")]([ExtResource("19_player_mask")])
 
 [node name="Faction" type="Node" parent="."]
 unique_name_in_owner = true

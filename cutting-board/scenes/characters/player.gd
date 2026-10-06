@@ -58,6 +58,8 @@ extends CharacterBody3D
 @export var pickup_sound: SoundBank = preload("res://resources/audio/pickup.tres")
 ## The tick of a number key that did something.
 @export var hotbar_sound: SoundBank = preload("res://resources/audio/ui_hotbar.tres")
+## Putting on something held in the hand — a mask taken off a body.
+@export var wear_sound: SoundBank = preload("res://resources/audio/ui_equip.tres")
 @export_group("")
 
 @onready var camera_pivot: Node3D = %CameraPivot
@@ -76,6 +78,7 @@ extends CharacterBody3D
 @onready var hotbar: Hotbar = %Hotbar
 @onready var camera: Camera3D = %Camera3D
 @onready var health: Health = %Health
+@onready var equipment: Equipment = %Equipment
 ## The player's own body is never drawn while they are alive — the view is first person
 ## and the arms are separate — and only falls into view on death.
 @onready var body: HumanBody = %Body
@@ -130,6 +133,11 @@ func _ready() -> void:
 	arms.hit.connect(_on_arm_hit)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
+	# The hidden body wears whatever mask is in the Mask slot, so the face it falls with
+	# is the one the player had on. Synced once here: the starting mask went on before
+	# this script was ready to hear about it.
+	equipment.changed.connect(_wear_mask)
+	_wear_mask()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -192,14 +200,43 @@ func _use_hotbar(event: InputEvent) -> void:
 ## the obvious reading of clicking on a barrel. Shift always works the world — grabbing
 ## what is under the crosshair, or winding up a throw with what is already held.
 ##
-## A click with nothing to grab is a blow. Putting the punch last means it costs none of
-## the existing gestures: it happens exactly when the click would otherwise have done
-## nothing at all.
+## A plain click with something wearable in hand puts it on. A click with nothing to grab
+## is a blow. Putting the punch last means it costs none of the existing gestures: it
+## happens exactly when the click would otherwise have done nothing at all.
 func _use_hand(hand: HandSlot, event: InputEvent) -> void:
 	if _is_grab_modifier(event) or (hand.is_free() and interactor.has_grabbable()):
 		interactor.grab_or_charge(hand)
-	else:
+	elif not wear_held(hand):
 		_punch(hand)
+
+
+## Puts on what a hand is holding, if it is something worn — a mask picked up off a body.
+## Whatever that slot had on comes off into the same hand, so a click swaps the two
+## faces, and a second click swaps them back. Returns false, touching nothing, when the
+## held item is not worn at all.
+func wear_held(hand: HandSlot) -> bool:
+	var held := hand.get_item_data()
+	var slot := Equipment.slot_for(held)
+	if slot == Equipment.NO_SLOT:
+		return false
+	# Both wears are read before either object or record goes.
+	var durability := hand.get_durability()
+	var worn_durability := equipment.get_durability(slot)
+	var worn := equipment.unequip(slot)
+	interactor.consume_held(hand)
+	equipment.equip(slot, held, durability)
+	# A worn item with no world scene cannot be held, so it goes into the bag instead,
+	# and only drops at the player's feet when the bag is full.
+	if worn and interactor.spawn_into_hand(worn, worn_durability, hand) == null:
+		if not inventory.add(worn, worn_durability):
+			interactor.drop_item(worn, worn_durability)
+	Sfx.play(wear_sound)
+	return true
+
+
+## The hidden body keeps the face the player has on, ready for when it falls.
+func _wear_mask() -> void:
+	body.mask = equipment.get_item(Equipment.Slot.MASK) as MaskData
 
 
 ## Throws a blow with one arm. What the hand is holding chooses the animation, which is

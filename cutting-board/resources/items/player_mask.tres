@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MaskData" format=3]
+
+[ext_resource type="Script" uid="uid://7f28yo0kbwbx" path="res://scripts/mask_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/characters/masks/player_mask.tscn" id="2_worn"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/player_mask.png" id="2_x1w8h"]
+[ext_resource type="Resource" path="res://resources/factions/player.tres" id="3_faction"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_p7hj7"]
+diffuse_texture = ExtResource("2_x1w8h")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+worn_scene = ExtResource("2_worn")
+faction = ExtResource("3_faction")
+display_name = "Your Mask"
+icon = SubResource("CanvasTexture_p7hj7")
+item_type = 2
+description = "Grey-green wood, worn smooth. Nobody else's face looks like this one."
+weight = 0.3
+world_scene_path = "res://scenes/items/player_mask.tscn"

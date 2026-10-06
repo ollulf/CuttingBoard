@@ -14,8 +14,9 @@ extends Node
 ## cursor since the OS one is not in the frame. Both need a real window. --check runs
 ## every kind of drag through the panel and prints PASS / FAIL, and works headless.
 ##
-## The worn items here are placeholders built in code: there are no mask, head, body or
-## pack items in the game yet.
+## The worn items here are placeholders built in code: there are no head, body or pack
+## items in the game yet. The masks are real now (resources/items/*_mask.tres), but the
+## placeholder one is kept so the shots stay comparable with earlier ones.
 
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
@@ -54,6 +55,11 @@ func _ready() -> void:
 	_player.global_position = Vector3(1, _player.global_position.y, -38)
 	_player.rotation.y = atan2(1.0, 20.0)
 	_panel = _level.find_child("InventoryPanel", true, false) as InventoryPanel
+	# The player starts with their own mask on; the tour starts from an empty loadout, so
+	# that the placeholder mask has a free slot to go into.
+	var equipment := _player.get_node_or_null("Equipment") as Equipment
+	if equipment:
+		equipment.unequip(Equipment.Slot.MASK)
 	_mask = _placeholder("Tallow Mask", "MASK", Vector2i(2, 2), "Pale wax, still warm.")
 	_hood = _placeholder("Wool Hood", "HEAD", Vector2i(2, 2), "")
 	_coat = _placeholder("Waxed Coat", "BODY", Vector2i(2, 3), "")
