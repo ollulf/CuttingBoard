@@ -22,9 +22,10 @@ func _run() -> void:
 	if swing == null:
 		_finish()
 		return
-	var lantern := swing.get_node("Lantern") as Node3D
+	var lantern := swing.get_node("LampBody") as Node3D
 	var aabb := _mesh_aabb(lantern)
 	print("lantern AABB (post space): ", aabb)
+	var arm_start: Transform3D = post.get_node("Arm").global_transform
 	var post_mesh_start: Transform3D = post.get_node("Post").global_transform
 	var light_start: Vector3 = (swing.get_node("Light") as Node3D).global_position
 	var min_a := INF
@@ -41,13 +42,16 @@ func _run() -> void:
 	_check("swing stays within the limit", max_a <= swing.max_angle * 1.1 + 0.01)
 	_check("light swings along, but only a little", light_moved > 0.005 and light_moved < 0.25)
 	_check("post stays still", post.get_node("Post").global_transform.is_equal_approx(post_mesh_start))
+	_check("bracket arm stays still", post.get_node("Arm").global_transform.is_equal_approx(arm_start))
 	_finish()
 
 
 func _mesh_aabb(root: Node) -> AABB:
 	var box := AABB()
 	var first := true
-	for n in root.find_children("*", "MeshInstance3D", true, false):
+	for n in [root] + root.find_children("*", "MeshInstance3D", true, false):
+		if not n is MeshInstance3D:
+			continue
 		var mi := n as MeshInstance3D
 		var b := (get_child(0) as Node3D).global_transform.affine_inverse() * mi.global_transform * mi.get_aabb()
 		box = b if first else box.merge(b)

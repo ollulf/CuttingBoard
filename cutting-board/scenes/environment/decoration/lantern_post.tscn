@@ -1,7 +1,10 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Material" path="res://assets/materials/environment/dark_planks.tres" id="1_planks"]
-[ext_resource type="PackedScene" path="res://scenes/environment/decoration/lantern.tscn" id="2_lantern"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/lantern_arm.res" id="2_arm"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/lantern_body.res" id="7_body"]
+[ext_resource type="Material" path="res://assets/materials/environment/metal.tres" id="8_metal"]
+[ext_resource type="Material" path="res://assets/materials/environment/window.tres" id="9_window"]
 [ext_resource type="Script" path="res://scripts/components/light_flicker.gd" id="3_flicker"]
 [ext_resource type="Script" path="res://scripts/components/ambient_sound.gd" id="4_ambient"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/lantern_crackle_loop.wav" id="5_crackle"]
@@ -28,15 +31,24 @@ mesh = SubResource("BoxMesh_post")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0)
 mesh = SubResource("BoxMesh_foot")
 
+[node name="Arm" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, -0.1)
+mesh = ExtResource("2_arm")
+surface_material_override/0 = ExtResource("8_metal")
+
 [node name="Swing" type="Node3D" parent="."]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, -0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -1.23)
 script = ExtResource("6_swing")
 
-[node name="Lantern" parent="Swing" instance=ExtResource("2_lantern")]
+[node name="LampBody" type="MeshInstance3D" parent="Swing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 1.13)
+mesh = ExtResource("7_body")
+surface_material_override/0 = ExtResource("8_metal")
+surface_material_override/1 = ExtResource("9_window")
 
 [node name="Light" type="OmniLight3D" parent="Swing"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -1.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, -0.07)
 light_color = Color(1, 0.66, 0.26, 1)
 light_energy = 2.4
 omni_range = 11.0
