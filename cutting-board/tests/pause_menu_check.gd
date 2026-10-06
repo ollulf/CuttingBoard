@@ -72,6 +72,42 @@ func _run() -> void:
 	await _wait(0.8)
 	_check("Esc also puts it back on", not menu.is_open() and not get_tree().paused)
 
+	# The grain backdrop behind the mask: off with the mask on, full once it is off.
+	var vision: MaskOffVision = player.find_child("MaskOffVision", true, false)
+	_check("the menu knows the player's bare-face view", menu.vision == vision)
+	_check("no backdrop while playing", menu.backdrop_amount() == 0.0)
+	menu.open()
+	await _wait(0.3)
+	var half := menu.backdrop_amount()
+	_check("backdrop fades in with the take-off (%.2f)" % half, half > 0.2 and half < 0.9)
+	await _wait(0.5)
+	_check("backdrop is full once the mask is off", menu.backdrop_amount() == 1.0)
+	var grain_t: float = menu.get("_grain_time")
+	await _wait(0.2)
+	_check("the grain keeps flowing while paused", float(menu.get("_grain_time")) > grain_t)
+	menu.close()
+	await _wait(0.9)
+	_check("backdrop is gone after Resume", menu.backdrop_amount() == 0.0 and not get_tree().paused)
+
+	# Bare face: the grain is already on, and stays full through pause and resume.
+	var equipment: Equipment = player.find_child("Equipment", true, false)
+	equipment.unequip(Equipment.Slot.MASK)
+	await _wait(0.8)
+	_check("bare face shows the mask-off view", vision.amount == 1.0 and vision.visible)
+	menu.open()
+	await get_tree().process_frame
+	_check("bare face: backdrop is full at once", menu.backdrop_amount() == 1.0 and not vision.visible)
+	var steady := true
+	for i in 60:
+		await get_tree().process_frame
+		steady = steady and menu.backdrop_amount() == 1.0
+	menu.close()
+	for i in 50:
+		await get_tree().process_frame
+		steady = steady and (menu.backdrop_amount() == 1.0 or vision.visible)
+	_check("bare face: no gap through pause and resume", steady)
+	_check("bare face: the view is back after resume", not menu.is_open() and vision.visible and vision.amount == 1.0)
+
 	var inventory: InventoryPanel = player.find_child("InventoryPanel", true, false)
 	inventory.open()
 	await _press_esc()
