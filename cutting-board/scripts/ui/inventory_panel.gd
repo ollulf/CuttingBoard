@@ -85,6 +85,7 @@ signal drop_requested(inventory: Inventory, entry: InventoryEntry)
 @onready var _health_bar: ProgressBar = %HealthBar
 @onready var _health_value: Label = %HealthValue
 @onready var _figure: PaperDoll = %Figure
+@onready var _equip_frame: Control = %EquipFrame
 @onready var _hand_boxes: Array[Panel] = [%LeftHandSlot, %RightHandSlot]
 @onready var _hand_labels: Array[Label] = [%LeftHandLabel, %RightHandLabel]
 ## The box of each worn slot, by Equipment.Slot.
@@ -286,7 +287,11 @@ func _gui_input(event: InputEvent) -> void:
 		if event.pressed:
 			_clear_hover()
 		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
+			if event.pressed and event.double_click:
+				# The first click already picked the item up and put it back; the second
+				# sends it across instead of starting another drag.
+				transfer_at(event.position)
+			elif event.pressed:
 				_begin_drag(event.position)
 			else:
 				_end_drag(event.position)
@@ -669,6 +674,36 @@ func _play_drop_sound(
 ## Crossing between the player and a container is the same gesture, with one difference:
 ## the item is only taken out of the source once the destination has accepted it, so a
 ## chest with no room leaves it where it was rather than losing it on the way across.
+## Double-click while looting: the item under the cursor goes across to the other grid,
+## into the first spot it fits (turned if only that way fits), wear and all. Only works
+## between the player's grid and an open container; anywhere else it does nothing. A
+## target with no room refuses with the buzz and a red flash on the item. Returns
+## whether the item moved.
+func transfer_at(pos: Vector2) -> bool:
+	if _container == null or _is_dragging():
+		return false
+	var slot := _slot_at(pos)
+	if slot.is_empty():
+		return false
+	var from := _inventory_for(slot["side"])
+	var to := _container if from == _inventory else _inventory
+	var entry := from.get_entry_at(slot["cell"])
+	if entry == null:
+		return false
+	for rotated: bool in [entry.rotated, not entry.rotated]:
+		var free := to.find_free_origin(entry.data.footprint(rotated))
+		if free.x >= 0 and to.add_at(entry.data, free, entry.durability, rotated):
+			from.remove(entry)
+			Sfx.play(place_sound)
+			return true
+	Sfx.play(invalid_sound)
+	var tile := _tiles.get(entry) as Control
+	if tile:
+		tile.modulate = invalid_drop_color
+		create_tween().tween_property(tile, "modulate", Color.WHITE, 0.4)
+	return false
+
+
 func _place_item(
 	from: Inventory, entry: InventoryEntry, to: Inventory, origin: Vector2i, rotated: bool
 ) -> void:
@@ -938,6 +973,8 @@ func _rebuild() -> void:
 ## opened and shut; with nothing open it says so in place of a grid.
 func _rebuild_nearby() -> void:
 	_container_grid.visible = _container != null
+	# Looting shows just the two grids; the equipment comes back with the plain bag.
+	_equip_frame.visible = _container == null
 	_nearby_empty.visible = _container == null
 	if _container:
 		_rebuild_grid(Side.CONTAINER)
@@ -1099,6 +1136,8 @@ func _is_outside_window(pos: Vector2) -> bool:
 
 ## The hand slot under a panel-local point, or null if there is none.
 func _hand_at(pos: Vector2) -> HandSlot:
+	if not _equip_frame.visible:
+		return null
 	for hand in _slot_boxes:
 		if _local_rect(_slot_boxes[hand]).has_point(pos):
 			return hand
@@ -1108,7 +1147,7 @@ func _hand_at(pos: Vector2) -> HandSlot:
 ## The worn slot under a panel-local point, or Equipment.NO_SLOT. The slots only count
 ## once there is a loadout behind them.
 func _wear_at(pos: Vector2) -> int:
-	if _equipment == null:
+	if _equipment == null or not _equip_frame.visible:
 		return Equipment.NO_SLOT
 	for slot in _wear_boxes:
 		if _local_rect(_wear_boxes[slot]).has_point(pos):

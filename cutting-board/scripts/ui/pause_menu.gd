@@ -5,7 +5,10 @@ extends Node3D
 ## that inside: Resume, Save, Load, Settings and Quit. Choosing one carves a groove
 ## across the word with a spray of chips; Resume (or Esc) puts the mask back on.
 ##
-## Lives under the player's camera and keeps running while the tree is paused.
+## While the mask is off the world behind it turns to the bare-face look of
+## MaskOffVision (black with flowing grain), drawn on a sheet just behind the mask so the
+## mask itself still shows. Lives under the player's camera and keeps running while the
+## tree is paused.
 
 ## Fixed carve order for Tab, and the index of each word in WORDS.
 enum Word { RESUME, SAVE, LOAD, SETTINGS, QUIT }
@@ -42,9 +45,17 @@ const WOOD_DARK := Color(0.36, 0.22, 0.11)
 const GROOVE := Color(0.18, 0.09, 0.04)
 const LIP := Color(0.93, 0.8, 0.6)
 const CANDLE := Color(1.0, 0.68, 0.36)
+## How far in front of the camera the grain backdrop hangs: behind the held mask and its
+## shell, in front of the world.
+const BACKDROP_DEPTH := 0.34
+const BACKDROP_SHADER := preload("res://assets/shaders/post/mask_off_backdrop.gdshader")
 
 signal opened
 signal closed
+
+## The player's bare-face view. It hides while paused, so the backdrop takes over from
+## it: already full when the face was bare, and carrying on its grain's time.
+@export var vision: MaskOffVision
 
 ## What the second Quit carve does. Swapped out by tests so they don't end the run.
 var quit_handler: Callable = func() -> void: get_tree().quit()
@@ -65,6 +76,10 @@ var _grooves: Array[Node3D] = []
 var _glow: OmniLight3D
 var _chips: CPUParticles3D
 var _note: Node3D
+var _backdrop: MeshInstance3D
+## Bare-face amount the backdrop starts from (1 when no mask was on), and the grain's time.
+var _backdrop_floor := 0.0
+var _grain_time := 0.0
 
 
 func _ready() -> void:
@@ -91,6 +106,10 @@ func open() -> void:
 	_select(Word.RESUME)
 	_lift_dir = 1
 	_mask.show()
+	if vision != null:
+		_backdrop_floor = vision.amount
+		_grain_time = vision.grain_time
+	_apply_backdrop()
 	opened.emit()
 
 
@@ -204,6 +223,9 @@ func _process(delta: float) -> void:
 	if _note_t > 0.0:
 		_note_t -= delta
 		_note.visible = _note_t > 0.0
+	if is_open():
+		_grain_time += delta
+		_apply_backdrop()
 	# The candle over the selected word never burns quite still.
 	_flicker_t += delta
 	_glow.light_energy = 0.55 + 0.12 * sin(_flicker_t * 13.0) + 0.08 * sin(_flicker_t * 31.0 + 1.3)
@@ -231,6 +253,9 @@ func _put_on() -> void:
 		groove.hide()
 	_note.hide()
 	_note_t = 0.0
+	_backdrop.hide()
+	if vision != null:
+		vision.grain_time = _grain_time
 	get_tree().paused = false
 	MouseGrab.capture()
 	closed.emit()
@@ -261,6 +286,20 @@ func _apply_lift() -> void:
 	_mask.position = FACE_POS.lerp(HELD_POS, t)
 	_mask.rotation = Vector3(HELD_TILT * t, 0, 0.03 * (1.0 - t))
 	_mask.visible = _lift > 0.0
+
+
+## How far the world behind the mask has gone to black and grain: follows the mask off
+## and back on, never below what the bare face already showed.
+func backdrop_amount() -> float:
+	return maxf(_lift, _backdrop_floor) if _backdrop.visible else 0.0
+
+
+func _apply_backdrop() -> void:
+	var amount := maxf(_lift, _backdrop_floor)
+	_backdrop.visible = is_open() and amount > 0.0
+	var material := _backdrop.material_override as ShaderMaterial
+	material.set_shader_parameter("fade", amount)
+	material.set_shader_parameter("time", _grain_time)
 
 
 # --- Picking -----------------------------------------------------------------------
@@ -372,6 +411,8 @@ func _build() -> void:
 	_mask.add_child(_note)
 	_chips = _make_chips()
 	add_child(_chips)
+	_backdrop = _make_backdrop()
+	add_child(_backdrop)
 	_select(Word.RESUME)
 
 
@@ -417,6 +458,23 @@ func _make_chips() -> CPUParticles3D:
 	chips.mesh = chip
 	chips.local_coords = false
 	return chips
+
+
+## A sheet across the whole view, depth-tested so the mask in front of it still draws.
+func _make_backdrop() -> MeshInstance3D:
+	var sheet := MeshInstance3D.new()
+	sheet.name = "GrainBackdrop"
+	var quad := QuadMesh.new()
+	# Far wider than any field of view at this depth; the shader works in screen pixels.
+	quad.size = Vector2(4.0, 4.0)
+	sheet.mesh = quad
+	sheet.position = Vector3(0, 0, -BACKDROP_DEPTH)
+	var mat := ShaderMaterial.new()
+	mat.shader = BACKDROP_SHADER
+	sheet.material_override = mat
+	sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sheet.hide()
+	return sheet
 
 
 ## The concept's outline of mask 1 (knotted brow, chipped right cheek) as a polygon.
