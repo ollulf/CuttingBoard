@@ -409,6 +409,13 @@ func _rotate_drag(pos: Vector2) -> void:
 
 
 func _begin_drag(pos: Vector2) -> void:
+	# The bar first, as everywhere else: it is drawn over this screen, and in a short
+	# window the screen runs down behind it, so a square is what the cursor is on even
+	# where a hand or worn slot lies underneath.
+	var hotbar_index := _hotbar_at(pos)
+	if hotbar_index != HotbarPanel.NO_SLOT:
+		_begin_hotbar_drag(hotbar_index, pos)
+		return
 	var hand := _hand_at(pos)
 	if hand:
 		_begin_hand_drag(hand, pos)
@@ -416,10 +423,6 @@ func _begin_drag(pos: Vector2) -> void:
 	var wear := _wear_at(pos)
 	if wear != Equipment.NO_SLOT:
 		_begin_wear_drag(wear, pos)
-		return
-	var hotbar_index := _hotbar_at(pos)
-	if hotbar_index != HotbarPanel.NO_SLOT:
-		_begin_hotbar_drag(hotbar_index, pos)
 		return
 	var slot := _slot_at(pos)
 	if slot.is_empty():
@@ -886,6 +889,12 @@ func _place_tooltip(pos: Vector2) -> void:
 ## identifies this particular item — the record does not, since every copy of an item
 ## shares one, and the wear is not on the record for that same reason.
 func _hover_at(pos: Vector2) -> Dictionary:
+	var hotbar_index := _hotbar_at(pos)
+	if hotbar_index != HotbarPanel.NO_SLOT:
+		var link := _hotbar.get_slot(hotbar_index)
+		if link == null or link.data == null:
+			return {}
+		return {"source": link, "data": link.data, "durability": link.get_durability()}
 	var hand := _hand_at(pos)
 	if hand:
 		var held := hand.get_item_data()
@@ -901,12 +910,6 @@ func _hover_at(pos: Vector2) -> Dictionary:
 			"source": _wear_boxes[wear], "data": worn,
 			"durability": _equipment.get_durability(wear),
 		}
-	var hotbar_index := _hotbar_at(pos)
-	if hotbar_index != HotbarPanel.NO_SLOT:
-		var link := _hotbar.get_slot(hotbar_index)
-		if link == null or link.data == null:
-			return {}
-		return {"source": link, "data": link.data, "durability": link.get_durability()}
 	var slot := _slot_at(pos)
 	if slot.is_empty():
 		return {}
