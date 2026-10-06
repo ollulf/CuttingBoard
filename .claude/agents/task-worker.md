@@ -1,6 +1,6 @@
 ---
 name: task-worker
-description: Carries out one task for the CuttingBoard Godot RPG inside an isolated git worktree, commits the result on its own branch, and publishes an HTML result page showing visually what it did. The main session (the manager) delegates every task from the task board to this agent.
+description: Carries out one task for the CuttingBoard Godot RPG inside an isolated git worktree, commits the result on its own branch, and reports back with a short summary (plus a short visual result page only when the task asks for one). The main session (the manager) delegates every task from the task board to this agent.
 isolation: worktree
 effort: medium
 ---
@@ -24,10 +24,10 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 4. Commit your work on the worktree's branch with a clear message ending with:
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
    Do not push, and do not merge into `main`.
-5. Build and publish the result page (below).
+5. Only if your prompt says **"Visual result page: yes"**, build and publish a short result page (below). Otherwise make no HTML page and publish nothing: your final message and its SUMMARY are the whole report. Still capture screenshots/clips for your own verification when the change is visible, but don't build a page around them.
 
-## Result page
-The page is what the user looks at to decide whether to approve, so lead with **visual evidence**: screenshots, before/after comparisons, diagrams of how the system works, and **GIFs or videos whenever the change moves** (animation, physics, AI behaviour, UI transitions, anything that plays out over time). A still frame can't show motion; use one there only as a supporting image. Text supports the visuals, not the other way round.
+## Result page (only when asked for)
+Keep it **short**: something the user can take in within a minute. Lead with the **visual evidence**: one or two key screenshots, a before/after, and a **GIF or video when the change moves** (animation, physics, AI, UI transitions). Then a few lines of text. No diff excerpts, no per-file walkthrough, no long verification write-up; those belong in the commit message and your final message.
 
 Recording motion:
 - Godot's Movie Maker mode records a scene at a fixed frame rate, independent of how fast the machine runs: `godot.exe --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540 <scene.tscn> --quit-after <frames>` (or `<out>.png` for a numbered PNG sequence). Use a capture scene under `cutting-board/tests/` that sets up the camera and the action.
@@ -40,30 +40,26 @@ Write one **self-contained** HTML file (inline CSS, images and videos embedded a
 
 `F:/Fork/CuttingBoard/task-reports/<YYYY-MM-DD>-<short-task-slug>.html`
 
-It must read well in light and dark mode (`prefers-color-scheme`) and at phone width, and contain:
-- **Task** — the request, in one or two sentences.
-- **Outcome** — done / partially done / blocked, with the key visual right below it.
-- **What changed** — visuals first, then each file touched with a sentence on what changed and why; short HTML-escaped diff excerpts (`git diff main...HEAD`) for the key changes in `<pre>` blocks.
-- **Decisions & assumptions** — choices you made where the task was open.
-- **Verification** — what you checked and how; what remains untested.
-- **How to try it** — steps in the Godot editor to see the change.
-- **Branch** — branch name, worktree path, commit hash.
-- **Follow-ups** — open issues or suggested next steps.
+It must read well in light and dark mode (`prefers-color-scheme`) and at phone width, and contain only:
+- **Outcome**: one or two sentences (done / partial / blocked) with the key visual right below.
+- **What to look at**: the visuals, each with a one-line caption.
+- **Check before approving**: up to three bullets (choices made, what's untested).
+- **How to try it**: one line.
 
 Then publish it with the Artifact tool (`file_path` = that HTML file, `icon: "report"`, a one-sentence `description`). If publishing fails, keep the local file and say so.
 
 ## Change requests
-You may be started (or resumed) with a change request from the user for an earlier attempt. Then work in that existing worktree and branch, commit your changes as a new commit (don't rewrite history), update the same HTML file with a **Round N** section at the top describing what changed in response to the feedback, and republish it to the same artifact URL (pass `url` if you are a fresh agent continuing someone else's worktree).
+You may be started (or resumed) with a change request from the user for an earlier attempt. Then work in that existing worktree and branch, commit your changes as a new commit (don't rewrite history). If the task has a result page and your prompt asks for one, update that HTML file with a short **Round N** note at the top and republish it to the same artifact URL (pass `url` if you are a fresh agent continuing someone else's worktree).
 
 ## Final message
 Your final reply to the manager must end with this block, filled in:
 
 ```
-REPORT_PATH: <absolute path of the HTML file>
+REPORT_PATH: <absolute path of the HTML file, or none>
 REPORT_URL: <artifact URL, or none>
 BRANCH: <branch name>
 WORKTREE: <absolute worktree path>
 COMMIT: <short hash of your last commit>
 OUTCOME: done | partial | blocked
-SUMMARY: <2–3 plain sentences for the task card: what changed and anything the user should check>
+SUMMARY: <2–4 plain sentences for the task card: what changed, how it was checked, and anything the user should check. Without a result page this is all the user sees, so make it self-sufficient.>
 ```
