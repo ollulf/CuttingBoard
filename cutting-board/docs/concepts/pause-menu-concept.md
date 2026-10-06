@@ -17,3 +17,14 @@ Recommendation: build A, with B's caption plank idea as an add-on (eyes glance a
 row). Pause truly pauses from the first frame; lift ~0.6 s (skippable), carve ~0.35 s. Settings
 and save slots open on a flat board with plain text (readability fallback, as in Pentiment).
 Quit needs two carves.
+
+## Round 2: A2 (iteration on A)
+
+- **No cutouts:** while playing, nothing on screen shows the mask (no eye-hole frame or vignette).
+  On pause the hands reach up to the face, pull the mask down into view and turn it to show its inside.
+- **Shape:** asymmetric, hand-cut. Two variants to pick from: 1, a knotted brow with a chipped right
+  cheek and a grain crack; 2, long and narrow with a forked, split chin.
+- **Labels:** Resume, Save, Load, Settings and Quit are scratched at odd angles and sizes (9-14 px)
+  across the inside, around the knot and along the grain. Resume is always the biggest, right under the eyes.
+- **Navigation:** arrows jump to the nearest word in that direction; Tab walks a fixed carve order.
+  The selected word is lit like candlelight with the knife waiting at its start.
