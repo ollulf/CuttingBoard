@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/masks/player_mask.tscn" id="1_mesh"]
+[ext_resource type="Script" uid="uid://jtqbca6mqo6" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Resource" path="res://resources/items/player_mask.tres" id="3_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_face"]
+size = Vector3(0.22, 0.27, 0.06)
+
+[node name="PlayerMask" type="RigidBody3D"]
+mass = 0.3
+angular_damp = 1.0
+
+[node name="Mesh" parent="." instance=ExtResource("1_mesh")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_face")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+item_data = ExtResource("3_item")

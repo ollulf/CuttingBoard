@@ -75,8 +75,12 @@ func _physics_process(_delta: float) -> void:
 	hover_changed.emit(_hovered)
 
 
+## What is under the crosshair, or null. Read through here rather than off _hovered: what
+## was hovered can be freed between two physics steps — taken into the inventory, then
+## something else changes the inventory before the next step — and a freed node cannot
+## even be passed on to a typed parameter.
 func get_hovered() -> Node3D:
-	return _hovered
+	return _hovered if is_instance_valid(_hovered) else null
 
 
 ## The "interact" action: a loose item goes into the inventory, since that is what a
@@ -90,7 +94,7 @@ func interact(inventory: Inventory = null) -> void:
 	var container := get_hovered_container()
 	if container:
 		container_opened.emit(container)
-	var usable := _get_component(_hovered, "Usable") as Usable
+	var usable := _get_component(get_hovered(), "Usable") as Usable
 	if usable:
 		usable.use(get_owner())
 
@@ -98,7 +102,7 @@ func interact(inventory: Inventory = null) -> void:
 ## The inventory of the container under the crosshair, or null if what is there is not
 ## one.
 func get_hovered_container() -> Inventory:
-	return _container_of(_hovered)
+	return _container_of(get_hovered())
 
 
 ## A carryable object's own inventory does not count: pointing at a sack means picking
@@ -117,14 +121,14 @@ func _container_of(node: Node3D) -> Inventory:
 func can_stow_hovered(inventory: Inventory) -> bool:
 	if inventory == null:
 		return false
-	var carryable := _get_component(_hovered, "Carryable") as Carryable
+	var carryable := _get_component(get_hovered(), "Carryable") as Carryable
 	return carryable != null and inventory.can_add(carryable.item_data)
 
 
 func stow_hovered(inventory: Inventory) -> bool:
 	if not can_stow_hovered(inventory):
 		return false
-	var carryable := _get_component(_hovered, "Carryable") as Carryable
+	var carryable := _get_component(get_hovered(), "Carryable") as Carryable
 	# Read the record and the wear before stowing: that is what frees the world object
 	# both live on, and the wear is the half that would otherwise be lost.
 	var data := carryable.item_data
@@ -138,7 +142,7 @@ func stow_hovered(inventory: Inventory) -> bool:
 
 ## True if there is something under the crosshair that a hand could take hold of.
 func has_grabbable() -> bool:
-	return _get_component(_hovered, "Carryable") != null
+	return _get_component(get_hovered(), "Carryable") != null
 
 
 ## Pressing with an empty hand grabs; pressing with a full one starts winding up a throw.
@@ -255,7 +259,7 @@ func drop_hand(hand: HandSlot) -> void:
 
 
 func _grab_into(hand: HandSlot) -> void:
-	var carryable := _get_component(_hovered, "Carryable") as Carryable
+	var carryable := _get_component(get_hovered(), "Carryable") as Carryable
 	if carryable == null:
 		return
 	if hand.hold(carryable.take(get_owner())):
