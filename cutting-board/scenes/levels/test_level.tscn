@@ -12,8 +12,12 @@
 [ext_resource type="Script" path="res://scripts/level/auto_bake_navigation.gd" id="10_navbake"]
 [ext_resource type="PackedScene" path="res://scenes/characters/villager.tscn" id="11_villager"]
 [ext_resource type="PackedScene" path="res://scenes/characters/bandit.tscn" id="12_bandit"]
+[ext_resource type="PackedScene" path="res://scenes/levels/valley_terrain.tscn" id="13_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/levels/village.tscn" id="14_village"]
+[ext_resource type="PackedScene" path="res://scenes/levels/valley_foliage.tscn" id="15_foliage"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+ground_bottom_color = Color(0.6463, 0.6558, 0.6708, 1)
 
 [sub_resource type="Sky" id="Sky_1"]
 sky_material = SubResource("ProceduralSkyMaterial_1")
@@ -22,15 +26,10 @@ sky_material = SubResource("ProceduralSkyMaterial_1")
 background_mode = 2
 sky = SubResource("Sky_1")
 tonemap_mode = 2
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-size = Vector2(60, 60)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.42, 0.45, 0.4, 1)
-uv1_scale = Vector3(30, 30, 1)
-
-[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_ground"]
+fog_enabled = true
+fog_light_color = Color(0.66, 0.69, 0.74, 1)
+fog_density = 0.0018
+fog_sky_affect = 0.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -53,14 +52,12 @@ environment = SubResource("Environment_1")
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
 shadow_enabled = true
 
-[node name="Ground" type="StaticBody3D" parent="." unique_id=272265108 groups=["navigation_source"]]
+[node name="Terrain" parent="." unique_id=272265108 instance=ExtResource("13_terrain")]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1710344613]
-mesh = SubResource("PlaneMesh_ground")
-surface_material_override/0 = SubResource("StandardMaterial3D_ground")
+[node name="Village" parent="." unique_id=1310871624 instance=ExtResource("14_village")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1575756470]
-shape = SubResource("WorldBoundaryShape3D_ground")
+[node name="ValleyFoliage" parent="." unique_id=725114063 instance=ExtResource("15_foliage")]
 
 [node name="Step" type="StaticBody3D" parent="." unique_id=1948015408 groups=["navigation_source"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.5, -5)

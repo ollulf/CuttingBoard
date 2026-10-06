@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/terrain.gd" id="1_terrain"]
+[ext_resource type="Material" path="res://assets/materials/environment/terrain.tres" id="2_material"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_hills"]
+seed = 7
+frequency = 0.018
+fractal_octaves = 3
+
+[node name="ValleyTerrain" type="StaticBody3D" groups=["navigation_source"]]
+script = ExtResource("1_terrain")
+size = 240
+hill_height = 22.0
+hills_start = 68.0
+bump_height = 1.2
+noise = SubResource("FastNoiseLite_hills")
+flat_areas = Array[Vector3]([Vector3(0, 0, 30), Vector3(0, -52, 40)])
+flat_blend = 14.0
+paths = Array[PackedVector2Array]([PackedVector2Array(0, -6, 1.5, -16, -0.8, -26, 0, -36, 0, -66, 2.5, -78, 7, -92, 13, -106, 17, -120), PackedVector2Array(-24, -52, 34, -52, 48, -48, 70, -42, 94, -40, 120, -37), PackedVector2Array(-7, -39, 0, -39), PackedVector2Array(-12, -60, -12, -52), PackedVector2Array(-4.5, -78, 0, -78), PackedVector2Array(7, -79, 0, -79), PackedVector2Array(5, -40, 0, -40), PackedVector2Array(5, -64, 0, -64), PackedVector2Array(5, -28, 0, -28)])
+path_width = 3.2
+gravel_areas = Array[Vector3]([Vector3(0, -52, 9.5)])
+material = ExtResource("2_material")
+
+[node name="TerrainMesh" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+
+[node name="TerrainCollision" type="CollisionShape3D" parent="."]
+unique_name_in_owner = true

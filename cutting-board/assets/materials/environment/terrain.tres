@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/terrain.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://assets/textures/environment/terrain/grass.png" id="2_grass"]
+[ext_resource type="Texture2D" path="res://assets/textures/environment/terrain/rocky_forest.png" id="3_forest"]
+[ext_resource type="Texture2D" path="res://assets/textures/environment/terrain/ground.png" id="4_path"]
+[ext_resource type="Texture2D" path="res://assets/textures/environment/terrain/gravel.png" id="5_gravel"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/grass_texture = ExtResource("2_grass")
+shader_parameter/forest_texture = ExtResource("3_forest")
+shader_parameter/path_texture = ExtResource("4_path")
+shader_parameter/gravel_texture = ExtResource("5_gravel")
+shader_parameter/tile_size = 4.0
+shader_parameter/patch_size = 28.0
+shader_parameter/patch_amount = 0.35
+shader_parameter/slope_start = 0.12
+shader_parameter/slope_end = 0.3
+shader_parameter/grass_tint = Color(0.58, 0.64, 0.45, 1)
+shader_parameter/forest_tint = Color(0.7, 0.72, 0.6, 1)
+shader_parameter/path_tint = Color(0.62, 0.55, 0.47, 1)
+shader_parameter/gravel_tint = Color(0.78, 0.76, 0.72, 1)

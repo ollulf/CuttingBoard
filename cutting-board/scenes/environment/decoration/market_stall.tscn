@@ -1,0 +1,84 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/environment/wooden_planks.tres" id="1_planks"]
+[ext_resource type="Material" path="res://assets/materials/environment/dark_planks.tres" id="2_dark"]
+[ext_resource type="Texture2D" path="res://assets/textures/environment/fabric.png" id="3_fabric"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/sack.tscn" id="4_sack"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/2_box.tscn" id="5_box"]
+[ext_resource type="PackedScene" path="res://scenes/environment/decoration/barrel_1.tscn" id="6_barrel"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_counter"]
+material = ExtResource("1_planks")
+size = Vector3(2.8, 0.9, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_top"]
+material = ExtResource("2_dark")
+size = Vector3(3.0, 0.08, 1.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_post_front"]
+material = ExtResource("2_dark")
+size = Vector3(0.12, 2.3, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_post_back"]
+material = ExtResource("2_dark")
+size = Vector3(0.12, 2.75, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_awning"]
+albedo_color = Color(0.78, 0.32, 0.25, 1)
+albedo_texture = ExtResource("3_fabric")
+texture_filter = 0
+cull_mode = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_awning"]
+material = SubResource("StandardMaterial3D_awning")
+size = Vector3(3.3, 0.04, 2.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_counter"]
+size = Vector3(3.0, 1.0, 1.1)
+
+[node name="MarketStall" type="StaticBody3D"]
+
+[node name="Counter" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_counter")
+
+[node name="CounterTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.94, 0)
+mesh = SubResource("BoxMesh_top")
+
+[node name="PostFrontLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.15, -0.5)
+mesh = SubResource("BoxMesh_post_front")
+
+[node name="PostFrontRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.15, -0.5)
+mesh = SubResource("BoxMesh_post_front")
+
+[node name="PostBackLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.375, 0.5)
+mesh = SubResource("BoxMesh_post_back")
+
+[node name="PostBackRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.375, 0.5)
+mesh = SubResource("BoxMesh_post_back")
+
+[node name="Awning" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0.9284767, 0.3713907, 0, -0.3713907, 0.9284767, 0, 2.55, -0.15)
+mesh = SubResource("BoxMesh_awning")
+
+[node name="Sack" parent="." instance=ExtResource("4_sack")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -0.9, 0.98, 0.05)
+
+[node name="Sack2" parent="." instance=ExtResource("4_sack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.98, -0.1)
+
+[node name="Box" parent="." instance=ExtResource("5_box")]
+transform = Transform3D(0.9659258, 0, -0.2588190, 0, 1, 0, 0.2588190, 0, 0.9659258, 0.75, 0.98, 0.05)
+
+[node name="Barrel" parent="." instance=ExtResource("6_barrel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 0, 0.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_counter")
