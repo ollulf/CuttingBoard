@@ -98,3 +98,49 @@ func unequip(slot: int) -> ItemData:
 	_durability.erase(slot)
 	changed.emit()
 	return data
+
+
+## Swaps an item from a grid with whatever `slot` is wearing: the new item goes on and
+## the old one goes into the grid, wear and all, into the squares the new item leaves if
+## it fits there and anywhere free otherwise. Refused, with nothing moved, when the item
+## is the wrong kind or the old one has nowhere to go. An empty slot is a plain equip.
+func swap_from(slot: int, from: Inventory, entry: InventoryEntry) -> bool:
+	if from == null or entry == null or not accepts(slot, entry.data):
+		return false
+	if is_free(slot):
+		if equip(slot, entry.data, entry.durability):
+			from.remove(entry)
+			return true
+		return false
+	var old: ItemData = _items[slot]
+	var old_durability: int = _durability[slot]
+	# The spot is found before anything moves, so a refusal leaves both items put.
+	var spot := _spot_for(old, from, entry)
+	if spot.is_empty():
+		return false
+	from.remove(entry)
+	_items[slot] = entry.data
+	_durability[slot] = entry.durability if entry.durability >= 0 else entry.data.durability
+	from.add_at(old, spot["origin"], old_durability, spot["rotated"])
+	changed.emit()
+	return true
+
+
+## Whether swap_from() would go through, without moving anything.
+func can_swap_from(slot: int, from: Inventory, entry: InventoryEntry) -> bool:
+	if from == null or entry == null or not accepts(slot, entry.data):
+		return false
+	return is_free(slot) or not _spot_for(_items[slot], from, entry).is_empty()
+
+
+## Where `data` can go in `grid` once `leaving` is out of it: the squares `leaving` frees
+## first, either way round, then any free spot. Empty when there is none.
+func _spot_for(data: ItemData, grid: Inventory, leaving: InventoryEntry) -> Dictionary:
+	for rotated in [false, true]:
+		if grid.is_region_free(leaving.origin, data.footprint(rotated), leaving):
+			return {"origin": leaving.origin, "rotated": rotated}
+	for rotated in [false, true]:
+		var origin := grid.find_free_origin(data.footprint(rotated))
+		if origin.x >= 0:
+			return {"origin": origin, "rotated": rotated}
+	return {}
