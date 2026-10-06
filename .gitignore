@@ -24,3 +24,6 @@ task-reports/
 
 # Personal Claude Code settings (status line for the Tasks board)
 .claude/settings.local.json
+
+# No HTML in the repository (result pages and concept boards live as artifacts)
+*.html
