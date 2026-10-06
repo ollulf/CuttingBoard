@@ -6,9 +6,12 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="4_invpanel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hotbar_panel.tscn" id="5_hotbar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/health_bar.tscn" id="6_healthbar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hurt_overlay.tscn" id="6_hurt"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")
+
+[node name="HurtOverlay" parent="." instance=ExtResource("6_hurt")]
 
 [node name="Crosshair" type="TextureRect" parent="." unique_id=973741609]
 texture_filter = 1
