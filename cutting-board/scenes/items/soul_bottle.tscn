@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/items/carryable_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scenes/items/soul_bottle.gd" id="2_script"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_a.res" id="3_mesh"]
+[ext_resource type="Resource" path="res://resources/items/soul_bottle.tres" id="4_item"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_wisp.res" id="5_wisp"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/soul_bottle_face.res" id="6_face"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_bottle"]
+height = 0.22
+radius = 0.065
+
+[node name="SoulBottle" instance=ExtResource("1_base")]
+mass = 0.3
+script = ExtResource("2_script")
+
+[node name="MeshInstance3D" parent="." index="0"]
+mesh = ExtResource("3_mesh")
+
+[node name="CollisionShape3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+shape = SubResource("CylinderShape3D_bottle")
+
+[node name="Carryable" parent="." index="2"]
+item_data = ExtResource("4_item")
+impact_damage = 2
+
+[node name="Destructible" parent="." index="3"]
+durability = 10
+
+[node name="Wisp" type="Node3D" parent="." index="5"]
+unique_name_in_owner = true
+
+[node name="Body" type="MeshInstance3D" parent="Wisp"]
+cast_shadow = 0
+mesh = ExtResource("5_wisp")
+
+[node name="Face" type="MeshInstance3D" parent="Wisp"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+cast_shadow = 0
+mesh = ExtResource("6_face")
+
+[node name="Glow" type="OmniLight3D" parent="Wisp"]
+light_color = Color(0.62, 1, 0.82, 1)
+light_energy = 0.3
+omni_range = 0.5

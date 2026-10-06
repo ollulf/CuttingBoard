@@ -60,3 +60,16 @@ for wooden folk, and it extends Rings instead of adding a second system.
 | **Acorns** | Seeds are future neighbours | Planted, grow into resource trees | Seed, acorn, cone, potted sapling | Needs growth timers and persistence |
 | **Matches** | Fire is the only real death for wood; whoever holds it rules | Struck to light lanterns or burn things | Match, matchbox, tinder bundle, lantern share | Fire systems are a big ask |
 | **Tally Sticks** | Split notched sticks: debt you carry | Redeemed by matching halves, then snapped | Notch, stick, faction-face tally | Abstract, UI-heavy |
+
+## Round 4: the Soul in a Bottle
+
+What the Mask-Monger pays out for a mask: the face's spirit caught in a bottle, a little
+glowing face-wisp that bobs and blinks. Now a real item (`resources/items/soul_bottle.tres`,
+`scenes/items/soul_bottle.tscn`), three bottles built by `scripts/import/build_soul_bottle.gd`:
+
+- **A** (default): a corked glass vial with a red wax seal.
+- **B**: a carved wooden flask with a window slot, the glow showing through.
+- **C**: a lantern-like glass jar, tin lid, a twine loop to carry it by.
+
+Switch by changing the mesh path in `soul_bottle.tscn`; renders from
+`tests/visual/soul_bottle_capture.tscn`. Follow-up: the Mask-Monger's ritual and the trade.
