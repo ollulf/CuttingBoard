@@ -44,3 +44,12 @@ its inside to you; a warm candle key light sits below the mask so the carving re
   0.4 s and sprays small wood chips. Resume puts the mask back on; Quit needs two carves.
 - Checked with a `#selftest3d` run in headless Chrome (software WebGL): picking hits every word,
   arrows and Tab reach all five, and the carve flow works on both masks.
+
+## Round 4: mask 1, straight off the face
+
+- **Mask 1 only** (knotted brow); the shape toggle is gone from the round-4 mock-up.
+- **Take-off:** the mask starts on the face, at the centre of the view. The hands meet it there and pull
+  it straight toward the player and a little down along the view axis (no arc from above the head).
+  Its inside already faces the player, so it only settles a few degrees. Resume or pause runs it back
+  into the centre.
+- Checked as still frames at fixed points of the take-off (`#lift4-<0..1>` on the page).
