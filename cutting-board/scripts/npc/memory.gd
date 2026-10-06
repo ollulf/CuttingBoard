@@ -5,7 +5,8 @@ extends Node
 ## them and when. The brain decides from this, never from the true state of the world,
 ## so an NPC that lost sight of the player goes to where the player *was*.
 ##
-## Deliberately plain for now — no opinions, no grudges. An entry is refreshed each time
+## Deliberately plain — no opinions here; grudges are the Npc's own (Npc.hold_grudge),
+## and end when this forgets their target. An entry is refreshed each time
 ## the actor is noticed again and simply fades once it has gone unnoticed for long enough.
 
 ## Seconds an actor stays remembered after it was last noticed.

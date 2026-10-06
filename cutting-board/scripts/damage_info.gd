@@ -30,3 +30,17 @@ func _init(p_amount: int, p_source: Node = null, p_type: Type = Type.BLUNT) -> v
 ## The push as a vector: knockback along the direction of travel.
 func get_impulse() -> Vector3:
 	return direction.normalized() * knockback
+
+
+## Who is behind the hit: the attacker's body for a blow, the thrower for an item that
+## left someone's hand at most `thrown_memory` seconds ago (HandSlot marks what it lets
+## go of), else the source itself. Null when there is no source.
+func get_attacker(thrown_memory := 4.0) -> Node3D:
+	if source == null or not is_instance_valid(source):
+		return null
+	if source.has_meta(HandSlot.RELEASED_BY_META):
+		var thrower: Variant = source.get_meta(HandSlot.RELEASED_BY_META)
+		var released_at: float = source.get_meta(HandSlot.RELEASED_AT_META, -INF)
+		if is_instance_valid(thrower) and Time.get_ticks_msec() / 1000.0 - released_at <= thrown_memory:
+			return thrower as Node3D
+	return source as Node3D

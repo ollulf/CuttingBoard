@@ -22,11 +22,15 @@ var _reaim := 0.0
 
 
 func score(npc: Npc) -> float:
-	var threat := npc.nearest_hostile()
-	if threat == null:
+	if npc.nearest_hostile() == null:
 		return 0.0
 	if npc.health.get_ratio() <= flee_below_health:
 		return wounded_score
+	# Someone it holds a grudge against is someone it is fighting back, not running from
+	# — until it is badly hurt, above. Other enemies about still scare it off.
+	var threat := npc.nearest_hostile(false)
+	if threat == null:
+		return 0.0
 	var distance := npc.flat_distance_to(npc.memory.last_seen_position(threat))
 	if distance >= safe_distance:
 		return 0.0
@@ -48,7 +52,7 @@ func tick(npc: Npc, delta: float) -> void:
 	if _reaim > 0.0 and npc.locomotion.is_moving():
 		return
 	_reaim = reaim_interval
-	var threat := npc.nearest_hostile()
+	var threat := npc.nearest_hostile(npc.health.get_ratio() <= flee_below_health)
 	if threat == null:
 		return
 	var away := npc.global_position - npc.memory.last_seen_position(threat)
