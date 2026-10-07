@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/chair_leap_check.gd" id="1_script"]
+
+[node name="ChairLeapCheck" type="Node3D"]
+script = ExtResource("1_script")

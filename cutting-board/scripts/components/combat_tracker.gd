@@ -222,15 +222,22 @@ func _nearest_attacker() -> Node3D:
 	var nearest: Node3D = null
 	var nearest_distance := INF
 	for node in get_tree().get_nodes_in_group(Faction.GROUP):
+		var body := node as Node3D
+		if body == null or not Health.is_node_alive(body):
+			continue
 		var npc := node as Npc
-		if npc == null or not npc.health.is_alive() or npc.get_attack_target() != actor:
+		if npc:
+			if npc.get_attack_target() != actor:
+				continue
+			var action := npc.brain.get_current_action()
+			if not (action is AttackTargetAction or action is ThrowAtTargetAction):
+				continue
+		# A creature that is no NPC, like the walking chair, says so itself.
+		elif not (body.has_method("is_going_for") and body.is_going_for(actor)):
 			continue
-		var action := npc.brain.get_current_action()
-		if not (action is AttackTargetAction or action is ThrowAtTargetAction):
-			continue
-		var distance := npc.global_position.distance_to(actor.global_position)
+		var distance := body.global_position.distance_to(actor.global_position)
 		if distance < nearest_distance:
-			nearest = npc
+			nearest = body
 			nearest_distance = distance
 	return nearest
 

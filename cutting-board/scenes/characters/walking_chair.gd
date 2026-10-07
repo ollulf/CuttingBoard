@@ -86,6 +86,16 @@ var _body_rest := Vector3.ZERO
 ## Below 0 standing; rises 0..1 as a dead chair sinks onto its splayed limbs.
 var _collapse := -1.0
 
+## The launch attack's pose, set by whatever drives the attack between begin_attack()
+## and end_attack(). How far it rocks back onto its hind limbs, 0..1: the tell.
+var attack_crouch := 0.0
+## Where both front arms are: 0 at rest, 1 raised high over the head, 2 slammed down on
+## the ground in front of it.
+var attack_arms := 0.0
+## While attacking the gait stops: the hind hands ride along with the body and the front
+## ones follow attack_arms.
+var _attacking := false
+
 
 func _ready() -> void:
 	_put_on_mask()
@@ -125,6 +135,9 @@ func _process(delta: float) -> void:
 		_collapse = minf(_collapse + delta * 2.5, 1.0)
 		_pose_collapsed()
 		return
+	if _attacking:
+		_pose_attack()
+		return
 	var moved := global_position - _last_pos
 	moved.y = 0.0
 	_last_pos = global_position
@@ -163,6 +176,64 @@ func planted_hand(corner: String) -> Variant:
 ## Dead: the limbs give way and splay out, the seat drops onto them, and the mask pops off
 ## the head as a loose item in `level`, the way a fallen villager's does. Returns the
 ## dropped mask, or null.
+## Leaves the gait for the launch attack's pose (attack_crouch, attack_arms).
+func begin_attack() -> void:
+	_attacking = true
+	attack_crouch = 0.0
+	attack_arms = 0.0
+
+
+## Back to the gait: every hand is planted under where it rests now.
+func end_attack() -> void:
+	_attacking = false
+	attack_crouch = 0.0
+	attack_arms = 0.0
+	for corner in CORNERS:
+		var home: Vector3 = _home[corner]
+		var p: Vector3 = global_transform * home
+		p.y = global_position.y + home.y
+		_plant[corner] = p
+		_hand[corner] = p
+		_swing[corner] = -1.0
+	_under_way = false
+	_last_pos = global_position
+	_velocity = Vector3.ZERO
+
+
+func is_attacking() -> bool:
+	return _attacking
+
+
+## The launch attack: the body rocks back and down on its hind limbs, the front arms rise
+## with it and go up over the head in the air, then come down together on the ground
+## ahead. The hind hands ride along under the body.
+func _pose_attack() -> void:
+	_last_pos = global_position
+	var crouch := attack_crouch
+	var body := %Body as Node3D
+	body.position = _body_rest + Vector3(0.0, -0.05 - 0.16 * crouch, 0.18 * crouch)
+	# +X pitch lifts the front: it rears back, head up, before the spring.
+	body.rotation = Vector3(0.3 * crouch, 0.0, 0.0)
+	(%Head as Node3D).rotation = Vector3(0.2 * crouch, 0.0, 0.0)
+	var arms := maxf(attack_arms, crouch * 0.5)
+	for corner in CORNERS:
+		var home: Vector3 = _home[corner]
+		var rest: Vector3 = home
+		if corner.begins_with("B"):
+			rest += Vector3(0.0, 0.0, -0.1 * crouch)
+			_hand[corner] = global_transform * rest
+			continue
+		var side := signf(home.x)
+		var raised := Vector3(side * 0.3, 0.85, -0.55)
+		var slammed := Vector3(side * 0.22, home.y, -0.95)
+		var local := home.lerp(raised, smoothstep(0.0, 1.0, minf(arms, 1.0)))
+		if arms > 1.0:
+			local = raised.lerp(slammed, smoothstep(0.0, 1.0, arms - 1.0))
+		_hand[corner] = global_transform * local
+	for corner in CORNERS:
+		_solve(corner)
+
+
 func collapse(level: Node) -> Node3D:
 	if _collapse >= 0.0:
 		return null

@@ -2,8 +2,8 @@ extends Node3D
 
 ## Headless checks for the walking chair creature (scenes/characters/chair_creature.tscn):
 ## it walks along the navigation mesh one limb at a time (two at most when it scuttles),
-## its hands stay put while they carry weight, a hit
-## sends it off, and killed it collapses and drops its mask. Prints PASS/FAIL per check
+## its hands stay put while they carry weight, it scuttles at a run on the chairs' side,
+## and killed it collapses and drops its mask. Prints PASS/FAIL per check
 ## and quits with the number of failures as the exit code.
 ##
 ##   godot --headless --path cutting-board res://tests/walking_chair_check.tscn
@@ -58,8 +58,14 @@ func _run() -> void:
 	var info := DamageInfo.new(10)
 	info.position = creature.global_position + Vector3(0, 0.6, -1)
 	health.apply_damage(info)
+	_check("an enemy of the player's side",
+		creature.get_node("%Faction").data == preload("res://resources/factions/chairs.tres")
+		and preload("res://resources/items/chair_mask.tres").faction.is_hostile_to(
+			preload("res://resources/factions/player.tres")))
+	# Chasing, it scuttles: the gait at a run, on along the way it was going.
+	locomotion.move_to(creature.global_position + Vector3(0, 0, 3), true)
 	await _physics_frames(5)
-	_check("a hit sends it moving", locomotion.is_moving())
+	_check("scuttles off", locomotion.is_moving())
 	var run: Dictionary = await _watch_gait(chair, locomotion)
 	_check("scuttling, at most two hands are off the ground (most %d)" % run.most_up,
 		run.most_up <= 2 and run.swings >= 4)

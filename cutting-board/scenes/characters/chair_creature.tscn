@@ -4,11 +4,14 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/walking_chair.tscn" id="2_chair"]
 [ext_resource type="Script" path="res://scripts/npc/locomotion.gd" id="3_loco"]
 [ext_resource type="Script" path="res://scripts/components/health.gd" id="4_health"]
+[ext_resource type="Script" path="res://scripts/components/faction.gd" id="5_faction"]
+[ext_resource type="Resource" path="res://resources/factions/chairs.tres" id="6_chairs"]
+[ext_resource type="Script" path="res://scripts/npc/sight.gd" id="7_sight"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_chair"]
 size = Vector3(0.9, 1.1, 0.9)
 
-[node name="ChairCreature" type="CharacterBody3D"]
+[node name="ChairCreature" type="CharacterBody3D" groups=["nameplate"]]
 script = ExtResource("1_creature")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -38,3 +41,18 @@ arrive_distance = 0.4
 unique_name_in_owner = true
 script = ExtResource("4_health")
 max_health = 60
+
+[node name="Faction" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("5_faction")
+data = ExtResource("6_chairs")
+
+[node name="Eyes" type="Node3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, -0.45)
+
+[node name="Sight" type="Node" parent="Eyes"]
+unique_name_in_owner = true
+script = ExtResource("7_sight")
+view_distance = 12.0
+awareness_radius = 2.5

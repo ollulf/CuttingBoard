@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://7f28yo0kbwbx" path="res://scripts/resources/mask_data.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/ui/icons/items/chair_mask.png" id="2_icon"]
 [ext_resource type="PackedScene" path="res://scenes/characters/masks/chair_mask.tscn" id="2_worn"]
+[ext_resource type="Resource" path="res://resources/factions/chairs.tres" id="3_faction"]
 
 [sub_resource type="CanvasTexture" id="CanvasTexture_chair"]
 diffuse_texture = ExtResource("2_icon")
@@ -11,6 +12,7 @@ texture_filter = 1
 [resource]
 script = ExtResource("1_script")
 worn_scene = ExtResource("2_worn")
+faction = ExtResource("3_faction")
 display_name = "Chair Mask"
 icon = SubResource("CanvasTexture_chair")
 item_type = 2
