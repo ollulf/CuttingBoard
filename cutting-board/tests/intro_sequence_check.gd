@@ -11,6 +11,8 @@ extends Node3D
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 var _failures := 0
+## Every hit the player takes, as "amount from source", for the failure message.
+var _hits: Array[String] = []
 
 
 func _ready() -> void:
@@ -29,11 +31,18 @@ func _run() -> void:
 	_check("every sound of the opening exists", missing.is_empty())
 	var level := LEVEL.instantiate()
 	add_child(level)
+	# The level's bandits are hostile to a bare face and close enough to reach the landing
+	# within the fall; when they arrive depends on the navmesh bake, which lags under load.
+	# Freeze every NPC so the fall-damage check only sees the landing.
+	for npc in level.find_children("*", "Npc", true, false):
+		npc.process_mode = Node.PROCESS_MODE_DISABLED
 	await _frames(5)
 	var intro: IntroSequence = level.find_child("IntroSequence", true, false)
 	var player = level.find_child("Player", true, false)
 	var menu: PauseMenu = player.find_child("PauseMenu", true, false)
 	var hud: CanvasLayer = player.get_node("%InteractionPrompts")
+	player.health.damaged.connect(func(info: DamageInfo) -> void:
+		_hits.append("%d from %s" % [info.amount, info.source.get_path() if info.source else "nothing"]))
 	_check("an instanced level does not start the opening by itself", not intro.running)
 	_check("the player starts with no mask", player.equipment.is_free(Equipment.Slot.MASK))
 	_check("the player mask is nowhere in the inventory",
@@ -61,15 +70,20 @@ func _run() -> void:
 	_check("clear once born", intro._hole(intro.BIRTH_END) > 1.5)
 	intro.elapsed = intro.GRAIN_END - 0.5
 	await _frames(20)
-	print("state ", intro.running, " ", intro.elapsed, " ", player.control, " ", Input.is_action_pressed("pause"))
 	_check("look only during the grain", player.control == intro.CONTROL_LOOK_ONLY)
 	_check("still high up", player.global_position.y > 30.0)
-	await _frames(int((intro.FALL_END - intro.GRAIN_END) * 60.0) + 30)
+	# Wait on the opening itself rather than a frame count, with a generous limit.
+	var limit := int((intro.FALL_END - intro.GRAIN_END) * 60.0) * 3
+	while intro.running and limit > 0:
+		await _frames(1)
+		limit -= 1
 	_check("the fall ends the opening", not intro.running)
 	_check_landed(intro, player, hud)
-	await _frames(30)
-	_check("still standing after a second (no fall damage)", player.health.is_alive()
-		and player.health.get_current() >= player.health.max_health)
+	# A second on the ground, standing on the floor, for any landing damage to show.
+	await _frames(60)
+	_check("standing on the floor after landing", player.is_on_floor())
+	_check("still standing after a second (no fall damage)%s" % (" " + str(_hits) if _hits else ""),
+		player.health.is_alive() and player.health.get_current() >= player.health.max_health)
 	_finish()
 
 
