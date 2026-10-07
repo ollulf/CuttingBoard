@@ -1,0 +1,763 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/characters/carver.gd" id="1_mbdxc"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_stump.res" id="2_k6t8y"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_yard.res" id="3_o1r4l"]
+[ext_resource type="Material" path="res://assets/materials/characters/carver_shadow.tres" id="4_8y1mf"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_fruit.res" id="5_lt5uh"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_blank_rough.res" id="6_briwb"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_blank_rings.res" id="7_myjrg"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_blank_spiked.res" id="8_emj8b"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_body.res" id="9_5t8pv"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_face.res" id="10_g3taq"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_upper_arm.res" id="11_g7wt4"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_forearm.res" id="12_3lccu"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_rasp.res" id="13_qtl66"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_mallet.res" id="14_87fuh"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_chisel.res" id="15_dc04p"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_gouge.res" id="16_xtv77"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_knife.res" id="17_cf0fh"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/carver_gouge_hot.res" id="18_pet1m"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2cvqt"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.35
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_mxxyv"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.6
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7hqqb"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.85
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_d2qon"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.35
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_je84k"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.6
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gfgif"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.85
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lyy3b"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.35
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_k0wij"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.6
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jkxbr"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.85
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rqogn"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.35
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_r48dw"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.6
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jvku5"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.85
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_drxyq"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.35
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3fysm"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.6
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_oxf00"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.85
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0tv4h"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.35
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_e0mjb"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.6
+radial_segments = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5ubea"]
+material = ExtResource("4_8y1mf")
+top_radius = 0.008
+bottom_radius = 0.008
+height = 0.85
+radial_segments = 4
+
+[node name="Carver" type="Node3D" unique_id=1746173935]
+script = ExtResource("1_mbdxc")
+
+[node name="Stump" type="MeshInstance3D" parent="." unique_id=725008630]
+mesh = ExtResource("2_k6t8y")
+
+[node name="Yard" type="MeshInstance3D" parent="." unique_id=1776139746]
+mesh = ExtResource("3_o1r4l")
+
+[node name="Fruit" type="Node3D" parent="." unique_id=423157457]
+
+[node name="Hang0" type="Node3D" parent="Fruit" unique_id=889060704]
+transform = Transform3D(0.87758255, 0, -0.47942555, 0, 1, 0, 0.47942555, 0, 0.87758255, -2.42, 4.678, 1.54)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang0" unique_id=1144448694]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+mesh = SubResource("CylinderMesh_2cvqt")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang0" unique_id=1128402764]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang1" type="Node3D" parent="Fruit" unique_id=1368771777]
+transform = Transform3D(0.9689124, 0, -0.24740396, 0, 1, 0, 0.24740396, 0, 0.9689124, -4.02, 7.7720003, 1.32)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang1" unique_id=1364890566]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("CylinderMesh_mxxyv")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang1" unique_id=340283033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang2" type="Node3D" parent="Fruit" unique_id=775633210]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7400002, 5.6071997, 1.46)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang2" unique_id=965501624]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.425, 0)
+mesh = SubResource("CylinderMesh_7hqqb")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang2" unique_id=1975872604]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.07, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang3" type="Node3D" parent="Fruit" unique_id=731094798]
+transform = Transform3D(0.9689124, 0, 0.24740396, 0, 1, 0, -0.24740396, 0, 0.9689124, -1.3310001, 5.173, 1.54)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang3" unique_id=1011403977]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+mesh = SubResource("CylinderMesh_d2qon")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang3" unique_id=561917512]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang4" type="Node3D" parent="Fruit" unique_id=1360181234]
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, -2.103, 9.152, 1.32)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang4" unique_id=1038675233]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("CylinderMesh_je84k")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang4" unique_id=576708708]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang5" type="Node3D" parent="Fruit" unique_id=847347361]
+transform = Transform3D(0.87758255, 0, -0.47942555, 0, 1, 0, 0.47942555, 0, 0.87758255, -2.435, 6.4952, 1.46)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang5" unique_id=927641545]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.425, 0)
+mesh = SubResource("CylinderMesh_gfgif")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang5" unique_id=1219537527]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.07, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang6" type="Node3D" parent="Fruit" unique_id=1026876286]
+transform = Transform3D(0.9689124, 0, -0.24740396, 0, 1, 0, 0.24740396, 0, 0.9689124, -0.363, 5.2390003, 1.54)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang6" unique_id=1820699445]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+mesh = SubResource("CylinderMesh_lyy3b")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang6" unique_id=187650659]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang7" type="Node3D" parent="Fruit" unique_id=1089583074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.399, 9.336, 1.32)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang7" unique_id=1836927001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("CylinderMesh_k0wij")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang7" unique_id=1844960788]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang8" type="Node3D" parent="Fruit" unique_id=604639033]
+transform = Transform3D(0.9689124, 0, 0.24740396, 0, 1, 0, -0.24740396, 0, 0.9689124, -1.2750001, 6.6136, 1.46)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang8" unique_id=902687419]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.425, 0)
+mesh = SubResource("CylinderMesh_jkxbr")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang8" unique_id=2019840094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.07, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang9" type="Node3D" parent="Fruit" unique_id=1015087237]
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, 0.605, 5.371, 1.54)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang9" unique_id=1772063000]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+mesh = SubResource("CylinderMesh_rqogn")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang9" unique_id=813267523]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang10" type="Node3D" parent="Fruit" unique_id=770273548]
+transform = Transform3D(0.87758255, 0, -0.47942555, 0, 1, 0, 0.47942555, 0, 0.87758255, 1.3050001, 9.7039995, 1.32)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang10" unique_id=1462831064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("CylinderMesh_r48dw")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang10" unique_id=574697924]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang11" type="Node3D" parent="Fruit" unique_id=264248843]
+transform = Transform3D(0.9689124, 0, -0.24740396, 0, 1, 0, 0.24740396, 0, 0.9689124, 1.565, 6.8504, 1.46)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang11" unique_id=1621447273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.425, 0)
+mesh = SubResource("CylinderMesh_jvku5")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang11" unique_id=1797439428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.07, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang12" type="Node3D" parent="Fruit" unique_id=1265167635]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.573, 4.9090004, 1.54)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang12" unique_id=1383383352]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+mesh = SubResource("CylinderMesh_drxyq")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang12" unique_id=1330786714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang13" type="Node3D" parent="Fruit" unique_id=1392382784]
+transform = Transform3D(0.9689124, 0, 0.24740396, 0, 1, 0, -0.24740396, 0, 0.9689124, 3.009, 8.416, 1.32)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang13" unique_id=954259258]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("CylinderMesh_3fysm")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang13" unique_id=1434369417]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang14" type="Node3D" parent="Fruit" unique_id=1637718046]
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, 2.7250001, 6.0216, 1.46)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang14" unique_id=619708973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.425, 0)
+mesh = SubResource("CylinderMesh_oxf00")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang14" unique_id=155513510]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.07, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang15" type="Node3D" parent="Fruit" unique_id=610458929]
+transform = Transform3D(0.87758255, 0, -0.47942555, 0, 1, 0, 0.47942555, 0, 0.87758255, 2.42, 4.876, 1.54)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang15" unique_id=1764346516]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+mesh = SubResource("CylinderMesh_0tv4h")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang15" unique_id=1833344063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.57, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang16" type="Node3D" parent="Fruit" unique_id=1523736573]
+transform = Transform3D(0.9689124, 0, -0.24740396, 0, 1, 0, 0.24740396, 0, 0.9689124, 4.5, 8.323999, 1.32)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang16" unique_id=31100257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("CylinderMesh_e0mjb")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang16" unique_id=1793993501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Hang17" type="Node3D" parent="Fruit" unique_id=1341234842]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7400002, 5.9624004, 1.46)
+
+[node name="String" type="MeshInstance3D" parent="Fruit/Hang17" unique_id=1939828248]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.425, 0)
+mesh = SubResource("CylinderMesh_5ubea")
+
+[node name="Mask" type="MeshInstance3D" parent="Fruit/Hang17" unique_id=1692198711]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.07, 0)
+mesh = ExtResource("5_lt5uh")
+
+[node name="LooseMasks" type="Node3D" parent="." unique_id=79066025]
+
+[node name="Mask0" type="MeshInstance3D" parent="LooseMasks" unique_id=1679723454]
+transform = Transform3D(0.9553365, -0.29336676, 0.035610992, 0, 0.120502725, 0.992713, -0.29552022, -0.9483749, 0.11512066, -2.9, 0.48, -1.45)
+mesh = ExtResource("6_briwb")
+
+[node name="Mask1" type="MeshInstance3D" parent="LooseMasks" unique_id=144243930]
+transform = Transform3D(0.9800666, -0.19866933, 0, 0.014053312, 0.06932717, 0.997495, -0.19817166, -0.97761154, 0.0707372, -1.7, 0.08, -2.6)
+mesh = ExtResource("6_briwb")
+
+[node name="Mask2" type="MeshInstance3D" parent="LooseMasks" unique_id=1411310618]
+transform = Transform3D(0.26749888, -0.19142947, 0.9443512, 0, 0.9800666, 0.19866933, -0.9635582, -0.05314382, 0.2621667, -1.75, 0.35, 0.7)
+mesh = ExtResource("7_myjrg")
+
+[node name="Mask3" type="MeshInstance3D" parent="LooseMasks" unique_id=1393657224]
+transform = Transform3D(0.921061, 0.38844284, -0.027546361, 0, 0.0707372, 0.997495, 0.38941833, -0.91875374, 0.06515327, 1, 0.08, -2.7)
+mesh = ExtResource("7_myjrg")
+
+[node name="Mask4" type="MeshInstance3D" parent="LooseMasks" unique_id=270273015]
+transform = Transform3D(0.5583867, 0.15320298, -0.8153117, 0.096729845, 0.9640719, 0.24740396, 0.8239221, -0.21701205, 0.52350557, 2.1, 0.32, -1.1)
+mesh = ExtResource("8_emj8b")
+
+[node name="Mask5" type="MeshInstance3D" parent="LooseMasks" unique_id=1678871719]
+transform = Transform3D(0.9553365, 0.14167994, -0.2593434, 0, 0.87758255, 0.47942555, 0.29552022, -0.45801273, 0.83838665, 3, 1.03, 1.05)
+mesh = ExtResource("8_emj8b")
+
+[node name="Mask6" type="MeshInstance3D" parent="LooseMasks" unique_id=1516742674]
+transform = Transform3D(0.921061, -0.30504188, 0.24206632, 0, 0.62161, 0.7833269, -0.38941833, -0.7214919, 0.5725407, 3.7, 1, 1.3)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Mask7" type="MeshInstance3D" parent="LooseMasks" unique_id=596584598]
+transform = Transform3D(1, 0, 0, 0, 0.16996716, 0.98544973, 0, -0.98544973, 0.16996716, 2.65, 0.95, 1.4)
+mesh = ExtResource("7_myjrg")
+
+[node name="Mask8" type="MeshInstance3D" parent="LooseMasks" unique_id=513448565]
+transform = Transform3D(0.77573323, -0.327506, 0.5394236, 0.18979606, 0.9362934, 0.29552022, -0.60184336, -0.1268644, 0.78847325, -3.4, 0.25, 0.3)
+mesh = ExtResource("6_briwb")
+
+[node name="Mask9" type="MeshInstance3D" parent="LooseMasks" unique_id=861706621]
+transform = Transform3D(0.9950042, -0.09304865, 0.03617541, 0, 0.3623577, 0.9320391, -0.09983342, -0.92738277, 0.36054742, 0.1, 0.2, -2.4)
+mesh = ExtResource("5_lt5uh")
+
+[node name="Body" type="Node3D" parent="." unique_id=571633154]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 0.1)
+
+[node name="Torso" type="MeshInstance3D" parent="Body" unique_id=319253529]
+mesh = ExtResource("9_5t8pv")
+
+[node name="Head" type="Node3D" parent="Body" unique_id=1953659936]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0.99280864, -0.119712204, 0, 0.119712204, 0.99280864, 0, 2.25, -0.35)
+
+[node name="Mask" type="MeshInstance3D" parent="Body/Head" unique_id=753402733]
+mesh = ExtResource("10_g3taq")
+
+[node name="Shoulder0" type="Node3D" parent="Body" unique_id=349443763]
+unique_name_in_owner = true
+transform = Transform3D(-0.41756976, -0.9063078, -0.06512785, 0.8954814, -0.42261818, 0.13966715, -0.15410565, 0, 0.9880544, -0.07607129, 1.4131354, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder0" unique_id=1310129321]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow0" type="Node3D" parent="Body/Shoulder0" unique_id=490247838]
+unique_name_in_owner = true
+transform = Transform3D(0.70081526, -0.21678756, 0.6796037, 0.29552022, 0.9553365, 0, -0.6492502, 0.20083663, 0.73357946, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder0/Elbow0" unique_id=1876050644]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist0" type="Node3D" parent="Body/Shoulder0/Elbow0" unique_id=2137960916]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, -0.1866971, 0.44158018, 0, 0.921061, 0.38941833, -0.47942555, -0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder0/Elbow0/Wrist0" unique_id=293265991]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("13_qtl66")
+
+[node name="Shoulder1" type="Node3D" parent="Body" unique_id=1554943898]
+unique_name_in_owner = true
+transform = Transform3D(-0.7032871, -0.6988315, -0.1304676, 0.6871083, -0.7152864, 0.12746623, -0.1823991, 0, 0.9832246, -0.12875155, 1.3757896, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder1" unique_id=253880020]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow1" type="Node3D" parent="Body/Shoulder1" unique_id=256681388]
+unique_name_in_owner = true
+transform = Transform3D(0.5402316, -0.14371325, 0.82915395, 0.25708055, 0.96638995, 0, -0.80128604, 0.21315935, 0.5590203, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder1/Elbow1" unique_id=806111031]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist1" type="Node3D" parent="Body/Shoulder1/Elbow1" unique_id=2119975830]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder1/Elbow1/Wrist1" unique_id=216387923]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("14_87fuh")
+
+[node name="Shoulder2" type="Node3D" parent="Body" unique_id=818283409]
+unique_name_in_owner = true
+transform = Transform3D(-0.89536625, -0.40141496, -0.19283488, 0.39241716, -0.9158963, 0.08451481, -0.21054226, 0, 0.9775848, -0.16486134, 1.3222547, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder2" unique_id=196744242]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow2" type="Node3D" parent="Body/Shoulder2" unique_id=786438448]
+unique_name_in_owner = true
+transform = Transform3D(0.6005211, -0.13428819, 0.7882519, 0.21822962, 0.97589743, 0, -0.76925296, 0.17201991, 0.6153527, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder2/Elbow2" unique_id=1536431612]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist2" type="Node3D" parent="Body/Shoulder2/Elbow2" unique_id=864068405]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, 0.1866971, 0.44158018, 0, 0.921061, -0.38941833, -0.47942555, 0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder2/Elbow2/Wrist2" unique_id=755623089]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("15_dc04p")
+
+[node name="Shoulder3" type="Node3D" parent="Body" unique_id=621066316]
+unique_name_in_owner = true
+transform = Transform3D(-0.96980864, -0.052335985, -0.23818511, 0.050825544, -0.9986295, 0.01248276, -0.23851198, 0, 0.97113955, -0.17975332, 1.2594205, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder3" unique_id=1771387410]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow3" type="Node3D" parent="Body/Shoulder3" unique_id=1154104645]
+unique_name_in_owner = true
+transform = Transform3D(0.4123371, -0.07503279, 0.9079362, 0.17902958, 0.9838437, 0, -0.89326733, 0.16254744, 0.41910833, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder3/Elbow3" unique_id=561743488]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist3" type="Node3D" parent="Body/Shoulder3/Elbow3" unique_id=584175983]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, -0.1866971, 0.44158018, 0, 0.921061, 0.38941833, -0.47942555, -0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder3/Elbow3/Wrist3" unique_id=304996009]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("16_xtv77")
+
+[node name="Shoulder4" type="Node3D" parent="Body" unique_id=277046269]
+unique_name_in_owner = true
+transform = Transform3D(-0.91843534, 0.3034787, -0.25372672, -0.2925214, -0.95283824, -0.08081189, -0.2662852, 0, 0.9638943, -0.17151088, 1.1953738, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder4" unique_id=1072326001]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow4" type="Node3D" parent="Body/Shoulder4" unique_id=614278610]
+unique_name_in_owner = true
+transform = Transform3D(0.47655234, -0.06715666, 0.8765774, 0.13954312, 0.990216, 0, -0.868001, 0.12232034, 0.481261, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder4/Elbow4" unique_id=1634441118]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist4" type="Node3D" parent="Body/Shoulder4/Elbow4" unique_id=514932325]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder4/Elbow4/Wrist4" unique_id=1045289464]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("17_cf0fh")
+
+[node name="Shoulder5" type="Node3D" parent="Body" unique_id=1795910218]
+unique_name_in_owner = true
+transform = Transform3D(-0.7497875, 0.62023556, -0.23049195, -0.5928552, -0.7844156, -0.18224944, -0.29383907, 0, 0.9558549, -0.14119482, 1.1383576, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder5" unique_id=1249763699]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow5" type="Node3D" parent="Body/Shoulder5" unique_id=480192750]
+unique_name_in_owner = true
+transform = Transform3D(0.2670501, -0.026794383, 0.96331006, 0.09983342, 0.9950042, 0, -0.9584975, 0.09617054, 0.26839092, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder5/Elbow5" unique_id=2057763739]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist5" type="Node3D" parent="Body/Shoulder5/Elbow5" unique_id=1215607344]
+unique_name_in_owner = true
+transform = Transform3D(0.8253356, 0, -0.5646425, 0, 1, 0, 0.5646425, 0, 0.8253356, 1.31, 0, 0)
+
+[node name="Work" type="MeshInstance3D" parent="Body/Shoulder5/Elbow5/Wrist5" unique_id=891874310]
+transform = Transform3D(-0.7191382, 0, 1.316374, 0, 1.5, 0, -1.316374, 0, -0.7191382, 0.15, 0, -0.08)
+mesh = ExtResource("7_myjrg")
+
+[node name="Shoulder6" type="Node3D" parent="Body" unique_id=753771355]
+unique_name_in_owner = true
+transform = Transform3D(-0.48775545, 0.8571673, -0.16540489, -0.8117615, -0.515038, -0.27528, -0.32115084, 0, 0.94702804, -0.09270686, 1.0957099, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder6" unique_id=388714653]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow6" type="Node3D" parent="Body/Shoulder6" unique_id=1975167361]
+unique_name_in_owner = true
+transform = Transform3D(0.33415884, -0.020073624, 0.942303, 0.059964005, 0.99820054, 0, -0.94060737, 0.05650426, 0.33476123, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder6/Elbow6" unique_id=369663228]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist6" type="Node3D" parent="Body/Shoulder6/Elbow6" unique_id=1095443312]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, -0.1866971, 0.44158018, 0, 0.921061, 0.38941833, -0.47942555, -0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder6/Elbow6/Wrist6" unique_id=1008943717]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("18_pet1m")
+
+[node name="Shoulder7" type="Node3D" parent="Body" unique_id=322116566]
+unique_name_in_owner = true
+transform = Transform3D(-0.16814953, 0.98378086, -0.062457882, -0.92221683, -0.1793746, -0.34255055, -0.34819803, 0, 0.937421, -0.032287426, 1.0729195, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder7" unique_id=1494063531]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow7" type="Node3D" parent="Body/Shoulder7" unique_id=635107343]
+unique_name_in_owner = true
+transform = Transform3D(0.110731706, -0.0022149293, 0.99384785, 0.019998666, 0.9998, 0, -0.9936491, 0.01987563, 0.11075386, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder7/Elbow7" unique_id=1833091963]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist7" type="Node3D" parent="Body/Shoulder7/Elbow7" unique_id=1748977713]
+unique_name_in_owner = true
+transform = Transform3D(0.8253356, 0, -0.5646425, 0, 1, 0, 0.5646425, 0, 0.8253356, 1.31, 0, 0)
+
+[node name="Work" type="MeshInstance3D" parent="Body/Shoulder7/Elbow7/Wrist7" unique_id=452521802]
+transform = Transform3D(-0.7191382, 0, 1.316374, 0, 1.5, 0, -1.316374, 0, -0.7191382, 0.15, 0, -0.08)
+mesh = ExtResource("8_emj8b")
+
+[node name="Shoulder8" type="Node3D" parent="Body" unique_id=1952853366]
+unique_name_in_owner = true
+transform = Transform3D(0.16814956, 0.98378086, 0.062457893, -0.92221683, 0.17937464, -0.34255055, -0.34819803, 0, 0.937421, 0.032287426, 1.0729195, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder8" unique_id=1695413524]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow8" type="Node3D" parent="Body/Shoulder8" unique_id=604160969]
+unique_name_in_owner = true
+transform = Transform3D(0.25797737, 0.005160235, 0.9661372, -0.019998666, 0.9998, 0, -0.965944, -0.019321455, 0.25802895, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder8/Elbow8" unique_id=983769722]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist8" type="Node3D" parent="Body/Shoulder8/Elbow8" unique_id=1274495777]
+unique_name_in_owner = true
+transform = Transform3D(0.8253356, 0, -0.5646425, 0, 1, 0, 0.5646425, 0, 0.8253356, 1.31, 0, 0)
+
+[node name="Work" type="MeshInstance3D" parent="Body/Shoulder8/Elbow8/Wrist8" unique_id=579771504]
+transform = Transform3D(0.71913826, 0, 1.316374, 0, 1.5, 0, -1.316374, 0, 0.71913826, 0.15, 0, -0.08)
+mesh = ExtResource("8_emj8b")
+
+[node name="Shoulder9" type="Node3D" parent="Body" unique_id=1799980217]
+unique_name_in_owner = true
+transform = Transform3D(0.4877555, 0.8571673, 0.16540492, -0.8117615, 0.5150381, -0.27528, -0.32115084, 0, 0.94702804, 0.09270686, 1.0957099, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder9" unique_id=495496547]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow9" type="Node3D" parent="Body/Shoulder9" unique_id=1919887531]
+unique_name_in_owner = true
+transform = Transform3D(0.18984401, 0.011404329, 0.98174804, -0.059964005, 0.99820054, 0, -0.9799814, -0.058869544, 0.19018625, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder9/Elbow9" unique_id=1760295847]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist9" type="Node3D" parent="Body/Shoulder9/Elbow9" unique_id=405694204]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, -0.1866971, 0.44158018, 0, 0.921061, 0.38941833, -0.47942555, -0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder9/Elbow9/Wrist9" unique_id=2145599581]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("17_cf0fh")
+
+[node name="Shoulder10" type="Node3D" parent="Body" unique_id=33237162]
+unique_name_in_owner = true
+transform = Transform3D(0.74978757, 0.6202355, 0.23049197, -0.59285516, 0.78441566, -0.18224943, -0.29383907, 0, 0.9558549, 0.14119482, 1.1383576, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder10" unique_id=1427743211]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow10" type="Node3D" parent="Body/Shoulder10" unique_id=1999203368]
+unique_name_in_owner = true
+transform = Transform3D(0.40728748, 0.040865056, 0.91238534, -0.09983342, 0.9950042, 0, -0.90782726, -0.09108655, 0.40933242, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder10/Elbow10" unique_id=172207032]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist10" type="Node3D" parent="Body/Shoulder10/Elbow10" unique_id=738971789]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder10/Elbow10/Wrist10" unique_id=1878975216]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("15_dc04p")
+
+[node name="Shoulder11" type="Node3D" parent="Body" unique_id=199354190]
+unique_name_in_owner = true
+transform = Transform3D(0.9184353, 0.30347878, 0.25372672, -0.29252148, 0.9528382, -0.08081191, -0.2662852, 0, 0.9638943, 0.17151088, 1.1953738, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder11" unique_id=2070842453]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow11" type="Node3D" parent="Body/Shoulder11" unique_id=347002698]
+unique_name_in_owner = true
+transform = Transform3D(0.34148863, 0.048123226, 0.9386531, -0.13954312, 0.990216, 0, -0.92946935, -0.13098258, 0.34486276, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder11/Elbow11" unique_id=1971039586]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist11" type="Node3D" parent="Body/Shoulder11/Elbow11" unique_id=929948273]
+unique_name_in_owner = true
+transform = Transform3D(0.8253356, 0, -0.5646425, 0, 1, 0, 0.5646425, 0, 0.8253356, 1.31, 0, 0)
+
+[node name="Work" type="MeshInstance3D" parent="Body/Shoulder11/Elbow11/Wrist11" unique_id=1833409795]
+transform = Transform3D(0.71913826, 0, 1.316374, 0, 1.5, 0, -1.316374, 0, 0.71913826, 0.15, 0, -0.08)
+mesh = ExtResource("7_myjrg")
+
+[node name="Shoulder12" type="Node3D" parent="Body" unique_id=1046830175]
+unique_name_in_owner = true
+transform = Transform3D(0.96980864, -0.05233596, 0.23818511, 0.05082552, 0.9986295, 0.012482753, -0.23851198, 0, 0.97113955, 0.17975332, 1.2594205, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder12" unique_id=1563704135]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow12" type="Node3D" parent="Body/Shoulder12" unique_id=1229257054]
+unique_name_in_owner = true
+transform = Transform3D(0.54119515, 0.09848103, 0.83511037, -0.17902958, 0.9838437, 0, -0.8216181, -0.14950946, 0.55008245, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder12/Elbow12" unique_id=1886214745]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist12" type="Node3D" parent="Body/Shoulder12/Elbow12" unique_id=1596388679]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, -0.1866971, 0.44158018, 0, 0.921061, 0.38941833, -0.47942555, -0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder12/Elbow12/Wrist12" unique_id=1614384041]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("16_xtv77")
+
+[node name="Shoulder13" type="Node3D" parent="Body" unique_id=410215867]
+unique_name_in_owner = true
+transform = Transform3D(0.89536625, -0.401415, 0.19283488, 0.3924172, 0.9158963, 0.08451482, -0.21054226, 0, 0.9775848, 0.16486134, 1.3222547, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder13" unique_id=270485235]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow13" type="Node3D" parent="Body/Shoulder13" unique_id=1587493688]
+unique_name_in_owner = true
+transform = Transform3D(0.47882214, 0.10707393, 0.87135786, -0.21822962, 0.97589743, 0, -0.8503559, -0.1901561, 0.49064803, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder13/Elbow13" unique_id=1833886604]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist13" type="Node3D" parent="Body/Shoulder13/Elbow13" unique_id=1930336465]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder13/Elbow13/Wrist13" unique_id=782553363]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("14_87fuh")
+
+[node name="Shoulder14" type="Node3D" parent="Body" unique_id=516965977]
+unique_name_in_owner = true
+transform = Transform3D(0.70328707, -0.69883156, 0.13046758, 0.68710834, 0.7152863, 0.12746625, -0.1823991, 0, 0.9832246, 0.12875155, 1.3757896, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder14" unique_id=1874025287]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow14" type="Node3D" parent="Body/Shoulder14" unique_id=1390006324]
+unique_name_in_owner = true
+transform = Transform3D(0.653908, 0.17395364, 0.7363045, -0.25708055, 0.96638995, 0, -0.71155727, -0.18928957, 0.6766503, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder14/Elbow14" unique_id=212236381]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist14" type="Node3D" parent="Body/Shoulder14/Elbow14" unique_id=1661774106]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, 0.1866971, 0.44158018, 0, 0.921061, -0.38941833, -0.47942555, 0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder14/Elbow14/Wrist14" unique_id=852959017]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("17_cf0fh")
+
+[node name="Shoulder15" type="Node3D" parent="Body" unique_id=1502031408]
+unique_name_in_owner = true
+transform = Transform3D(0.41756982, -0.9063078, 0.06512786, 0.8954814, 0.42261824, 0.13966715, -0.15410565, 0, 0.9880544, 0.07607129, 1.4131354, 0.05)
+
+[node name="UpperArm" type="MeshInstance3D" parent="Body/Shoulder15" unique_id=710695531]
+mesh = ExtResource("11_g7wt4")
+
+[node name="Elbow15" type="Node3D" parent="Body/Shoulder15" unique_id=393271140]
+unique_name_in_owner = true
+transform = Transform3D(0.5959231, 0.18434063, 0.7815972, -0.29552022, 0.9553365, 0, -0.74668837, -0.23097777, 0.62378347, 1.5, 0, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Body/Shoulder15/Elbow15" unique_id=1483061868]
+mesh = ExtResource("12_3lccu")
+
+[node name="Wrist15" type="Node3D" parent="Body/Shoulder15/Elbow15" unique_id=1563122411]
+unique_name_in_owner = true
+transform = Transform3D(0.87758255, -0.1866971, 0.44158018, 0, 0.921061, 0.38941833, -0.47942555, -0.34174675, 0.80830705, 1.31, 0, 0)
+
+[node name="Tool" type="MeshInstance3D" parent="Body/Shoulder15/Elbow15/Wrist15" unique_id=1099625357]
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 0, 0)
+mesh = ExtResource("13_qtl66")
