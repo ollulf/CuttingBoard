@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/environment/carver_grove/carver_grove.gd" id="1_grove"]
+[ext_resource type="PackedScene" path="res://scenes/characters/carver.tscn" id="2_carver"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_stump"]
+height = 2.0
+radius = 1.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bench"]
+size = Vector3(2.1, 0.9, 0.8)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_block"]
+height = 0.6
+radius = 0.42
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_planks"]
+size = Vector3(2.3, 0.5, 1.0)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_brazier"]
+height = 0.85
+radius = 0.4
+
+[node name="CarverGrove" type="Node3D"]
+script = ExtResource("1_grove")
+
+[node name="Carver" parent="." instance=ExtResource("2_carver")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+
+[node name="Collision" type="StaticBody3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+
+[node name="Stump" type="CollisionShape3D" parent="Collision"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("CylinderShape3D_stump")
+
+[node name="Workbench" type="CollisionShape3D" parent="Collision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, 0.45, 1.2)
+shape = SubResource("BoxShape3D_bench")
+
+[node name="ChoppingBlock" type="CollisionShape3D" parent="Collision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 0.3, -2.2)
+shape = SubResource("CylinderShape3D_block")
+
+[node name="PlankStack" type="CollisionShape3D" parent="Collision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.1, 0.25, -1.4)
+shape = SubResource("BoxShape3D_planks")
+
+[node name="Brazier" type="CollisionShape3D" parent="Collision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1, 0.42, -3.1)
+shape = SubResource("CylinderShape3D_brazier")

@@ -52,3 +52,16 @@ slow code idle in `scenes/characters/carver.gd`. Not placed in any level.
   workbench, a brazier, and an eye glow; most use `LightFlicker`. Eyes are a hot orange
   (pure red turned brown through the PSX palette).
 - The capture scene is now dusk-lit and has a side view.
+
+## In the world
+
+- Placed in `test_level.tscn` as `CarverGrove` (`scenes/environment/carver_grove/`) at
+  (-72, 42): a level grove at the foot of the south-west hills, about 80 m from the start
+  meadow and 100 m from the village, 73 m from the chair yard, well off the roads and far
+  from Hollowstump. He faces back down the valley.
+- A footpath runs to him from the south-west edge of the start meadow (the last entry in
+  the terrain's `paths`); from halfway along it his lit stump reads as a landmark.
+- Collision: stump, workbench, chopping block, plank stack and brazier. The stump and yard
+  meshes join the navmesh source group, so NPCs walk round them.
+- His 14 lights have no shadows and fade out from 40 m to 55 m away.
+- Check: `tests/carver_grove_check.tscn`; stills: `tests/visual/carver_grove_capture.tscn`.
