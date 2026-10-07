@@ -106,6 +106,9 @@ func _update_interact_prompt() -> void:
 	var container := _interactor.get_hovered_container()
 	var usable := Usable.find_in(_interactor.get_hovered())
 	var offer := usable.get_prompt(_interactor.get_owner()) if usable else ""
+	var dialogue := Dialogue.find_dialogue_in(_interactor.get_hovered())
+	if offer.is_empty() and dialogue:
+		offer = dialogue.get_prompt(_interactor.get_owner())
 	if _interactor.can_stow_hovered(_inventory):
 		_interact_prompt.show_prompt("E", "Take")
 	elif container:
