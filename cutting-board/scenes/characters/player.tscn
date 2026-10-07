@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/components/hotbar.gd" id="11_hotbar"]
 [ext_resource type="Script" path="res://scripts/components/health.gd" id="12_health"]
 [ext_resource type="Script" path="res://scripts/components/stamina.gd" id="30_stamina"]
+[ext_resource type="Script" path="res://scripts/components/low_stamina_breath.gd" id="42_low_stamina_breath"]
 [ext_resource type="Script" path="res://scripts/components/faction.gd" id="13_faction"]
 [ext_resource type="Resource" path="res://resources/factions/player.tres" id="14_player_faction"]
 [ext_resource type="PackedScene" path="res://scenes/characters/human_body.tscn" id="15_human_body"]
@@ -197,6 +198,12 @@ script = ExtResource("12_health")
 [node name="Stamina" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("30_stamina")
+
+[node name="LowStaminaBreath" type="Node" parent="." node_paths=PackedStringArray("stamina", "health")]
+unique_name_in_owner = true
+script = ExtResource("42_low_stamina_breath")
+stamina = NodePath("../Stamina")
+health = NodePath("../Health")
 
 [node name="Equipment" type="Node" parent="."]
 unique_name_in_owner = true

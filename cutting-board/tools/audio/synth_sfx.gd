@@ -48,6 +48,8 @@ func _init() -> void:
 		"draw": _make_draws,
 		"stow": _make_stows,
 		"glue": _make_glue,
+		"breath": _make_breaths,
+		"breath_concepts": _make_breath_concepts,
 		# World.
 		"impact_wood": _make_wood_impacts,
 		"impact_stone": _make_stone_impacts,
@@ -277,6 +279,106 @@ func _make_glue() -> void:
 		var creak := _grains(_tone(0.28, rng.randf_range(170.0, 200.0), rng.randf_range(115.0, 135.0), 0.25), 0.55, 0.005)
 		_mix(out, _shape(creak, 0.04, 0.12), _seconds(at + 0.03), 0.45)
 		_save("sfx/glue_%d" % (take + 1), _softclip(out, 1.2), 0.8)
+
+
+## The player out of breath, as a wooden body breathes: air dragged in and shoved out
+## through dry wood, the boards of the chest creaking as they flex and a small knock as
+## they settle. Each take is one whole breath, in then out, which LowStaminaBreath plays
+## faster and louder the emptier the stamina gets. The game uses the creaky bellows (A);
+## breath_concepts renders all three flavours to user://breath_concepts/ for comparing.
+func _make_breaths() -> void:
+	for take in 3:
+		_save("sfx/breath_%d" % (take + 1), _breath(0), 0.85)
+
+
+func _make_breath_concepts() -> void:
+	var names := ["a_bellows", "b_hollow_log", "c_rasp_knocks"]
+	for flavour in 3:
+		for take in 3:
+			var out := _normalized(_breath(flavour), 0.85)
+			_write_wav("user://breath_concepts/%s_%d.wav" % [names[flavour], take + 1], out, false)
+
+
+## One breath in flavour 0 (creaky bellows), 1 (hollow-log wheeze) or 2 (rasp with
+## knocks); each call varies the timing and pitch a little.
+func _breath(flavour: int) -> PackedFloat32Array:
+	var inhale := rng.randf_range(0.42, 0.55)
+	var gap := rng.randf_range(0.05, 0.1)
+	var exhale := rng.randf_range(0.55, 0.7)
+	var out := _silence(inhale + gap + exhale + 0.15)
+	var out_at := _seconds(inhale + gap)
+	var wood := rng.randf_range(0.9, 1.1)
+	match flavour:
+		0:
+			# Bellows: hollow low air, with the creak of the frame speeding up as the
+			# bellows open and slowing as they close, and a knock as they settle.
+			var air_in := _sweep(_noise(inhale), 380.0 * wood, 820.0 * wood, 1.6)
+			_mix(out, _envelope(air_in, 0.6, 0.25), 0, 0.8)
+			_mix(out, _envelope(_creak(inhale, 18.0, 42.0, 760.0 * wood), 0.5, 0.3), 0, 0.5)
+			var air_out := _sweep(_noise(exhale), 700.0 * wood, 300.0 * wood, 1.4)
+			_mix(out, _envelope(air_out, 0.15, 0.6), out_at, 1.0)
+			_mix(out, _envelope(_creak(exhale, 36.0, 14.0, 620.0 * wood), 0.2, 0.6), out_at, 0.45)
+			_mix(out, _knock(330.0 * wood), out_at + _seconds(exhale - 0.06), 0.35)
+		1:
+			# Hollow log: breath sounding through a closed tube, whose odd harmonics give
+			# it a woody hoot, and a thin wheeze whistling on top.
+			var tube := [210.0 * wood, 630.0 * wood, 1050.0 * wood]
+			var air_in := _formants(_noise(inhale), tube, [1.0, 0.7, 0.35], 6.0)
+			_mix(out, _envelope(air_in, 0.6, 0.25), 0, 0.9)
+			_mix(out, _envelope(_wheeze(inhale, 1500.0 * wood, 1750.0 * wood), 0.7, 0.2), 0, 0.12)
+			var air_out := _formants(_noise(exhale), tube, [1.0, 0.6, 0.25], 6.0)
+			_mix(out, _envelope(air_out, 0.15, 0.6), out_at, 1.0)
+			_mix(out, _envelope(_wheeze(exhale, 1300.0 * wood, 1050.0 * wood), 0.2, 0.6), out_at, 0.08)
+		2:
+			# Rasp with knocks: gritty air scraped through dry grain, a wooden knock as
+			# the chest starts to fill and another as it drops.
+			var air_in := _grains(_bandpass(_noise(inhale), 1400.0 * wood, 0.9), 0.75, 0.006)
+			_mix(out, _envelope(air_in, 0.6, 0.25), 0, 0.8)
+			_mix(out, _envelope(_lowpass(_noise(inhale), 600.0, 0.7), 0.6, 0.25), 0, 0.4)
+			_mix(out, _knock(420.0 * wood), 0, 0.5)
+			var air_out := _grains(_bandpass(_noise(exhale), 950.0 * wood, 0.9), 0.75, 0.007)
+			_mix(out, _envelope(air_out, 0.15, 0.6), out_at, 1.0)
+			_mix(out, _envelope(_lowpass(_noise(exhale), 500.0, 0.7), 0.15, 0.6), out_at, 0.5)
+			_mix(out, _knock(300.0 * wood), out_at + _seconds(exhale - 0.08), 0.55)
+	return _softclip(out, 1.2)
+
+
+## A swell over the first `rise` of the length and a fall over the last `fall`, eased,
+## for the air of a breath.
+func _envelope(x: PackedFloat32Array, rise: float, fall: float) -> PackedFloat32Array:
+	var env := _ramp(x.size(), rise, fall)
+	var out := x.duplicate()
+	for i in out.size():
+		out[i] *= env[i] * env[i] * (3.0 - 2.0 * env[i])
+	return out
+
+
+## Wood under strain: a stick-slip train of clicks whose rate glides from `rate_from` to
+## `rate_to` per second, each ringing a woody resonance around `freq`.
+func _creak(length: float, rate_from: float, rate_to: float, freq: float) -> PackedFloat32Array:
+	var n := _seconds(length)
+	var clicks := PackedFloat32Array()
+	clicks.resize(n)
+	var next := 0.0
+	while next < n:
+		clicks[int(next)] = rng.randf_range(0.5, 1.0)
+		var rate := lerpf(rate_from, rate_to, next / n)
+		next += sample_rate / rate * rng.randf_range(0.7, 1.3)
+	var out := _bandpass(clicks, freq, 7.0)
+	_mix(out, _bandpass(clicks, freq * 2.3, 9.0), 0, 0.5)
+	return out
+
+
+## A thin whistle of air through a crack, gliding from `from` to `to` Hz.
+func _wheeze(length: float, from: float, to: float) -> PackedFloat32Array:
+	return _filter_swept(_noise(length), "bandpass", _glide_freqs(length, from, to), 25.0)
+
+
+## A small knock of wood on wood.
+func _knock(freq: float) -> PackedFloat32Array:
+	var out := _modes(0.14, [freq, freq * 2.45, freq * 4.1], [0.035, 0.018, 0.009], [1.0, 0.5, 0.25])
+	_mix(out, _shape(_bandpass(_noise(0.02), freq * 3.0, 1.2), 0.001, 0.006), 0, 0.4)
+	return out
 
 
 # --- Recipes: world -----------------------------------------------------------------------
