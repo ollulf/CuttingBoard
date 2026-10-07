@@ -6,13 +6,15 @@ extends Node3D
 ##   godot --path cutting-board res://tests/visual/fp_arms_capture.tscn -- --shots=<dir>
 ##
 ## Needs a real window; under --headless nothing is saved. --plain turns the retro
-## screen off, for reading shapes rather than the look.
+## screen off, for reading shapes rather than the look. --clip throws a few punches
+## instead, to record with --write-movie.
 
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const HAMMER := preload("res://scenes/items/hammer.tscn")
 const ROCK := preload("res://scenes/items/rock.tscn")
 
 var _shots_dir := ""
+var _clip_only := false
 var _player: Node3D
 var _side_camera: Camera3D
 
@@ -21,6 +23,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+		elif arg == "--clip":
+			_clip_only = true
 		elif arg == "--plain":
 			PsxScreen.enabled = false
 	_build_stage()
@@ -32,7 +36,7 @@ func _ready() -> void:
 		layer.visible = false
 	_side_camera = Camera3D.new()
 	add_child(_side_camera)
-	_tour.call_deferred()
+	(_clip if _clip_only else _tour).call_deferred()
 
 
 func _tour() -> void:
@@ -61,6 +65,17 @@ func _tour() -> void:
 	_side_camera.global_position = Vector3(2.0, 1.5, -0.6)
 	_side_camera.look_at(Vector3(0.0, 1.3, -0.7), Vector3.UP)
 	await _shot("09_side_holding")
+	get_tree().quit()
+
+
+## Throws a left, a right and a left again from the first-person camera, then quits.
+func _clip() -> void:
+	(_player.get_node("%Camera3D") as Camera3D).make_current()
+	await _wait(0.4)
+	var arms: ArmAnimator = _player.get_node("%Arms")
+	for arm in [ArmAnimator.Arm.LEFT, ArmAnimator.Arm.RIGHT, ArmAnimator.Arm.LEFT]:
+		arms.play_action(&"punch", arm)
+		await _wait(0.6)
 	get_tree().quit()
 
 

@@ -78,35 +78,97 @@ libraries = {
 unique_name_in_owner = true
 transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -0.7, -0.3, -0.6)
 
-[node name="ArmLeft" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot" unique_id=949494793]
+[node name="ArmLeftSkeleton" type="Skeleton3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot"]
+unique_name_in_owner = true
+bones/0/name = "UpperArm"
+bones/0/parent = -1
+bones/0/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.23)
+bones/0/enabled = true
+bones/0/position = Vector3(0, 0, 0.23)
+bones/0/rotation = Quaternion(0, 0, 0, 1)
+bones/0/scale = Vector3(1, 1, 1)
+bones/1/name = "Forearm"
+bones/1/parent = 0
+bones/1/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.23)
+bones/1/enabled = true
+bones/1/position = Vector3(0, 0, -0.23)
+bones/1/rotation = Quaternion(0.05996, 0, 0, 0.9982)
+bones/1/scale = Vector3(1, 1, 1)
+bones/2/name = "Hand"
+bones/2/parent = 1
+bones/2/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.208)
+bones/2/enabled = true
+bones/2/position = Vector3(0, 0, -0.208)
+bones/2/rotation = Quaternion(-0.04, 0, 0, 0.9992)
+bones/2/scale = Vector3(1, 1, 1)
+
+[node name="ArmLeft" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeftSkeleton" unique_id=949494793]
 unique_name_in_owner = true
 mesh = ExtResource("17_arm_left")
+skeleton = NodePath("..")
 surface_material_override/0 = SubResource("StandardMaterial3D_body")
 
-[node name="HandSlotLeft" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeft" unique_id=1502060170]
+[node name="HandLeft" type="BoneAttachment3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeftSkeleton"]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.208)
+bone_name = "Hand"
+bone_idx = 2
+
+[node name="HandSlotLeft" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeftSkeleton/HandLeft" unique_id=1502060170]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.092)
 script = ExtResource("3_hand_slot")
 display_name = "Left Hand"
 
-[node name="ChargeBar" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeft/HandSlotLeft" unique_id=985039455 instance=ExtResource("5_charge_bar")]
+[node name="ChargeBar" parent="CameraPivot/Camera3D/Arms/ArmLeftPivot/ArmLeftSkeleton/HandLeft/HandSlotLeft" unique_id=985039455 instance=ExtResource("5_charge_bar")]
 
 [node name="ArmRightPivot" type="Node3D" parent="CameraPivot/Camera3D/Arms"]
 unique_name_in_owner = true
 transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.7, -0.3, -0.6)
 
-[node name="ArmRight" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot" unique_id=1725595375]
+[node name="ArmRightSkeleton" type="Skeleton3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot"]
+unique_name_in_owner = true
+bones/0/name = "UpperArm"
+bones/0/parent = -1
+bones/0/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.23)
+bones/0/enabled = true
+bones/0/position = Vector3(0, 0, 0.23)
+bones/0/rotation = Quaternion(0, 0, 0, 1)
+bones/0/scale = Vector3(1, 1, 1)
+bones/1/name = "Forearm"
+bones/1/parent = 0
+bones/1/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.23)
+bones/1/enabled = true
+bones/1/position = Vector3(0, 0, -0.23)
+bones/1/rotation = Quaternion(0.05996, 0, 0, 0.9982)
+bones/1/scale = Vector3(1, 1, 1)
+bones/2/name = "Hand"
+bones/2/parent = 1
+bones/2/rest = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.208)
+bones/2/enabled = true
+bones/2/position = Vector3(0, 0, -0.208)
+bones/2/rotation = Quaternion(-0.04, 0, 0, 0.9992)
+bones/2/scale = Vector3(1, 1, 1)
+
+[node name="ArmRight" type="MeshInstance3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRightSkeleton" unique_id=1725595375]
 unique_name_in_owner = true
 mesh = ExtResource("18_arm_right")
+skeleton = NodePath("..")
 surface_material_override/0 = SubResource("StandardMaterial3D_body")
 
-[node name="HandSlotRight" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRight" unique_id=1724605880]
+[node name="HandRight" type="BoneAttachment3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRightSkeleton"]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.208)
+bone_name = "Hand"
+bone_idx = 2
+
+[node name="HandSlotRight" type="Node3D" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRightSkeleton/HandRight" unique_id=1724605880]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.092)
 script = ExtResource("3_hand_slot")
 display_name = "Right Hand"
 
-[node name="ChargeBar" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRight/HandSlotRight" unique_id=1584888876 instance=ExtResource("5_charge_bar")]
+[node name="ChargeBar" parent="CameraPivot/Camera3D/Arms/ArmRightPivot/ArmRightSkeleton/HandRight/HandSlotRight" unique_id=1584888876 instance=ExtResource("5_charge_bar")]
 
 [node name="Interactor" type="Node" parent="CameraPivot/Camera3D" unique_id=167089925]
 unique_name_in_owner = true
