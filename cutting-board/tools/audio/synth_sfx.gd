@@ -284,11 +284,11 @@ func _make_glue() -> void:
 ## The player out of breath, as a wooden body breathes: air dragged in and shoved out
 ## through dry wood, the boards of the chest creaking as they flex and a small knock as
 ## they settle. Each take is one whole breath, in then out, which LowStaminaBreath plays
-## faster and louder the emptier the stamina gets. The game uses the creaky bellows (A);
+## faster and louder the emptier the stamina gets. The game uses the hollow-log wheeze (B);
 ## breath_concepts renders all three flavours to user://breath_concepts/ for comparing.
 func _make_breaths() -> void:
 	for take in 3:
-		_save("sfx/breath_%d" % (take + 1), _breath(0), 0.85)
+		_save("sfx/breath_%d" % (take + 1), _breath(1), 0.85)
 
 
 func _make_breath_concepts() -> void:
