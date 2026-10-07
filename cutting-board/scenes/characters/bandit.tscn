@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
 [ext_resource type="Resource" path="res://resources/factions/bandits.tres" id="2_faction"]
@@ -7,6 +7,8 @@
 [ext_resource type="Resource" path="res://resources/items/rock.tres" id="5_rock"]
 [ext_resource type="Resource" path="res://resources/items/bandit_mask.tres" id="6_mask"]
 [ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="7_glue"]
+[ext_resource type="Script" path="res://scripts/components/dialogue.gd" id="8_dialogue"]
+[ext_resource type="Resource" path="res://resources/audio/bandit_voice.tres" id="9_voice"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bandit"]
 albedo_color = Color(0.7, 0.2, 0.18, 1)
@@ -36,3 +38,9 @@ flee_below_health = 0.0
 
 [node name="AttackTarget" parent="Brain" index="2"]
 aggression = 0.8
+
+[node name="Dialogue" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("8_dialogue")
+one_liners = PackedStringArray("Nice mask, brother. Ugly as sin. Perfect.", "Back to Hollowstump by dark, or the boss counts you as firewood.", "Next raid we go for the glue pots. No glue, no village. Simple sums.", "That face of yours. Carved it yourself? Looks proper mean. Good.", "Villagers squeak when you knock on 'em. Like a door that owes you money.", "Don't look at me like that. Well, do. Your mask's got a lovely scowl.", "I'd tell you the password, brother, but I sawed it off and lost it.", "Quiet day. Too quiet. Somebody go kick a fence.", "If the Monger asks, you never saw me. If she asks my mask, it never saw your mask.")
+voice = ExtResource("9_voice")

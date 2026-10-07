@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SoundBank" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sound_bank.gd" id="1_bank"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_a_low.wav" id="2_al"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_e_low.wav" id="3_el"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_o_low.wav" id="4_ol"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_u_low.wav" id="5_ul"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_a_high.wav" id="6_ah"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_e_high.wav" id="7_eh"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_o_high.wav" id="8_oh"]
+[ext_resource type="AudioStream" path="res://assets/audio/voices/mask_monger/blip_u_high.wav" id="9_uh"]
+
+[resource]
+script = ExtResource("1_bank")
+streams = Array[AudioStream]([ExtResource("2_al"), ExtResource("3_el"), ExtResource("4_ol"), ExtResource("5_ul"), ExtResource("6_ah"), ExtResource("7_eh"), ExtResource("8_oh"), ExtResource("9_uh")])
+volume_db = -10
+volume_jitter_db = 1
+pitch = 0.78
+pitch_jitter = 0.06
+bus = &"SFX"
+cooldown = 0
+unit_size = 3
+max_distance = 25

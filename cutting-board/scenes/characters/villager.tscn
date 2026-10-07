@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
 [ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="2_faction"]
@@ -8,6 +8,8 @@
 [ext_resource type="Resource" uid="uid://d4k7e4lko40pm" path="res://resources/items/hammer.tres" id="6_hammer"]
 [ext_resource type="Resource" path="res://resources/items/saw.tres" id="7_saw"]
 [ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="8_glue"]
+[ext_resource type="Script" path="res://scripts/components/dialogue.gd" id="9_dialogue"]
+[ext_resource type="Resource" path="res://resources/audio/villager_voice.tres" id="10_voice"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_villager"]
 albedo_color = Color(0.35, 0.5, 0.8, 1)
@@ -41,3 +43,9 @@ aggression = 0.0
 
 [node name="ThrowAtTarget" parent="Brain" index="3"]
 eagerness = 0.0
+
+[node name="Dialogue" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("9_dialogue")
+one_liners = PackedStringArray("Nice face you've got on. Mine itches at the knots, but the Monger says that's just the grain settling.", "Mind the splinters, friend. I sat down too fast this morning and now there's two of me.", "Sky's got a tight ring on it today. Old Spoke says that means glue weather.", "Lovely mask! The eyes on it are looking right at my eyes. Ooh. Hello, eyes.", "Ran out of glue again. Had to hold my elbow on all through supper.", "The Monger carved my face on a Tuesday. You can tell, it's a bit Tuesday around the chin.", "They say the Builder hears every nail that drops. So I don't drop nails. I place them. Gently.", "Count the rings up in the sky, see? One more every year, and it's still not done sanding.", "Don't wander off to Hollowstump. Bandits out there, rude ones, faces like kindling.", "If you hear clicking at night, that's just me. My knees, mostly.")
+voice = ExtResource("10_voice")

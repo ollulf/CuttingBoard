@@ -11,17 +11,25 @@ extends Usable
 ## nothing to offer. The first talk says `first_lines` and ends by giving `gift`, worn
 ## straight away when it is something worn and its slot is free, else put in the
 ## inventory. Every later talk says `repeat_lines` and gives nothing.
+##
+## An everyday NPC (a villager, a bandit) has `one_liners` instead: each talk is one line
+## drawn from them, and it only talks while friendly to the listener: not of a side
+## hostile to the listener's (a bandit mask makes bandits take you for one of theirs), no
+## grudge against them, not fighting.
 
 signal talk_started(by: Node)
 signal line_shown(text: String)
 signal talk_ended
 
-## The name on the plank.
+## The name on the plank. Empty uses the NPC's own name.
 @export var speaker_name := ""
 @export_multiline var first_lines: PackedStringArray = []
 @export_multiline var repeat_lines: PackedStringArray = []
 ## Handed over at the end of the first talk; null for none.
 @export var gift: ItemData
+## When set, every talk says one of these, never the same twice running, and only to a
+## friendly listener; first_lines, repeat_lines and gift are left unused.
+@export_multiline var one_liners: PackedStringArray = []
 ## The voice blips played while a line types out.
 @export var voice: SoundBank
 ## Metres the listener may walk away before the talk breaks off.
@@ -36,6 +44,8 @@ var _index := -1
 var _listener: Node3D
 var _plank: SpeechPlank
 var _listener_control := 0
+## Index into one_liners of the line said last, so the next talk says another.
+var _last_one_liner := -1
 
 @onready var _npc: Npc = get_parent() as Npc
 
@@ -67,13 +77,18 @@ func _can_talk(by: Node) -> bool:
 			return false
 		if _npc.has_grudge_against(by as Node3D):
 			return false
+	if not one_liners.is_empty():
+		return _is_friendly_to(by)
 	var lines := repeat_lines if talked else first_lines
 	return not lines.is_empty()
 
 
 func _on_used(by: Node) -> void:
 	_listener = by as Node3D
-	_lines = repeat_lines if talked else first_lines
+	if one_liners.is_empty():
+		_lines = repeat_lines if talked else first_lines
+	else:
+		_lines = PackedStringArray([_pick_one_liner()])
 	_index = 0
 	if _npc:
 		_npc.brain.set_physics_process(false)
@@ -104,7 +119,7 @@ func advance() -> void:
 
 
 func _show_line() -> void:
-	_plank.show_line(speaker_name, _lines[_index], voice)
+	_plank.show_line(_speaker(), _lines[_index], voice)
 	line_shown.emit(_lines[_index])
 
 
@@ -128,12 +143,37 @@ func _end(heard_out: bool) -> void:
 	if _npc:
 		_npc.locomotion.clear_facing()
 		_npc.brain.set_physics_process(true)
-	if heard_out and not talked:
+	if heard_out and not talked and one_liners.is_empty():
 		talked = true
 		_give(by)
 	_listener = null
 	talk_ended.emit()
 	get_tree().call_group(&"interaction_prompts", &"refresh")
+
+
+## speaker_name, or failing that the NPC's own name (the one drawn from its name_pool).
+func _speaker() -> String:
+	if not speaker_name.is_empty() or _npc == null:
+		return speaker_name
+	return _npc.inventory.get_display_name()
+
+
+## Friendly enough for small talk: its side is not hostile to the listener's (which
+## follows the listener's mask) and it is not in a fight or holding a grudge.
+func _is_friendly_to(by: Node) -> bool:
+	var own: Faction = _npc.faction if _npc else Faction.find_in(get_parent())
+	if own and own.is_hostile_to(by):
+		return false
+	return _npc == null or not _npc.is_in_combat()
+
+
+## A line from one_liners other than the one said last time, when there is another.
+func _pick_one_liner() -> String:
+	var index := randi() % one_liners.size()
+	if one_liners.size() > 1 and index == _last_one_liner:
+		index = (index + 1 + randi() % (one_liners.size() - 1)) % one_liners.size()
+	_last_one_liner = index
+	return one_liners[index]
 
 
 ## Puts the gift on when it is worn and the slot is free (a first mask lifts the grain),

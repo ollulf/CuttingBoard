@@ -69,6 +69,14 @@ func _ready() -> void:
 	_refresh()
 
 
+## Whether someone will talk can change while they stay under the crosshair (a mask put
+## on or off, a grudge starting, a fight breaking out), so a talker's prompt is redrawn
+## every step rather than waiting for a signal.
+func _physics_process(_delta: float) -> void:
+	if Dialogue.find_dialogue_in(_interactor.get_hovered()):
+		_update_interact_prompt()
+
+
 func refresh() -> void:
 	_refresh()
 
