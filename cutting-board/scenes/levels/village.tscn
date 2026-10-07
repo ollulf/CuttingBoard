@@ -47,6 +47,8 @@
 [ext_resource type="PackedScene" path="res://scenes/items/wood_glue.tscn" id="44_wood_glue"]
 [ext_resource type="PackedScene" path="res://scenes/characters/mask_monger.tscn" id="45_mask_monger"]
 [ext_resource type="PackedScene" path="res://scenes/items/soul_bottle.tscn" id="46_soul_bottle"]
+[ext_resource type="PackedScene" path="res://scenes/items/pegged_rolling_pin.tscn" id="47_rolling_pin"]
+[ext_resource type="PackedScene" path="res://scenes/items/clothes_peg_knuckles.tscn" id="48_peg_knuckles"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -218,6 +220,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.55, 0.95, 17.55)
 
 [node name="WoodGlue" parent="WagonYard" instance=ExtResource("44_wood_glue")]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 3.78, 1.03, 17.78)
+
+[node name="PeggedRollingPin" parent="WagonYard" instance=ExtResource("47_rolling_pin")]
+transform = Transform3D(0.8660254, 0, 0.5, 0.5, 0, -0.8660254, 0, 1, 0, 6.6, 0.08, 10.9)
+
+[node name="ClothesPegKnuckles" parent="WagonYard" instance=ExtResource("48_peg_knuckles")]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 7.7, 0.03, 12.0)
 
 [node name="Farm" type="Node3D" parent="." unique_id=502573557]
 

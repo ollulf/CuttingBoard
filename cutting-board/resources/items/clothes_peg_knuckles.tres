@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/clothes_peg_knuckles.png" id="1_gsgrb"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_i43bo"]
+diffuse_texture = ExtResource("1_gsgrb")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Clothes-Peg Knuckles"
+icon = SubResource("CanvasTexture_i43bo")
+item_type = 1
+description = "Four sprung clothes pegs strapped across a leather band. Light and quick, if not much of a punch."
+animation_set = &"weapon"
+weight = 0.6
+durability = 90
+wear_per_hit = 3
+world_scene_path = "res://scenes/items/clothes_peg_knuckles.tscn"

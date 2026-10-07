@@ -21,3 +21,7 @@ no ItemData or scenes yet.
 8. **Pendulum Maul** (player). Clock bob on its rod; slow, heavy, keeps ticking after a swing.
 9. **Back-Scratcher Rake** (elders). Its scratches strip mask paint; a blank face forgets its side.
 10. **Rocker Sickle** (walking chairs). Rocking-chair runner planed keen; hooks legs, rocks foes over.
+
+## In the game (round 2)
+
+Five of these are real melee weapons now (`resources/items/`, `scenes/items/`): Pegged Rolling Pin (16 dmg, 2.5 kg, 200 dur) and Clothes-Peg Knuckles (9, 0.6 kg, 90) in the village wagon yard, Chair-Leg Club (19, 3.5 kg, 160) in the chair yard, Back-Scratcher Rake (11, 0.9 kg, 70) and Rocker Sickle (18, 2.0 kg, 130) in the bandit den. Plain swings only: the special moves above are not built.
