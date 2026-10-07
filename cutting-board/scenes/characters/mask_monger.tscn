@@ -96,6 +96,7 @@ display_name = "Mask-Monger"
 unique_name_in_owner = true
 script = ExtResource("7_health")
 max_health = 120
+invincible = true
 
 [node name="HealthRegen" type="Node" parent="."]
 script = ExtResource("99_regen")
