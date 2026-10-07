@@ -71,6 +71,28 @@ enum Gesture { LOOK_AROUND, GLANCE, LOOK_DOWN, LOOK_UP, STRETCH_NECK, SHIFT_WEIG
 ## How quickly an arm reaches for or lets go of a held item, higher is snappier.
 @export var hold_blend_speed := 8.0
 
+## Seconds from the start of a weapon's chop, and of a bare fist's jab, to the blow
+## landing. Npc.strike_at times its damage to these.
+const CHOP_CONTACT := 0.3
+const JAB_CONTACT := 0.15
+
+## A swing as keys of [seconds, hand position, item pitch in degrees], the position in
+## the Visual's frame for the right hand (the left mirrors it), the pitch tilting the
+## held item's top back for positive values. The hand starts and ends at its rest.
+## The chop: up and back by the head, down onto the target, a short follow-through.
+const CHOP_KEYS := [
+	[0.24, Vector3(0.26, 1.72, 0.12), 55.0],
+	[CHOP_CONTACT, Vector3(0.18, 1.2, -0.5), -60.0],
+	[0.38, Vector3(0.22, 1.02, -0.42), -75.0],
+	[0.6, Vector3.INF, 0.0],
+]
+## The jab: drawn back to the ribs, punched straight out.
+const JAB_KEYS := [
+	[0.09, Vector3(0.3, 1.12, 0.06), 0.0],
+	[JAB_CONTACT, Vector3(0.16, 1.36, -0.52), -10.0],
+	[0.34, Vector3.INF, 0.0],
+]
+
 @onready var _body: HumanBody = %Body
 @onready var _skeleton: Skeleton3D = _body.skeleton
 @onready var _actor: CharacterBody3D = owner
@@ -90,6 +112,13 @@ var _velocity := Vector3.ZERO
 var _gait := 0.0
 var _phase := 0.0
 var _hold := {&"Right": 0.0, &"Left": 0.0}
+
+## The swing playing: which hand, its keys, and seconds into it. The hand slots' rest
+## transforms are what a swing moves away from and back to.
+var _swing_hand: HandSlot
+var _swing_keys: Array = []
+var _swing_time := 0.0
+var _slot_rest := {}
 
 ## Idle state. Every NPC starts its breathing and gestures at a random point so a crowd
 ## never moves in step.
@@ -124,6 +153,28 @@ func _ready() -> void:
 	_lean_side_target = 1.0 if _rng.randf() < 0.5 else -1.0
 	_body.went_limp.connect(set_process.bind(false))
 	_body.animated = true
+	_slot_rest[_hand_right] = _hand_right.transform
+	_slot_rest[_hand_left] = _hand_left.transform
+
+
+## Swings `hand`: a chop from above the head when `armed`, else a jab. The hand slot
+## itself is moved, so the held item goes with it and the arm's reach follows. Starts
+## over if a swing is already playing.
+func swing(hand: HandSlot, armed: bool) -> void:
+	if _swing_hand and _swing_hand != hand:
+		_swing_hand.transform = _slot_rest[_swing_hand]
+	_swing_hand = hand
+	_swing_keys = CHOP_KEYS if armed else JAB_KEYS
+	_swing_time = 0.0
+
+
+## Seconds from the start of a swing to its contact, armed or bare-handed.
+func contact_time(armed: bool) -> float:
+	return CHOP_CONTACT if armed else JAB_CONTACT
+
+
+func is_swinging() -> bool:
+	return _swing_hand != null
 
 
 ## Starts an idle gesture straight away, cutting short whatever one was playing. Idle
@@ -151,6 +202,7 @@ func _process(delta: float) -> void:
 	_gait = lerpf(_gait, clampf(speed / maxf(_locomotion.walk_speed * 0.5, 0.01), 0.0, 1.0) if moving else 0.0, _blend(gait_blend_speed, delta))
 
 	_update_gestures(delta)
+	_update_swing(delta)
 	_update_holding(delta)
 	_pose(delta, speed)
 
@@ -332,8 +384,41 @@ func _model_rest(bone_name: StringName) -> Vector3:
 func _update_holding(delta: float) -> void:
 	for side in [&"Right", &"Left"]:
 		var hand := _hand_right if side == &"Right" else _hand_left
+		# A swinging fist reaches for its slot like a held item, and fully at once.
+		if hand == _swing_hand:
+			_hold[side] = 1.0
+			continue
 		var target := 0.0 if hand.is_free() else 1.0
 		_hold[side] = lerpf(_hold[side], target, _blend(hold_blend_speed, delta))
+
+
+## Moves the swinging hand's slot along the swing's keys, from its rest and back.
+## Into the contact key the hand accelerates; every other leg eases in and out.
+func _update_swing(delta: float) -> void:
+	if _swing_hand == null:
+		return
+	_swing_time += delta
+	var rest: Transform3D = _slot_rest[_swing_hand]
+	var mirror := 1.0 if _swing_hand == _hand_right else -1.0
+	var from_time := 0.0
+	var from_pos := rest.origin
+	var from_pitch := 0.0
+	for key: Array in _swing_keys:
+		var key_time: float = key[0]
+		var key_pos: Vector3 = key[1]
+		key_pos = rest.origin if key_pos == Vector3.INF else Vector3(key_pos.x * mirror, key_pos.y, key_pos.z)
+		var key_pitch: float = key[2]
+		if _swing_time < key_time:
+			var t := clampf((_swing_time - from_time) / maxf(key_time - from_time, 0.001), 0.0, 1.0)
+			t = t * t if is_equal_approx(key_time, CHOP_CONTACT) or is_equal_approx(key_time, JAB_CONTACT) else smoothstep(0.0, 1.0, t)
+			var pitch := deg_to_rad(lerpf(from_pitch, key_pitch, t))
+			_swing_hand.transform = Transform3D(Basis(Vector3.RIGHT, pitch) * rest.basis, from_pos.lerp(key_pos, t))
+			return
+		from_time = key_time
+		from_pos = key_pos
+		from_pitch = key_pitch
+	_swing_hand.transform = rest
+	_swing_hand = null
 
 
 # --- Idle gestures ----------------------------------------------------------------------

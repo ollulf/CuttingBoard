@@ -80,12 +80,17 @@ extends CharacterBody3D
 @onready var hands: Array[HandSlot] = [hand_right, hand_left]
 ## Puts the weapon away at the hip out of combat. Not every NPC has one.
 @onready var holster: Holster = get_node_or_null(^"%Holster")
+## Poses the swing's arm motion. Optional: a body without one still strikes on time.
+@onready var body_animator: BodyAnimator = get_node_or_null(^"%BodyAnimator")
 
 ## Where the NPC was placed, which is what it wanders around.
 var home := Vector3.ZERO
 
 ## Whoever this NPC holds a grudge against, and until when.
 var _grudges := GrudgeBook.new()
+## The blow being swung: who at, and seconds left until it lands. Negative when none is.
+var _strike_target: Node3D
+var _strike_left := -1.0
 
 
 func _ready() -> void:
@@ -204,17 +209,69 @@ func flat_distance_to(point: Vector3) -> float:
 	return Vector2(point.x - global_position.x, point.z - global_position.z).length()
 
 
-## Swings at `target` with whatever weapon is in hand, or a bare fist. The eyes are
-## turned onto the target first, since MeleeAttack strikes along them — without that a
-## crouching target would be swung over.
-func strike_at(target: Node3D) -> void:
-	var aim_point := target.global_position + Vector3.UP * sight.target_height
-	if not eyes.global_position.is_equal_approx(aim_point):
-		eyes.look_at(aim_point)
+## Swings at `target` with whatever weapon is in hand, or a bare fist. The blow does not
+## land at once: the arm winds up first — a chop from above the head with a weapon, a
+## shorter jab with a fist — and the damage comes on the swing's contact frame, so the
+## wind-up is the tell a target can step away from. Returns false, starting nothing,
+## while an earlier swing has still to land.
+func strike_at(target: Node3D) -> bool:
+	if is_striking() or not health.is_alive():
+		return false
 	# A weapon still at the hip comes out before the first blow, never after it.
 	if holster:
 		holster.draw_now()
+	_strike_target = target
+	_strike_left = swing_contact_time()
+	var weapon_hand := get_weapon_hand()
+	if body_animator:
+		body_animator.swing(weapon_hand if weapon_hand else hand_right, weapon_hand != null)
 	melee.play_swing()
+	return true
+
+
+## Seconds from the start of a swing to its blow landing, for what is in hand now.
+func swing_contact_time() -> float:
+	var armed := get_weapon_hand() != null
+	if body_animator:
+		return body_animator.contact_time(armed)
+	return BodyAnimator.CHOP_CONTACT if armed else BodyAnimator.JAB_CONTACT
+
+
+## Whether a swing is winding up and its blow has still to land.
+func is_striking() -> bool:
+	return _strike_left >= 0.0
+
+
+## Drops the blow being wound up, so it never lands. The arm still finishes its motion.
+func cancel_strike() -> void:
+	_strike_target = null
+	_strike_left = -1.0
+
+
+func _physics_process(delta: float) -> void:
+	if not is_striking():
+		return
+	_strike_left -= delta
+	if _strike_left <= 0.0:
+		var target := _strike_target
+		cancel_strike()
+		_land_strike(target)
+
+
+## The contact frame. The eyes are turned onto the target first, since MeleeAttack
+## strikes along them — without that a crouching target would be swung over. A target
+## gone, dead or out of reach by now is swung at and missed.
+func _land_strike(target: Node3D) -> void:
+	if not health.is_alive() or not is_instance_valid(target) or not target.is_inside_tree():
+		return
+	var target_health := Health.find_in(target)
+	if target_health and not target_health.is_alive():
+		return
+	if flat_distance_to(target.global_position) > melee.reach:
+		return
+	var aim_point := target.global_position + Vector3.UP * sight.target_height
+	if not eyes.global_position.is_equal_approx(aim_point):
+		eyes.look_at(aim_point)
 	melee.strike(get_weapon_hand())
 
 
@@ -391,6 +448,8 @@ func _on_damaged(info: DamageInfo) -> void:
 					Sfx.play_at(hurt_sound, eyes.global_position)
 		)
 		body.flinch(info)
+		# A blow staggers: a swing still winding up is knocked out of it.
+		cancel_strike()
 		locomotion.push(body.get_knockback(info))
 
 
@@ -400,6 +459,7 @@ func _on_damaged(info: DamageInfo) -> void:
 ## it by its limbs, so the standing capsule is switched off rather than left upright
 ## where the NPC used to be.
 func _on_died(info: DamageInfo) -> void:
+	cancel_strike()
 	brain.shut_down()
 	locomotion.stop()
 	locomotion.set_physics_process(false)
