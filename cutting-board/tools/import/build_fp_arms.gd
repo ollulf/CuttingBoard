@@ -30,8 +30,9 @@ const HAND_SLOT := Vector3(0.0, 0.0, -0.3)
 ## How far up from the fingertips the middle of the palm is, in metres.
 const PALM_FROM_FINGERTIPS := 0.11
 ## How much of the upper arm is kept above the elbow, in metres. The shoulder above it
-## is left off: it would only show as a ball floating behind a punch.
-const UPPER_ARM_KEPT := 0.2
+## is left off: it would only show as a ball floating behind a punch. Long enough that
+## the cut end stays below the view while the punch reaches the middle of the screen.
+const UPPER_ARM_KEPT := 0.3
 ## First-person arms are drawn a little larger than life, so they read at the edges of
 ## a low-resolution screen.
 const VIEW_SCALE := 1.15
