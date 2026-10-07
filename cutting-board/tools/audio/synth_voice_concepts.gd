@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tools/audio/synth_base.gd"
 
 ## Renders the five Mask-Monger voice concepts (docs/concepts/monger-voice.md) as WAVs in
 ## assets/audio/voice_concepts/: per concept a short greeting of babble blips and a
@@ -17,7 +17,6 @@ extends SceneTree
 ## so the files compare the voice itself, not the melody. Same lo-fi format and filter
 ## approach as synth_sfx.gd; prints peak and RMS level of each file.
 
-const RATE := 22050
 const ROOT := "res://assets/audio/voice_concepts/"
 
 ## Female vowel formants (F1, F2, F3 in Hz), roughly from Peterson & Barney.
@@ -37,8 +36,6 @@ var wise := [
 	[-2, 0, 0.22, 0.07, O], [0, 0, 0.18, 0.07, A], [3, 2, 0.26, 0.07, E], [2, 0, 0.32, 0.38, O],
 	[0, 1, 0.20, 0.07, I], [-1, -2, 0.22, 0.07, A], [-3, -3, 0.22, 0.08, E], [-5, -7, 0.75, 0.0, U],
 ]
-
-var rng := RandomNumberGenerator.new()
 
 
 ## Fast dialogue babble for round 3: two quick runs of short syllables, as typed-out text.
@@ -118,8 +115,8 @@ func _syl_reed(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFlo
 	for i in n:
 		var t := clampf(float(i) / _seconds(length), 0.0, 1.0)
 		wobble = clampf(wobble + rng.randf_range(-0.002, 0.002), -0.01, 0.01)
-		var f0 := lerpf(f0a, f0b, t * t) * (1.0 + wobble + 0.008 * sin(TAU * 4.5 * i / RATE))
-		phase += f0 / RATE
+		var f0 := lerpf(f0a, f0b, t * t) * (1.0 + wobble + 0.008 * sin(TAU * 4.5 * i / sample_rate))
+		phase += f0 / sample_rate
 		out[i] = sin(TAU * phase) + 0.18 * sin(TAU * 2.0 * phase) + 0.06 * sin(TAU * 3.0 * phase)
 	var air := _bandpass(_noise(length + 0.1), (f0a + f0b) * 0.5, 3.0)
 	_mix(out, air, 0, 1.6)
@@ -143,11 +140,11 @@ func _syl_hinge(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFl
 	var fry := 0.07
 	for i in n:
 		var t := clampf(float(i) / _seconds(length), 0.0, 1.0)
-		var sec := float(i) / RATE
+		var sec := float(i) / sample_rate
 		var f0 := lerpf(f0a, f0b, t)
 		if sec < fry:
 			f0 = lerpf(38.0, f0, pow(sec / fry, 3.0))
-		phase += f0 * (1.0 + jitter) / RATE
+		phase += f0 * (1.0 + jitter) / sample_rate
 		if phase >= 1.0:
 			phase -= 1.0
 			amp = rng.randf_range(0.55, 1.0)
@@ -166,7 +163,7 @@ func _syl_whisper_hum(length: float, f0a: float, f0b: float, vowel: Array) -> Pa
 	var phase := 0.0
 	for i in n:
 		var t := clampf(float(i) / _seconds(length), 0.0, 1.0)
-		phase += lerpf(f0a, f0b, t) * (1.0 + 0.01 * sin(TAU * 5.5 * i / RATE)) / RATE
+		phase += lerpf(f0a, f0b, t) * (1.0 + 0.01 * sin(TAU * 5.5 * i / sample_rate)) / sample_rate
 		hum[i] = sin(TAU * phase) + 0.35 * sin(TAU * 2.0 * phase) + 0.12 * sin(TAU * 3.0 * phase)
 	hum = _shape(_lowpass(hum, 900.0, 0.7), 0.05, length)
 	var whisper := _formants(_noise(length + 0.15), vowel, [1.0, 0.8, 0.45], 12.0)
@@ -185,9 +182,9 @@ func _syl_kalimba(length: float, f0a: float, f0b: float, vowel: Array) -> Packed
 	var out := _silence_samples(n)
 	var phase := 0.0
 	for i in n:
-		var sec := float(i) / RATE
+		var sec := float(i) / sample_rate
 		var t := clampf(sec / length, 0.0, 1.0)
-		phase += lerpf(f0a, f0b, t) / RATE
+		phase += lerpf(f0a, f0b, t) / sample_rate
 		out[i] = (sin(TAU * phase) * exp(-sec / (ring * 0.45))
 			+ 0.25 * sin(TAU * 2.0 * phase) * exp(-sec / (ring * 0.2))
 			+ 0.3 * sin(TAU * 5.4 * phase) * exp(-sec / 0.035))
@@ -267,7 +264,7 @@ func _godly_phrase(phrase: Array, v: Array, stretch: float) -> PackedFloat32Arra
 	var wet := _hall(send, v[2])
 	# Duck the wet signal under the dry voice (fast attack, 120 ms release).
 	var env := 0.0
-	var release := exp(-1.0 / (0.12 * RATE))
+	var release := exp(-1.0 / (0.12 * sample_rate))
 	var top := 0.001
 	for x in dry:
 		top = maxf(top, absf(x))
@@ -296,7 +293,7 @@ func _syl_choir(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFl
 	var n := out.size()
 	var phase := 0.0
 	for i in n:
-		phase += lerpf(f0a, f0b, float(i) / n) * 4.0 / RATE
+		phase += lerpf(f0a, f0b, float(i) / n) * 4.0 / sample_rate
 		out[i] += 0.06 * sin(TAU * phase)
 	return _shape(out, 0.03, length * 0.95)
 
@@ -315,8 +312,8 @@ func _syl_bell_voice(length: float, f0a: float, f0b: float, vowel: Array) -> Pac
 	var gains := [1.0, 0.45, 0.35, 0.18, 0.1]
 	var phase := 0.0
 	for i in n:
-		var sec := float(i) / RATE
-		phase += lerpf(f0a, f0b, clampf(sec / length, 0.0, 1.0)) * 2.0 / RATE
+		var sec := float(i) / sample_rate
+		phase += lerpf(f0a, f0b, clampf(sec / length, 0.0, 1.0)) * 2.0 / sample_rate
 		var bloom := minf(sec / 0.05, 1.0)
 		var x := 0.0
 		for r in ratios.size():
@@ -338,7 +335,7 @@ func _syl_grove(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFl
 	var phase := 0.0
 	for i in n:
 		var t := clampf(float(i) / _seconds(length), 0.0, 1.0)
-		phase += lerpf(f0a, f0b, t) * (1.0 + 0.008 * sin(TAU * 4.6 * i / RATE)) / RATE
+		phase += lerpf(f0a, f0b, t) * (1.0 + 0.008 * sin(TAU * 4.6 * i / sample_rate)) / sample_rate
 		hum[i] = sin(TAU * phase) + 0.3 * sin(TAU * 2.0 * phase) + 0.35 * sin(PI * phase)
 	hum = _shape(_lowpass(hum, 1100.0, 0.7), 0.04, length)
 	var source := _silence_samples(n)
@@ -382,11 +379,11 @@ func _hall(x: PackedFloat32Array, feedback: float) -> PackedFloat32Array:
 func _wind(length: float) -> PackedFloat32Array:
 	var out := _bandpass(_noise(length), 500.0, 0.8)
 	for i in out.size():
-		out[i] *= 0.6 + 0.4 * sin(TAU * 0.35 * i / RATE)
+		out[i] *= 0.6 + 0.4 * sin(TAU * 0.35 * i / sample_rate)
 	return out
 
 
-# --- Building blocks (as in synth_sfx.gd) -------------------------------------------------
+# --- Building blocks ----------------------------------------------------------------------
 
 
 ## A soft glottal pulse train: a sawtooth with a rounded edge, pitch gliding `f0a` to `f0b`
@@ -399,29 +396,14 @@ func _glottal(length: float, f0a: float, f0b: float, vib_rate: float, vib_depth:
 	for i in n:
 		var t := float(i) / n
 		drift = clampf(drift + rng.randf_range(-drift_step, drift_step), -0.02, 0.02)
-		var f0 := lerpf(f0a, f0b, t) * (1.0 + drift + vib_depth * sin(TAU * vib_rate * i / RATE))
-		phase = fposmod(phase + f0 / RATE, 1.0)
+		var f0 := lerpf(f0a, f0b, t) * (1.0 + drift + vib_depth * sin(TAU * vib_rate * i / sample_rate))
+		phase = fposmod(phase + f0 / sample_rate, 1.0)
 		out[i] = sin(PI * phase) * (2.0 * phase - 1.0)
 	return out
 
 
-func _glide_freqs(length: float, from: float, to: float) -> PackedFloat32Array:
-	var n := _seconds(length)
-	var freqs := PackedFloat32Array()
-	freqs.resize(n)
-	for i in n:
-		freqs[i] = lerpf(from, to, float(i) / n)
-	return freqs
-
-
-func _noise(length: float) -> PackedFloat32Array:
-	var out := _silence(length)
-	for i in out.size():
-		out[i] = rng.randf_range(-1.0, 1.0)
-	return out
-
-
-## Attack ramp of `attack` s, then an exponential-ish fall over `decay` s.
+## Attack ramp of `attack` s, then an exponential-ish fall over `decay` s. Overrides the
+## exponential envelope of synth_base.gd: these voices fade out to silence by `decay`.
 func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32Array:
 	var out := x.duplicate()
 	var a := maxi(_seconds(attack), 1)
@@ -434,113 +416,12 @@ func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32
 	return out
 
 
-func _formants(x: PackedFloat32Array, freqs: Array, gains: Array, q: float) -> PackedFloat32Array:
-	var out := _silence_samples(x.size())
-	for f in freqs.size():
-		_mix(out, _bandpass(x, freqs[f], q * (1.0 + f * 0.5)), 0, gains[f])
-	return out
-
-
-func _lowpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
-	return _biquad(x, "lowpass", freq, q)
-
-
-func _highpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
-	return _biquad(x, "highpass", freq, q)
-
-
-func _bandpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
-	return _biquad(x, "bandpass", freq, q)
-
-
-func _biquad(x: PackedFloat32Array, type: String, freq: float, q: float) -> PackedFloat32Array:
-	var freqs := PackedFloat32Array()
-	freqs.resize(x.size())
-	freqs.fill(freq)
-	return _filter_swept(x, type, freqs, q)
-
-
-## RBJ biquad with a per-sample frequency, coefficients refreshed every 8 samples.
-func _filter_swept(x: PackedFloat32Array, type: String, freqs: PackedFloat32Array, q: float) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(x.size())
-	var x1 := 0.0
-	var x2 := 0.0
-	var y1 := 0.0
-	var y2 := 0.0
-	var b0 := 0.0
-	var b1 := 0.0
-	var b2 := 0.0
-	var a1 := 0.0
-	var a2 := 0.0
-	for i in x.size():
-		if i % 8 == 0:
-			var w0 := TAU * clampf(freqs[mini(i, freqs.size() - 1)], 20.0, RATE * 0.45) / RATE
-			var cw := cos(w0)
-			var alpha := sin(w0) / (2.0 * q)
-			var a0 := 1.0 + alpha
-			match type:
-				"lowpass":
-					b0 = (1.0 - cw) * 0.5
-					b1 = 1.0 - cw
-					b2 = b0
-				"highpass":
-					b0 = (1.0 + cw) * 0.5
-					b1 = -(1.0 + cw)
-					b2 = b0
-				_:
-					b0 = alpha
-					b1 = 0.0
-					b2 = -alpha
-			b0 /= a0
-			b1 /= a0
-			b2 /= a0
-			a1 = -2.0 * cw / a0
-			a2 = (1.0 - alpha) / a0
-		var v := b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
-		x2 = x1
-		x1 = x[i]
-		y2 = y1
-		y1 = v
-		out[i] = v
-	return out
-
-
-func _mix(into: PackedFloat32Array, x: PackedFloat32Array, offset: int, gain: float) -> void:
-	for i in x.size():
-		var j := offset + i
-		if j >= into.size():
-			return
-		into[j] += x[i] * gain
-
-
-func _silence(length: float) -> PackedFloat32Array:
-	return _silence_samples(_seconds(length))
-
-
-func _silence_samples(n: int) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(n)
-	out.fill(0.0)
-	return out
-
-
-func _seconds(length: float) -> int:
-	return int(round(length * RATE))
-
-
 # --- Output -------------------------------------------------------------------------------
 
 
 ## Normalises to `peak`, fades the last 10 ms, writes 16-bit mono PCM and prints the level.
 func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
-	var out := x.duplicate()
-	var top := 0.0
-	for v in out:
-		top = maxf(top, absf(v))
-	if top > 0.0:
-		for i in out.size():
-			out[i] *= peak / top
+	var out := _normalized(x, peak)
 	var fade := mini(_seconds(0.01), out.size())
 	for i in fade:
 		out[out.size() - 1 - i] *= float(i) / fade
@@ -550,25 +431,6 @@ func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
 		sum += v * v
 		top_out = maxf(top_out, absf(v))
 	var rms := sqrt(sum / out.size())
-	print("%s  %.2f s  peak %.1f dBFS  rms %.1f dBFS" % [file_name, float(out.size()) / RATE, linear_to_db(top_out), linear_to_db(rms)])
+	print("%s  %.2f s  peak %.1f dBFS  rms %.1f dBFS" % [file_name, float(out.size()) / sample_rate, linear_to_db(top_out), linear_to_db(rms)])
 	var path := (file_name if file_name.begins_with("res://") else ROOT + file_name) + ".wav"
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
-	var data := PackedByteArray()
-	data.resize(out.size() * 2)
-	for i in out.size():
-		data.encode_s16(i * 2, clampi(int(round(out[i] * 32767.0)), -32768, 32767))
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_buffer("RIFF".to_ascii_buffer())
-	file.store_32(36 + data.size())
-	file.store_buffer("WAVEfmt ".to_ascii_buffer())
-	file.store_32(16)
-	file.store_16(1)
-	file.store_16(1)
-	file.store_32(RATE)
-	file.store_32(RATE * 2)
-	file.store_16(2)
-	file.store_16(16)
-	file.store_buffer("data".to_ascii_buffer())
-	file.store_32(data.size())
-	file.store_buffer(data)
-	file.close()
+	_write_wav(path, out, false)

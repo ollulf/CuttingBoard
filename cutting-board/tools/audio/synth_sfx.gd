@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tools/audio/synth_base.gd"
 
 ## Regenerates every synthesised sound in assets/audio from code, so a sound can be tuned
 ## by editing its recipe below and running this again:
@@ -23,10 +23,7 @@ extends SceneTree
 ## crossfaded into their head, which makes the seam inaudible; a WAV "smpl" chunk marks
 ## the loop so Godot imports them looping without touching the import settings.
 
-const RATE := 22050
 const ROOT := "res://assets/audio/"
-
-var rng := RandomNumberGenerator.new()
 
 
 func _init() -> void:
@@ -154,7 +151,7 @@ func _make_throws() -> void:
 		var out := _whoosh(length, 250.0, rng.randf_range(850.0, 1100.0), 330.0, 1.3, 0.35)
 		var flap := _shape(_lowpass(_noise(length), 600.0, 0.7), 0.04, length * 0.3)
 		for i in flap.size():
-			flap[i] *= 0.6 + 0.4 * sin(TAU * 22.0 * i / RATE)
+			flap[i] *= 0.6 + 0.4 * sin(TAU * 22.0 * i / sample_rate)
 		_mix(out, flap, 0, 0.4)
 		_save("sfx/throw_%d" % (take + 1), out, 0.85)
 
@@ -410,7 +407,7 @@ func _make_night_loop() -> void:
 	var level := PackedFloat32Array()
 	level.resize(n)
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / sample_rate
 		var gust := 0.5 * sin(TAU * t / loop) + 0.3 * sin(TAU * 2.0 * t / loop + 1.3) + 0.2 * sin(TAU * 5.0 * t / loop + 0.4)
 		cutoffs[i] = 420.0 + 220.0 * gust
 		level[i] = 0.75 + 0.25 * gust
@@ -431,7 +428,7 @@ func _make_night_loop() -> void:
 	# The far field: a narrow band of noise around cricket pitch with a slow shimmer.
 	var field := _bandpass(_noise(length), 4300.0, 6.0)
 	for i in n:
-		field[i] *= 0.6 + 0.4 * sin(TAU * 3.0 * i / RATE / 2.0)
+		field[i] *= 0.6 + 0.4 * sin(TAU * 3.0 * i / sample_rate / 2.0)
 	_mix(out, field, 0, 0.06)
 
 	_save_loop("ambience/night_loop", out, loop, fade, 0.6)
@@ -480,7 +477,7 @@ func _make_lantern_crackle() -> void:
 	var n := _seconds(length)
 	var out := _lowpass(_brown(length), 160.0, 0.7)
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / sample_rate
 		out[i] *= 0.5 * (0.7 + 0.3 * sin(TAU * 1.0 * t / loop * 8.0) * sin(TAU * 3.0 * t / loop))
 	var at := 0.0
 	while at < length - 0.05:
@@ -514,8 +511,8 @@ func _make_monger_hum() -> void:
 		x.resize(n)
 		var phase := rng.randf() * TAU
 		for i in n:
-			var t := float(i) / RATE
-			phase += TAU * freq * (1.0 + 0.006 * sin(TAU * 5.0 * t)) / RATE
+			var t := float(i) / sample_rate
+			phase += TAU * freq * (1.0 + 0.006 * sin(TAU * 5.0 * t)) / sample_rate
 			var env := minf(1.0, t / 0.12) * minf(1.0, (dur - t) / 0.25)
 			x[i] = (sin(phase) + 0.3 * sin(2.0 * phase) + 0.12 * sin(3.0 * phase)) * env
 		_mix(out, x, _seconds(float(note[1]) * 0.6), 1.0)
@@ -546,7 +543,7 @@ func _make_monger_tosses() -> void:
 		var length := rng.randf_range(0.42, 0.5)
 		var out := _whoosh(length, 300.0, rng.randf_range(1400.0, 1800.0), 1900.0, 1.4, 0.55)
 		for i in out.size():
-			out[i] *= 0.65 + 0.35 * sin(TAU * 14.0 * i / RATE)
+			out[i] *= 0.65 + 0.35 * sin(TAU * 14.0 * i / sample_rate)
 		_save("sfx/monger_toss_%d" % (take + 1), out, 0.8)
 
 
@@ -574,8 +571,8 @@ func _make_monger_soul() -> void:
 	var phase := 0.0
 	for i in n:
 		var t := float(i) / n
-		var freq := lerpf(520.0, 1150.0, sin(t * PI * 0.5)) * (1.0 + 0.04 * sin(TAU * 6.0 * i / RATE))
-		phase += TAU * freq / RATE
+		var freq := lerpf(520.0, 1150.0, sin(t * PI * 0.5)) * (1.0 + 0.04 * sin(TAU * 6.0 * i / sample_rate))
+		phase += TAU * freq / sample_rate
 		out[i] = sin(phase) * pow(sin(t * PI), 0.7)
 	var air := _filter_swept(_noise(length), "bandpass", _glide_freqs(length, 520.0, 1150.0), 6.0)
 	for i in n:
@@ -639,7 +636,7 @@ func _make_intro_room() -> void:
 	var out := _lowpass(_brown(length), 260.0, 0.7)
 	var air := _bandpass(_noise(length), 900.0, 0.8)
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / sample_rate
 		out[i] = out[i] * (0.85 + 0.15 * sin(TAU * t / loop)) + air[i] * 0.04 + sin(TAU * 98.0 * t) * 0.015
 	_save_loop("ambience/intro_room_loop", out, loop, fade, 0.5)
 
@@ -685,7 +682,7 @@ func _make_intro_saw() -> void:
 		var rasp := _bandpass(_noise(length), 2400.0 if push else 1700.0, 1.6)
 		var teeth := 90.0 if push else 70.0
 		for i in rasp.size():
-			rasp[i] *= 0.4 + 0.6 * absf(sin(PI * teeth * i / RATE))
+			rasp[i] *= 0.4 + 0.6 * absf(sin(PI * teeth * i / sample_rate))
 		_mix(out, _shape(rasp, length * 0.3, length * 0.4), _seconds(at), 1.0 if push else 0.7)
 		_mix(out, _shape(_lowpass(_noise(length), 300.0, 0.7), length * 0.3, length * 0.4), _seconds(at), 0.35)
 		at += length + 0.03
@@ -765,7 +762,7 @@ func _make_intro_wind() -> void:
 	cutoffs.resize(n)
 	for i in n:
 		var t := float(i) / n
-		cutoffs[i] = lerpf(300.0, 1600.0, t * t) * (1.0 + 0.15 * sin(TAU * 3.1 * i / RATE) * t)
+		cutoffs[i] = lerpf(300.0, 1600.0, t * t) * (1.0 + 0.15 * sin(TAU * 3.1 * i / sample_rate) * t)
 	var rush := _filter_swept(_noise(length), "bandpass", cutoffs, 0.9)
 	var body := _lowpass(_brown(length), 220.0, 0.7)
 	var out := _silence(length)
@@ -775,16 +772,6 @@ func _make_intro_wind() -> void:
 		var swell := pow(t, 1.6)
 		out[i] = (rush[i] * 0.8 + body[i] * 0.6) * (0.08 + 0.92 * swell) * minf(1.0, (n - i) / tail)
 	_save("sfx/intro_wind", out, 0.85)
-
-
-## Per-sample filter frequencies gliding linearly from `from` to `to` over `length`.
-func _glide_freqs(length: float, from: float, to: float) -> PackedFloat32Array:
-	var n := _seconds(length)
-	var freqs := PackedFloat32Array()
-	freqs.resize(n)
-	for i in n:
-		freqs[i] = lerpf(from, to, float(i) / n)
-	return freqs
 
 
 # --- Building blocks ----------------------------------------------------------------------
@@ -828,7 +815,7 @@ func _voice(length: float, f0_from: float, f0_to: float, vowel: Array, attack: f
 		var t := float(i) / n
 		drift = clampf(drift + rng.randf_range(-0.004, 0.004), -0.04, 0.04)
 		var f0 := lerpf(f0_from, f0_to, t) * (1.0 + drift)
-		phase += f0 / RATE
+		phase += f0 / sample_rate
 		var growl := 0.75 + 0.25 * signf(sin(PI * phase))
 		source[i] = (2.0 * fposmod(phase, 1.0) - 1.0) * growl
 	var breath := _noise(length)
@@ -855,7 +842,7 @@ func _chirp(freq: float, pulses: int) -> PackedFloat32Array:
 		var start := _seconds(0.022 * p)
 		for i in pulse_len:
 			var env := pow(sin(PI * float(i) / pulse_len), 2.0)
-			out[start + i] += sin(TAU * freq * (start + i) / RATE) * env
+			out[start + i] += sin(TAU * freq * (start + i) / sample_rate) * env
 	return out
 
 
@@ -867,9 +854,9 @@ func _tone(length: float, from: float, to: float, glide: float) -> PackedFloat32
 	out.resize(n)
 	var phase := 0.0
 	for i in n:
-		var t := float(i) / RATE
+		var t := float(i) / sample_rate
 		var freq := to + (from - to) * exp(-t / maxf(glide * 0.4, 0.001))
-		phase += TAU * freq / RATE
+		phase += TAU * freq / sample_rate
 		out[i] = sin(phase) * exp(-t / (length * 0.3)) * minf(1.0, t / 0.002)
 	return out
 
@@ -885,7 +872,7 @@ func _modes(length: float, freqs: Array, decays: Array, amps: Array) -> PackedFl
 		var amp: float = amps[m]
 		var phase := rng.randf() * TAU
 		for i in n:
-			var t := float(i) / RATE
+			var t := float(i) / sample_rate
 			out[i] += sin(phase + TAU * freq * t) * exp(-t / decay) * amp * minf(1.0, t / 0.0005)
 	return out
 
@@ -895,16 +882,7 @@ func _square(length: float, freq: float) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	out.resize(n)
 	for i in n:
-		out[i] = 1.0 if fposmod(freq * i / RATE, 1.0) < 0.5 else -1.0
-	return out
-
-
-func _noise(length: float) -> PackedFloat32Array:
-	var n := _seconds(length)
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		out[i] = rng.randf_range(-1.0, 1.0)
+		out[i] = 1.0 if fposmod(freq * i / sample_rate, 1.0) < 0.5 else -1.0
 	return out
 
 
@@ -934,28 +912,6 @@ func _grains(x: PackedFloat32Array, density: float, grain: float) -> PackedFloat
 	return out
 
 
-## An attack ramp of `attack` seconds, then an exponential decay with time constant
-## `decay` seconds.
-func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32Array:
-	var out := x.duplicate()
-	for i in out.size():
-		var t := float(i) / RATE
-		var a := minf(1.0, t / maxf(attack, 0.0001))
-		var d := exp(-maxf(t - attack, 0.0) / maxf(decay, 0.0001))
-		out[i] *= a * d
-	return out
-
-
-## A rise over the first `rise` of the length and a fall over the last `fall`.
-func _ramp(n: int, rise: float, fall: float) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / n
-		out[i] = minf(t / rise, 1.0) * minf((1.0 - t) / fall, 1.0)
-	return out
-
-
 ## Band-pass noise sweeping from `from` to `to` Hz across its length.
 func _sweep(x: PackedFloat32Array, from: float, to: float, q: float) -> PackedFloat32Array:
 	var freqs := PackedFloat32Array()
@@ -963,114 +919,6 @@ func _sweep(x: PackedFloat32Array, from: float, to: float, q: float) -> PackedFl
 	for i in x.size():
 		freqs[i] = lerpf(from, to, float(i) / x.size())
 	return _filter_swept(x, "bandpass", freqs, q)
-
-
-func _formants(x: PackedFloat32Array, freqs: Array, gains: Array, q: float) -> PackedFloat32Array:
-	var out := _silence_samples(x.size())
-	for f in freqs.size():
-		_mix(out, _bandpass(x, freqs[f], q * (1.0 + f * 0.5)), 0, gains[f])
-	return out
-
-
-func _softclip(x: PackedFloat32Array, drive: float) -> PackedFloat32Array:
-	var out := x.duplicate()
-	var peak := 0.0
-	for v in out:
-		peak = maxf(peak, absf(v))
-	if peak <= 0.0:
-		return out
-	for i in out.size():
-		out[i] = tanh(out[i] / peak * drive) / tanh(drive)
-	return out
-
-
-func _lowpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
-	return _biquad(x, "lowpass", freq, q)
-
-
-func _highpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
-	return _biquad(x, "highpass", freq, q)
-
-
-func _bandpass(x: PackedFloat32Array, freq: float, q: float) -> PackedFloat32Array:
-	return _biquad(x, "bandpass", freq, q)
-
-
-func _biquad(x: PackedFloat32Array, type: String, freq: float, q: float) -> PackedFloat32Array:
-	var freqs := PackedFloat32Array()
-	freqs.resize(x.size())
-	freqs.fill(freq)
-	return _filter_swept(x, type, freqs, q)
-
-
-## An RBJ biquad whose frequency may change every sample; the coefficients are only
-## recomputed every few samples, which is far below what the ear can hear.
-func _filter_swept(x: PackedFloat32Array, type: String, freqs: PackedFloat32Array, q: float) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(x.size())
-	var x1 := 0.0
-	var x2 := 0.0
-	var y1 := 0.0
-	var y2 := 0.0
-	var b0 := 0.0
-	var b1 := 0.0
-	var b2 := 0.0
-	var a1 := 0.0
-	var a2 := 0.0
-	for i in x.size():
-		if i % 8 == 0:
-			var w0 := TAU * clampf(freqs[i], 20.0, RATE * 0.45) / RATE
-			var cw := cos(w0)
-			var alpha := sin(w0) / (2.0 * q)
-			var a0 := 1.0 + alpha
-			match type:
-				"lowpass":
-					b0 = (1.0 - cw) * 0.5
-					b1 = 1.0 - cw
-					b2 = b0
-				"highpass":
-					b0 = (1.0 + cw) * 0.5
-					b1 = -(1.0 + cw)
-					b2 = b0
-				_:
-					b0 = alpha
-					b1 = 0.0
-					b2 = -alpha
-			b0 /= a0
-			b1 /= a0
-			b2 /= a0
-			a1 = -2.0 * cw / a0
-			a2 = (1.0 - alpha) / a0
-		var v := b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
-		x2 = x1
-		x1 = x[i]
-		y2 = y1
-		y1 = v
-		out[i] = v
-	return out
-
-
-func _mix(into: PackedFloat32Array, x: PackedFloat32Array, offset: int, gain: float) -> void:
-	for i in x.size():
-		var j := offset + i
-		if j >= into.size():
-			return
-		into[j] += x[i] * gain
-
-
-func _silence(length: float) -> PackedFloat32Array:
-	return _silence_samples(_seconds(length))
-
-
-func _silence_samples(n: int) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(n)
-	out.fill(0.0)
-	return out
-
-
-func _seconds(length: float) -> int:
-	return int(round(length * RATE))
 
 
 # --- Output -------------------------------------------------------------------------------
@@ -1100,52 +948,3 @@ func _save_loop(path: String, x: PackedFloat32Array, loop: float, fade: float, p
 		var t := float(i) / f
 		out[i] = x[i] * sqrt(t) + x[n + i] * sqrt(1.0 - t)
 	_write_wav(ROOT + path + ".wav", _normalized(out, peak), true)
-
-
-func _normalized(x: PackedFloat32Array, peak: float) -> PackedFloat32Array:
-	var out := x.duplicate()
-	var top := 0.0
-	for v in out:
-		top = maxf(top, absf(v))
-	if top > 0.0:
-		for i in out.size():
-			out[i] *= peak / top
-	return out
-
-
-## 16-bit mono PCM. A looping file also gets a "smpl" chunk with one forward loop over
-## the whole file, which Godot's WAV importer reads as the loop.
-func _write_wav(path: String, x: PackedFloat32Array, looping: bool) -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
-	var data := PackedByteArray()
-	data.resize(x.size() * 2)
-	for i in x.size():
-		data.encode_s16(i * 2, clampi(int(round(x[i] * 32767.0)), -32768, 32767))
-	var smpl := PackedByteArray()
-	if looping:
-		smpl.resize(68)
-		smpl.fill(0)
-		smpl.encode_u32(0, 0x6c706d73)  # "smpl"
-		smpl.encode_u32(4, 60)
-		smpl.encode_u32(16, int(1.0e9 / RATE))  # sample period, ns
-		smpl.encode_u32(20, 60)  # MIDI unity note
-		smpl.encode_u32(36, 1)  # one loop
-		smpl.encode_u32(48, 0)  # forward
-		smpl.encode_u32(52, 0)  # loop start
-		smpl.encode_u32(56, x.size() - 1)  # loop end, inclusive
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_buffer("RIFF".to_ascii_buffer())
-	file.store_32(36 + data.size() + smpl.size())
-	file.store_buffer("WAVEfmt ".to_ascii_buffer())
-	file.store_32(16)
-	file.store_16(1)
-	file.store_16(1)
-	file.store_32(RATE)
-	file.store_32(RATE * 2)
-	file.store_16(2)
-	file.store_16(16)
-	file.store_buffer("data".to_ascii_buffer())
-	file.store_32(data.size())
-	file.store_buffer(data)
-	file.store_buffer(smpl)
-	file.close()
