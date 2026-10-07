@@ -55,11 +55,25 @@ func _run() -> void:
 	_check("movement is locked", player.control == intro.CONTROL_NONE)
 	_check("no HUD during the opening", not hud.visible)
 	_check("starts high above the meadow", player.global_position.y > 30.0)
+	_check("the skip hint is shown", is_instance_valid(intro.hint) and intro.hint.is_visible_in_tree())
+	var hint: Control = intro.hint
 	_press_esc(true)
 	await _frames(int(intro.skip_hold * 60.0) + 10)
 	_press_esc(false)
 	_check("holding Esc skips the opening", not intro.running)
 	_check("holding Esc does not open the pause menu", not menu.is_open() and not get_tree().paused)
+	_check_landed(intro, player, hud)
+	await _frames(2)
+	_check("the skip hint is gone", not is_instance_valid(hint))
+
+	# Skip mid-fall too.
+	intro.start()
+	intro.elapsed = intro.GRAIN_END + 1.0
+	await _frames(3)
+	_press_esc(true)
+	await _frames(int(intro.skip_hold * 60.0) + 10)
+	_press_esc(false)
+	_check("holding Esc skips mid-fall", not intro.running)
 	_check_landed(intro, player, hud)
 
 	# Full fall: jump to the end of the grain beat and let it drop.
