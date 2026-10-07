@@ -35,8 +35,10 @@ const SOUL_SHADER := preload("res://assets/shaders/soul_swirl.gdshader")
 @export var reward: ItemData = preload("res://resources/items/soul_bottle.tres")
 ## The only mask that is burnt; every kind of face becomes this one once it splits.
 @export var shattered_mask: ItemData = preload("res://resources/items/shattered_mask.tres")
-## Heard as a damaged mask is mended.
+## Heard as a damaged mask is mended: the Monger muttering over it, and the glue and
+## mallet at his hand.
 @export var repair_sound: SoundBank = preload("res://resources/audio/monger_babble.tres")
+@export var mend_sound: SoundBank = preload("res://resources/audio/monger_repair.tres")
 ## How far in front of the giver the bottle lands, in metres.
 @export var landing_distance := 0.7
 
@@ -174,6 +176,7 @@ func _repair(by: Node) -> void:
 	var mask := hand.get_held()
 	Destructible.write(mask, hand.get_item_data().durability)
 	Sfx.play_at(repair_sound, _head.global_position)
+	Sfx.play_at(mend_sound, _hand.global_position)
 	mask_repaired.emit(mask)
 	get_tree().call_group(&"interaction_prompts", &"refresh")
 

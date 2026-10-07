@@ -81,6 +81,13 @@ func _init() -> void:
 		"intro_mutter": _make_intro_mutter,
 		"intro_heart": _make_intro_heart,
 		"intro_wind": _make_intro_wind,
+		# Sound pass 2: pickups, putting on a mask, the walking chair, the Monger's repair.
+		"pickup": _make_pickups,
+		"pickup_mask": _make_mask_pickups,
+		"pickup_heavy": _make_heavy_pickups,
+		"mask_on": _make_mask_ons,
+		"chair_step": _make_chair_steps,
+		"monger_repair": _make_monger_repairs,
 		# Ambience.
 		"night_loop": _make_night_loop,
 		"fair_murmur_loop": _make_fair_murmur,
@@ -917,6 +924,100 @@ func _make_intro_wind() -> void:
 		var swell := pow(t, 1.6)
 		out[i] = (rush[i] * 0.8 + body[i] * 0.6) * (0.08 + 0.92 * swell) * minf(1.0, (n - i) / tail)
 	_save("sfx/intro_wind", out, 0.85)
+
+
+# --- Recipes: sound pass 2 ----------------------------------------------------------------
+
+
+## Something off the ground and into the satchel: a quick rustle of the flap, the item
+## clacking against what is already in there — two small wooden knocks close together —
+## and the bag settling. Short and dry, so a run of pickups never grates.
+func _make_pickups() -> void:
+	for take in 4:
+		var out := _silence(0.22)
+		var rustle := _grains(_bandpass(_noise(0.09), rng.randf_range(2000.0, 2600.0), 0.9), 0.6, 0.003)
+		_mix(out, _shape(rustle, 0.006, 0.035), 0, 0.45)
+		var f0 := rng.randf_range(560.0, 760.0)
+		var at := _seconds(rng.randf_range(0.03, 0.045))
+		_mix(out, _modes(0.09, [f0, f0 * 2.6, f0 * 4.3], [0.03, 0.015, 0.008], [1.0, 0.45, 0.2]), at, 0.75)
+		var second := at + _seconds(rng.randf_range(0.03, 0.05))
+		var f1 := f0 * rng.randf_range(0.8, 0.9)
+		_mix(out, _modes(0.07, [f1, f1 * 2.5], [0.025, 0.012], [1.0, 0.4]), second, 0.4)
+		_mix(out, _shape(_lowpass(_noise(0.08), 350.0, 0.7), 0.003, 0.035), second, 0.55)
+		_save("sfx/pickup_%d" % (take + 1), out, 0.8)
+
+
+## A mask going into the bag: thin carved wood, so a lighter, hollower tock that rings a
+## little longer, and a cloth tie brushing after it.
+func _make_mask_pickups() -> void:
+	for take in 3:
+		var out := _silence(0.26)
+		var f0 := rng.randf_range(900.0, 1150.0)
+		_mix(out, _modes(0.18, [f0, f0 * 1.52, f0 * 2.9], [0.06, 0.035, 0.015], [1.0, 0.55, 0.25]), 0, 0.6)
+		_mix(out, _shape(_bandpass(_noise(0.02), f0 * 2.0, 1.0), 0.0005, 0.006), 0, 0.4)
+		var tie := _grains(_bandpass(_noise(0.12), rng.randf_range(2600.0, 3200.0), 1.0), 0.5, 0.003)
+		_mix(out, _shape(tie, 0.02, 0.05), _seconds(0.04), 0.4)
+		_save("sfx/pickup_mask_%d" % (take + 1), out, 0.75)
+
+
+## Something heavy hauled into the bag: a deep wooden thud the bag sags under, and a
+## longer shuffle of cloth.
+func _make_heavy_pickups() -> void:
+	for take in 3:
+		var out := _silence(0.34)
+		var rustle := _grains(_bandpass(_noise(0.16), rng.randf_range(1600.0, 2100.0), 0.9), 0.65, 0.004)
+		_mix(out, _shape(rustle, 0.02, 0.06), 0, 0.5)
+		var at := _seconds(rng.randf_range(0.06, 0.08))
+		var f0 := rng.randf_range(140.0, 190.0)
+		_mix(out, _modes(0.22, [f0, f0 * 2.3, f0 * 3.9], [0.08, 0.04, 0.02], [1.0, 0.5, 0.25]), at, 0.8)
+		_mix(out, _shape(_lowpass(_noise(0.14), 260.0, 0.7), 0.003, 0.06), at, 0.9)
+		_mix(out, _tone(0.12, rng.randf_range(70.0, 85.0), 50.0, 0.05), at, 0.5)
+		_save("sfx/pickup_heavy_%d" % (take + 1), _softclip(out, 1.3), 0.85)
+
+
+## A mask pressed onto a wooden face: a hollow clack of wood on wood, a shorter one as
+## it seats, and the cord pulled tight behind the head.
+func _make_mask_ons() -> void:
+	for take in 2:
+		var out := _silence(0.32)
+		var f0 := rng.randf_range(700.0, 850.0)
+		_mix(out, _modes(0.14, [f0, f0 * 1.6, f0 * 2.8], [0.05, 0.03, 0.012], [1.0, 0.5, 0.25]), 0, 0.75)
+		_mix(out, _shape(_lowpass(_noise(0.06), 450.0, 0.7), 0.002, 0.025), 0, 0.5)
+		_mix(out, _modes(0.08, [f0 * 1.15, f0 * 2.1], [0.025, 0.012], [1.0, 0.4]), _seconds(0.05), 0.35)
+		var cord := _sweep(_noise(0.1), 1800.0, rng.randf_range(3000.0, 3500.0), 3.0)
+		_mix(out, _shape(cord, 0.04, 0.03), _seconds(0.12), 0.35)
+		_save("sfx/mask_on_%d" % (take + 1), out, 0.75)
+
+
+## A walking chair's clay hand slapping down: a soft pat of clay on earth with a little
+## grit, and on every other take the seat's joints answering with a dry tick.
+func _make_chair_steps() -> void:
+	for take in 4:
+		var out := _silence(0.2)
+		_mix(out, _shape(_lowpass(_noise(0.08), rng.randf_range(500.0, 700.0), 0.9), 0.001, 0.025), 0, 0.9)
+		_mix(out, _shape(_bandpass(_noise(0.04), rng.randf_range(1100.0, 1500.0), 1.5), 0.001, 0.01), 0, 0.35)
+		var grit := _grains(_bandpass(_noise(0.08), 2200.0, 1.0), 0.3, 0.003)
+		_mix(out, _shape(grit, 0.005, 0.03), _seconds(0.015), 0.3)
+		if take % 2 == 0:
+			var f0 := rng.randf_range(1300.0, 1700.0)
+			_mix(out, _modes(0.05, [f0, f0 * 1.9], [0.015, 0.008], [1.0, 0.4]), _seconds(rng.randf_range(0.04, 0.07)), 0.3)
+		_save("sfx/chair_step_%d" % (take + 1), out, 0.8)
+
+
+## The Monger mending a mask: a dab of glue, three quick taps of the mallet working the
+## split shut, and the grain creaking as it draws together.
+func _make_monger_repairs() -> void:
+	for take in 2:
+		var out := _silence(0.8)
+		var squelch := _sweep(_noise(0.07), rng.randf_range(1400.0, 1700.0), 500.0, 4.0)
+		_mix(out, _shape(squelch, 0.006, 0.025), 0, 0.5)
+		var at := 0.12
+		for tap in 3:
+			_mix(out, _knock(rng.randf_range(420.0, 520.0) * (1.0 - tap * 0.04)), _seconds(at), 0.8 - tap * 0.1)
+			at += rng.randf_range(0.1, 0.13)
+		var creak := _grains(_tone(0.26, rng.randf_range(180.0, 210.0), rng.randf_range(120.0, 140.0), 0.25), 0.55, 0.005)
+		_mix(out, _shape(creak, 0.04, 0.1), _seconds(at + 0.02), 0.4)
+		_save("sfx/monger_repair_%d" % (take + 1), _softclip(out, 1.2), 0.85)
 
 
 # --- Building blocks ----------------------------------------------------------------------

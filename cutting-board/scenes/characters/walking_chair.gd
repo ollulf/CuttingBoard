@@ -32,6 +32,8 @@ extends Node3D
 @export var lift := 0.12
 ## Off: the limbs keep the generated reference pose (for the model sheet).
 @export var animate := true
+## A clay hand slapping down at the end of its step.
+@export var step_sound: SoundBank = preload("res://resources/audio/chair_step.tres")
 
 ## The limbs' bones, metres (the builder's THIGH and SHIN).
 const THIGH := 0.46
@@ -340,6 +342,7 @@ func _step(advance: float, walking: bool) -> void:
 		if _swing[corner] >= 1.0:
 			_swing[corner] = -1.0
 			_plant[corner] = _target(corner)
+			Sfx.play_at(step_sound, _plant[corner])
 	var speed := _velocity.length() if walking else 0.0
 	var most_up := 2 if speed > RUN_SPEED else 1
 	var order := CORNERS.duplicate()
