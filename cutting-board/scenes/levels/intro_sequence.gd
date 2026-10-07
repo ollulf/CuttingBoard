@@ -78,6 +78,9 @@ var _esc_held := 0.0
 var _ground_y := 0.0
 var _landed := false
 var _black: ColorRect
+## The "Hold Esc to skip" corner hint and its fill bar.
+var hint: Control
+var _hint_fill: ColorRect
 var _next_cue := 0
 var _room: AudioStreamPlayer
 ## Every sound the opening started, stopped together at the landing.
@@ -136,6 +139,7 @@ func start() -> void:
 	material.shader = HEARTBEAT_SHADER
 	_black.material = material
 	layer.add_child(_black)
+	layer.add_child(_make_hint())
 	add_child(layer)
 	_room = AudioStreamPlayer.new()
 	_room.stream = ROOM_LOOP
@@ -169,6 +173,9 @@ func _process(delta: float) -> void:
 			return
 	else:
 		_esc_held = 0.0
+	_hint_fill.scale.x = clampf(_esc_held / skip_hold, 0.0, 1.0)
+	# Faint until Esc is touched, so it doesn't fight the black opening.
+	hint.modulate.a = 1.0 if _esc_held > 0.0 else clampf(elapsed / 1.5, 0.0, 0.55)
 	_play_cues()
 	(_black.material as ShaderMaterial).set_shader_parameter("hole", _hole(elapsed))
 	# The room tone drains away under the last peg, leaving two seconds of silence.
@@ -251,6 +258,39 @@ func _hole(t: float) -> float:
 	return r
 
 
+## The corner hint: a small label over a thin bar that fills while Esc is held.
+func _make_hint() -> Control:
+	hint = VBoxContainer.new()
+	hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	hint.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	hint.offset_left = -170.0
+	hint.offset_top = -52.0
+	hint.offset_right = -24.0
+	hint.offset_bottom = -24.0
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint.modulate.a = 0.0
+	var label := Label.new()
+	label.text = "Hold Esc to skip"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.add_theme_color_override("font_color", Color(0.92, 0.88, 0.8))
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 6)
+	hint.add_child(label)
+	var track := ColorRect.new()
+	track.color = Color(0.0, 0.0, 0.0, 0.6)
+	track.custom_minimum_size = Vector2(0.0, 4.0)
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint.add_child(track)
+	_hint_fill = ColorRect.new()
+	_hint_fill.color = Color(0.92, 0.88, 0.8)
+	_hint_fill.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hint_fill.scale.x = 0.0
+	_hint_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	track.add_child(_hint_fill)
+	return hint
+
+
 ## Holding Esc: straight to the ground, no fall.
 ## Stands the player on the landing spot, facing the landing way, with no fall.
 func place_at_landing() -> void:
@@ -275,6 +315,8 @@ func _land() -> void:
 	if _black != null:
 		_black.get_parent().queue_free()
 		_black = null
+		hint = null
+		_hint_fill = null
 	for voice in _voices:
 		voice.queue_free()
 	_voices.clear()
