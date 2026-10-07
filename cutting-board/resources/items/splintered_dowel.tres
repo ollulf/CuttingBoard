@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/splintered_dowel.png" id="1_rjd2p"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_xfpkh"]
+diffuse_texture = ExtResource("1_rjd2p")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Splintered Dowel"
+icon = SubResource("CanvasTexture_xfpkh")
+description = "Puppet junk. A limb dowel snapped at the joint. Mind the splinters."
+weight = 0.08
+durability = 20
+grid_size = Vector2i(2, 1)
+world_scene_path = "res://scenes/items/splintered_dowel.tscn"

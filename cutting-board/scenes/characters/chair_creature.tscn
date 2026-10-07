@@ -15,6 +15,9 @@
 [ext_resource type="Resource" path="res://resources/items/bandit_mask.tres" id="13_bandit_mask"]
 [ext_resource type="Resource" path="res://resources/items/chair_mask.tres" id="14_chair_mask"]
 [ext_resource type="Resource" path="res://resources/items/soul_bottle.tres" id="15_soul"]
+[ext_resource type="Resource" path="res://resources/items/finger_joint.tres" id="j1_finger"]
+[ext_resource type="Resource" path="res://resources/items/splintered_dowel.tres" id="j6_dowel"]
+[ext_resource type="Resource" path="res://resources/items/peg_teeth.tres" id="j10_teeth"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_chair"]
 size = Vector3(0.9, 1.1, 0.9)
@@ -24,8 +27,8 @@ script = ExtResource("1_creature")
 loot_pool = Array[ExtResource("9_item_data")]([ExtResource("10_plank"), ExtResource("11_glue")])
 loot_weights = Array[float]([3.0, 1.0])
 no_loot_weight = 1.0
-extra_items = Array[ExtResource("9_item_data")]([ExtResource("11_glue"), ExtResource("12_villager_mask"), ExtResource("13_bandit_mask"), ExtResource("14_chair_mask"), ExtResource("15_soul")])
-extra_item_chances = Array[float]([0.15, 0.08, 0.04, 0.05, 0.03])
+extra_items = Array[ExtResource("9_item_data")]([ExtResource("11_glue"), ExtResource("12_villager_mask"), ExtResource("13_bandit_mask"), ExtResource("14_chair_mask"), ExtResource("15_soul"), ExtResource("j6_dowel"), ExtResource("j1_finger"), ExtResource("j10_teeth")])
+extra_item_chances = Array[float]([0.15, 0.08, 0.04, 0.05, 0.03, 0.35, 0.2, 0.15])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 unique_name_in_owner = true

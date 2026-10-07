@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/junk_lacquer_flake.res" id="1_mesh"]
+[ext_resource type="Script" uid="uid://jtqbca6mqo6" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" uid="uid://ci8j6fh2yi3i7" path="res://scripts/components/destructible.gd" id="3_destructible"]
+[ext_resource type="Script" uid="uid://bjihoqfhsb0l2" path="res://scripts/components/impact_damage.gd" id="4_impact"]
+[ext_resource type="Resource" path="res://resources/items/lacquer_flakes.tres" id="5_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_junk"]
+size = Vector3(0.12, 0.019, 0.074)
+
+[node name="LacquerFlakes" type="RigidBody3D"]
+mass = 0.02
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = ExtResource("1_mesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.008, 0.008, 0.02)
+shape = SubResource("BoxShape3D_junk")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+item_data = ExtResource("5_item")
+impact_damage = 1
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("3_destructible")
+durability = 20
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("4_impact")

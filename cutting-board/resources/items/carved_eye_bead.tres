@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/carved_eye_bead.png" id="1_8q1bt"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_stwm2"]
+diffuse_texture = ExtResource("1_8q1bt")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Carved Eye Bead"
+icon = SubResource("CanvasTexture_stwm2")
+description = "Puppet junk. An eye turned from boxwood and painted by hand. It keeps looking at you."
+weight = 0.03
+durability = 20
+world_scene_path = "res://scenes/items/carved_eye_bead.tscn"
