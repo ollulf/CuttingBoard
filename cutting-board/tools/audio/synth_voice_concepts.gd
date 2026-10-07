@@ -6,6 +6,9 @@ extends SceneTree
 ##
 ##   godot --headless --path cutting-board -s res://tools/audio/synth_voice_concepts.gd
 ##
+## Pass `-- godly` to render only the round 3 "godly" voices into voice_concepts/godly/;
+## each also gets a fast "dialogue" sample to test how the reverb holds up at speed.
+##
 ## Every concept speaks the same two phrases (same syllable pitches, lengths and vowels),
 ## so the files compare the voice itself, not the melody. Same lo-fi format and filter
 ## approach as synth_sfx.gd; prints peak and RMS level of each file.
@@ -34,7 +37,22 @@ var wise := [
 var rng := RandomNumberGenerator.new()
 
 
+## Fast dialogue babble for round 3: two quick runs of short syllables, as typed-out text.
+var dialogue := [
+	[0, 1, 0.07, 0.02, E], [2, 2, 0.06, 0.02, A], [3, 2, 0.07, 0.02, O], [1, 1, 0.06, 0.02, I],
+	[2, 3, 0.07, 0.02, A], [4, 4, 0.06, 0.02, E], [3, 2, 0.07, 0.02, U], [2, 1, 0.06, 0.02, O],
+	[0, 0, 0.08, 0.02, A], [-1, -2, 0.12, 0.22, E],
+	[2, 3, 0.07, 0.02, I], [4, 3, 0.06, 0.02, A], [3, 3, 0.07, 0.02, O], [2, 2, 0.06, 0.02, E],
+	[1, 2, 0.07, 0.02, A], [3, 2, 0.06, 0.02, U], [1, 0, 0.07, 0.02, O], [0, -1, 0.06, 0.02, I],
+	[-2, -2, 0.08, 0.02, E], [-3, -5, 0.24, 0.0, A],
+]
+
+
 func _init() -> void:
+	if "godly" in OS.get_cmdline_user_args():
+		_render_godly()
+		quit()
+		return
 	var concepts := {
 		"1_heartwood_alto": [220.0, _syl_alto],
 		"2_hollow_reed": [440.0, _syl_reed],
@@ -170,6 +188,170 @@ func _syl_kalimba(length: float, f0a: float, f0b: float, vowel: Array) -> Packed
 	var click := _shape(_bandpass(_noise(0.02), 3000.0, 2.0), 0.001, 0.012)
 	_mix(out, click, 0, 0.3)
 	return _shape(out, 0.002, ring)
+
+
+# --- Round 3: the godly voices --------------------------------------------------------------
+
+
+## Each godly voice: [base pitch Hz, syllable, reverb feedback (tail length), wet gain, wind].
+## Same greeting, wise line and dialogue phrase for all three.
+func _render_godly() -> void:
+	var voices := {
+		"a_choir_of_rings": [233.0, _syl_choir, 0.9, 2.6, 0.0],
+		"b_elder_bell_voice": [262.0, _syl_bell_voice, 0.88, 2.0, 0.0],
+		"c_breath_of_the_grove": [196.0, _syl_grove, 0.87, 2.2, 0.05],
+	}
+	for voice in voices:
+		var v: Array = voices[voice]
+		rng.seed = hash(voice)
+		var path: String = "godly/" + voice
+		_save(path + "_greeting", _godly_phrase(greeting, v, 1.0), 0.8)
+		_save(path + "_wise", _godly_phrase(wise, v, 1.1), 0.8)
+		_save(path + "_dialogue", _godly_phrase(dialogue, v, 1.0), 0.8)
+
+
+## Like _phrase, but through a long hall reverb that stays out of the way while she talks:
+## the send is only 7 % during the syllables and opens fully on the last one, and the wet
+## signal is ducked under the dry voice, so fast blips stay crisp and the big tail
+## blooms only when the line ends.
+func _godly_phrase(phrase: Array, v: Array, stretch: float) -> PackedFloat32Array:
+	var base: float = v[0]
+	var syl: Callable = v[1]
+	var tail := 2.4
+	var total := tail
+	for s in phrase:
+		total += (s[2] + s[3]) * stretch
+	var dry := _silence(total)
+	var send := _silence(total)
+	var at := 0
+	for k in phrase.size():
+		var s: Array = phrase[k]
+		var f0a := base * pow(2.0, s[0] / 12.0)
+		var f0b := base * pow(2.0, s[1] / 12.0)
+		var sound: PackedFloat32Array = syl.call(s[2] * stretch, f0a, f0b, s[4])
+		_mix(dry, sound, at, 1.0)
+		_mix(send, sound, at, 1.0 if k == phrase.size() - 1 else 0.07)
+		at += _seconds((s[2] + s[3]) * stretch)
+	var wet := _hall(send, v[2])
+	# Duck the wet signal under the dry voice (fast attack, 120 ms release).
+	var env := 0.0
+	var release := exp(-1.0 / (0.12 * RATE))
+	var top := 0.001
+	for x in dry:
+		top = maxf(top, absf(x))
+	for i in dry.size():
+		env = maxf(absf(dry[i]) / top, env * release)
+		wet[i] *= 1.0 - 0.7 * minf(env * 2.0, 1.0)
+	_mix(dry, wet, 0, v[3])
+	if v[4] > 0.0:
+		_mix(dry, _wind(total), 0, v[4])
+	return dry
+
+
+## A. Choir of Rings: four female voices in one mouth (unison detuned a few cents, plus a
+## soft fifth above), each with its own vibrato, through the vowel formants, with a faint
+## high shimmer partial.
+func _syl_choir(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
+	var parts := [[0.0, 1.0, 4.7], [9.0, 0.8, 5.2], [-11.0, 0.8, 5.5], [702.0, 0.3, 4.9]]
+	var source := _silence(length + 0.15)
+	for p in parts:
+		var ratio := pow(2.0, p[0] / 1200.0)
+		_mix(source, _glottal(length + 0.15, f0a * ratio, f0b * ratio, p[2], 0.012, 0.002), 0, p[1])
+	source = _lowpass(source, 3200.0, 0.7)
+	var breath := _highpass(_noise(length + 0.15), 1500.0, 0.7)
+	_mix(source, breath, 0, 0.12)
+	var out := _formants(source, vowel, [1.0, 0.6, 0.3], 7.0)
+	var n := out.size()
+	var phase := 0.0
+	for i in n:
+		phase += lerpf(f0a, f0b, float(i) / n) * 4.0 / RATE
+		out[i] += 0.06 * sin(TAU * phase)
+	return _shape(out, 0.03, length * 0.95)
+
+
+## B. Elder Bell-Voice: one sung vowel with a wide, slow vibrato, and a singing-bowl of
+## inharmonic partials an octave above blooming underneath it. The bowl rings a little past
+## the syllable (longer on long syllables).
+func _syl_bell_voice(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
+	var ring := clampf(length * 2.5, 0.2, 1.1)
+	var voice := _glottal(length + 0.1, f0a, f0b, 4.8, 0.018, 0.002)
+	voice = _formants(_lowpass(voice, 2800.0, 0.7), vowel, [1.0, 0.55, 0.25], 8.0)
+	voice = _shape(voice, 0.035, length * 0.9)
+	var n := _seconds(length + ring)
+	var bowl := _silence_samples(n)
+	var ratios := [1.0, 2.0, 2.76, 4.07, 5.4]
+	var gains := [1.0, 0.45, 0.35, 0.18, 0.1]
+	var phase := 0.0
+	for i in n:
+		var sec := float(i) / RATE
+		phase += lerpf(f0a, f0b, clampf(sec / length, 0.0, 1.0)) * 2.0 / RATE
+		var bloom := minf(sec / 0.05, 1.0)
+		var x := 0.0
+		for r in ratios.size():
+			x += gains[r] * sin(TAU * phase * ratios[r]) * exp(-sec * (1.0 + r) / ring)
+		bowl[i] = x * bloom
+	var out := _silence_samples(n)
+	_mix(out, voice, 0, 1.0)
+	_mix(out, bowl, 0, 0.22)
+	return out
+
+
+## C. Breath of the Grove: a large whispered vowel resonating in a hollow trunk (fixed
+## low wood resonances), carried by a soft hum with a sub-octave for warmth.
+func _syl_grove(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
+	var n := _seconds(length + 0.2)
+	var whisper := _formants(_noise(length + 0.2), vowel, [1.0, 0.75, 0.4], 11.0)
+	whisper = _shape(whisper, 0.015, length * 0.8)
+	var hum := _silence_samples(n)
+	var phase := 0.0
+	for i in n:
+		var t := clampf(float(i) / _seconds(length), 0.0, 1.0)
+		phase += lerpf(f0a, f0b, t) * (1.0 + 0.008 * sin(TAU * 4.6 * i / RATE)) / RATE
+		hum[i] = sin(TAU * phase) + 0.3 * sin(TAU * 2.0 * phase) + 0.35 * sin(PI * phase)
+	hum = _shape(_lowpass(hum, 1100.0, 0.7), 0.04, length)
+	var source := _silence_samples(n)
+	_mix(source, whisper, 0, 1.8)
+	_mix(source, hum, 0, 0.5)
+	var trunk := _formants(source, [210.0, 340.0, 590.0], [0.6, 0.45, 0.3], 14.0)
+	_mix(source, trunk, 0, 1.0)
+	return source
+
+
+## Freeverb-style hall: 30 ms pre-delay, six damped combs, two allpasses. `feedback`
+## sets the tail (0.9 is about three seconds).
+func _hall(x: PackedFloat32Array, feedback: float) -> PackedFloat32Array:
+	var pre := _seconds(0.03)
+	var input := _silence_samples(x.size())
+	for i in range(pre, x.size()):
+		input[i] = x[i - pre]
+	var out := _silence_samples(x.size())
+	for d in [558, 594, 639, 678, 711, 746]:
+		var buf := _silence_samples(d)
+		var store := 0.0
+		var pos := 0
+		for i in x.size():
+			var y := buf[pos]
+			store = y * 0.6 + store * 0.4
+			buf[pos] = input[i] + store * feedback
+			pos = (pos + 1) % d
+			out[i] += y / 6.0
+	for d in [278, 220]:
+		var buf := _silence_samples(d)
+		var pos := 0
+		for i in x.size():
+			var b := buf[pos]
+			buf[pos] = out[i] + b * 0.5
+			out[i] = b - out[i]
+			pos = (pos + 1) % d
+	return out
+
+
+## Soft wind: low-passed noise swelling slowly, for the grove's air.
+func _wind(length: float) -> PackedFloat32Array:
+	var out := _bandpass(_noise(length), 500.0, 0.8)
+	for i in out.size():
+		out[i] *= 0.6 + 0.4 * sin(TAU * 0.35 * i / RATE)
+	return out
 
 
 # --- Building blocks (as in synth_sfx.gd) -------------------------------------------------
@@ -338,7 +520,7 @@ func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
 	var rms := sqrt(sum / out.size())
 	print("%s  %.2f s  peak %.1f dBFS  rms %.1f dBFS" % [file_name, float(out.size()) / RATE, linear_to_db(top_out), linear_to_db(rms)])
 	var path := ROOT + file_name + ".wav"
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ROOT))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var data := PackedByteArray()
 	data.resize(out.size() * 2)
 	for i in out.size():

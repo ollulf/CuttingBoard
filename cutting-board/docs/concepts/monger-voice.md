@@ -141,3 +141,34 @@ during the burn ritual.
 If the user prefers the weirdest option outright, **Whisper & Hum** is the strongest
 single concept on paper. Worth listening to before deciding: I (the agent) could not
 listen to these files, only measure them; how they actually sound is untested.
+
+## Round 3: godly
+
+The user asked for a completely new direction: "more godly but still female". Vast,
+reverent and timeless, like a forest spirit singing in a cathedral of trees, but still
+wordless, warm and calm (no horror detuning, no growls). Three variations, rendered with
+`synth_voice_concepts.gd -- godly` into `assets/audio/voice_concepts/godly/`; each says
+the same greeting and wise line as rounds 1–2 (same pitches, lengths, vowels), plus a new
+**dialogue** sample of 20 fast blips (60–80 ms each) in two runs.
+Listening page: https://claude.ai/artifact/GtuAYSBVFjwX8Lgaa2Qcoj
+
+| Variation | Base | Idea |
+|---|---|---|
+| A. Choir of Rings | 233 Hz | four female voices in one mouth: detuned unison (0, +9, −11 cents) plus a soft fifth above, each with its own vibrato, a faint high shimmer partial, long hall |
+| B. Elder Bell-Voice | 262 Hz | one sung vowel with a wide, slow vibrato; a singing bowl of inharmonic partials an octave up blooms under each syllable and rings past it |
+| C. Breath of the Grove | 196 Hz | a large whispered vowel through fixed hollow-trunk resonances (210 / 340 / 590 Hz), carried by a soft hum with a sub-octave, plus slow wind |
+
+**Reverb vs. fast blips.** A long hall would smear fast babble, so the reverb send is only
+7 % during the syllables and full on the last syllable, and the wet signal is ducked under
+the dry voice (fast attack, 120 ms release). Blips stay dry and crisp; the big 2–3 s tail
+blooms only when the line ends. In the game this maps to: a dry blip per syllable, and
+the final syllable routed to a reverb bus (or a pre-rendered wet tail).
+
+Measured (RMS of the dialogue sample, talk 0.3–2.2 s / end tail 2.6–3.4 s; all files
+peak at −1.9 dBFS): A −17.5 / −36.5 dB, B −13.3 / −23.3 dB, C −16.2 / −34.4 dB. B's bowl
+keeps ringing, so it smears the most at dialogue speed. Files are 2.4 s longer than
+in rounds 1–2 because of the tail.
+
+**Recommendation:** A, Choir of Rings: the most clearly female and the most godly, and its
+blips stay dry. C is the more wooden, forest-spirit alternative. As before, I (the agent)
+could not listen to these, only measure them; how they sound is untested.
