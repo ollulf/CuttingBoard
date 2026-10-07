@@ -76,6 +76,17 @@ func _run() -> void:
 	await _wait(0.3)
 	_check("Mask-Monger named", bar.get_target_name() == "Mask-Monger" and bar.modulate.a > 0.99)
 
+	# The training dummy is no NPC, but looking at it names it, neutral gray.
+	monger.global_position = player.global_position + forward.cross(Vector3.UP) * -30.0
+	dummy.global_position = player.global_position + forward * 2.5
+	await _wait(0.3)
+	_check("looked-at dummy is picked", tracker.get_nearby() == dummy)
+	_check("dummy named, neutral tint", bar.get_target_name() == "Training Dummy"
+		and bar.is_friendly() and bar.modulate.a > 0.99)
+	dummy.global_position = player.global_position + forward * 30.0
+	monger.global_position = player.global_position + forward * 3.0
+	await _wait(0.3)
+
 	# A blow on the dummy makes it the combat target; the Mask-Monger in view gives way.
 	Health.find_in(dummy).apply_damage(DamageInfo.new(10, player))
 	await _wait(0.3)

@@ -23,6 +23,13 @@ signal targeted_changed(targeted: bool)
 ## the target bar shows out of combat.
 signal nearby_changed(npc: Node3D)
 
+## Things that are no NPC but still get a bar when looked at, like the training dummy.
+## They are aimed at through an `%Eyes` node if they have one, else their origin.
+const NAMEPLATE_GROUP := &"nameplate"
+## Targets that stand back up after dying. Their empty bar stays up while the fight
+## lasts, so it fills back up when they reset instead of being dropped.
+const REVIVES_GROUP := &"revives"
+
 ## Seconds after the last blow, or the last NPC coming for the owner, that a fight ends.
 @export var linger := 6.0
 ## How long a target that just died keeps its (empty) bar before the next one is picked.
@@ -91,11 +98,14 @@ static func find_for(node: Node) -> CombatTracker:
 	return null
 
 
-## What to call `actor` over its bar: its own name if it has one (the heading its body
-## is searched under), else its side, else its node name.
+## What to call `actor` over its bar: its own name if it has one (a `display_name`, or
+## the heading its body is searched under), else its side, else its node name.
 static func name_of(actor: Node) -> String:
 	if actor == null or not is_instance_valid(actor):
 		return ""
+	var own_name = actor.get("display_name")
+	if own_name is String and not own_name.is_empty():
+		return own_name
 	var inventory := actor.get_node_or_null("Inventory") as Inventory
 	if inventory and not inventory.display_name.is_empty():
 		return inventory.display_name
@@ -114,7 +124,8 @@ func _process(delta: float) -> void:
 	if _nearby_left <= 0.0:
 		_nearby_left = nearby_interval
 		_set_nearby(_find_nearby())
-	if _has_target and (not is_instance_valid(_target) or not Health.is_node_alive(_target)):
+	if _has_target and (not is_instance_valid(_target) or not Health.is_node_alive(_target)) \
+			and not (is_instance_valid(_target) and _target.is_in_group(REVIVES_GROUP)):
 		# Counted from the moment it is found dead, so the empty bar always gets its beat.
 		if _dead_left < 0.0:
 			_dead_left = dead_target_hold
@@ -224,38 +235,53 @@ func _nearest_attacker() -> Node3D:
 	return nearest
 
 
-## The closest living NPC within nearby_range that sits within nearby_angle of where the
-## owner looks, with nothing solid between them. Distance and angle weed out the rest,
-## so only the one candidate gets a ray.
+## The closest living NPC (or NAMEPLATE_GROUP thing) within nearby_range that sits within
+## nearby_angle of where the owner looks, with nothing solid between them. Distance and
+## angle weed out the rest, so only the one candidate gets a ray.
 func _find_nearby() -> Node3D:
 	var actor := _actor as Node3D
 	if nearby_range <= 0.0 or actor == null or not Health.is_node_alive(actor):
 		return null
 	var view := _view_of(actor)
 	var min_dot := cos(deg_to_rad(nearby_angle))
-	var best: Npc = null
+	var best: Node3D = null
+	var best_point := Vector3.ZERO
 	var best_distance := INF
-	for node in get_tree().get_nodes_in_group(Faction.GROUP):
-		var npc := node as Npc
-		if npc == null or not npc.health.is_alive():
+	var candidates := get_tree().get_nodes_in_group(Faction.GROUP)
+	candidates.append_array(get_tree().get_nodes_in_group(NAMEPLATE_GROUP))
+	for node in candidates:
+		var body := node as Node3D
+		if body == null or not (body is Npc or body.is_in_group(NAMEPLATE_GROUP)):
 			continue
-		var to_npc := npc.eyes.global_position - view.origin
-		var distance := to_npc.length()
+		if not Health.is_node_alive(body):
+			continue
+		var point := _aim_point(body)
+		var to_body := point - view.origin
+		var distance := to_body.length()
 		if distance > nearby_range or distance >= best_distance or distance < 0.01:
 			continue
-		if (to_npc / distance).dot(-view.basis.z) < min_dot:
+		if (to_body / distance).dot(-view.basis.z) < min_dot:
 			continue
-		best = npc
+		best = body
+		best_point = point
 		best_distance = distance
 	if best == null:
 		return null
-	var query := PhysicsRayQueryParameters3D.create(view.origin, best.eyes.global_position)
+	var query := PhysicsRayQueryParameters3D.create(view.origin, best_point)
 	if actor is CollisionObject3D:
 		query.exclude = [(actor as CollisionObject3D).get_rid()]
 	var hit := actor.get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty() and hit.collider != best:
 		return null
 	return best
+
+
+## Where to look at `body`: an NPC's eyes, a nameplate thing's `%Eyes`, else its origin.
+func _aim_point(body: Node3D) -> Vector3:
+	if body is Npc:
+		return (body as Npc).eyes.global_position
+	var eyes := body.get_node_or_null("%Eyes") as Node3D
+	return eyes.global_position if eyes else body.global_position
 
 
 ## Where the owner looks from and towards: its camera if it has one, else its body.

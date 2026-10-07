@@ -82,6 +82,19 @@ func _run() -> void:
 	_check("combat ends after linger", not tracker.is_in_combat())
 	_check("player bar released after combat", health_bar.modulate.a < 0.01)
 
+	# The dummy "dies" and stands back up: its empty bar stays and fills back up.
+	tracker.linger = 3.0
+	dummy.reset_delay = 0.8
+	var dummy_health := Health.find_in(dummy)
+	dummy_health.apply_damage(DamageInfo.new(999, player))
+	await _wait(0.5)
+	_check("dead dummy kept as the target past the hold", tracker.get_target() == dummy
+		and target_bar.modulate.a > 0.99 and target_bar.get_target_name() == "Training Dummy")
+	_check("its bar shows it empty", dummy_health.get_current() == 0 and target_bar._fill_to == 0.0)
+	await _wait(0.7)
+	_check("reset dummy still the target", tracker.get_target() == dummy)
+	_check("its bar fills back up", dummy_health.is_alive() and target_bar._fill_to == 1.0)
+
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
 

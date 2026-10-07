@@ -3,7 +3,14 @@ extends StaticBody3D
 ## The smallest possible enemy: a body, a Health component, and a reaction to being hit.
 ## It does not move, chase or fight back. Later enemies keep this exact Health component
 ## and add behaviour components beside it rather than replacing anything here.
+##
+## Its name and health show on the HUD's target bar like an NPC's: hitting it makes it the
+## player's combat target, and looking at it close by names it (it is in the tracker's
+## nameplate group, aimed at through %Eyes). It is in the revives group too, so its empty
+## bar stays up through the reset and fills back up.
 
+## The name over its bar.
+@export var display_name := "Training Dummy"
 ## How long the hit tint stays on, in seconds.
 @export var flash_time := 0.2
 ## How long the dummy lies "dead" before standing back up. A training dummy is the one
@@ -13,7 +20,6 @@ extends StaticBody3D
 @export var dead_color := Color(0.1, 0.1, 0.1, 0.6)
 
 @onready var _health: Health = %Health
-@onready var _readout: Label3D = %Readout
 @onready var _visual: Node3D = %Visual
 
 var _tint: StandardMaterial3D
@@ -21,24 +27,19 @@ var _flash_until := 0.0
 
 
 func _ready() -> void:
+	add_to_group(CombatTracker.NAMEPLATE_GROUP)
+	add_to_group(CombatTracker.REVIVES_GROUP)
 	_tint = StandardMaterial3D.new()
 	_tint.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_tint.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_health.changed.connect(_on_changed)
 	_health.damaged.connect(_on_damaged)
 	_health.died.connect(_on_died)
-	_on_changed(_health.get_current(), _health.max_health)
 
 
 func _process(_delta: float) -> void:
 	if _flash_until > 0.0 and Time.get_ticks_msec() / 1000.0 >= _flash_until:
 		_flash_until = 0.0
 		_set_overlay(null)
-
-
-func _on_changed(current: int, maximum: int) -> void:
-	_readout.text = "%d / %d" % [current, maximum]
-	_readout.modulate = Color(1, 1, 1) if current > 0 else Color(0.8, 0.3, 0.3)
 
 
 func _on_damaged(_info: DamageInfo) -> void:
