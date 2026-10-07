@@ -1,16 +1,22 @@
-[gd_resource type="Environment" load_steps=3 format=3]
+[gd_resource type="Environment" load_steps=4 format=3]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_night"]
-sky_top_color = Color(0.051, 0.031, 0.071, 1)
-sky_horizon_color = Color(0.29, 0.173, 0.29, 1)
-sky_curve = 0.12
-ground_bottom_color = Color(0.102, 0.063, 0.125, 1)
-ground_horizon_color = Color(0.29, 0.173, 0.29, 1)
-sun_angle_max = 0.0
-sun_curve = 0.0
+[ext_resource type="Shader" uid="uid://c6rr7hi02u7pp" path="res://assets/shaders/sky/woody_sky.gdshader" id="1_sky"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_woody_night"]
+shader = ExtResource("1_sky")
+shader_parameter/sky_top = Color(0.051, 0.031, 0.071, 1)
+shader_parameter/sky_horizon = Color(0.29, 0.173, 0.29, 1)
+shader_parameter/sky_curve = 0.12
+shader_parameter/ground_bottom = Color(0.102, 0.063, 0.125, 1)
+shader_parameter/ground_horizon = Color(0.29, 0.173, 0.29, 1)
+shader_parameter/sun_size_degrees = 0.0
+shader_parameter/wood_light = Color(0.3, 0.2, 0.24, 1)
+shader_parameter/wood_dark = Color(0.16, 0.1, 0.14, 1)
+shader_parameter/bark = Color(0.07, 0.04, 0.06, 1)
+shader_parameter/ring_strength = 0.85
 
 [sub_resource type="Sky" id="Sky_night"]
-sky_material = SubResource("ProceduralSkyMaterial_night")
+sky_material = SubResource("ShaderMaterial_woody_night")
 
 [resource]
 background_mode = 2

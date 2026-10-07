@@ -1,9 +1,11 @@
 extends Node3D
 
 ## Concept captures for woody clouds: three ways to make the sky belong to a world of
-## wood, each over the village in daylight and at night. Concept only; nothing here is
-## used by the levels.
+## wood, each over the village in daylight and at night. B is now the real sky
+## (assets/shaders/sky/woody_sky.gdshader, used by the daylight and tallow fair
+## environments); A, C and "plain" switch its clouds off to compare against.
 ##
+##   plain  the environment with the wood clouds switched off (as before B)
 ##   A  whittled clouds: lumpy carved meshes hung on strings, swaying like stage props
 ##   B  ring sky: a sky shader drawing clouds as end-grain log slices (growth rings)
 ##   C  plywood flats: cut-out cloud boards on rails, sliding like theatre scenery
@@ -16,7 +18,6 @@ const LIGHTING := {
 	"day": preload("res://scenes/levels/lighting/daylight_lighting.tscn"),
 	"night": preload("res://scenes/levels/lighting/tallow_fair_lighting.tscn"),
 }
-const WOODY_SKY := preload("res://tests/visual/woody_clouds/woody_sky.gdshader")
 const PLYWOOD := preload("res://tests/visual/woody_clouds/plywood.gdshader")
 const EYE := Vector3(0.0, 2.5, 32.0)
 const LOOK := Vector3(-2.0, 18.0, -40.0)
@@ -48,7 +49,7 @@ func _ready() -> void:
 	if clip != "":
 		_setup(clip, clip_time)
 		return
-	for concept in ["A", "B", "C"]:
+	for concept in ["plain", "A", "B", "C"]:
 		for time in ["day", "night"]:
 			_setup(concept, time)
 			for i in 12:
@@ -85,11 +86,11 @@ func _setup(concept: String, time: String) -> void:
 	_clouds.position = Vector3(0, -4, 48)
 	add_child(_clouds)
 	var night := time == "night"
+	if concept != "B":
+		_hide_wood_clouds()
 	match concept:
 		"A":
 			_build_whittled(night)
-		"B":
-			_apply_ring_sky(night)
 		"C":
 			_build_plywood(night)
 
@@ -156,20 +157,12 @@ func _build_whittled(night: bool) -> void:
 		_swayers.append([pivot, float(i) * 1.3])
 
 
-# --- B: ring sky shader --------------------------------------------------------------
+# --- B is the environment's own sky; the others switch its clouds off ---------------
 
-func _apply_ring_sky(night: bool) -> void:
+func _hide_wood_clouds() -> void:
 	var world_env := _find_world_env(_lighting)
 	var env: Environment = world_env.environment.duplicate(true)
-	var mat := ShaderMaterial.new()
-	mat.shader = WOODY_SKY
-	if night:
-		mat.set_shader_parameter("sky_top", Color(0.051, 0.031, 0.071))
-		mat.set_shader_parameter("sky_horizon", Color(0.29, 0.173, 0.29))
-		mat.set_shader_parameter("wood_light", Color(0.30, 0.20, 0.24))
-		mat.set_shader_parameter("wood_dark", Color(0.20, 0.13, 0.17))
-		mat.set_shader_parameter("bark", Color(0.08, 0.05, 0.07))
-	env.sky.sky_material = mat
+	(env.sky.sky_material as ShaderMaterial).set_shader_parameter("cloud_cover", 0.0)
 	world_env.environment = env
 
 

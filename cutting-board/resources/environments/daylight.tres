@@ -1,10 +1,13 @@
-[gd_resource type="Environment" load_steps=3 format=3]
+[gd_resource type="Environment" load_steps=4 format=3]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
-ground_bottom_color = Color(0.6463, 0.6558, 0.6708, 1)
+[ext_resource type="Shader" uid="uid://c6rr7hi02u7pp" path="res://assets/shaders/sky/woody_sky.gdshader" id="1_sky"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_woody"]
+shader = ExtResource("1_sky")
+shader_parameter/ground_bottom = Color(0.6463, 0.6558, 0.6708, 1)
 
 [sub_resource type="Sky" id="Sky_1"]
-sky_material = SubResource("ProceduralSkyMaterial_1")
+sky_material = SubResource("ShaderMaterial_woody")
 
 [resource]
 background_mode = 2
