@@ -1,10 +1,20 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/vfx/mask_off_vision.gd" id="1_script"]
 [ext_resource type="Shader" path="res://assets/shaders/post/mask_off_vision.gdshader" id="2_shader"]
+[ext_resource type="Shader" path="res://assets/shaders/post/mask_beacon.gdshader" id="3_beacon"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vision"]
 shader = ExtResource("2_shader")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_beacon"]
+shader = ExtResource("3_beacon")
+
+[sub_resource type="Environment" id="Environment_beacon"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(1, 0.8, 0.6, 1)
 
 [node name="MaskOffVision" type="CanvasLayer"]
 layer = -80
@@ -20,3 +30,27 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="BeaconRender" type="SubViewport" parent="."]
+unique_name_in_owner = true
+transparent_bg = true
+msaa_3d = 0
+positional_shadow_atlas_size = 0
+size = Vector2i(320, 180)
+render_target_update_mode = 0
+
+[node name="BeaconCamera" type="Camera3D" parent="BeaconRender"]
+unique_name_in_owner = true
+cull_mask = 524288
+environment = SubResource("Environment_beacon")
+
+[node name="Beacon" type="TextureRect" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_beacon")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1

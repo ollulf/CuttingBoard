@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
 [ext_resource type="Script" path="res://scripts/components/health_regen.gd" id="99_regen"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/mask_monger_model.tscn" id="12_model"]
 [ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="13_faction"]
 [ext_resource type="Script" path="res://scenes/characters/mask_burn_ritual.gd" id="14_ritual"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/mask_beacon.tscn" id="15_beacon"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_monger"]
 radius = 0.5
@@ -109,3 +110,7 @@ pause_max = 8.0
 [node name="Usable" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("14_ritual")
+
+[node name="MaskBeacon" parent="." node_paths=PackedStringArray("visual") instance=ExtResource("15_beacon")]
+unique_name_in_owner = true
+visual = NodePath("../Visual")

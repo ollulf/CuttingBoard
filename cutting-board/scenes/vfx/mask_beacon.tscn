@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/vfx/mask_beacon.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monger_hum_loop.wav" id="2_hum"]
+
+[node name="MaskBeacon" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Hum" type="AudioStreamPlayer3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+stream = ExtResource("2_hum")
+unit_size = 4.0
+max_distance = 40.0
+bus = &"SFX"
