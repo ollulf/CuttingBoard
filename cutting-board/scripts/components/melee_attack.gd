@@ -76,12 +76,26 @@ func strike(hand: HandSlot) -> void:
 	var bone := target as PhysicalBone3D
 	if bone:
 		bone.apply_impulse(direction * knockback, hit["position"] - bone.global_position)
+	_wear(hand)
 
 
 ## The whoosh of the blow being thrown, from where it starts. Separate from strike()
 ## because the swing is heard as the arm sets off and the hit only when it arrives.
 func play_swing() -> void:
 	Sfx.play_at(swing_sound, _aim.global_position)
+
+
+## A blow that landed dulls what struck it, by the item's own wear_per_hit; a whiff never
+## gets here. Last, after the hit is resolved, because the final blow breaks the weapon
+## out of the hand: the hand and the hotbar let go of it as it is freed, which leaves a
+## bare fist for the next swing.
+func _wear(hand: HandSlot) -> void:
+	var data := hand.get_item_data() if hand else null
+	if data == null or data.wear_per_hit <= 0:
+		return
+	var destructible := hand.get_held().get_node_or_null("Destructible") as Destructible
+	if destructible:
+		destructible.damage(data.wear_per_hit, true)
 
 
 ## What this hand hits for: the held item's own impact damage, or a bare fist. An item

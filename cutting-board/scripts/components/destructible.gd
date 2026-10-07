@@ -50,7 +50,9 @@ static func write(node: Node, durability: int) -> void:
 		component.durability = durability
 
 
-func damage(amount: int) -> void:
+## `quiet` wears the object down without announcing it as damage, so no number pops up:
+## a weapon dulling in the hand that swings it is not a hit on the weapon.
+func damage(amount: int, quiet := false) -> void:
 	# Already broken: several contacts in one step can each try to finish it off.
 	if indestructible or amount <= 0 or durability == 0:
 		return
@@ -59,7 +61,8 @@ func damage(amount: int) -> void:
 	var lost := mini(amount, durability)
 	durability = clampi(durability - amount, 0, MAX_DURABILITY)
 	var node := get_parent() as Node3D
-	damaged.emit(lost, node.global_position if node else Vector3.ZERO)
+	if not quiet:
+		damaged.emit(lost, node.global_position if node else Vector3.ZERO)
 	if durability == 0:
 		if node:
 			Sfx.play_at(break_sound, node.global_position)

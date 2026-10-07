@@ -16,5 +16,6 @@ animation_set = &"weapon"
 description = "A carpenter's hand saw. Light and quick in the hand, and the teeth bite."
 weight = 1.5
 durability = 150
+wear_per_hit = 4
 grid_size = Vector2i(3, 1)
 world_scene_path = "res://scenes/items/saw.tscn"

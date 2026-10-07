@@ -33,6 +33,10 @@ enum Type { MISC, WEAPON, MASK, HEAD, BODY, PACK }
 ## This is the authored maximum rather than the wear on one particular object: picking
 ## an item up frees the node that was tracking what it had left.
 @export_range(0, 9999) var durability := 0
+## Durability a melee blow that lands with this item in hand costs it. A whiff costs
+## nothing. Zero means swinging it never wears it, which is right for anything that is
+## not meant as a weapon. Pick it as durability over the landed hits it should survive.
+@export_range(0, 999) var wear_per_hit := 0
 ## Footprint in inventory squares: x wide by y tall.
 @export var grid_size := Vector2i(1, 1)
 ## Scene the item is rebuilt from when it leaves an inventory. Held as a path, not as a
