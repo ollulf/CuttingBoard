@@ -81,7 +81,7 @@ signal drop_requested(inventory: Inventory, entry: InventoryEntry)
 @onready var _container_title: Label = %ContainerTitle
 @onready var _container_size: Label = %ContainerSize
 @onready var _container_grid: Control = %ContainerGrid
-@onready var _nearby_empty: Control = %NearbyEmpty
+@onready var _container_frame: Control = %ContainerFrame
 @onready var _health_bar: ProgressBar = %HealthBar
 @onready var _health_value: Label = %HealthValue
 @onready var _figure: PaperDoll = %Figure
@@ -595,10 +595,12 @@ func _end_drag(pos: Vector2) -> void:
 			_hotbar.clear(from_hotbar)
 		return
 	if target_hotbar != HotbarPanel.NO_SLOT:
-		# Only an item sitting in the player's own grid can be linked to a key: the bar
-		# points into that one bag. Something in the hand is not in there to be pointed
-		# at, and something in a chest is about to be left behind when the lid shuts.
-		if entry and from == _inventory:
+		# An item in the player's own grid is linked where it lies; one in a hand stays
+		# there, with the square following it as it does after a draw. Something in a
+		# chest is about to be left behind when the lid shuts, so it cannot be linked.
+		if from_hand:
+			_hotbar.assign_held(target_hotbar, from_hand)
+		elif entry and from == _inventory:
 			_hotbar.assign(target_hotbar, entry)
 		return
 	if target_hand:
@@ -840,8 +842,8 @@ func _accepts_wear(slot: int) -> bool:
 
 
 ## Whether a hotbar square will take what is being dragged. Links are made to items in
-## the grid, so only a grid item can be dropped on an empty square; a link already on
-## the bar can be dropped on any other square, which moves or swaps it.
+## the player's grid or hands, and either replaces whatever link the square had; a link
+## already on the bar can be dropped on any other square, which moves or swaps it.
 func _accepts_link(index: int) -> bool:
 	if _hotbar == null:
 		return false
@@ -850,6 +852,8 @@ func _accepts_link(index: int) -> bool:
 		# A square whose item is out in the hand is not a place a link can be put: its
 		# key is tied to the arm the item is in.
 		return index != _drag_hotbar and target != null and not target.is_held()
+	if _drag_hand:
+		return true
 	return _drag_entry != null and _drag_side == Side.PLAYER
 
 
@@ -969,20 +973,15 @@ func _rebuild() -> void:
 	_rebuild_equipment()
 
 
-## The left-hand panel is always there, so the screen does not jump about as chests are
-## opened and shut; with nothing open it says so in place of a grid.
+## The container panel only shows while looting; the plain bag shows the equipment instead.
 func _rebuild_nearby() -> void:
-	_container_grid.visible = _container != null
-	# Looting shows just the two grids; the equipment comes back with the plain bag.
+	_container_frame.visible = _container != null
 	_equip_frame.visible = _container == null
-	_nearby_empty.visible = _container == null
 	if _container:
 		_rebuild_grid(Side.CONTAINER)
 		return
 	for child in _container_grid.get_children():
 		child.queue_free()
-	_container_title.text = "Nearby"
-	_container_size.text = ""
 
 
 func _rebuild_grid(side: int) -> void:

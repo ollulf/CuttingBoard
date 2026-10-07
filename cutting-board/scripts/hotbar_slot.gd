@@ -57,6 +57,15 @@ func take_into_hand(item: Node3D, from_entry: InventoryEntry) -> void:
 	entry = null
 
 
+## Links this slot to an item that is already out in a hand without having come from the
+## grid through this slot. It has no squares of its own yet, so putting it away later
+## lets it go wherever it fits.
+func link_held(item: Node3D, p_data: ItemData) -> void:
+	clear()
+	held = item
+	data = p_data
+
+
 ## The item is back in the grid, as a new entry: the old one stopped existing the moment
 ## it was taken out.
 func return_to_grid(p_entry: InventoryEntry) -> void:

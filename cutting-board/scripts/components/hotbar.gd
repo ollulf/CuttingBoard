@@ -86,6 +86,22 @@ func assign(index: int, entry: InventoryEntry) -> bool:
 	return true
 
 
+## Links a slot to whatever a hand is holding, and leaves it in the hand. The square then
+## follows it just as it would an item drawn with its own key: pressing the key puts it
+## away, and pressing it again draws it into the slot's hand. Its wear stays on the object.
+func assign_held(index: int, hand: HandSlot) -> bool:
+	var slot := get_slot(index)
+	if slot == null or hand == null or hand.is_free():
+		return false
+	var item := hand.get_held()
+	for other in _slots:
+		if other != slot and other.is_held() and other.held == item:
+			other.clear()
+	slot.link_held(item, hand.get_item_data())
+	changed.emit()
+	return true
+
+
 ## Moves a link from one square to another, swapping with whatever is there. Refused
 ## while either item is out in a hand: a slot's hand is fixed, so moving a link across
 ## the bar mid-use would leave the key pointing at the wrong arm.
