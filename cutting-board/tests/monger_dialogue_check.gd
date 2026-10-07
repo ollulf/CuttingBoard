@@ -86,6 +86,12 @@ func _run() -> void:
 	_check("nothing more is given", inventory.get_entries().size() == items_before
 			and equipment.get_item(Equipment.Slot.MASK) == worn)
 
+	# A mask only in the inventory: still just Talk.
+	inventory.add(MASK)
+	prompts.refresh()
+	_check("a mask only in the inventory still offers Talk",
+			interact_prompt._action_label.text == "Talk")
+
 	# A mask in hand: the ritual comes first.
 	var hand := player.get_node("%HandSlotRight") as HandSlot
 	interactor.spawn_into_hand(MASK, -1, hand)
