@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tools/import/mesh_builder.gd"
 
 ## Builds the hand saw's mesh: a flat steel blade with a row of real teeth along its
 ## lower edge, set into a wooden handle with a hole for the fingers. Everything is flat
@@ -12,7 +12,6 @@ extends SceneTree
 ## Run it again whenever the tables below change:
 ##   godot --headless --path cutting-board -s res://tools/import/build_saw.gd
 
-const OUT_MESH := "res://assets/meshes/props/saw.res"
 const WOOD := preload("res://assets/materials/environment/dark_planks.tres")
 const METAL := preload("res://assets/materials/environment/metal.tres")
 
@@ -49,20 +48,13 @@ const BLADE_THICKNESS := 0.006
 ## the metal keep one size across the whole saw.
 const UV_SCALE := 2.0
 
-var _triangles := 0
-
 
 func _init() -> void:
+	uv_scale = UV_SCALE
 	var mesh := ArrayMesh.new()
 	_commit(mesh, _build_handle(), WOOD)
 	_commit(mesh, _build_blade(), METAL)
-	var error := ResourceSaver.save(mesh, OUT_MESH)
-	if error != OK:
-		push_error("Could not save %s: %s" % [OUT_MESH, error_string(error)])
-		quit(1)
-		return
-	print("Built %s with %d triangles." % [OUT_MESH, _triangles])
-	quit()
+	quit(0 if _save(mesh, "saw.res") else 1)
 
 
 ## A slab between the outline and the hole: both faces, the outside rim and the inside
@@ -140,25 +132,3 @@ func _quad(tool: SurfaceTool, corners: Array, facing: Vector3) -> void:
 		tool.set_uv(_uv(corner, normal))
 		tool.add_vertex(corner)
 	_triangles += 2
-
-
-## Projects the texture along whichever axis the face looks down most.
-func _uv(point: Vector3, normal: Vector3) -> Vector2:
-	var n := normal.abs()
-	if n.x >= n.y and n.x >= n.z:
-		return Vector2(point.z, -point.y) * UV_SCALE
-	if n.y >= n.z:
-		return Vector2(point.z, point.x) * UV_SCALE
-	return Vector2(point.x, -point.y) * UV_SCALE
-
-
-func _begin() -> SurfaceTool:
-	var tool := SurfaceTool.new()
-	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	return tool
-
-
-func _commit(mesh: ArrayMesh, tool: SurfaceTool, material: Material) -> void:
-	tool.index()
-	tool.commit(mesh)
-	mesh.surface_set_material(mesh.get_surface_count() - 1, material)
