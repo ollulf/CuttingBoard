@@ -142,6 +142,9 @@ func _spawn_villager(at: Vector3, pop_chance: float) -> Npc:
 	await _physics_frames(5)
 	villager.brain.shut_down()
 	villager.body.mask_pop_chance = pop_chance
+	# The mask survives its wearer's death as its own kind; shattering is
+	# shattered_mask_check's.
+	villager.body.mask_shatter_chance = 0.0
 	return villager
 
 

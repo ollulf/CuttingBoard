@@ -1,14 +1,18 @@
 class_name MaskBurnRitual
 extends Usable
 
-## The Mask-Monger's trade: hand it a mask and its puppet tosses it up, the lantern sets
-## it alight, and the soul that burns out of it spirals down into a vial, which is lobbed
-## to the giver's feet as a Soul in a Bottle (docs/concepts/monger-burn-ritual.md).
+## The Mask-Monger's trade: hand it a shattered mask and its puppet tosses it up, the
+## lantern sets it alight, and the soul that burns out of it spirals down into a vial,
+## which is lobbed to the giver's feet as a Soul in a Bottle
+## (docs/concepts/monger-burn-ritual.md). A whole mask is not burnt: one that is damaged
+## it mends instead, for one Soul in a Bottle out of the giver's inventory.
 ##
 ## Sits on the Monger as its Usable, so the player's interact key reaches it. The mask
 ## given is the one in a hand (right first); a mask only in the inventory or being worn
-## is never taken, and without one in hand the Monger just talks. It refuses while a ritual is already playing, while the
-## Monger is dead, and while it holds a grudge against whoever is asking.
+## is never taken. Burning comes before mending; with neither to offer — or a damaged
+## mask but no soul to pay with — the Monger just talks. It refuses while a ritual is
+## already playing, while the Monger is dead, and while it holds a grudge against whoever
+## is asking.
 ##
 ## The ritual poses the model after MaskMongerBody has (a later process_priority), so the
 ## body's breathing and swaying carry on underneath and only the arms, head and jaw are
@@ -29,6 +33,10 @@ const SOUL_SHADER := preload("res://assets/shaders/soul_swirl.gdshader")
 
 ## What the burnt mask becomes.
 @export var reward: ItemData = preload("res://resources/items/soul_bottle.tres")
+## The only mask that is burnt; every kind of face becomes this one once it splits.
+@export var shattered_mask: ItemData = preload("res://resources/items/shattered_mask.tres")
+## Heard as a damaged mask is mended.
+@export var repair_sound: SoundBank = preload("res://resources/audio/monger_babble.tres")
 ## How far in front of the giver the bottle lands, in metres.
 @export var landing_distance := 0.7
 
@@ -50,6 +58,8 @@ const SOUL_SHADER := preload("res://assets/shaders/soul_swirl.gdshader")
 
 signal ritual_started(mask: ItemData)
 signal ritual_finished(bottle: Node3D)
+## A damaged mask in the giver's hand was mended to full, for one soul.
+signal mask_repaired(mask: Node3D)
 ## A beat's sound was played, `at` seconds into the ritual.
 signal sound_cued(bank: SoundBank, at: float)
 
@@ -84,7 +94,7 @@ var _cues := {}
 
 func _ready() -> void:
 	held_verb = ""
-	can_use = _can_give
+	can_use = func(by: Node) -> bool: return _can_give(by) or _can_repair(by)
 	used.connect(_on_used)
 	# After MaskMongerBody, so the ritual's pose is the one that shows.
 	process_priority = 10
@@ -93,7 +103,11 @@ func _ready() -> void:
 
 ## What the interact prompt offers this player, or "" when there is nothing to offer.
 func get_prompt(by: Node) -> String:
-	return "Give mask" if _can_give(by) else ""
+	if _can_give(by):
+		return "Give shattered mask"
+	if _can_repair(by):
+		return "Repair mask (1 soul)"
+	return ""
 
 
 func is_playing() -> bool:
@@ -101,33 +115,78 @@ func is_playing() -> bool:
 
 
 func _can_give(by: Node) -> bool:
+	return _will_trade(by) and _find_hand_mask(by) != null
+
+
+## A damaged mask in hand, and a soul in the inventory to pay for it.
+func _can_repair(by: Node) -> bool:
+	return _will_trade(by) and _find_damaged_mask(by) != null and _find_payment(by) != null
+
+
+func _will_trade(by: Node) -> bool:
 	if is_playing() or by == null:
 		return false
 	var health := Health.find_in(_npc)
 	if health and not health.is_alive():
 		return false
-	if _npc.has_grudge_against(by as Node3D):
-		return false
-	return _find_hand_mask(by) != null
+	return not _npc.has_grudge_against(by as Node3D)
 
 
+## The hand holding a shattered mask, the only kind that is burnt.
 func _find_hand_mask(by: Node) -> HandSlot:
 	for hand_name: String in ["%HandSlotRight", "%HandSlotLeft"]:
 		var hand := by.get_node_or_null(hand_name) as HandSlot
-		if hand and hand.get_item_data() is MaskData:
+		if hand and shattered_mask and hand.get_item_data() == shattered_mask:
 			return hand
 	return null
+
+
+## The hand holding a mask with less than its full durability left.
+func _find_damaged_mask(by: Node) -> HandSlot:
+	for hand_name: String in ["%HandSlotRight", "%HandSlotLeft"]:
+		var hand := by.get_node_or_null(hand_name) as HandSlot
+		if hand == null or not hand.get_item_data() is MaskData:
+			continue
+		var left := hand.get_durability()
+		if left >= 0 and left < hand.get_item_data().durability:
+			return hand
+	return null
+
+
+## The Soul in a Bottle a repair is paid with, out of the giver's inventory.
+func _find_payment(by: Node) -> InventoryEntry:
+	var inventory := by.get_node_or_null("Inventory") as Inventory
+	if inventory == null:
+		return null
+	for entry in inventory.get_entries():
+		if entry.data == reward:
+			return entry
+	return null
+
+
+## Takes one soul and mends the mask in hand to full, there and then.
+func _repair(by: Node) -> void:
+	var hand := _find_damaged_mask(by)
+	var payment := _find_payment(by)
+	if hand == null or payment == null:
+		return
+	(by.get_node("Inventory") as Inventory).remove(payment)
+	var mask := hand.get_held()
+	Destructible.write(mask, hand.get_item_data().durability)
+	Sfx.play_at(repair_sound, _head.global_position)
+	mask_repaired.emit(mask)
+	get_tree().call_group(&"interaction_prompts", &"refresh")
 
 
 ## Takes the mask off the giver and starts the burn.
 func _on_used(by: Node) -> void:
 	# Marked busy before the mask leaves the giver: taking it refreshes the prompts,
 	# which must already read the Monger as busy.
-	_time = 0.0
 	var hand := _find_hand_mask(by)
 	if hand == null:
-		_time = -1.0
+		_repair(by)
 		return
+	_time = 0.0
 	var data := hand.get_item_data()
 	_mask = hand.release()
 	# Released, the object still hangs under the hand; it goes out into the world.

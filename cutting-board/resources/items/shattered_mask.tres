@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/shattered_mask.png" id="2_icon"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_shatter"]
+diffuse_texture = ExtResource("2_icon")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Shattered Mask"
+icon = SubResource("CanvasTexture_shatter")
+description = "Split clean through. Whose face it was, nobody can tell any more, and no glue will hold it. The Mask-Monger can still get a soul out of it."
+weight = 0.25
+world_scene_path = "res://scenes/items/shattered_mask.tscn"

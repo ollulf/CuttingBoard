@@ -4,14 +4,14 @@ extends Node3D
 ## bare-faced player looking at her is offered "E Talk"; E starts the talk and each
 ## further E goes on a line (eaten by the speech plank, so it does not start another
 ## talk); after the last line the player wears the first mask; a second talk says
-## something else and gives nothing; and a mask in hand still offers "Give mask" first.
+## something else and gives nothing; and a mask in hand still offers "Give shattered mask" first.
 ## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
 ##
 ##   godot --headless --fixed-fps 60 --path cutting-board res://tests/monger_dialogue_check.tscn
 
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
-const MASK := preload("res://resources/items/villager_mask.tres")
+const MASK := preload("res://resources/items/shattered_mask.tres")
 
 var _failures := 0
 
@@ -102,7 +102,7 @@ func _run() -> void:
 	var hand := player.get_node("%HandSlotRight") as HandSlot
 	interactor.spawn_into_hand(MASK, -1, hand)
 	prompts.refresh()
-	_check("a mask in hand offers Give mask", interact_prompt._action_label.text == "Give mask")
+	_check("a mask in hand offers Give mask", interact_prompt._action_label.text == "Give shattered mask")
 	interactor.interact(inventory)
 	var ritual := monger.get_node("%Usable") as MaskBurnRitual
 	_check("E with a mask in hand burns it, no talk",
