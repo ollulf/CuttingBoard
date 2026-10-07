@@ -23,6 +23,10 @@ func _run() -> void:
 		_finish()
 		return
 	_check("no skip without the argument", not IntroSequence.skip_requested())
+	var missing := IntroSequence.CUES.filter(
+		func(cue: Array) -> bool: return not ResourceLoader.exists(IntroSequence.SFX + cue[1] + ".wav")
+	)
+	_check("every sound of the opening exists", missing.is_empty())
 	var level := LEVEL.instantiate()
 	add_child(level)
 	await _frames(5)
@@ -51,6 +55,10 @@ func _run() -> void:
 
 	# Full fall: jump to the end of the grain beat and let it drop.
 	intro.start()
+	_check("all black until the heart beats", intro._hole(intro.HEARTBEATS[0] - 0.1) == 0.0)
+	_check("the heartbeats open the dark from the centre",
+		intro._hole(intro.HEARTBEATS[1] + 0.6) > intro._hole(intro.HEARTBEATS[0] + 0.6))
+	_check("clear once born", intro._hole(intro.BIRTH_END) > 1.5)
 	intro.elapsed = intro.GRAIN_END - 0.5
 	await _frames(20)
 	print("state ", intro.running, " ", intro.elapsed, " ", player.control, " ", Input.is_action_pressed("pause"))

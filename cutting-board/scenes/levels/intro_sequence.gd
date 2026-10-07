@@ -35,12 +35,53 @@ const CONTROL_FULL := 0
 const CONTROL_LOOK_ONLY := 1
 const CONTROL_NONE := 2
 
+const SFX := "res://assets/audio/sfx/"
+const HEARTBEAT_SHADER := preload("res://scenes/levels/intro_heartbeat.gdshader")
+const ROOM_LOOP := preload("res://assets/audio/ambience/intro_room_loop.wav")
+## What is heard on the workbench in the dark, then the heart-knock: [seconds, sound,
+## where it comes from relative to the camera (x right, y up, z behind; null for inside
+## the head), dB]. The Builder works above and around the player, mostly over the chest.
+const CUES := [
+	[1.5, "intro_hum_1", Vector3(1.2, 1.0, -0.6), -6.0],
+	[5.0, "intro_knock_1", Vector3(0.4, 0.3, -1.0), -4.0],
+	[7.5, "intro_saw", Vector3(-1.8, 0.4, 0.2), -8.0],
+	[10.8, "intro_mutter_1", Vector3(1.0, 1.1, -0.3), -5.0],
+	[13.2, "intro_peg_1", Vector3(0.6, 0.2, -0.8), -5.0],
+	[15.0, "intro_peg_2", Vector3(-0.6, 0.2, -0.8), -5.0],
+	[17.2, "glue_1", Vector3(0.0, 0.3, -0.6), 0.0],
+	[19.6, "intro_plane", Vector3(-1.0, 0.5, -0.5), -8.0],
+	[22.6, "intro_hum_2", Vector3(-0.9, 1.0, -0.4), -6.0],
+	[25.8, "intro_mutter_2", Vector3(0.3, 1.1, -0.5), -5.0],
+	[28.4, "intro_peg_last", Vector3(0.0, 0.2, -0.7), -3.0],
+	# 30 to 32: silence. Then two knocks on the chest, and one back from inside.
+	[32.2, "intro_knock_2", Vector3(0.0, 0.0, -0.5), -2.0],
+	[33.3, "intro_knock_1", Vector3(0.0, 0.0, -0.5), -2.0],
+	[34.4, "intro_heart", null, 0.0],
+	[35.5, "intro_heart", null, -1.0],
+	[36.5, "intro_heart", null, -2.0],
+	[37.4, "intro_heart", null, -4.0],
+	[GRAIN_END, "intro_wind", null, -4.0],
+]
+## The heartbeats from inside, and how far each pushes the dark back from the centre of
+## the screen (screen heights); the last one clears it.
+const HEARTBEATS := [34.4, 35.5, 36.5, 37.4]
+const HEART_OPEN := [0.18, 0.4, 0.7, 1.6]
+## Seconds at the start of the fall over which the view turns back to face the market.
+const FALL_TURN := 1.5
+
 var running := false
 var elapsed := 0.0
 var _esc_held := 0.0
 var _ground_y := 0.0
 var _landed := false
 var _black: ColorRect
+var _next_cue := 0
+var _room: AudioStreamPlayer
+## Every sound the opening started, stopped together at the landing.
+var _voices: Array[Node] = []
+## The view the player looked to during the grain, which the fall turns back from.
+var _look_yaw := 0.0
+var _look_pitch := 0.0
 ## The player, untyped so its script's own members can be reached.
 var _p: Variant
 
@@ -65,20 +106,33 @@ func start() -> void:
 	elapsed = 0.0
 	_esc_held = 0.0
 	_landed = false
+	_next_cue = 0
+	_look_yaw = landing_yaw
+	_look_pitch = 0.0
 	_p.control = CONTROL_NONE
 	player.set_physics_process(false)
 	_set_hud(false)
 	_ground_y = _find_ground()
 	_place(fall_height)
-	# The total black over the grain until birth.
+	# The total black over the grain until birth, opened from the centre by the heart.
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	_black = ColorRect.new()
 	_black.color = Color.BLACK
 	_black.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var material := ShaderMaterial.new()
+	material.shader = HEARTBEAT_SHADER
+	_black.material = material
 	layer.add_child(_black)
 	add_child(layer)
+	_room = AudioStreamPlayer.new()
+	_room.stream = ROOM_LOOP
+	_room.bus = &"SFX"
+	_room.volume_db = -14.0
+	add_child(_room)
+	_room.play()
+	_voices.append(_room)
 	set_process(true)
 
 
@@ -99,18 +153,74 @@ func _process(delta: float) -> void:
 			return
 	else:
 		_esc_held = 0.0
-	if elapsed < BIRTH_END:
-		_black.modulate.a = 1.0 if elapsed < BLACK_END else 1.0 - (elapsed - BLACK_END) / (BIRTH_END - BLACK_END)
-	else:
-		_black.modulate.a = 0.0
-	if elapsed >= BIRTH_END:
+	_play_cues()
+	(_black.material as ShaderMaterial).set_shader_parameter("hole", _hole(elapsed))
+	# The room tone drains away under the last peg, leaving two seconds of silence.
+	_room.volume_db = -14.0 + linear_to_db(clampf((BLACK_END - 2.0 - elapsed) / 1.5, 0.001, 1.0))
+	if elapsed >= BIRTH_END and _p.control == CONTROL_NONE:
 		_p.control = CONTROL_LOOK_ONLY
+	if elapsed >= GRAIN_END and _p.control == CONTROL_LOOK_ONLY:
+		_p.control = CONTROL_NONE
+		_look_yaw = player.rotation.y
+		_look_pitch = _p.camera_pivot.rotation.x
 	if elapsed >= GRAIN_END:
 		# Ease in like a real drop, but slower: the whole fall lasts the beat.
 		var t := clampf((elapsed - GRAIN_END) / (FALL_END - GRAIN_END), 0.0, 1.0)
-		_place(fall_height * (1.0 - t * t))
+		_place(fall_height * (1.0 - t * t), clampf((elapsed - GRAIN_END) / FALL_TURN, 0.0, 1.0))
 	if elapsed >= FALL_END:
 		_land()
+
+
+## Starts every cue whose time has come, placed around the camera as it is now.
+func _play_cues() -> void:
+	while _next_cue < CUES.size() and elapsed >= CUES[_next_cue][0]:
+		var cue: Array = CUES[_next_cue]
+		_next_cue += 1
+		# A cue long past (the test jumping ahead) is not played late.
+		if elapsed - cue[0] > 0.5:
+			continue
+		var stream: AudioStream = load(SFX + cue[1] + ".wav")
+		var voice: Node
+		if cue[2] == null:
+			var flat := AudioStreamPlayer.new()
+			flat.volume_db = cue[3]
+			voice = flat
+		else:
+			var spatial := AudioStreamPlayer3D.new()
+			spatial.volume_db = cue[3]
+			spatial.max_db = cue[3]
+			spatial.unit_size = 1.5
+			spatial.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_DISABLED
+			voice = spatial
+		voice.stream = stream
+		voice.bus = &"SFX"
+		add_child(voice)
+		if voice is AudioStreamPlayer3D:
+			var camera := get_viewport().get_camera_3d()
+			voice.global_position = camera.global_transform * (cue[2] as Vector3) if camera else player.global_position
+		voice.play()
+		voice.finished.connect(_drop_voice.bind(voice))
+		_voices.append(voice)
+
+
+func _drop_voice(voice: Node) -> void:
+	_voices.erase(voice)
+	voice.queue_free()
+
+
+## How far the dark has been pushed back from the centre at `t`: each heartbeat throws it
+## out past its new edge, and it settles back a little until the next.
+func _hole(t: float) -> float:
+	if t >= BIRTH_END:
+		return 3.0
+	var r := 0.0
+	for i in HEARTBEATS.size():
+		var beat: float = HEARTBEATS[i]
+		if t < beat:
+			break
+		var u := clampf((t - beat) / 0.45, 0.0, 1.0)
+		r = lerpf(r, HEART_OPEN[i], 1.0 - pow(1.0 - u, 3.0)) + 0.12 * sin(PI * u)
+	return r
 
 
 ## Holding Esc: straight to the ground, no fall.
@@ -129,6 +239,10 @@ func _land() -> void:
 	if _black != null:
 		_black.get_parent().queue_free()
 		_black = null
+	for voice in _voices:
+		voice.queue_free()
+	_voices.clear()
+	_room = null
 	Sfx.play(_p.land_sound)
 	player.set_physics_process(true)
 	_p.control = CONTROL_FULL
@@ -136,10 +250,14 @@ func _land() -> void:
 	finished.emit()
 
 
-func _place(height: float) -> void:
+## Puts the player `height` above the landing spot. `turn` (0..1) turns the view from
+## where the player looked during the grain back to the landing facing.
+func _place(height: float, turn := 1.0) -> void:
 	player.global_position = Vector3(landing_spot.x, _ground_y + height, landing_spot.z)
-	player.rotation = Vector3(0.0, landing_yaw, 0.0)
-	_p.camera_pivot.rotation.x = 0.0 if height > 0.0 else _p.camera_pivot.rotation.x
+	var blend := smoothstep(0.0, 1.0, turn)
+	player.rotation = Vector3(0.0, lerp_angle(_look_yaw, landing_yaw, blend), 0.0)
+	if height > 0.0:
+		_p.camera_pivot.rotation.x = lerpf(_look_pitch, 0.0, blend)
 
 
 func _set_hud(on: bool) -> void:

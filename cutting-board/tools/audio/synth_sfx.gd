@@ -66,6 +66,16 @@ func _init() -> void:
 		"monger_cork": _make_monger_corks,
 		"monger_clink": _make_monger_clinks,
 		"monger_babble": _make_monger_babble,
+		# The opening, on the Builder's workbench.
+		"intro_room_loop": _make_intro_room,
+		"intro_hum": _make_intro_hum,
+		"intro_knock": _make_intro_knocks,
+		"intro_saw": _make_intro_saw,
+		"intro_peg": _make_intro_pegs,
+		"intro_plane": _make_intro_plane,
+		"intro_mutter": _make_intro_mutter,
+		"intro_heart": _make_intro_heart,
+		"intro_wind": _make_intro_wind,
 		# Ambience.
 		"night_loop": _make_night_loop,
 		"fair_murmur_loop": _make_fair_murmur,
@@ -583,6 +593,159 @@ func _make_monger_babble() -> void:
 	var gasp := _silence(0.5)
 	_mix(gasp, _voice(0.42, 300.0, 620.0, [450.0, 900.0, 2600.0], 0.03, 0.2), 0, 1.0)
 	_save("sfx/monger_gasp", gasp, 0.8)
+
+
+# --- Recipes: the opening -----------------------------------------------------------------
+# Heard lying on the Builder's workbench in the dark (IntroSequence): warm, a little goofy
+# woodwork, never horror. The opening places each one around the camera itself.
+
+
+## The workshop's room tone: a low, close brown-noise hush with a faint warm hum of the
+## room in it, looping under the whole dark.
+func _make_intro_room() -> void:
+	var loop := 8.0
+	var fade := 1.0
+	var length := loop + fade
+	var n := _seconds(length)
+	var out := _lowpass(_brown(length), 260.0, 0.7)
+	var air := _bandpass(_noise(length), 900.0, 0.8)
+	for i in n:
+		var t := float(i) / RATE
+		out[i] = out[i] * (0.85 + 0.15 * sin(TAU * t / loop)) + air[i] * 0.04 + sin(TAU * 98.0 * t) * 0.015
+	_save_loop("ambience/intro_room_loop", out, loop, fade, 0.5)
+
+
+## The Builder humming at the work: a cheerful wordless "mm-hm-hmm" tune with a lip-closed
+## vowel, a few notes bobbing up and down.
+func _make_intro_hum() -> void:
+	var hum_vowel := [250.0, 900.0, 2200.0]
+	var tunes := [[196.0, 220.0, 247.0, 220.0, 262.0], [262.0, 247.0, 220.0, 196.0, 220.0, 196.0]]
+	for take in tunes.size():
+		var notes: Array = tunes[take]
+		var out := _silence(0.56 * notes.size() + 0.5)
+		var at := 0.0
+		for note in notes:
+			var length := rng.randf_range(0.28, 0.48)
+			var f0: float = note * 0.75
+			var voiced := _lowpass(_voice(length, f0 * 0.97, f0 * rng.randf_range(1.0, 1.04), hum_vowel, 0.04, length * 0.8), 900.0, 0.7)
+			_mix(out, voiced, _seconds(at), rng.randf_range(0.7, 1.0))
+			at += length + rng.randf_range(0.0, 0.06)
+		_save("sfx/intro_hum_%d" % (take + 1), out, 0.8)
+
+
+## Knuckles knocking on a wooden board, twice: a hollow ring of a few modes with a click.
+func _make_intro_knocks() -> void:
+	for take in 2:
+		var out := _silence(0.7)
+		for k in 2:
+			var at := _seconds(k * rng.randf_range(0.16, 0.2))
+			var f0 := rng.randf_range(230.0, 270.0)
+			_mix(out, _modes(0.25, [f0, f0 * 2.3, f0 * 3.9], [0.07, 0.03, 0.015], [1.0, 0.45, 0.2]), at, 0.9)
+			_mix(out, _shape(_bandpass(_noise(0.02), 2500.0, 1.0), 0.001, 0.006), at, 0.4)
+		_save("sfx/intro_knock_%d" % (take + 1), out, 0.85)
+
+
+## A handsaw going through a plank: rasping strokes back and forth, each a band of noise
+## chopped by the teeth, the push brighter than the pull.
+func _make_intro_saw() -> void:
+	var out := _silence(2.6)
+	var at := 0.0
+	for stroke in 6:
+		var length := rng.randf_range(0.3, 0.38)
+		var push := stroke % 2 == 0
+		var rasp := _bandpass(_noise(length), 2400.0 if push else 1700.0, 1.6)
+		var teeth := 90.0 if push else 70.0
+		for i in rasp.size():
+			rasp[i] *= 0.4 + 0.6 * absf(sin(PI * teeth * i / RATE))
+		_mix(out, _shape(rasp, length * 0.3, length * 0.4), _seconds(at), 1.0 if push else 0.7)
+		_mix(out, _shape(_lowpass(_noise(length), 300.0, 0.7), length * 0.3, length * 0.4), _seconds(at), 0.35)
+		at += length + 0.03
+	_save("sfx/intro_saw", out, 0.8)
+
+
+## A wooden peg tapped home with a mallet: three taps, each a little higher as the peg
+## seats. intro_peg_last is the last peg: one firm, satisfied tap that rings longer.
+func _make_intro_pegs() -> void:
+	for take in 2:
+		var out := _silence(0.9)
+		var f0 := rng.randf_range(380.0, 440.0)
+		for tap in 3:
+			var at := _seconds(tap * rng.randf_range(0.2, 0.26))
+			_mix(out, _modes(0.18, [f0, f0 * 2.7], [0.045, 0.02], [1.0, 0.4]), at, 0.8)
+			_mix(out, _tone(0.1, 140.0, 90.0, 0.03), at, 0.5)
+			f0 *= 1.08
+		_save("sfx/intro_peg_%d" % (take + 1), out, 0.8)
+	var last := _silence(1.4)
+	_mix(last, _modes(1.2, [520.0, 520.0 * 2.6, 520.0 * 4.1], [0.35, 0.12, 0.05], [1.0, 0.4, 0.2]), 0, 0.9)
+	_mix(last, _tone(0.3, 120.0, 70.0, 0.08), 0, 0.7)
+	_save("sfx/intro_peg_last", last, 0.85)
+
+
+## A hand plane shaving a board: two long breathy hisses that brighten as the blade
+## bites, with a curl of shaving crackling off the top.
+func _make_intro_plane() -> void:
+	var out := _silence(2.2)
+	var at := 0.0
+	for stroke in 2:
+		var length := rng.randf_range(0.6, 0.75)
+		var hiss := _sweep(_noise(length), 1800.0, 4200.0, 1.2)
+		_mix(out, _shape(hiss, 0.08, length * 0.35), _seconds(at), 0.9)
+		var curl := _grains(_bandpass(_noise(length), 3000.0, 1.0), 0.15, 0.003)
+		_mix(out, _shape(curl, 0.1, length * 0.3), _seconds(at + 0.1), 0.35)
+		at += length + rng.randf_range(0.25, 0.35)
+	_save("sfx/intro_plane", out, 0.75)
+
+
+## The Builder muttering over the work: low, quick, wordless syllables, then a pleased
+## little "hm!".
+func _make_intro_mutter() -> void:
+	var vowels := [[500.0, 1100.0, 2400.0], [400.0, 900.0, 2400.0], [600.0, 1300.0, 2500.0]]
+	for take in 2:
+		var out := _silence(1.8)
+		var at := 0
+		for syl in rng.randi_range(5, 7):
+			var f0 := rng.randf_range(110.0, 150.0)
+			var length := rng.randf_range(0.08, 0.14)
+			var v: Array = vowels[rng.randi() % vowels.size()]
+			_mix(out, _voice(length, f0, f0 * rng.randf_range(0.85, 1.1), v, 0.01, length * 0.6), at, 0.8)
+			at += _seconds(length + rng.randf_range(0.02, 0.06))
+		at += _seconds(0.15)
+		_mix(out, _lowpass(_voice(0.25, 130.0, 175.0, [250.0, 900.0, 2200.0], 0.02, 0.15), 900.0, 0.7), at, 1.0)
+		_save("sfx/intro_mutter_%d" % (take + 1), out, 0.8)
+
+
+## The heart-knock from inside: a woody "lub-dub", two low hollow thumps close together,
+## felt more than heard.
+func _make_intro_heart() -> void:
+	var out := _silence(0.7)
+	for beat in 2:
+		var at := _seconds(beat * 0.17)
+		var f0 := 72.0 if beat == 0 else 82.0
+		_mix(out, _modes(0.45, [f0, f0 * 2.2, f0 * 3.6], [0.12, 0.05, 0.025], [1.0, 0.35, 0.15]), at, 1.0 if beat == 0 else 0.7)
+		_mix(out, _tone(0.3, 110.0, 50.0, 0.05), at, 0.8)
+		_mix(out, _shape(_bandpass(_noise(0.02), 1400.0, 1.0), 0.001, 0.008), at, 0.15)
+	_save("sfx/intro_heart", _softclip(out, 1.3), 0.9)
+
+
+## Falling: wind rising over eight seconds from a far whisper to a roaring rush, its band
+## climbing and fluttering as the speed builds.
+func _make_intro_wind() -> void:
+	var length := 8.0
+	var n := _seconds(length)
+	var cutoffs := PackedFloat32Array()
+	cutoffs.resize(n)
+	for i in n:
+		var t := float(i) / n
+		cutoffs[i] = lerpf(300.0, 1600.0, t * t) * (1.0 + 0.15 * sin(TAU * 3.1 * i / RATE) * t)
+	var rush := _filter_swept(_noise(length), "bandpass", cutoffs, 0.9)
+	var body := _lowpass(_brown(length), 220.0, 0.7)
+	var out := _silence(length)
+	var tail := float(_seconds(0.05))
+	for i in n:
+		var t := float(i) / n
+		var swell := pow(t, 1.6)
+		out[i] = (rush[i] * 0.8 + body[i] * 0.6) * (0.08 + 0.92 * swell) * minf(1.0, (n - i) / tail)
+	_save("sfx/intro_wind", out, 0.85)
 
 
 ## Per-sample filter frequencies gliding linearly from `from` to `to` over `length`.
