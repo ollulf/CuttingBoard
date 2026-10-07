@@ -17,9 +17,11 @@ const TURNING := [5, 7, 8, 11]
 ## The mask's twitches: seconds between them (min, max), the largest snap (radians) and
 ## shift, and how fast a twitch fades back (per second).
 const TWITCH_GAP := Vector2(1.5, 4.0)
-const TWITCH_ANGLE := 0.09
-const TWITCH_OFFSET := 0.03
+const TWITCH_ANGLE := 0.27
+const TWITCH_OFFSET := 0.09
 const TWITCH_FADE := 5.0
+## Scale of the slow drift and tilt (1 = about 2 degrees).
+const DRIFT_SCALE := 3.0
 
 ## How fast the whole idle runs (1 = as built).
 @export var speed := 1.0
@@ -86,6 +88,6 @@ func _move_mask(delta: float) -> void:
 			0.02 * sin(_time * 0.53) + 0.01 * sin(_time * 1.31 + 2.0),
 			0.025 * sin(_time * 0.37 + 1.0) + 0.01 * sin(_time * 0.97),
 			0.03 * sin(_time * 0.29 + 4.0) + 0.012 * sin(_time * 1.13 + 0.5))
-	var turn := drift + _twitch_turn
+	var turn := drift * DRIFT_SCALE + _twitch_turn
 	var tilt := Basis.IDENTITY if turn.is_zero_approx() else Basis(turn.normalized(), turn.length())
 	%Mask.transform = Transform3D(tilt * _mask_rest.basis, _mask_rest.origin + _twitch_shift)
