@@ -36,6 +36,9 @@ extends Control
 ## The worn-mask marker between the hands: its size in squares, and its wear line.
 @export var mask_scale := 2
 @export var wear_color := Color(0.85, 0.3, 0.2, 0.9)
+## A square's wear line: drawn once its item has taken any wear, in this colour, and in
+## wear_color once it is under half.
+@export var slot_wear_color := Color(0.9, 0.8, 0.55, 0.8)
 
 const NO_SLOT := -1
 
@@ -53,6 +56,9 @@ var _mask_box: PanelContainer
 var _mask_icon: TextureRect
 var _mask_shadow: TextureRect
 var _wear_bar: ColorRect
+## Each square's wear line, by slot index. A weapon wears mid-fight, between the bar's
+## rebuilds, so the lines are kept up to date every frame rather than on `changed`.
+var _slot_wear: Array[ColorRect] = []
 
 
 func _ready() -> void:
@@ -133,11 +139,13 @@ func _rebuild() -> void:
 	for child in _groups.get_children():
 		child.queue_free()
 	_boxes.clear()
+	_slot_wear.clear()
 	if _hotbar == null:
 		return
 
 	var per_hand := Hotbar.SLOTS_PER_HAND
 	_boxes.resize(_hotbar.slot_count())
+	_slot_wear.resize(_hotbar.slot_count())
 	for first in range(0, _hotbar.slot_count(), per_hand):
 		var column := VBoxContainer.new()
 		column.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -197,7 +205,41 @@ func _make_slot(index: int) -> Control:
 	# A second child of the PanelContainer, which lays both out over the same rectangle,
 	# so the number sits in the corner on top of the item rather than beside it.
 	box.add_child(key)
+
+	var wear := ColorRect.new()
+	wear.custom_minimum_size = Vector2(0, 2)
+	wear.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	wear.size_flags_vertical = Control.SIZE_SHRINK_END
+	wear.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(wear)
+	_slot_wear[index] = wear
+	_refresh_slot_wear(index)
 	return box
+
+
+func _process(_delta: float) -> void:
+	for index in _slot_wear.size():
+		_refresh_slot_wear(index)
+
+
+## Share of its built-with durability the slot's item has left, or 1.0 for an empty slot
+## or an item that does not wear.
+func get_slot_wear(index: int) -> float:
+	var slot := _hotbar.get_slot(index) if _hotbar else null
+	if slot == null or slot.data == null or slot.data.durability <= 0:
+		return 1.0
+	var left := slot.get_durability()
+	return clampf(float(left) / slot.data.durability, 0.0, 1.0) if left >= 0 else 1.0
+
+
+func _refresh_slot_wear(index: int) -> void:
+	var wear := _slot_wear[index] if index < _slot_wear.size() else null
+	if wear == null:
+		return
+	var share := get_slot_wear(index)
+	wear.visible = share < 1.0
+	wear.color = wear_color if share < 0.5 else slot_wear_color
+	wear.custom_minimum_size.x = maxi(roundi((slot_size - 4) * share), 2)
 
 
 ## The item's face on the bar: its icon, or its name where it has none, filling the

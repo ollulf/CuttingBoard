@@ -15,5 +15,6 @@ item_type = 1
 animation_set = &"weapon"
 weight = 14.0
 durability = 160
+wear_per_hit = 5
 grid_size = Vector2i(6, 1)
 world_scene_path = "res://scenes/items/plank.tscn"
