@@ -10,7 +10,7 @@ extends SceneTree
 ## in the YZ plane, its thickness along X.
 ##
 ## Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://scripts/import/build_saw.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_saw.gd
 
 const OUT_MESH := "res://assets/meshes/props/saw.res"
 const WOOD := preload("res://assets/materials/environment/dark_planks.tres")

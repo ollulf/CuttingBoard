@@ -11,7 +11,7 @@ extends SceneTree
 ## drags the side of the chest along with it.
 ##
 ## Run it again whenever the model or the tables below change:
-##   godot --headless --path cutting-board -s res://scripts/import/build_human_body.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_human_body.gd
 ## The generated scene is overwritten, so tune the body here rather than in the editor.
 ## What HumanBody exports (flinch timing, impulse scale, material) is set per instance
 ## and survives a rebuild.

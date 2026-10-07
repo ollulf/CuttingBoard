@@ -16,7 +16,7 @@ extends SceneTree
 ## along +Y, and forward is -Z.
 ##
 ## Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://scripts/import/build_wood_glue.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_wood_glue.gd
 
 const OUT_DIR := "res://assets/meshes/props/"
 const GLUE := preload("res://assets/materials/props/glue.tres")

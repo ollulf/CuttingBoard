@@ -65,7 +65,7 @@ for wooden folk, and it extends Rings instead of adding a second system.
 
 What the Mask-Monger pays out for a mask: the face's spirit caught in a bottle, a little
 glowing face-wisp that bobs and blinks. Now a real item (`resources/items/soul_bottle.tres`,
-`scenes/items/soul_bottle.tscn`), three bottles built by `scripts/import/build_soul_bottle.gd`:
+`scenes/items/soul_bottle.tscn`), three bottles built by `tools/import/build_soul_bottle.gd`:
 
 - **A** (default): a corked glass vial with a red wax seal.
 - **B**: a carved wooden flask with a window slot, the glow showing through.

@@ -11,9 +11,9 @@ extends SceneTree
 ## resources/animations/arms.tres turn the arm about the same point they always did.
 ##
 ## Run it again whenever the model or the tables below change:
-##   godot --headless --path cutting-board -s res://scripts/import/build_fp_arms.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_fp_arms.gd
 
-const Body := preload("res://scripts/import/build_human_body.gd")
+const Body := preload("res://tools/import/build_human_body.gd")
 
 const OUT_MESHES := {
 	"Right": "res://assets/meshes/characters/fp_arm_right.res",

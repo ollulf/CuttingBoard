@@ -5,7 +5,7 @@ extends SceneTree
 ## Triangles are assigned by their centroid (in the glb scene root's space); see BODY_MAX_*.
 ## Pass "-- --dump" to print the vertex layout instead of writing.
 ##
-##   godot --headless --path cutting-board -s res://tools/split_lantern_mesh.gd
+##   godot --headless --path cutting-board -s res://tools/import/split_lantern_mesh.gd
 
 const SOURCE := "res://assets/meshes/props/lantern.glb"
 const ARM_OUT := "res://assets/meshes/props/lantern_arm.res"

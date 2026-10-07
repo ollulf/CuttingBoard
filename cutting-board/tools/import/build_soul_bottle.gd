@@ -5,10 +5,10 @@ extends SceneTree
 ## is not part of the mesh: it is the swirl sphere in scenes/items/soul_bottle.tscn,
 ## floating in the vial's hollow round the origin.
 ##
-## Built the same way as the wood glue (scripts/import/build_wood_glue.gd): lathed
+## Built the same way as the wood glue (tools/import/build_wood_glue.gd): lathed
 ## profiles, flat shaded, laid out the way a HandSlot holds things.
 ##
-##   godot --headless --path cutting-board -s res://scripts/import/build_soul_bottle.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_soul_bottle.gd
 
 const OUT_DIR := "res://assets/meshes/props/"
 const WOOD := preload("res://assets/materials/environment/wooden_planks.tres")

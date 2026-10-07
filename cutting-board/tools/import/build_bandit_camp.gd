@@ -7,7 +7,7 @@ extends SceneTree
 ## It places existing props (village fences, boxes, barrels, the lantern, rocks, the
 ## chest) and a few primitive-built ones (curtain, straw bed, fire pit, stump table,
 ## mask rack, lookout platform). Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://scripts/import/build_bandit_camp.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_bandit_camp.gd
 
 const OUT := "res://scenes/environment/bandit_camp/bandit_camp.tscn"
 

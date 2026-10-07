@@ -2,7 +2,7 @@ class_name MaskMongerBody
 extends NpcBody
 
 ## The Mask-Monger's body (scenes/characters/mask_monger_model.tscn, built by
-## scripts/import/build_mask_monger.gd) and the procedural animation that keeps it alive.
+## tools/import/build_mask_monger.gd) and the procedural animation that keeps it alive.
 ##
 ## It walks on four limbs in a slow four-beat gait, one limb at a time in the order
 ## LegL, KnuckleArmR, LegR, KnuckleArmL, at the pace the character really covers ground.

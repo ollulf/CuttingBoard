@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/vfx/damage_number.gd" id="1_number"]
+[ext_resource type="Script" path="res://scenes/vfx/damage_number.gd" id="1_number"]
 [ext_resource type="FontFile" uid="uid://rplyw8yyul84" path="res://assets/fonts/Cubix.ttf" id="2_cubix"]
 
 [node name="DamageNumber" type="Label3D"]

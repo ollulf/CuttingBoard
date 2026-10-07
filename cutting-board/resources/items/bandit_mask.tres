@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="MaskData" format=3]
 
-[ext_resource type="Script" uid="uid://7f28yo0kbwbx" path="res://scripts/mask_data.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://7f28yo0kbwbx" path="res://scripts/resources/mask_data.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/characters/masks/bandit_mask.tscn" id="2_worn"]
 [ext_resource type="Texture2D" path="res://assets/ui/icons/items/bandit_mask.png" id="2_yarnf"]
 [ext_resource type="Resource" path="res://resources/factions/bandits.tres" id="3_faction"]

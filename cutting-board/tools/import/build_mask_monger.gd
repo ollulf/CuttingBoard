@@ -17,7 +17,7 @@ extends SceneTree
 ## Its rotations are three.js Euler angles (X, then Y, then Z, applied in that order).
 ##
 ## Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://scripts/import/build_mask_monger.gd
+##   godot --headless --path cutting-board -s res://tools/import/build_mask_monger.gd
 
 const OUT_PATH := "res://scenes/characters/mask_monger_model.tscn"
 const VILLAGER_MASK := preload("res://scenes/characters/masks/villager_mask.tscn")

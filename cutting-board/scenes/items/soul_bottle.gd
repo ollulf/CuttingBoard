@@ -6,7 +6,7 @@ extends RigidBody3D
 ## (assets/shaders/soul_swirl.gdshader). The swirl drifts gently up and down.
 ##
 ## The bottle is a corked glass vial (assets/meshes/props/soul_bottle.res, built by
-## scripts/import/build_soul_bottle.gd); its hollow sits round the origin, where the swirl
+## tools/import/build_soul_bottle.gd); its hollow sits round the origin, where the swirl
 ## floats.
 
 ## Soul colours. Amber-yellow lands on the retro palette's flame/amber and stays yellow;

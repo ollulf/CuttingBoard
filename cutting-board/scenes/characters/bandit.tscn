@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/characters/npc_base.tscn" id="1_base"]
 [ext_resource type="Resource" path="res://resources/factions/bandits.tres" id="2_faction"]
-[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/item_data.gd" id="3_item_data"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="3_item_data"]
 [ext_resource type="Resource" uid="uid://d4k7e4lko40pm" path="res://resources/items/hammer.tres" id="4_hammer"]
 [ext_resource type="Resource" path="res://resources/items/rock.tres" id="5_rock"]
 [ext_resource type="Resource" path="res://resources/items/bandit_mask.tres" id="6_mask"]

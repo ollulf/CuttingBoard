@@ -6,7 +6,7 @@ extends RigidBody3D
 ## click at full health wastes nothing.
 ##
 ## Which pot, skin or stick it looks like is only the Mesh node's mesh: the concepts are
-## assets/meshes/props/wood_glue_a|b|c.res, built by scripts/import/build_wood_glue.gd.
+## assets/meshes/props/wood_glue_a|b|c.res, built by tools/import/build_wood_glue.gd.
 
 ## Health given back by one dab, all told.
 @export var heal_amount := 30
