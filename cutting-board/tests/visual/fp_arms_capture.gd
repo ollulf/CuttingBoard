@@ -7,7 +7,7 @@ extends Node3D
 ##
 ## Needs a real window; under --headless nothing is saved. --plain turns the retro
 ## screen off, for reading shapes rather than the look. --clip throws a few punches
-## instead, to record with --write-movie.
+## instead, to record with --write-movie; --walk walks with a hammer and a rock in hand.
 
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const HAMMER := preload("res://scenes/items/hammer.tscn")
@@ -15,6 +15,7 @@ const ROCK := preload("res://scenes/items/rock.tscn")
 
 var _shots_dir := ""
 var _clip_only := false
+var _walk_only := false
 var _player: Node3D
 var _side_camera: Camera3D
 
@@ -25,6 +26,8 @@ func _ready() -> void:
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg == "--clip":
 			_clip_only = true
+		elif arg == "--walk":
+			_walk_only = true
 		elif arg == "--plain":
 			PsxScreen.enabled = false
 	_build_stage()
@@ -36,7 +39,10 @@ func _ready() -> void:
 		layer.visible = false
 	_side_camera = Camera3D.new()
 	add_child(_side_camera)
-	(_clip if _clip_only else _tour).call_deferred()
+	if _walk_only:
+		_walk_clip.call_deferred()
+	else:
+		(_clip if _clip_only else _tour).call_deferred()
 
 
 func _tour() -> void:
@@ -76,6 +82,42 @@ func _clip() -> void:
 	for arm in [ArmAnimator.Arm.LEFT, ArmAnimator.Arm.RIGHT, ArmAnimator.Arm.LEFT]:
 		arms.play_action(&"punch", arm)
 		await _wait(0.6)
+	get_tree().quit()
+
+
+## Walks forward with a hammer and a rock in hand, throwing a punch with each mid-stride,
+## then quits: the held items sway and turn with the arms, and the punching arm lets go
+## of the sway.
+func _walk_clip() -> void:
+	# The player stays paused like the rest of this scene; the walk is driven straight
+	# through pose_arms at the player's own walking pace, the camera carried forward.
+	(_player.get_node("%Camera3D") as Camera3D).make_current()
+	_hold(HAMMER, "%HandSlotRight")
+	_hold(ROCK, "%HandSlotLeft")
+	for i in 12:
+		var post := MeshInstance3D.new()
+		post.mesh = BoxMesh.new()
+		post.position = Vector3(-1.5 if i % 2 else 1.5, 0.5, -2.0 * i)
+		add_child(post)
+	var arms: ArmAnimator = _player.get_node("%Arms")
+	var bob := 0.0
+	var left_sway := 1.0
+	var right_sway := 1.0
+	var frames := 0
+	while frames < 120:
+		var delta := get_physics_process_delta_time()
+		bob += delta * _player.arm_bob_frequency
+		_player.position.z -= delta * _player.walk_speed
+		if frames == 36:
+			arms.play_action(&"punch", ArmAnimator.Arm.RIGHT)
+		elif frames == 66:
+			arms.play_action(&"punch", ArmAnimator.Arm.LEFT)
+		var settle: float = delta / _player.arm_action_settle_time
+		left_sway = move_toward(left_sway, 0.0 if arms.is_busy(ArmAnimator.Arm.LEFT) else 1.0, settle)
+		right_sway = move_toward(right_sway, 0.0 if arms.is_busy(ArmAnimator.Arm.RIGHT) else 1.0, settle)
+		_player.pose_arms(sin(bob), 0.0, left_sway, right_sway)
+		await get_tree().physics_frame
+		frames += 1
 	get_tree().quit()
 
 

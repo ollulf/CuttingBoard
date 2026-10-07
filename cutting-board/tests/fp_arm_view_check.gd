@@ -46,8 +46,34 @@ func _run() -> void:
 		var half_width := -fist.z * tan(deg_to_rad(camera.fov * 0.5)) * ASPECT
 		var across := fist.x / half_width
 		_check(absf(across) < CENTRE_SPAN, "%s fist lands near the centre (%.2f of half-width)" % [side, across])
+	_check_walk(player, camera)
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+## Sweeps the walk swing (up to a run's stride) and the jump lift, at rest and all
+## through a punch thrown mid-stride (the punching arm letting go of the sway as the
+## player does), checking the cut ends stay hidden.
+func _check_walk(player: Node3D, camera: Camera3D) -> void:
+	var settle_time: float = player.arm_action_settle_time
+	for side in ["Left", "Right"]:
+		var anim_player: AnimationPlayer = player.get_node("%%%sPlayer" % side)
+		var skeleton: Skeleton3D = player.get_node("%%Arm%sSkeleton" % side)
+		anim_player.play("punch_unarmed_%s" % side.to_lower())
+		var worst := -INF
+		for jump in [-1.0, 0.0, 1.0]:
+			var swing := -1.5
+			while swing <= 1.5:
+				var t := 0.0
+				while t <= 0.35:
+					var sway := clampf(1.0 - t / settle_time, 0.0, 1.0)
+					player.pose_arms(swing, jump, sway, sway)
+					anim_player.seek(t, true)
+					worst = maxf(worst, _view_overlap(camera, skeleton))
+					t += 0.01
+				swing += 0.25
+		player.pose_arms(0.0, 0.0)
+		_check(worst < 0.0, "%s arm's cut end stays out of view through the walk swing and jump (margin %.3f)" % [side, -worst])
 
 
 ## How far the UpperArm bone's origin, grown by ARM_RADIUS, reaches into the view

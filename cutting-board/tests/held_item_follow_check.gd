@@ -9,7 +9,8 @@ extends Node3D
 ##   godot --headless --path cutting-board res://tests/held_item_follow_check.tscn
 
 const PLAYER := preload("res://scenes/characters/player.tscn")
-const WOOD_GLUE := preload("res://resources/items/wood_glue.tres")
+## Both are weapons: a hand holding anything else (wood glue, say) does not punch.
+const SAW := preload("res://resources/items/saw.tres")
 const HAMMER := preload("res://resources/items/hammer.tres")
 ## How far the item may stray from the bone's pose, in metres and in radians.
 const TOLERANCE := 0.002
@@ -26,7 +27,7 @@ func _run() -> void:
 	var player = PLAYER.instantiate()
 	add_child(player)
 	await _physics_frames(10)
-	var left: Node3D = player.interactor.spawn_into_hand(WOOD_GLUE, -1, player.hand_left)
+	var left: Node3D = player.interactor.spawn_into_hand(SAW, -1, player.hand_left)
 	var right: Node3D = player.interactor.spawn_into_hand(HAMMER, -1, player.hand_right)
 	_check("both hands hold an item", left != null and right != null)
 	if left == null or right == null:

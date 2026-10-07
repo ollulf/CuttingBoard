@@ -31,6 +31,9 @@ extends CharacterBody3D
 @export var arm_jump_lift := 0.15
 ## How far the hands tip up on the way up of a jump (and down while falling), in radians.
 @export var arm_jump_tilt := deg_to_rad(6.0)
+## How long an arm takes to let go of the walk sway and jump lift when it starts an
+## action, and to pick them up again after, in seconds.
+@export var arm_action_settle_time := 0.08
 
 ## How far a hit snaps the view away from its force, in radians per newton-second of the
 ## impulse the body takes, up to the cap; and how quickly the view settles back.
@@ -115,6 +118,9 @@ var _arm_left_base_pos: Vector3
 var _arm_right_base_pos: Vector3
 var _arm_left_base_basis: Basis
 var _arm_right_base_basis: Basis
+## How much of the walk sway and jump lift each arm takes, 0..1: none mid-action.
+var _arm_left_sway := 1.0
+var _arm_right_sway := 1.0
 var _bob_time := 0.0
 ## Whether crouch is switched on; the body may still be standing if a ceiling is in
 ## the way, which is what _crouch_amount (0 standing, 1 fully crouched) tracks.
@@ -547,18 +553,33 @@ func _update_arms(delta: float) -> void:
 	var stride := clampf(horizontal_speed / walk_speed, 0.0, 1.5) if is_on_floor() else 0.0
 	# +stride at the top of the left arm's swing, -stride at the top of the right's.
 	var swing := sin(_bob_time) * stride
-	var bob_offset := swing * arm_bob_amplitude
-
 	# Raise the arms when jumping, let them drop a bit while falling.
 	var jump := clampf(velocity.y / jump_velocity, -1.0, 1.0)
-	var jump_offset := jump * arm_jump_lift
+	# An arm mid-action (a punch reaching across the view) lets go of the sway, or the
+	# lift and turn on top of the swing would bring its cut end into view.
+	var settle := delta / arm_action_settle_time
+	_arm_left_sway = move_toward(_arm_left_sway, 0.0 if arms.is_busy(ArmAnimator.Arm.LEFT) else 1.0, settle)
+	_arm_right_sway = move_toward(_arm_right_sway, 0.0 if arms.is_busy(ArmAnimator.Arm.RIGHT) else 1.0, settle)
+	pose_arms(swing, jump, _arm_left_sway, _arm_right_sway)
 
-	arm_left_pivot.position = _arm_left_base_pos + Vector3(0.0, bob_offset + jump_offset, 0.0)
-	arm_right_pivot.position = _arm_right_base_pos + Vector3(0.0, -bob_offset + jump_offset, 0.0)
+
+## Places both arm pivots for a point in the walk and the jump: `swing` is +stride at
+## the top of the left arm's swing and -stride at the top of the right's (stride up to
+## 1.5 when running), `jump` -1..1 from falling to rising, and each arm's `sway` 0..1
+## how much of both it takes. Public so checks can sweep the whole range.
+func pose_arms(swing: float, jump: float, left_sway := 1.0, right_sway := 1.0) -> void:
+	var left_swing := swing * left_sway
+	var left_jump := jump * left_sway
+	var right_swing := -swing * right_sway
+	var right_jump := jump * right_sway
+	arm_left_pivot.position = _arm_left_base_pos \
+			+ Vector3(0.0, left_swing * arm_bob_amplitude + left_jump * arm_jump_lift, 0.0)
+	arm_right_pivot.position = _arm_right_base_pos \
+			+ Vector3(0.0, right_swing * arm_bob_amplitude + right_jump * arm_jump_lift, 0.0)
 	# The arms turn as well as rise and fall, opposite to each other; the bones and the
 	# HandSlot riding them inherit it, which is what makes a held item sway with the walk.
-	arm_left_pivot.basis = _arm_left_base_basis * _swing_basis(swing, jump, 1.0)
-	arm_right_pivot.basis = _arm_right_base_basis * _swing_basis(-swing, jump, -1.0)
+	arm_left_pivot.basis = _arm_left_base_basis * _swing_basis(left_swing, left_jump, 1.0)
+	arm_right_pivot.basis = _arm_right_base_basis * _swing_basis(right_swing, right_jump, -1.0)
 
 
 ## The extra turn on one arm's pivot for its share of the swing and of the jump (both
