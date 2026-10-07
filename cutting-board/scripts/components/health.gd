@@ -12,6 +12,10 @@ signal changed(current: int, maximum: int)
 
 @export var max_health := 100
 @export var invulnerable := false
+## Takes every hit (damaged still fires, so numbers, flinches and grudges all happen)
+## but snaps straight back to full afterwards and never dies. Unlike `invulnerable`,
+## which ignores hits outright.
+@export var invincible := false
 
 var _current: int
 
@@ -39,6 +43,9 @@ func apply_damage(info: DamageInfo) -> void:
 	_current = maxi(_current - info.amount, 0)
 	changed.emit(_current, max_health)
 	damaged.emit(info)
+	if invincible:
+		reset()
+		return
 	if _current == 0:
 		died.emit(info)
 
