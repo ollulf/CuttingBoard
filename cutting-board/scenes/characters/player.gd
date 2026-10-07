@@ -81,10 +81,16 @@ extends CharacterBody3D
 @export var body_fall_delay := 0.55
 ## Something going into the inventory off the ground.
 @export var pickup_sound: SoundBank = preload("res://resources/audio/pickup.tres")
+## The same for a mask, light hollow wood, and for anything at least heavy_pickup_weight.
+@export var pickup_mask_sound: SoundBank = preload("res://resources/audio/pickup_mask.tres")
+@export var pickup_heavy_sound: SoundBank = preload("res://resources/audio/pickup_heavy.tres")
+@export var heavy_pickup_weight := 5.0
 ## The tick of a number key that did something.
 @export var hotbar_sound: SoundBank = preload("res://resources/audio/ui_hotbar.tres")
 ## Putting on something held in the hand — a mask taken off a body.
 @export var wear_sound: SoundBank = preload("res://resources/audio/ui_equip.tres")
+## Putting on a mask: wood clacking onto the wooden face.
+@export var mask_on_sound: SoundBank = preload("res://resources/audio/mask_on.tres")
 ## A click with something used from the hand that refused — glue while unhurt.
 @export var refuse_sound: SoundBank = preload("res://resources/audio/ui_invalid.tres")
 @export_group("")
@@ -346,7 +352,7 @@ func wear_held(hand: HandSlot) -> bool:
 	if worn and interactor.spawn_into_hand(worn, worn_durability, hand) == null:
 		if not inventory.add(worn, worn_durability):
 			interactor.drop_item(worn, worn_durability)
-	Sfx.play(wear_sound)
+	Sfx.play(mask_on_sound if held.item_type == ItemData.Type.MASK else wear_sound)
 	return true
 
 
@@ -462,8 +468,17 @@ func _process(delta: float) -> void:
 	camera.rotation = _kick + Vector3(arms.view_tilt, 0.0, 0.0)
 
 
-func _on_item_stowed(_data: ItemData) -> void:
-	Sfx.play(pickup_sound)
+func _on_item_stowed(data: ItemData) -> void:
+	Sfx.play(pickup_sound_for(data))
+
+
+## Which pickup bank `data` going into the bag plays: masks and heavy things have their own.
+func pickup_sound_for(data: ItemData) -> SoundBank:
+	if data.item_type == ItemData.Type.MASK:
+		return pickup_mask_sound
+	if data.weight >= heavy_pickup_weight:
+		return pickup_heavy_sound
+	return pickup_sound
 
 
 ## A hit that does not kill snaps the view away from the force — head back from a blow
