@@ -22,8 +22,15 @@ extends CharacterBody3D
 ## Arm sway while walking.
 @export var arm_bob_frequency := 10.0
 @export var arm_bob_amplitude := 0.05
+## How far each arm pitches and rolls with a step at walking pace, in radians: the hand,
+## and whatever it holds, tips up and turns out as its arm rises, and the other way as
+## it comes down.
+@export var arm_swing_pitch := deg_to_rad(5.0)
+@export var arm_swing_roll := deg_to_rad(3.0)
 ## How far the arms rise/fall in response to vertical velocity (jumping/falling).
 @export var arm_jump_lift := 0.15
+## How far the hands tip up on the way up of a jump (and down while falling), in radians.
+@export var arm_jump_tilt := deg_to_rad(6.0)
 
 ## How far a hit snaps the view away from its force, in radians per newton-second of the
 ## impulse the body takes, up to the cap; and how quickly the view settles back.
@@ -106,6 +113,8 @@ const PITCH_LIMIT := deg_to_rad(89.0)
 
 var _arm_left_base_pos: Vector3
 var _arm_right_base_pos: Vector3
+var _arm_left_base_basis: Basis
+var _arm_right_base_basis: Basis
 var _bob_time := 0.0
 ## Whether crouch is switched on; the body may still be standing if a ceiling is in
 ## the way, which is what _crouch_amount (0 standing, 1 fully crouched) tracks.
@@ -141,6 +150,8 @@ func _ready() -> void:
 	MouseGrab.capture()
 	_arm_left_base_pos = arm_left_pivot.position
 	_arm_right_base_pos = arm_right_pivot.position
+	_arm_left_base_basis = arm_left_pivot.basis
+	_arm_right_base_basis = arm_right_pivot.basis
 	# The capsule is shared with anything else instancing this scene unless it is made
 	# unique here, which would make one player's crouch shrink all of them.
 	_capsule = (collision_shape.shape as CapsuleShape3D).duplicate()
@@ -533,11 +544,27 @@ func _update_arms(delta: float) -> void:
 	if is_on_floor() and horizontal_speed > 0.1:
 		_bob_time += delta * arm_bob_frequency * (horizontal_speed / walk_speed)
 		_update_steps(horizontal_speed)
-	var bob_amount := arm_bob_amplitude * clampf(horizontal_speed / walk_speed, 0.0, 1.5) if is_on_floor() else 0.0
-	var bob_offset := sin(_bob_time) * bob_amount
+	var stride := clampf(horizontal_speed / walk_speed, 0.0, 1.5) if is_on_floor() else 0.0
+	# +stride at the top of the left arm's swing, -stride at the top of the right's.
+	var swing := sin(_bob_time) * stride
+	var bob_offset := swing * arm_bob_amplitude
 
 	# Raise the arms when jumping, let them drop a bit while falling.
-	var jump_offset := clampf(velocity.y / jump_velocity, -1.0, 1.0) * arm_jump_lift
+	var jump := clampf(velocity.y / jump_velocity, -1.0, 1.0)
+	var jump_offset := jump * arm_jump_lift
 
 	arm_left_pivot.position = _arm_left_base_pos + Vector3(0.0, bob_offset + jump_offset, 0.0)
 	arm_right_pivot.position = _arm_right_base_pos + Vector3(0.0, -bob_offset + jump_offset, 0.0)
+	# The arms turn as well as rise and fall, opposite to each other; the bones and the
+	# HandSlot riding them inherit it, which is what makes a held item sway with the walk.
+	arm_left_pivot.basis = _arm_left_base_basis * _swing_basis(swing, jump, 1.0)
+	arm_right_pivot.basis = _arm_right_base_basis * _swing_basis(-swing, jump, -1.0)
+
+
+## The extra turn on one arm's pivot for its share of the swing and of the jump (both
+## -1..1, the swing scaled by stride); `side` is 1 for the left arm and -1 for the right,
+## which mirrors the roll so both hands turn out as they rise.
+func _swing_basis(swing: float, jump: float, side: float) -> Basis:
+	var pitch := swing * arm_swing_pitch + jump * arm_jump_tilt
+	var roll := swing * arm_swing_roll * side
+	return Basis.from_euler(Vector3(pitch, 0.0, roll))
