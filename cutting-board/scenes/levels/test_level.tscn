@@ -22,6 +22,12 @@
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/night_loop.wav" id="19_night"]
 [ext_resource type="PackedScene" path="res://scenes/environment/bandit_camp/bandit_camp.tscn" id="20_camp"]
 [ext_resource type="PackedScene" path="res://scenes/characters/chair_creature.tscn" id="21_chair"]
+[ext_resource type="PackedScene" uid="uid://c4wm12ek3vnmp" path="res://scenes/environment/buildings/ruin_1x1.tscn" id="22_ruin"]
+[ext_resource type="PackedScene" uid="uid://deje72wiyrped" path="res://scenes/environment/decoration/wagon.tscn" id="23_wheel"]
+[ext_resource type="PackedScene" uid="uid://jejo6ahbgg58" path="res://scenes/environment/decoration/plank_1.tscn" id="24_plank1"]
+[ext_resource type="PackedScene" uid="uid://bw2ou4e37kgmq" path="res://scenes/environment/decoration/plank_2.tscn" id="25_plank2"]
+[ext_resource type="PackedScene" uid="uid://k3do0oioqbn5" path="res://scenes/environment/decoration/debris_1.tscn" id="26_debris"]
+[ext_resource type="PackedScene" uid="uid://bsf86vjc8cwc4" path="res://scenes/environment/decoration/2_box.tscn" id="27_boxes"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -186,11 +192,35 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 14)
 [node name="Bandit2" parent="." instance=ExtResource("12_bandit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 12)
 
-[node name="WalkingChair" parent="." groups=["terrain_snap"] instance=ExtResource("21_chair")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -40)
+[node name="ChairYard" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 0, -30)
 
-[node name="WalkingChair2" parent="." groups=["terrain_snap"] instance=ExtResource("21_chair")]
-transform = Transform3D(-0.5, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.5, -9, 0, -60)
+[node name="Ruin" parent="ChairYard" groups=["navigation_source", "terrain_snap"] instance=ExtResource("22_ruin")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -2, 0, -2)
+
+[node name="Wheel" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("23_wheel")]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 2, 0, 1.5)
+
+[node name="Plank" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("24_plank1")]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -4, 0, 2.5)
+
+[node name="Plank2" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("25_plank2")]
+transform = Transform3D(-0.5, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.5, -2.8, 0, 3.4)
+
+[node name="Debris" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("26_debris")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -5.5)
+
+[node name="Boxes" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("27_boxes")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -6, 0, -4.5)
+
+[node name="WalkingChair" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("21_chair")]
+transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, 8, 0, 8)
+
+[node name="WalkingChair2" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("21_chair")]
+transform = Transform3D(-0.5, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.5, -6, 0, 6)
+
+[node name="WalkingChair3" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("21_chair")]
+transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, 3, 0, -10)
 
 [node name="IntroSequence" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("90_intro")
