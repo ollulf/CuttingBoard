@@ -68,6 +68,8 @@ const HEARTBEATS := [34.4, 35.5, 36.5, 37.4]
 const HEART_OPEN := [0.18, 0.4, 0.7, 1.6]
 ## Seconds at the start of the fall over which the view turns back to face the market.
 const FALL_TURN := 1.5
+## The world's own sound, held silent on the workbench and faded in once born.
+const WORLD_BUSES := [&"Ambience", &"Music"]
 
 var running := false
 var elapsed := 0.0
@@ -82,6 +84,8 @@ var _voices: Array[Node] = []
 ## The view the player looked to during the grain, which the fall turns back from.
 var _look_yaw := 0.0
 var _look_pitch := 0.0
+## WORLD_BUSES' own levels, put back at the landing.
+var _bus_levels := {}
 ## The player, untyped so its script's own members can be reached.
 var _p: Variant
 
@@ -133,6 +137,11 @@ func start() -> void:
 	add_child(_room)
 	_room.play()
 	_voices.append(_room)
+	for bus in WORLD_BUSES:
+		var index := AudioServer.get_bus_index(bus)
+		if index >= 0 and not _bus_levels.has(index):
+			_bus_levels[index] = AudioServer.get_bus_volume_db(index)
+	_world_sound(0.0)
 	set_process(true)
 
 
@@ -157,6 +166,7 @@ func _process(delta: float) -> void:
 	(_black.material as ShaderMaterial).set_shader_parameter("hole", _hole(elapsed))
 	# The room tone drains away under the last peg, leaving two seconds of silence.
 	_room.volume_db = -14.0 + linear_to_db(clampf((BLACK_END - 2.0 - elapsed) / 1.5, 0.001, 1.0))
+	_world_sound(clampf((elapsed - BIRTH_END) / (GRAIN_END - BIRTH_END), 0.0, 1.0))
 	if elapsed >= BIRTH_END and _p.control == CONTROL_NONE:
 		_p.control = CONTROL_LOOK_ONLY
 	if elapsed >= GRAIN_END and _p.control == CONTROL_LOOK_ONLY:
@@ -203,6 +213,17 @@ func _play_cues() -> void:
 		_voices.append(voice)
 
 
+## Sets the world's buses to `level` (0..1) of their own volume.
+func _world_sound(level: float) -> void:
+	for index in _bus_levels:
+		AudioServer.set_bus_volume_db(index, _bus_levels[index] + linear_to_db(maxf(level, 0.0001)))
+
+
+func _exit_tree() -> void:
+	# Leaving mid-opening (a test, a scene change) must not leave the world muted.
+	_world_sound(1.0)
+
+
 func _drop_voice(voice: Node) -> void:
 	_voices.erase(voice)
 	voice.queue_free()
@@ -243,6 +264,7 @@ func _land() -> void:
 		voice.queue_free()
 	_voices.clear()
 	_room = null
+	_world_sound(1.0)
 	Sfx.play(_p.land_sound)
 	player.set_physics_process(true)
 	_p.control = CONTROL_FULL
