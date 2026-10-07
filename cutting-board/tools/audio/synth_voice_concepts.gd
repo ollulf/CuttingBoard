@@ -9,6 +9,10 @@ extends SceneTree
 ## Pass `-- godly` to render only the round 3 "godly" voices into voice_concepts/godly/;
 ## each also gets a fast "dialogue" sample to test how the reverb holds up at speed.
 ##
+## Pass `-- monger` to render the chosen voice (C, Breath of the Grove) into
+## assets/audio/voices/mask_monger/: its three phrases plus single syllable blips for a
+## dialogue system (bank: resources/audio/monger_voice.tres).
+##
 ## Every concept speaks the same two phrases (same syllable pitches, lengths and vowels),
 ## so the files compare the voice itself, not the melody. Same lo-fi format and filter
 ## approach as synth_sfx.gd; prints peak and RMS level of each file.
@@ -49,6 +53,10 @@ var dialogue := [
 
 
 func _init() -> void:
+	if "monger" in OS.get_cmdline_user_args():
+		_render_monger()
+		quit()
+		return
 	if "godly" in OS.get_cmdline_user_args():
 		_render_godly()
 		quit()
@@ -208,6 +216,30 @@ func _render_godly() -> void:
 		_save(path + "_greeting", _godly_phrase(greeting, v, 1.0), 0.8)
 		_save(path + "_wise", _godly_phrase(wise, v, 1.1), 0.8)
 		_save(path + "_dialogue", _godly_phrase(dialogue, v, 1.0), 0.8)
+
+
+const MONGER := "res://assets/audio/voices/mask_monger/"
+
+
+## The chosen Mask-Monger voice: C's three phrases (same as the godly render), then 8 blips
+## (four vowels at two pitches, short and nearly dry: a small 0.6-feedback room instead of
+## the hall), meant to be played one per syllable with the bank's pitch jitter.
+func _render_monger() -> void:
+	var v := [196.0, _syl_grove, 0.87, 2.2, 0.05]
+	rng.seed = hash("c_breath_of_the_grove")
+	_save(MONGER + "greeting", _godly_phrase(greeting, v, 1.0), 0.8)
+	_save(MONGER + "wise_line", _godly_phrase(wise, v, 1.1), 0.8)
+	_save(MONGER + "dialogue_blips", _godly_phrase(dialogue, v, 1.0), 0.8)
+	var vowels := {"a": A, "e": E, "o": O, "u": U}
+	for semis in [0, 4]:
+		for vowel_name in vowels:
+			var f0: float = v[0] * pow(2.0, semis / 12.0)
+			var blip := _silence(0.35)
+			_mix(blip, _syl_grove(0.08, f0, f0 * pow(2.0, -0.5 / 12.0), vowels[vowel_name]), 0, 1.0)
+			_mix(blip, _hall(blip.duplicate(), 0.6), 0, 0.25)
+			_mix(blip, _wind(0.35), 0, v[4])
+			blip = _shape(blip, 0.0, 0.33)
+			_save(MONGER + "blip_%s_%s" % [vowel_name, "low" if semis == 0 else "high"], blip, 0.7)
 
 
 ## Like _phrase, but through a long hall reverb that stays out of the way while she talks:
@@ -519,7 +551,7 @@ func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
 		top_out = maxf(top_out, absf(v))
 	var rms := sqrt(sum / out.size())
 	print("%s  %.2f s  peak %.1f dBFS  rms %.1f dBFS" % [file_name, float(out.size()) / RATE, linear_to_db(top_out), linear_to_db(rms)])
-	var path := ROOT + file_name + ".wav"
+	var path := (file_name if file_name.begins_with("res://") else ROOT + file_name) + ".wav"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var data := PackedByteArray()
 	data.resize(out.size() * 2)

@@ -1,5 +1,30 @@
 # Mask-Monger voice: five concepts
 
+## Chosen: C, Breath of the Grove
+
+The user picked round 3's variation C (a whispered vowel resonating in a hollow trunk, over a
+soft hum with a sub-octave and a little wind) as the Mask-Monger's voice, kept for later use.
+Not wired into any NPC yet.
+
+Files in `assets/audio/voices/mask_monger/`:
+
+- `greeting.wav`, `wise_line.wav`, `dialogue_blips.wav`: C's three phrases (reference takes;
+  same as `voice_concepts/godly/c_breath_of_the_grove_*`).
+- `blip_{a,e,o,u}_{low,high}.wav`: 8 single syllable blips (0.35 s, 80 ms syllable, a
+  small room instead of the long hall so they stay crisp at typing speed), four vowels at
+  196 Hz and +4 semitones. All peak -3.1 dBFS, RMS about -18 to -19 dBFS.
+
+Bank: `resources/audio/monger_voice.tres` (`SoundBank`, the 8 blips, pitch jitter 0.06).
+It is what the dialogue system's voice-blip plan (`docs/concepts/dialogue-system.md`,
+"Voice blips" per speaker: one blip every N characters) should use for the Monger
+instead of `monger_babble`.
+
+Regenerate (phrases and blips):
+
+    godot --headless --path cutting-board -s res://tools/audio/synth_voice_concepts.gd -- monger
+
+The concept folders below stay as they are.
+
 The Mask-Monger speaks in babble, not words: one synthesised blip per syllable while her
 text types out (Animal Crossing / Banjo-Kazooie style). The voice should be abstract, a
 bit weird, wise, and read as female. Tone: goofy-weird wood folk, never creepy.
