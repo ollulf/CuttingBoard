@@ -3,7 +3,7 @@ extends Node3D
 ## Headless checks for the Mask-Monger's burn ritual (scenes/characters/mask_burn_ritual.gd):
 ## nothing is offered without a mask; a mask in hand is taken, burnt and comes back as
 ## exactly one Soul in a Bottle pickup at the player's feet; a second offer mid-ritual is
-## refused; a mask in the inventory is taken when the hands are empty; and a Monger
+## refused; a mask only in the inventory is neither offered nor taken; and a Monger
 ## holding a grudge refuses. Prints PASS/FAIL per check and quits with the number of
 ## failures as the exit code.
 ##
@@ -74,18 +74,18 @@ func _run() -> void:
 		print("  bottle %.2f m from the player, frozen %s" % [off, bottle.freeze])
 		_check("the bottle is a loose pickup near the player", not bottle.freeze and off < 1.5)
 
-	# A mask in the inventory, hands empty.
-	_check("takes a mask from the inventory", ritual.use(player)
-			and _masks_in(inventory) == 0)
-	await _until_done(ritual)
-	await _physics_frames(30)
-	_check("a second bottle after the second ritual", _bottles().size() == 2)
+	# A mask only in the inventory, hands empty: neither offered nor taken.
+	_check("no \"Give mask\" for a mask only in the inventory",
+			ritual.get_prompt(player) == "")
+	_check("refuses a mask only in the inventory", not ritual.use(player)
+			and _masks_in(inventory) == 1)
 
-	# A grudge.
-	inventory.add(MASK)
+	# A grudge, mask in hand.
+	interactor.spawn_into_hand(MASK, -1, hand)
+	_check("a mask in hand is offered again", ritual.get_prompt(player) == "Give mask")
 	monger.hold_grudge(player)
 	_check("refused while it holds a grudge", ritual.get_prompt(player) == ""
-			and not ritual.use(player) and _masks_in(inventory) == 1)
+			and not ritual.use(player) and not hand.is_free())
 	_finish()
 
 

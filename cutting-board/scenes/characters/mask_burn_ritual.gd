@@ -6,8 +6,8 @@ extends Usable
 ## to the giver's feet as a Soul in a Bottle (docs/concepts/monger-burn-ritual.md).
 ##
 ## Sits on the Monger as its Usable, so the player's interact key reaches it. The mask
-## given is the one in a hand (right first), else the first mask in the inventory; the
-## mask being worn is never taken. It refuses while a ritual is already playing, while the
+## given is the one in a hand (right first); a mask only in the inventory or being worn
+## is never taken, and without one in hand the Monger just talks. It refuses while a ritual is already playing, while the
 ## Monger is dead, and while it holds a grudge against whoever is asking.
 ##
 ## The ritual poses the model after MaskMongerBody has (a later process_priority), so the
@@ -108,7 +108,7 @@ func _can_give(by: Node) -> bool:
 		return false
 	if _npc.has_grudge_against(by as Node3D):
 		return false
-	return _find_hand_mask(by) != null or _find_inventory_mask(by) != null
+	return _find_hand_mask(by) != null
 
 
 func _find_hand_mask(by: Node) -> HandSlot:
@@ -119,42 +119,22 @@ func _find_hand_mask(by: Node) -> HandSlot:
 	return null
 
 
-func _find_inventory_mask(by: Node) -> InventoryEntry:
-	var inventory := by.get_node_or_null("%Inventory") as Inventory
-	if inventory == null:
-		return null
-	for entry in inventory.get_entries():
-		if entry.data is MaskData:
-			return entry
-	return null
-
-
 ## Takes the mask off the giver and starts the burn.
 func _on_used(by: Node) -> void:
 	# Marked busy before the mask leaves the giver: taking it refreshes the prompts,
 	# which must already read the Monger as busy.
 	_time = 0.0
-	var data: ItemData
 	var hand := _find_hand_mask(by)
-	if hand:
-		data = hand.get_item_data()
-		_mask = hand.release()
-		# Released, the object still hangs under the hand; it goes out into the world.
-		_mask.reparent(get_tree().current_scene)
-	else:
-		var entry := _find_inventory_mask(by)
-		if entry == null:
-			_time = -1.0
-			return
-		data = entry.data
-		(by.get_node("%Inventory") as Inventory).remove(entry)
-		_mask = data.spawn()
-		if _mask:
-			get_tree().current_scene.add_child(_mask)
+	if hand == null:
+		_time = -1.0
+		return
+	var data := hand.get_item_data()
+	_mask = hand.release()
+	# Released, the object still hangs under the hand; it goes out into the world.
+	_mask.reparent(get_tree().current_scene)
 	_giver = by as Node3D
 	if _mask:
-		_mask_start = _mask.global_position if hand else \
-				_giver.global_position + Vector3.UP * 1.3
+		_mask_start = _mask.global_position
 		_freeze(_mask)
 	_begin()
 	ritual_started.emit(data)
