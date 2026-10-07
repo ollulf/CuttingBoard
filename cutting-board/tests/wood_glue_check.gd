@@ -1,8 +1,11 @@
 extends Node3D
 
-## Headless checks for wood glue: a click with it in hand mends the hurt player over a
-## moment and spends one dab, the pot is gone with its last dab, a pot with dabs to spare
-## stays in the hand, and a click at full health spends nothing and throws no punch.
+## Headless checks for wood glue: a click with it in hand starts the timed use, which
+## mends the hurt player all at once at its end and spends one dab; a hit or a step
+## cancels it with no heal (keeping the glue before the first dab, spending it after);
+## the pot is gone with its last dab, a pot with dabs to spare stays in the hand, glue
+## in the left hand plays the mirrored use, and a click at full health spends nothing
+## and throws no punch.
 ## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
 ##
 ##   godot --headless --path cutting-board res://tests/wood_glue_check.tscn
@@ -25,6 +28,7 @@ func _run() -> void:
 	_record()
 	await _unhurt(player)
 	await _single_dab(player)
+	await _cancelled(player)
 	await _spare_dabs(player)
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
@@ -64,12 +68,56 @@ func _single_dab(player) -> void:
 	var amount: int = glue.heal_amount
 	_click(player, hand)
 	await _frames(2)
+	_check("the click starts the timed use", player.is_using())
+	await get_tree().create_timer(1.5).timeout
+	_check("mid-use the view is tilted down", player.camera.rotation.x < -0.5)
+	_check("mid-use nothing has healed yet", health.get_current() == hurt)
+	_check("mid-use the pot is still in hand", hand.get_held() == glue)
+	await get_tree().create_timer(1.0).timeout
+	_check("the whole dab mends at once at the end (%d -> %d)" % [hurt, health.get_current()],
+			health.get_current() == hurt + amount)
 	_check("the empty pot is gone", not is_instance_valid(glue))
 	_check("the hand is free again", hand.is_free())
-	_check("the heal has begun", health.get_current() > hurt)
-	await get_tree().create_timer(1.0).timeout
-	_check("the whole dab has mended (%d -> %d)" % [hurt, health.get_current()],
-			health.get_current() == hurt + amount)
+	await get_tree().create_timer(0.5).timeout
+	_check("the use is over", not player.is_using())
+	_check("the view is level again", is_zero_approx(player.arms.view_tilt))
+
+
+## A hit before the first dab keeps the glue; a hit after it spends the dab. Neither heals.
+## Trying to walk off cancels the same way.
+func _cancelled(player) -> void:
+	var health: Health = player.health
+	var hand: HandSlot = player.hand_right
+	var glue := _glue_into(player, hand)
+	var usable := Usable.find_in(glue)
+	usable.uses_remaining = 3
+	var before := health.get_current()
+	_click(player, hand)
+	await get_tree().create_timer(0.3).timeout
+	health.apply_damage(DamageInfo.new(5))
+	await _frames(2)
+	_check("a hit before the dab cancels the use", not player.is_using())
+	_check("cancelled before the dab, the glue is kept", usable.uses_remaining == 3)
+	_check("cancelled, the view snaps level", is_zero_approx(player.arms.view_tilt))
+	before = health.get_current()
+	_click(player, hand)
+	await get_tree().create_timer(1.3).timeout
+	health.apply_damage(DamageInfo.new(5))
+	await get_tree().create_timer(1.8).timeout
+	_check("cancelled after the dab, the dab is spent", usable.uses_remaining == 2)
+	_check("a cancelled use heals nothing", health.get_current() == before - 5)
+	before = health.get_current()
+	_click(player, hand)
+	await get_tree().create_timer(0.8).timeout
+	Input.action_press("move_forward")
+	await _physics_frames(3)
+	Input.action_release("move_forward")
+	_check("walking off cancels the use", not player.is_using())
+	_check("walked off after the first dab, it is spent", usable.uses_remaining == 1)
+	await get_tree().create_timer(2.2).timeout
+	_check("walked off, nothing healed", health.get_current() == before)
+	glue.queue_free()
+	await _frames(2)
 
 
 ## A pot with two dabs: the first leaves it in the hand with one fewer, the second
@@ -85,12 +133,14 @@ func _spare_dabs(player) -> void:
 	glue.heal_amount = 50
 	_check("down to 20 health", health.get_current() == 20)
 	_check("a click with glue is handled", player.use_held(hand))
-	await get_tree().create_timer(1.0).timeout
+	_check("glue in the left hand plays the mirrored use",
+			player.get_node("%LeftPlayer").current_animation.begins_with(ArmAnimator.MIRRORED_LIBRARY))
+	await get_tree().create_timer(3.0).timeout
 	_check("one dab spent", usable.uses_remaining == 1)
 	_check("a pot with a dab left stays in the hand", hand.get_held() == glue)
 	_check("first dab mends to 70", health.get_current() == 70)
 	player.use_held(hand)
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(3.0).timeout
 	_check("the last dab empties the pot", not is_instance_valid(glue) and hand.is_free())
 	_check("mending stops at full", health.get_current() == health.max_health)
 

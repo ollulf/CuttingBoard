@@ -51,6 +51,7 @@ func _run() -> void:
 			var half_width := -fist.z * tan(deg_to_rad(camera.fov * 0.5)) * ASPECT
 			var across := fist.x / half_width
 			_check(absf(across) < CENTRE_SPAN, "%s %s lands near the centre (%.2f of half-width)" % [side, animation_name, across])
+	_check_two_armed(player, camera)
 	_check_walk(player, camera)
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
@@ -82,6 +83,29 @@ func _check_walk(player: Node3D, camera: Camera3D) -> void:
 					swing += 0.25
 			player.pose_arms(0.0, 0.0)
 			_check(worst < 0.0, "%s %s keeps the cut end out of view through the walk swing and jump (margin %.3f)" % [side, animation_name, -worst])
+
+
+## The two-armed glue use, as held in the right hand and mirrored for the left: both
+## cut ends stay hidden all through it, and it ends with the view level again.
+func _check_two_armed(player: Node3D, camera: Camera3D) -> void:
+	var arms: ArmAnimator = player.get_node("%Arms")
+	var anim_player: AnimationPlayer = player.get_node("%LeftPlayer")
+	for animation_name in ["use_glue_both", arms._mirrored("use_glue_both")]:
+		var length := anim_player.get_animation(animation_name).length
+		anim_player.play(animation_name)
+		var worst := -INF
+		var t := 0.0
+		while t <= length:
+			anim_player.seek(t, true)
+			camera.rotation.x = arms.view_tilt
+			for side in ["Left", "Right"]:
+				worst = maxf(worst, _view_overlap(camera, player.get_node("%%Arm%sSkeleton" % side)))
+			t += 0.01
+		_check(worst < 0.0, "%s keeps both cut ends out of view (margin %.3f)" % [animation_name, -worst])
+		anim_player.seek(length, true)
+		_check(is_zero_approx(arms.view_tilt), "%s ends with the view level" % animation_name)
+		anim_player.stop()
+	camera.rotation.x = 0.0
 
 
 ## When the animation's emit_hit key fires.

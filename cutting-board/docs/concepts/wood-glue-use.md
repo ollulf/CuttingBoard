@@ -40,3 +40,12 @@ on the chest by a two-bone reach in the script; `--save-library` writes them to
 `tests/visual/glue_use_concept_anims.tres`, ready to tune and move into `arms.tres` later. The
 glue in the crack is lighter and glows (emission 1.1), so it reads at night. `arms.tres` and
 player gameplay are unchanged. Still open: whether a cancelled use keeps or spends the glue.
+
+## Round 4: in the game
+
+`use_glue_both` now lives in `resources/animations/arms.tres` (the glue's `animation_set` is
+`glue`, its Usable's `use_action` is `use`). A click with glue plays it: the arms' `view_tilt`
+track tilts the camera down and back, look and movement are locked, beats fire the lid pop,
+two dabs, clamp and two knocks, and the heal lands whole on the `mend` beat (2.3 s). Glue in
+the left hand plays a mirrored copy, so the pot hand always dabs. A hit, or trying to move or
+jump, cancels it: before the first dab (0.65 s) the glue is kept, after it the dab is spent.

@@ -9,8 +9,17 @@ extends Node
 ## ("Apply" reads "Apply Wood Glue"). Blank means it is not used from the hand at all, so
 ## a click with it swings or punches as before; that is every item until it opts in.
 @export var held_verb := ""
+## A use from the hand that takes time: the two-armed arm action it plays (the glue's
+## "use" plays use_glue_both), the use itself landing on the action's "mend" beat. Blank
+## uses it at once.
+@export var use_action: StringName = &""
 
 signal used(by: Node)
+## A beat of a timed use's animation went by ("dab", "clamp"), for the object's sounds.
+signal use_beat(beat_name: StringName, by: Node)
+## A timed use was cut short after it had already taken from the object: one use is gone
+## with nothing to show for it.
+signal wasted(by: Node)
 
 ## Asked before every use when set, with whoever is using it; returning false refuses the
 ## use and spends nothing — glue does nothing for someone who is not hurt.
@@ -19,14 +28,26 @@ var can_use := Callable()
 
 ## Returns whether the object was actually used.
 func use(by: Node) -> bool:
-	if uses_remaining == 0:
-		return false
-	if can_use.is_valid() and not can_use.call(by):
+	if not can_be_used_by(by):
 		return false
 	if uses_remaining > 0:
 		uses_remaining -= 1
 	used.emit(by)
 	return true
+
+
+## Whether `by` could use this right now; asks without spending anything.
+func can_be_used_by(by: Node) -> bool:
+	if uses_remaining == 0:
+		return false
+	return not can_use.is_valid() or can_use.call(by)
+
+
+## Spends one use with no effect, for a timed use cancelled past its point of no return.
+func waste(by: Node) -> void:
+	if uses_remaining > 0:
+		uses_remaining -= 1
+	wasted.emit(by)
 
 
 ## What the interact prompt offers `by` when this object is under the crosshair ("Give
@@ -38,6 +59,10 @@ func get_prompt(_by: Node) -> String:
 
 func is_used_in_hand() -> bool:
 	return not held_verb.is_empty()
+
+
+func is_timed() -> bool:
+	return not use_action.is_empty()
 
 
 ## The Usable on `node`, or null if it has none.
