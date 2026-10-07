@@ -131,6 +131,11 @@ var _death_cam_offset := Vector3.ZERO
 var _last_step := 0
 var _was_on_floor := true
 
+## How much of the body the player commands: everything, only the view (mouse look), or
+## nothing at all. The opening (IntroSequence) holds the player still while they are made.
+enum ControlMode { FULL, LOOK_ONLY, NONE }
+var control := ControlMode.FULL
+
 
 func _ready() -> void:
 	MouseGrab.capture()
@@ -167,7 +172,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _dead:
+	if _dead or control == ControlMode.NONE:
 		return
 	if event is InputEventMouseMotion and MouseGrab.is_captured():
 		rotate_y(-event.relative.x * mouse_sensitivity)
@@ -176,6 +181,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			-PITCH_LIMIT,
 			PITCH_LIMIT
 		)
+		return
+	if control != ControlMode.FULL:
 		return
 
 	# Releases are handled before the capture guard so letting go while the mouse is
@@ -316,7 +323,7 @@ func _is_grab_modifier(event: InputEvent) -> bool:
 func _physics_process(delta: float) -> void:
 	# A free cursor means something is in front of the player — the inventory, or an
 	# unfocused window — so the body stops taking movement input until look is captured.
-	var controlling := MouseGrab.is_captured()
+	var controlling := MouseGrab.is_captured() and control == ControlMode.FULL
 
 	if not is_on_floor():
 		velocity += get_gravity() * delta
