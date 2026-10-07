@@ -617,7 +617,8 @@ func _build_scene() -> Error:
 	_part(body, "Torso", "body")
 	var head := _pivot(body, "Head", NECK_END + Vector3(0, 0.25, -0.25), true)
 	head.rotation.x = 0.15
-	_part(head, "Mask", "face")
+	# Its own node, unique, so the idle can twitch it against the head.
+	_unique.append(_part(head, "Mask", "face"))
 	# A dim ember light just in front of the mask, so the eyes cast a glow on it.
 	_lamp(head, "EyeGlow", Vector3(0, 0.2, -0.6), Color("ff6a2c"), 0.8, 2.2)
 	# The arms, fanned round his chest, elbows bending forward so the hands meet in front.
