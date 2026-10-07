@@ -131,6 +131,7 @@ theme_override_constants/separation = 16
 
 [node name="ContainerFrame" type="PanelContainer" parent="Center/Window/Row"]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(310, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -160,7 +161,6 @@ size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.91, 0.831, 0.541, 1)
 theme_override_fonts/font = ExtResource("3_mystical")
-text = "Nearby"
 
 [node name="ContainerSize" type="Label" parent="Center/Window/Row/ContainerFrame/Margin/Rows/TitleRow"]
 unique_name_in_owner = true
@@ -172,15 +172,6 @@ label_settings = SubResource("LabelSettings_dim")
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
-
-[node name="NearbyEmpty" type="Label" parent="Center/Window/Row/ContainerFrame/Margin/Rows"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(286, 0)
-layout_mode = 2
-mouse_filter = 2
-text = "Nothing open. Open a chest and what is inside shows up here."
-label_settings = SubResource("LabelSettings_dim")
-autowrap_mode = 3
 
 [node name="EquipFrame" type="PanelContainer" parent="Center/Window/Row"]
 unique_name_in_owner = true

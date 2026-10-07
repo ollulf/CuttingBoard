@@ -117,6 +117,7 @@ unique_name_in_owner = true
 script = ExtResource("10_melee")
 
 [node name="InteractionPrompts" parent="." unique_id=162121589 instance=ExtResource("4_prompts")]
+unique_name_in_owner = true
 
 [node name="Inventory" type="Node" parent="."]
 unique_name_in_owner = true
@@ -138,7 +139,7 @@ script = ExtResource("30_stamina")
 [node name="Equipment" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("16_equipment")
-starting_items = Array[ExtResource("20_item_data")]([ExtResource("19_player_mask")])
+starting_items = Array[ExtResource("20_item_data")]([])
 
 [node name="Faction" type="Node" parent="."]
 unique_name_in_owner = true
