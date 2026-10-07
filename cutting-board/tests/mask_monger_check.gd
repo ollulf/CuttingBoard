@@ -3,8 +3,8 @@ extends Node3D
 ## Headless checks for the Mask-Monger NPC (scenes/characters/mask_monger.tscn): he
 ## spawns with his own MaskMongerBody, is on the villagers' side and friendly to them
 ## and to the player, walks a navigation path with his four-beat gait advancing as he
-## goes and settling once he stops, and takes a blow and a killing blow without a
-## ragdoll. Prints PASS/FAIL per check and quits with the number of failures as the exit
+## goes and settling once he stops, takes a blow without a ragdoll, and shrugs off any
+## beating (he is invincible: numbers pop, health snaps back to full). Prints PASS/FAIL per check and quits with the number of failures as the exit
 ## code.
 ##
 ##   godot --headless --path cutting-board res://tests/mask_monger_check.tscn
@@ -99,12 +99,28 @@ func _hit(monger: Npc, body: MaskMongerBody) -> void:
 	_check("a hit rocks him and he stands", absf(body._jolt) > deg_to_rad(0.5) and not body.is_limp())
 	var limp := [false]
 	body.went_limp.connect(func() -> void: limp[0] = true)
+	# He is invincible: blows far past his 120 health still pop numbers, then he is whole.
+	var numbers_before := _damage_numbers()
+	for i in 15:
+		var blow := DamageInfo.new(20)
+		blow.direction = Vector3.LEFT
+		monger.health.apply_damage(blow)
 	var killing := DamageInfo.new(1000)
 	killing.direction = Vector3.LEFT
 	monger.health.apply_damage(killing)
+	_check("every blow pops a damage number", _damage_numbers() - numbers_before >= 16)
 	await _physics_frames(90)
-	_check("a killing blow slumps him", body.is_limp() and limp[0] and body._slump > 0.9
-		and not monger.health.is_alive())
+	_check("a beating leaves him standing at full health", monger.health.is_alive()
+		and monger.health.get_current() == monger.health.max_health
+		and not body.is_limp() and not limp[0])
+
+
+func _damage_numbers() -> int:
+	var count := 0
+	for child in get_tree().current_scene.get_children():
+		if child is DamageNumber:
+			count += 1
+	return count
 
 
 func _finish() -> void:

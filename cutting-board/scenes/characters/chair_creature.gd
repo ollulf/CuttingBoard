@@ -5,12 +5,15 @@ extends CharacterBody3D
 ## along the navigation mesh, pausing now and then to idle. Once it sees someone its side
 ## is hostile to, it crawls after them at a scuttle and, close enough, launches itself at
 ## them: it rocks back on its hind limbs (the tell), leaps, and slams down with both front
-## arms. Out of sight for a while, it gives up and wanders back. Killed, it collapses and
-## its mask drops off.
+## arms. Out of sight for a while, it gives up and wanders back. Killed, it collapses, its
+## mask drops off as a loose item (the way a fallen villager's does), and what it carried
+## stays on the body for the player to search, like an NPC's pockets.
 ##
 ## Moving the body is Locomotion's job, as for the villagers; the chair model's own gait
 ## follows whatever distance the body covers. The leap moves the body itself, as a short
-## ballistic arc through move_and_slide, so it follows the ground and stops at walls.
+## ballistic arc through move_and_slide, so it follows the ground and stops at walls. A
+## leap that would carry it off the navigation mesh (over a drop, into water) is cut short
+## where the mesh ends.
 
 ## Emitted on the leap's contact frame, when both front arms come down: `hit` is whether
 ## the target was still within reach and took the blow.
@@ -28,13 +31,28 @@ enum State { ROAM, CHASE, WIND_UP, LEAP, RECOVER }
 ## Seconds out of sight after which it stops chasing.
 @export var forget_time := 6.0
 
+@export_group("Loot")
+## Items one is drawn from at spawn, by weight: what it scavenged along the way.
+@export var loot_pool: Array[ItemData] = []
+## How likely each loot_pool entry is, matched by position. A missing weight counts as 1.
+@export var loot_weights: Array[float] = []
+## How likely it is to carry nothing from loot_pool.
+@export var no_loot_weight := 0.0
+## Items that may be on it as well, each rolled on its own. A full inventory skips it.
+@export var extra_items: Array[ItemData] = []
+## Chance (0-1) for each extra_items entry, matched by position. A missing chance counts as 0.
+@export var extra_item_chances: Array[float] = []
+@export_group("")
+
 @export_group("Launch attack")
 ## Distance to the target, metres, within which it launches itself.
-@export var leap_range := 3.6
+@export var leap_range := 6.5
 ## Seconds it crouches back before leaping: the tell.
-@export var wind_up_time := 0.5
-## Seconds in the air.
-@export var flight_time := 0.45
+@export var wind_up_time := 0.6
+## Seconds in the air. With gravity this sets the arc's height (about 0.37 m at 0.55 s).
+@export var flight_time := 0.55
+## How far apart, metres, the leap's path is sampled against the navigation mesh.
+@export var leap_probe_step := 0.4
 ## How far short of the target it aims to land, so the arms come down on them.
 @export var land_short := 0.7
 ## Radius around the point the front arms slam into that the blow reaches, metres.
@@ -51,6 +69,7 @@ enum State { ROAM, CHASE, WIND_UP, LEAP, RECOVER }
 @onready var health: Health = %Health
 @onready var faction: Faction = %Faction
 @onready var chair: Node3D = %Chair
+@onready var inventory: Inventory = %Inventory
 
 var _home := Vector3.ZERO
 var _pause := 0.0
@@ -73,6 +92,17 @@ func _ready() -> void:
 	health.died.connect(_on_died)
 	health.damaged.connect(_on_damaged)
 	(%Sight as Sight).spotted.connect(_on_spotted)
+	for data in pick_loot():
+		inventory.add(data)
+
+
+## A roll of what it carries: one draw from loot_pool, plus each extra item on its chance.
+func pick_loot() -> Array[ItemData]:
+	var picked := LoadoutRoll.pick_by_chance(extra_items, extra_item_chances)
+	var main := LoadoutRoll.pick_weighted(loot_pool, loot_weights, no_loot_weight)
+	if main:
+		picked.push_front(main)
+	return picked
 
 
 ## Whom it is going for, or null.
@@ -234,12 +264,33 @@ func _launch() -> void:
 		to = _flat(target.global_position - global_position)
 	if to.length_squared() < 0.01:
 		to = _flat(-global_basis.z)
-	var run := clampf(to.length() - land_short, 0.5, leap_range)
 	var direction := to.normalized()
+	var run := leap_run(direction, clampf(to.length() - land_short, 0.5, leap_range))
 	rotation.y = atan2(-direction.x, -direction.z)
 	_leap_to = global_position + direction * run
 	var g := get_gravity().length()
 	velocity = direction * (run / flight_time) + Vector3.UP * g * flight_time * 0.5
+
+
+## How far it may leap along `direction`, up to `wanted` metres: the path is sampled every
+## leap_probe_step, and it lands short of the first point that is off the navigation mesh
+## (a cliff edge, water, a hole) or well above or below where it stands.
+func leap_run(direction: Vector3, wanted: float) -> float:
+	var map := (%NavigationAgent3D as NavigationAgent3D).get_navigation_map()
+	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) == 0:
+		return wanted
+	var from := global_position
+	var safe := 0.0
+	var at := leap_probe_step
+	while at < wanted + leap_probe_step:
+		var d := minf(at, wanted)
+		var spot := from + direction * d
+		var on := NavigationServer3D.map_get_closest_point(map, spot)
+		if _flat(on - spot).length() > 0.35 or absf(on.y - from.y) > 0.8:
+			return maxf(safe - 0.2, 0.0)
+		safe = d
+		at += leap_probe_step
+	return wanted
 
 
 ## The contact frame: both front arms hit the ground in front of it, and whoever is the
@@ -298,7 +349,12 @@ func _on_died(_info: DamageInfo) -> void:
 	locomotion.stop()
 	locomotion.set_physics_process(false)
 	velocity = Vector3.ZERO
-	%CollisionShape3D.set_deferred("disabled", true)
+	# Kept as a low box where the collapsed chair lies, so the interaction ray finds the
+	# body to search.
+	var flat := BoxShape3D.new()
+	flat.size = Vector3(1.1, 0.45, 1.1)
+	%CollisionShape3D.set_deferred("shape", flat)
+	%CollisionShape3D.set_deferred("position", Vector3(0.0, 0.225, 0.0))
 	chair.collapse(get_parent())
 
 
