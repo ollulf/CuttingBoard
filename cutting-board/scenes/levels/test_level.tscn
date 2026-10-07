@@ -21,6 +21,7 @@
 [ext_resource type="PackedScene" path="res://scenes/vfx/wisp.tscn" id="18_wisp"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/night_loop.wav" id="19_night"]
 [ext_resource type="PackedScene" path="res://scenes/environment/bandit_camp/bandit_camp.tscn" id="20_camp"]
+[ext_resource type="PackedScene" path="res://scenes/characters/chair_creature.tscn" id="21_chair"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -184,6 +185,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 14)
 
 [node name="Bandit2" parent="." instance=ExtResource("12_bandit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 12)
+
+[node name="WalkingChair" parent="." groups=["terrain_snap"] instance=ExtResource("21_chair")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -40)
+
+[node name="WalkingChair2" parent="." groups=["terrain_snap"] instance=ExtResource("21_chair")]
+transform = Transform3D(-0.5, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.5, -9, 0, -60)
 
 [node name="IntroSequence" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("90_intro")

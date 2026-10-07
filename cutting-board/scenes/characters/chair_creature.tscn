@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/characters/chair_creature.gd" id="1_creature"]
+[ext_resource type="PackedScene" path="res://scenes/characters/walking_chair.tscn" id="2_chair"]
+[ext_resource type="Script" path="res://scripts/npc/locomotion.gd" id="3_loco"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="4_health"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_chair"]
+size = Vector3(0.9, 1.1, 0.9)
+
+[node name="ChairCreature" type="CharacterBody3D"]
+script = ExtResource("1_creature")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_chair")
+
+[node name="Chair" parent="." instance=ExtResource("2_chair")]
+unique_name_in_owner = true
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+unique_name_in_owner = true
+path_desired_distance = 0.8
+target_desired_distance = 0.5
+height = 1.2
+radius = 0.45
+
+[node name="Locomotion" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_loco")
+walk_speed = 0.7
+run_speed = 1.8
+turn_speed = 3.0
+arrive_distance = 0.4
+
+[node name="Health" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_health")
+max_health = 60
