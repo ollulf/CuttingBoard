@@ -57,6 +57,21 @@ signal mask_broken
 ## Heard and seen where the mask was as it breaks: a BreakBurst scene, like a crate's.
 @export var mask_break_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
 @export var mask_break_effect: PackedScene = preload("res://scenes/vfx/break_burst.tscn")
+## What a mask is once it has split: one Shattered Mask for every kind of face, past
+## wearing and past repair. A mask that breaks drops it; a mask on a dead face may become it.
+@export var shattered_mask: ItemData = preload("res://resources/items/shattered_mask.tres")
+## An NPC's mask takes the brunt of every hit, not just one to the head, and on death is
+## rolled for: shattered, or left its own kind but badly damaged. The player's own mask
+## leaves this off — it wears from head hits only and comes off as it is.
+@export var npc_mask_wear := false
+## How many times the damage a head hit costs an NPC's mask, against one to the body.
+@export var head_hit_mask_wear := 2.0
+## Chance an NPC's mask is shattered when its wearer dies; otherwise it stays its own
+## kind with only `damaged_mask_left` of its durability.
+@export_range(0.0, 1.0) var mask_shatter_chance := 0.75
+## The share of its durability a mask that survives its wearer's death keeps, picked
+## between x and y.
+@export var damaged_mask_left := Vector2(0.1, 0.25)
 ## Hits in a game land harder than physics says they should: every impulse a hit puts
 ## into the bones is multiplied by this.
 @export var impulse_scale := 2.5
@@ -108,6 +123,11 @@ var _face: Node3D
 ## come off once that entry is taken.
 var _face_entry: InventoryEntry
 var _face_inventory: Inventory
+## Rolls an NPC mask's fate on death. Seed it to make the roll repeatable.
+var mask_rng := RandomNumberGenerator.new()
+## What the mask comes off a dead body as, and with how much left (-1: as authored).
+var _dead_mask: ItemData
+var _dead_durability := -1
 
 ## What the worn mask has left, on the scale of its MaskData.durability. Putting a mask on
 ## starts it at full; whoever keeps the mask's wear elsewhere — the player's Equipment —
@@ -240,6 +260,10 @@ func go_limp(info: DamageInfo = null, carried_velocity := Vector3.ZERO) -> void:
 	if info:
 		var impulse := get_impulse(info)
 		_push(_nearest_bone(info.position, _bones), impulse, info.position)
+	_dead_mask = mask
+	_dead_durability = mask_durability
+	if _face and npc_mask_wear and mask:
+		_roll_mask_on_death()
 	if _face:
 		if randf() < mask_pop_chance or not _leave_mask_on():
 			# Deferred: adding a body from inside a physics callback is not allowed.
@@ -363,21 +387,31 @@ func is_head_hit(point: Vector3) -> bool:
 
 
 ## A blow to the head lands on the mask too: it wears down by the damage dealt, cracks
-## once half of it is gone, and breaks off the face when nothing is left. Like flinch(),
+## once half of it is gone, and breaks off the face when nothing is left. An NPC's mask
+## (`npc_mask_wear`) wears from every hit, and faster from one to the head. Like flinch(),
 ## the character's own script calls this when its Health is damaged; a mask authored with
 ## no durability never breaks.
 func hit_mask(info: DamageInfo) -> void:
 	if _limp or _face == null or info == null or info.amount <= 0 or mask.durability <= 0:
 		return
-	if not is_head_hit(info.position):
+	var wear := info.amount
+	if is_head_hit(info.position):
+		if npc_mask_wear:
+			wear = roundi(info.amount * head_hit_mask_wear)
+	elif not npc_mask_wear:
 		return
-	mask_durability = maxi(mask_durability - info.amount, 0)
+	# An NPC's killing blow leaves the mask to the roll as it falls (go_limp).
+	var health := Health.find_in(get_actor())
+	if npc_mask_wear and health and not health.is_alive():
+		return
+	mask_durability = maxi(mask_durability - wear, 0)
 	mask_damaged.emit(mask_durability)
 	if mask_durability == 0:
 		_break_mask()
 
 
-## The mask splits and falls from the face in pieces, leaving nothing to pick up. Seen
+## The mask splits and falls from the face in pieces, leaving a Shattered Mask where it
+## was. Seen
 ## from behind it — the player's own, in first person — it is only heard: the pieces
 ## would fill the view.
 func _break_mask() -> void:
@@ -396,9 +430,36 @@ func _break_mask() -> void:
 			burst.position = face.global_position
 		var tree := get_tree()
 		(tree.current_scene if tree.current_scene else tree.root).add_child(burst)
+	_drop_shattered.call_deferred(face.global_transform)
 	face.queue_free()
 	mask = null
 	mask_broken.emit()
+
+
+## What is left of a mask that split: a Shattered Mask, dropped where the face was.
+## Deferred by the caller: adding a body from inside a physics callback is not allowed.
+func _drop_shattered(at: Transform3D) -> void:
+	var level := get_actor().get_parent()
+	var loose := shattered_mask.spawn() as RigidBody3D if shattered_mask else null
+	if level == null or loose == null:
+		return
+	level.add_child(loose)
+	loose.global_transform = at
+	keep_clear_of(loose, get_actor(), mask_clear_time)
+
+
+## An NPC's mask, as its wearer goes limp: shattered (`mask_shatter_chance`), or still its
+## own kind with little left. The face shows a full crack either way; whatever it now is
+## comes off or stays on as before.
+func _roll_mask_on_death() -> void:
+	if mask_rng.randf() < mask_shatter_chance:
+		_dead_mask = shattered_mask
+		_dead_durability = -1
+		mask_durability = 0
+	else:
+		var left := mask_rng.randf_range(damaged_mask_left.x, damaged_mask_left.y)
+		_dead_durability = clampi(roundi(mask.durability * left), 1, maxi(mask_durability, 1))
+		mask_durability = _dead_durability
 
 
 ## Draws the worn mask's wear on its face: nothing above half, then a crack running
@@ -428,12 +489,12 @@ func _knock_off_mask(face: Node3D, info: DamageInfo, carried_velocity: Vector3) 
 	var at := face.global_transform
 	face.queue_free()
 	var level := get_actor().get_parent()
-	var loose := mask.spawn() as RigidBody3D if mask else null
+	var loose := _dead_mask.spawn() as RigidBody3D if _dead_mask else null
 	if level == null or loose == null:
 		return
 	level.add_child(loose)
 	# A battered mask is still battered once it is off.
-	Destructible.write(loose, mask_durability)
+	Destructible.write(loose, _dead_durability)
 	# The item's mesh is the worn face at its origin, so it leaves from exactly where the
 	# face was drawn.
 	loose.global_transform = at
@@ -453,9 +514,9 @@ func _knock_off_mask(face: Node3D, info: DamageInfo, carried_velocity: Vector3) 
 ## wearer has no inventory, or no room in it, and the mask has to come off after all.
 func _leave_mask_on() -> bool:
 	var inventory := get_actor().get_node_or_null("Inventory") as Inventory
-	if inventory == null or mask == null:
+	if inventory == null or _dead_mask == null:
 		return false
-	_face_entry = inventory.store(mask, mask_durability)
+	_face_entry = inventory.store(_dead_mask, _dead_durability)
 	if _face_entry == null:
 		return false
 	_face_inventory = inventory

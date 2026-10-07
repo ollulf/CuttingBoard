@@ -11,7 +11,7 @@ extends Node3D
 
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
-const MASK := preload("res://resources/items/villager_mask.tres")
+const MASK := preload("res://resources/items/shattered_mask.tres")
 const BOTTLE := preload("res://resources/items/soul_bottle.tres")
 
 var _failures := 0
@@ -56,7 +56,7 @@ func _run() -> void:
 		cues.append(at)
 		cue_times.append(ritual._time))
 	interactor.spawn_into_hand(MASK, -1, hand)
-	_check("offers \"Give mask\" with a mask in hand", ritual.get_prompt(player) == "Give mask")
+	_check("offers \"Give shattered mask\" with a mask in hand", ritual.get_prompt(player) == "Give shattered mask")
 	_check("takes the mask", ritual.use(player))
 	_check("the hand is empty", hand.is_free())
 	_check("the ritual is playing", ritual.is_playing())
@@ -81,14 +81,14 @@ func _run() -> void:
 		_check("the bottle is a loose pickup near the player", not bottle.freeze and off < 1.5)
 
 	# A mask only in the inventory, hands empty: neither offered nor taken.
-	_check("no \"Give mask\" for a mask only in the inventory",
+	_check("no \"Give shattered mask\" for a mask only in the inventory",
 			ritual.get_prompt(player) == "")
 	_check("refuses a mask only in the inventory", not ritual.use(player)
 			and _masks_in(inventory) == 1)
 
 	# A grudge, mask in hand.
 	interactor.spawn_into_hand(MASK, -1, hand)
-	_check("a mask in hand is offered again", ritual.get_prompt(player) == "Give mask")
+	_check("a mask in hand is offered again", ritual.get_prompt(player) == "Give shattered mask")
 	monger.hold_grudge(player)
 	_check("refused while it holds a grudge", ritual.get_prompt(player) == ""
 			and not ritual.use(player) and not hand.is_free())
@@ -105,7 +105,7 @@ func _until_done(ritual: MaskBurnRitual) -> void:
 func _masks_in(inventory: Inventory) -> int:
 	var count := 0
 	for entry in inventory.get_entries():
-		if entry.data is MaskData:
+		if entry.data == MASK:
 			count += 1
 	return count
 

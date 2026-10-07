@@ -2,8 +2,8 @@ extends Node3D
 
 ## Headless checks that masks break: a mask lying in the world breaks like a crate, both
 ## when it is struck and when it is thrown down hard; blows to an NPC's head wear its mask
-## down, crack it and finally break it off with nothing left to pick up, while blows to
-## the body leave it alone; the wear goes with a mask that comes off whole; and the
+## down twice as hard as blows to the body, crack it and finally break it off, leaving a
+## Shattered Mask behind; the wear goes with a mask that comes off whole; and the
 ## player's own mask breaks the same way, emptying the Mask slot. Prints PASS/FAIL per
 ## check and quits with the number of failures as the exit code.
 ##
@@ -14,6 +14,7 @@ const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const VILLAGER_MASK_ITEM := preload("res://scenes/items/villager_mask.tscn")
 const VILLAGER_MASK := preload("res://resources/items/villager_mask.tres")
 const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
+const SHATTERED_MASK := preload("res://resources/items/shattered_mask.tres")
 
 const MASK := Equipment.Slot.MASK
 
@@ -79,14 +80,14 @@ func _worn_mask_breaks() -> void:
 
 	_hit(villager, villager.global_position + Vector3(0, 1.05, -0.3), 10)
 	_check("a body blow is not a head hit", not body.is_head_hit(villager.global_position + Vector3(0, 1.05, -0.3)))
-	_check("a body blow leaves the mask alone", body.mask_durability == VILLAGER_MASK.durability)
+	_check("a body blow wears an NPC's mask by the damage", body.mask_durability == VILLAGER_MASK.durability - 10)
 
 	var loose_before := _loose_masks().size()
+	var shattered_before := _loose_shattered().size()
 	_hit(villager, _head_point(body), 10)
-	_check("a head blow wears the mask", body.mask_durability == VILLAGER_MASK.durability - 10)
+	_check("a head blow wears it twice as hard", body.mask_durability == VILLAGER_MASK.durability - 30)
 	_check("a lightly worn mask shows no crack", _crack_of(body) == 0.0)
 	_hit(villager, _head_point(body), 15)
-	_hit(villager, _head_point(body), 25)
 	_check("a mask half gone shows a crack", _crack_of(body) > 0.0)
 	# Every hit on a creature sprays splinters; the break adds a burst of its own.
 	var bursts_before := _bursts().size()
@@ -96,7 +97,8 @@ func _worn_mask_breaks() -> void:
 	_check("the face is bare", _face_of(body) == null)
 	_check("the villager is still alive", villager.health.is_alive())
 	_check("it breaks with a burst", _bursts().size() == bursts_before + 2)
-	_check("nothing is left to pick up", _loose_masks().size() == loose_before)
+	_check("no whole mask is left to pick up", _loose_masks().size() == loose_before)
+	_check("a Shattered Mask is", _loose_shattered().size() == shattered_before + 1)
 
 	# Dying bare-faced drops no mask either.
 	villager.health.apply_damage(DamageInfo.new(9999))
@@ -110,6 +112,9 @@ func _worn_mask_breaks() -> void:
 func _wear_goes_with_the_mask() -> void:
 	var villager: Npc = await _spawn_villager(Vector3(4, 0, -3))
 	villager.body.mask_pop_chance = 1.0
+	# Survives the death roll as its own kind, with at most what it had left.
+	villager.body.mask_shatter_chance = 0.0
+	villager.body.damaged_mask_left = Vector2.ONE
 	_hit(villager, _head_point(villager.body), 12)
 	var left: int = villager.body.mask_durability
 	var before := _loose_masks()
@@ -221,6 +226,12 @@ func _loose_masks() -> Array[Carryable]:
 				and not carryable.get_parent().is_queued_for_deletion():
 			masks.append(carryable)
 	return masks
+
+
+func _loose_shattered() -> Array[Node]:
+	return find_children("Carryable", "Carryable", true, false).filter(
+		func(c: Node) -> bool: return (c as Carryable).item_data == SHATTERED_MASK \
+				and not c.get_parent().is_queued_for_deletion())
 
 
 func _entry_of(inventory: Inventory, data: ItemData) -> InventoryEntry:

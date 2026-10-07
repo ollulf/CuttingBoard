@@ -40,6 +40,7 @@ unique_name_in_owner = true
 [node name="Body" parent="Visual" instance=ExtResource("14_human")]
 unique_name_in_owner = true
 material = SubResource("StandardMaterial3D_body")
+npc_mask_wear = true
 
 [node name="HandSlotRight" type="Node3D" parent="Visual"]
 unique_name_in_owner = true
