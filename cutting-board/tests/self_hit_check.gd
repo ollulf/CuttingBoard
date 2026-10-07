@@ -59,12 +59,13 @@ func _point_blank_swings() -> void:
 			villager.velocity = Vector3.ZERO
 			bandit.locomotion.face(offset)
 			await _physics_frames(2)
-			# Swing again on the next frame too, so a blow lands while the last one's
-			# flinch is still playing out on both bodies.
+			# Swing again as soon as each blow has landed, so a blow lands while the
+			# last one's flinch is still playing out on both bodies.
 			for i in 3:
 				bandit.strike_at(villager)
 				swings += 1
-				await _physics_frames(1)
+				while bandit.is_striking():
+					await _physics_frames(1)
 			_tough(bandit.health)
 			_tough(villager.health)
 
