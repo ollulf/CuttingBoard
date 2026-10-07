@@ -4,7 +4,9 @@ extends Node3D
 ## it goes for the player once it sees them and the player's CombatTracker takes it as
 ## a fight; its launch attack hurts only on the contact frame, a hit on its wind-up does
 ## not stop it, a player who steps aside during the leap takes nothing, and it waits out
-## its cooldown between leaps. Prints PASS/FAIL per check and quits with the number of
+## its cooldown between leaps. It launches from about 6 m, a wall stops the leap, a leap
+## toward a drop is cut short at the edge, and once dead its body holds loot the player's
+## interactor can open and take. Prints PASS/FAIL per check and quits with the number of
 ## failures as the exit code.
 ##
 ##   godot --headless --path cutting-board res://tests/chair_leap_check.tscn
@@ -29,7 +31,7 @@ func _run() -> void:
 
 	var player: Node3D = PLAYER.instantiate()
 	add_child(player)
-	player.global_position = Vector3(0, 0.1, -7)
+	player.global_position = Vector3(0, 0.1, -6.3)
 	var player_health := Health.find_in(player)
 	var tracker: CombatTracker = player.get_node("%CombatTracker")
 
@@ -53,12 +55,16 @@ func _run() -> void:
 	var start_health := player_health.get_current()
 	var hurt_before_slam := false
 	var frames := 0
+	var launch_distance := -1.0
 	while _slams.is_empty() and frames < 600:
 		await get_tree().physics_frame
 		_frame += 1
 		frames += 1
+		if launch_distance < 0.0 and creature.get_state() == creature.State.WIND_UP:
+			launch_distance = _flat_distance(creature, player)
 		if _slams.is_empty() and player_health.get_current() != start_health:
 			hurt_before_slam = true
+	_check("launches from about 6 m (%.2f m)" % launch_distance, launch_distance >= 5.5)
 	_check("leaps and slams within 10 s", not _slams.is_empty())
 	if _slams.is_empty():
 		_finish()
@@ -92,7 +98,90 @@ func _run() -> void:
 	if _slams.size() >= 2:
 		_check("a dodged leap misses", not (_slams[1] as Dictionary).hit)
 		_check("a dodged leap deals no damage", player_health.get_current() == before)
+	creature.queue_free()
+	await _check_wall(player)
+	_check_edge()
+	await _check_loot(player)
 	_finish()
+
+
+## A wall between it and the target, put up after the bake so the navmesh still runs
+## through: the leap stops against it.
+func _check_wall(player: Node3D) -> void:
+	player.global_position = Vector3(15, 0.1, -6)
+	var wall := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(4, 3, 0.4)
+	shape.shape = box
+	wall.add_child(shape)
+	add_child(wall)
+	wall.global_position = Vector3(15, 1.5, -3)
+	var creature: CharacterBody3D = CREATURE.instantiate()
+	add_child(creature)
+	creature.global_position = Vector3(15, 0.05, 0)
+	await get_tree().physics_frame
+	creature._target = player
+	creature._wind_up()
+	creature._launch()
+	var count := _slams.size()
+	creature.slammed.connect(func(hit: bool) -> void: _slams.append({"hit": hit}))
+	await _until(func() -> bool: return _slams.size() > count, 2.0)
+	_check("a leap into a wall comes down", _slams.size() > count)
+	_check("the wall stops it (z %.2f)" % creature.global_position.z,
+		creature.global_position.z > -3.0 + 0.2)
+	creature.queue_free()
+	wall.queue_free()
+
+
+## Near the floor's edge, a leap out over the drop is cut short where the navmesh ends.
+func _check_edge() -> void:
+	var creature: CharacterBody3D = CREATURE.instantiate()
+	add_child(creature)
+	creature.global_position = Vector3(-27.5, 0.05, 10)
+	var run: float = creature.leap_run(Vector3.LEFT, 6.0)
+	_check("a leap toward a drop is cut short (%.2f m of 6)" % run, run < 2.5)
+	var inland: float = creature.leap_run(Vector3.RIGHT, 6.0)
+	_check("a leap over open ground keeps its length (%.2f m)" % inland, is_equal_approx(inland, 6.0))
+	creature.queue_free()
+
+
+## Killed, it keeps its pockets: the body holds what it rolled, the player's interactor
+## sees it as a container, and the items go across into the player's pack.
+func _check_loot(player: Node3D) -> void:
+	player.global_position = Vector3(-15, 0.1, -15)
+	var creature: CharacterBody3D = CREATURE.instantiate()
+	creature.no_loot_weight = 0.0
+	add_child(creature)
+	creature.global_position = Vector3(-15, 0.05, 15)
+	await get_tree().physics_frame
+	var pockets: Inventory = creature.inventory
+	_check("it carries something (%d item(s))" % pockets.get_entries().size(),
+		not pockets.is_empty())
+	var interactor: Interactor = player.get_node("%Interactor")
+	_check("nothing to search while it lives", interactor._container_of(creature) == null)
+	Health.find_in(creature).apply_damage(DamageInfo.new(1000, player))
+	await TestWorld.physics_frames(self, 30)
+	_check("the body keeps its items", not pockets.is_empty())
+	_check("the body can be searched", interactor._container_of(creature) == pockets)
+	var ray := PhysicsRayQueryParameters3D.create(
+		creature.global_position + Vector3(0.2, 3, 0.2), creature.global_position + Vector3(0.2, -1, 0.2))
+	var hit := get_world_3d().direct_space_state.intersect_ray(ray)
+	_check("the interaction ray finds the body", hit.get("collider") == creature)
+	var pack: Inventory = player.get_node("%Inventory")
+	for entry in pack.get_entries().duplicate():
+		pack.remove(entry)
+	var taken := 0
+	for entry in pockets.get_entries().duplicate():
+		if pack.add(entry.data, entry.durability):
+			pockets.remove(entry)
+			taken += 1
+	_check("the player takes them (%d)" % taken, taken > 0 and pockets.is_empty())
+
+
+func _flat_distance(a: Node3D, b: Node3D) -> float:
+	var off := b.global_position - a.global_position
+	return Vector2(off.x, off.z).length()
 
 
 func _until(done: Callable, seconds: float) -> void:

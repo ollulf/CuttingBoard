@@ -7,12 +7,25 @@
 [ext_resource type="Script" path="res://scripts/components/faction.gd" id="5_faction"]
 [ext_resource type="Resource" path="res://resources/factions/chairs.tres" id="6_chairs"]
 [ext_resource type="Script" path="res://scripts/npc/sight.gd" id="7_sight"]
+[ext_resource type="Script" uid="uid://wq47jdapnj1r" path="res://scripts/components/inventory.gd" id="8_inventory"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="9_item_data"]
+[ext_resource type="Resource" path="res://resources/items/plank.tres" id="10_plank"]
+[ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="11_glue"]
+[ext_resource type="Resource" path="res://resources/items/villager_mask.tres" id="12_villager_mask"]
+[ext_resource type="Resource" path="res://resources/items/bandit_mask.tres" id="13_bandit_mask"]
+[ext_resource type="Resource" path="res://resources/items/chair_mask.tres" id="14_chair_mask"]
+[ext_resource type="Resource" path="res://resources/items/soul_bottle.tres" id="15_soul"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_chair"]
 size = Vector3(0.9, 1.1, 0.9)
 
 [node name="ChairCreature" type="CharacterBody3D" groups=["nameplate"]]
 script = ExtResource("1_creature")
+loot_pool = Array[ExtResource("9_item_data")]([ExtResource("10_plank"), ExtResource("11_glue")])
+loot_weights = Array[float]([3.0, 1.0])
+no_loot_weight = 1.0
+extra_items = Array[ExtResource("9_item_data")]([ExtResource("11_glue"), ExtResource("12_villager_mask"), ExtResource("13_bandit_mask"), ExtResource("14_chair_mask"), ExtResource("15_soul")])
+extra_item_chances = Array[float]([0.15, 0.08, 0.04, 0.05, 0.03])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 unique_name_in_owner = true
@@ -56,3 +69,9 @@ unique_name_in_owner = true
 script = ExtResource("7_sight")
 view_distance = 12.0
 awareness_radius = 2.5
+
+[node name="Inventory" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("8_inventory")
+grid_size = Vector2i(6, 4)
+display_name = "Walking Chair"
