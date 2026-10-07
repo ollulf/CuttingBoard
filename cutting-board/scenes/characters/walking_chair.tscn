@@ -1,12 +1,14 @@
 [gd_scene format=3]
 
-[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_seat.res" id="1_aeasy"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_skull.res" id="2_lkvin"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_thigh.res" id="3_v3bf4"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_shin.res" id="4_qefib"]
-[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_hand.res" id="5_kwk87"]
+[ext_resource type="Script" path="res://scenes/characters/walking_chair.gd" id="1_v3bf4"]
+[ext_resource type="Resource" path="res://resources/items/chair_mask.tres" id="2_qefib"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_seat.res" id="3_kwk87"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_head.res" id="4_tkjs6"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_thigh.res" id="5_r0ml3"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_shin.res" id="6_uya68"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_hand.res" id="7_l0e2y"]
 
-[sub_resource type="Animation" id="Animation_tkjs6"]
+[sub_resource type="Animation" id="Animation_js2hn"]
 length = 1.1
 loop_mode = 1
 tracks/0/type = "value"
@@ -178,112 +180,117 @@ tracks/13/keys = {
 "values": [Vector3(0.5122921, -0.2820421, -0.27822074), Vector3(0.16574398, -0.24513341, -0.19629982), Vector3(-0.25687572, -0.30357328, -0.09238186), Vector3(-0.16901498, -0.30923307, -0.1015734), Vector3(0.042454015, -0.3303293, -0.12550361), Vector3(0.2524462, -0.36337167, -0.15565726), Vector3(0.33877078, -0.3814289, -0.17131162), Vector3(0.5786264, -0.35384247, -0.28849846), Vector3(0.5122921, -0.2820421, -0.27822074)]
 }
 
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_r0ml3"]
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_n7n75"]
 _data = {
-&"walk": SubResource("Animation_tkjs6")
+&"walk": SubResource("Animation_js2hn")
 }
 
-[node name="WalkingChair" type="Node3D" unique_id=228918680]
+[node name="WalkingChair" type="Node3D" unique_id=1270478018]
+script = ExtResource("1_v3bf4")
+mask = ExtResource("2_qefib")
 
-[node name="Body" type="Node3D" parent="." unique_id=638721606]
+[node name="Body" type="Node3D" parent="." unique_id=1514865732]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1067154, 0)
 
-[node name="Seat" type="MeshInstance3D" parent="Body" unique_id=1797113889]
-mesh = ExtResource("1_aeasy")
+[node name="Seat" type="MeshInstance3D" parent="Body" unique_id=583006319]
+mesh = ExtResource("3_kwk87")
 
-[node name="Neck" type="Node3D" parent="Body" unique_id=1239072199]
+[node name="Neck" type="Node3D" parent="Body" unique_id=1707232960]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9689124, 0.24740396, 0, -0.24740396, 0.9689124, 0, -0.02, -0.2)
 
-[node name="Skull" type="MeshInstance3D" parent="Body/Neck" unique_id=1577957613]
-transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, -0.16, -0.06)
-mesh = ExtResource("2_lkvin")
+[node name="Head" type="Node3D" parent="Body/Neck" unique_id=2036026753]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.17, -0.06)
 
-[node name="HipFL" type="Node3D" parent="Body" unique_id=449089414]
+[node name="Ball" type="MeshInstance3D" parent="Body/Neck/Head" unique_id=957492477]
+mesh = ExtResource("4_tkjs6")
+
+[node name="HipFL" type="Node3D" parent="Body" unique_id=1008766329]
 unique_name_in_owner = true
 transform = Transform3D(0.9553365, 0.29552022, 0, -0.28051826, 0.90683925, -0.31456655, -0.092960775, 0.3005169, 0.94923544, -0.17, 0, -0.15)
 
-[node name="Thigh" type="MeshInstance3D" parent="Body/HipFL" unique_id=368554787]
-mesh = ExtResource("3_v3bf4")
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipFL" unique_id=1758140620]
+mesh = ExtResource("5_r0ml3")
 
-[node name="KneeFL" type="Node3D" parent="Body/HipFL" unique_id=2131182873]
+[node name="KneeFL" type="Node3D" parent="Body/HipFL" unique_id=727309098]
 unique_name_in_owner = true
 transform = Transform3D(0.9838437, -0.17902958, 0, 0.17346399, 0.9532584, 0.24740396, -0.04429263, -0.24340683, 0.9689124, 0, -0.46, 0)
 
-[node name="Shin" type="MeshInstance3D" parent="Body/HipFL/KneeFL" unique_id=221874233]
-mesh = ExtResource("4_qefib")
+[node name="Shin" type="MeshInstance3D" parent="Body/HipFL/KneeFL" unique_id=1973506242]
+mesh = ExtResource("6_uya68")
 
-[node name="WristFL" type="Node3D" parent="Body/HipFL/KneeFL" unique_id=1202342119]
+[node name="WristFL" type="Node3D" parent="Body/HipFL/KneeFL" unique_id=938953992]
 unique_name_in_owner = true
 transform = Transform3D(0.9804833, -0.10474919, 0.16637345, 0.089404486, 0.9912407, 0.09720342, -0.17509812, -0.08043181, 0.98126, 0, -0.62, 0)
 
-[node name="Hand" type="MeshInstance3D" parent="Body/HipFL/KneeFL/WristFL" unique_id=853797406]
-mesh = ExtResource("5_kwk87")
+[node name="Hand" type="MeshInstance3D" parent="Body/HipFL/KneeFL/WristFL" unique_id=1380393382]
+mesh = ExtResource("7_l0e2y")
 
-[node name="HipFR" type="Node3D" parent="Body" unique_id=708509116]
+[node name="HipFR" type="Node3D" parent="Body" unique_id=1560985690]
 unique_name_in_owner = true
 transform = Transform3D(0.99280864, -0.119712204, 0, 0.11836796, 0.9816605, -0.14943814, 0.017889569, 0.14836349, 0.9887711, 0.17, 0, -0.15)
 
-[node name="Thigh" type="MeshInstance3D" parent="Body/HipFR" unique_id=1042890950]
-mesh = ExtResource("3_v3bf4")
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipFR" unique_id=1277802716]
+mesh = ExtResource("5_r0ml3")
 
-[node name="KneeFR" type="Node3D" parent="Body/HipFR" unique_id=1093647425]
+[node name="KneeFR" type="Node3D" parent="Body/HipFR" unique_id=678204846]
 unique_name_in_owner = true
 transform = Transform3D(0.99875027, 0.04997917, 0, -0.010945771, 0.21873295, -0.9757234, -0.048765846, 0.974504, 0.21900666, 0, -0.46, 0)
 
-[node name="Shin" type="MeshInstance3D" parent="Body/HipFR/KneeFR" unique_id=2066293653]
-mesh = ExtResource("4_qefib")
+[node name="Shin" type="MeshInstance3D" parent="Body/HipFR/KneeFR" unique_id=416032552]
+mesh = ExtResource("6_uya68")
 
-[node name="WristFR" type="Node3D" parent="Body/HipFR/KneeFR" unique_id=1089550231]
+[node name="WristFR" type="Node3D" parent="Body/HipFR/KneeFR" unique_id=1842271812]
 unique_name_in_owner = true
 transform = Transform3D(0.99287814, 0.11277199, 0.038409665, 0.023434749, -0.5009883, 0.86513656, 0.11680596, -0.85807514, -0.5000632, 0, -0.62, 0)
 
-[node name="Hand" type="MeshInstance3D" parent="Body/HipFR/KneeFR/WristFR" unique_id=2067161854]
-mesh = ExtResource("5_kwk87")
+[node name="Hand" type="MeshInstance3D" parent="Body/HipFR/KneeFR/WristFR" unique_id=1014727464]
+mesh = ExtResource("7_l0e2y")
 
-[node name="HipBL" type="Node3D" parent="Body" unique_id=979203043]
+[node name="HipBL" type="Node3D" parent="Body" unique_id=1448450268]
 unique_name_in_owner = true
 transform = Transform3D(0.9553365, 0.29552022, 0, -0.28051826, 0.90683925, 0.31456655, 0.092960775, -0.3005169, 0.94923544, -0.17, 0, 0.15)
 
-[node name="Thigh" type="MeshInstance3D" parent="Body/HipBL" unique_id=108543857]
-mesh = ExtResource("3_v3bf4")
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipBL" unique_id=1762181509]
+mesh = ExtResource("5_r0ml3")
 
-[node name="KneeBL" type="Node3D" parent="Body/HipBL" unique_id=887911364]
+[node name="KneeBL" type="Node3D" parent="Body/HipBL" unique_id=1237224366]
 unique_name_in_owner = true
 transform = Transform3D(0.9838437, -0.17902958, 0, 0.17346399, 0.9532584, -0.24740396, 0.04429263, 0.24340683, 0.9689124, 0, -0.46, 0)
 
-[node name="Shin" type="MeshInstance3D" parent="Body/HipBL/KneeBL" unique_id=1019617632]
-mesh = ExtResource("4_qefib")
+[node name="Shin" type="MeshInstance3D" parent="Body/HipBL/KneeBL" unique_id=1533232381]
+mesh = ExtResource("6_uya68")
 
-[node name="WristBL" type="Node3D" parent="Body/HipBL/KneeBL" unique_id=926039835]
+[node name="WristBL" type="Node3D" parent="Body/HipBL/KneeBL" unique_id=1721266183]
 unique_name_in_owner = true
 transform = Transform3D(0.9402187, -0.10474919, 0.3240623, 0.12506162, 0.9912407, -0.042441234, -0.31677806, 0.08043181, 0.9450832, 0, -0.62, 0)
 
-[node name="Hand" type="MeshInstance3D" parent="Body/HipBL/KneeBL/WristBL" unique_id=373021034]
-mesh = ExtResource("5_kwk87")
+[node name="Hand" type="MeshInstance3D" parent="Body/HipBL/KneeBL/WristBL" unique_id=716361344]
+mesh = ExtResource("7_l0e2y")
 
-[node name="HipBR" type="Node3D" parent="Body" unique_id=740479255]
+[node name="HipBR" type="Node3D" parent="Body" unique_id=1363825856]
 unique_name_in_owner = true
 transform = Transform3D(0.9553365, -0.29552022, 0, 0.28051826, 0.90683925, 0.31456655, -0.092960775, -0.3005169, 0.94923544, 0.17, 0, 0.15)
 
-[node name="Thigh" type="MeshInstance3D" parent="Body/HipBR" unique_id=523449897]
-mesh = ExtResource("3_v3bf4")
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipBR" unique_id=1145361889]
+mesh = ExtResource("5_r0ml3")
 
-[node name="KneeBR" type="Node3D" parent="Body/HipBR" unique_id=362118541]
+[node name="KneeBR" type="Node3D" parent="Body/HipBR" unique_id=1460172255]
 unique_name_in_owner = true
 transform = Transform3D(0.9838437, 0.17902958, 0, -0.17346399, 0.9532584, -0.24740396, -0.04429263, 0.24340683, 0.9689124, 0, -0.46, 0)
 
-[node name="Shin" type="MeshInstance3D" parent="Body/HipBR/KneeBR" unique_id=1739020384]
-mesh = ExtResource("4_qefib")
+[node name="Shin" type="MeshInstance3D" parent="Body/HipBR/KneeBR" unique_id=1383754273]
+mesh = ExtResource("6_uya68")
 
-[node name="WristBR" type="Node3D" parent="Body/HipBR/KneeBR" unique_id=1412211011]
+[node name="WristBR" type="Node3D" parent="Body/HipBR/KneeBR" unique_id=397183680]
 unique_name_in_owner = true
 transform = Transform3D(0.9402187, 0.10474919, -0.3240623, -0.12506162, 0.9912407, -0.042441234, 0.31677806, 0.08043181, 0.9450832, 0, -0.62, 0)
 
-[node name="Hand" type="MeshInstance3D" parent="Body/HipBR/KneeBR/WristBR" unique_id=1707562128]
-mesh = ExtResource("5_kwk87")
+[node name="Hand" type="MeshInstance3D" parent="Body/HipBR/KneeBR/WristBR" unique_id=1194393604]
+mesh = ExtResource("7_l0e2y")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=438066288]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1098187855]
 unique_name_in_owner = true
-libraries/ = SubResource("AnimationLibrary_r0ml3")
+libraries/ = SubResource("AnimationLibrary_n7n75")

@@ -3,8 +3,9 @@ extends "res://tools/import/mesh_builder.gd"
 ## Builds the walking chair, a monster made from a reference sculpture: a pale Windsor
 ## chair (curved top rail, six spindles, a dished round seat) whose four wooden legs turn,
 ## halfway down, into long gray clay limbs that walk on big bony hands. Under the front of
-## the seat hangs a pale skull face. In this world a face is a mask and a mask is a
-## faction, so the skull is carved as a bone mask: the chair has taken a face of its own.
+## the seat hangs a round head of the same clay. In this world a face is a mask and a mask
+## is a faction, so the head wears a real mask (MaskData), put on by walking_chair.gd on
+## the %Head pivot, the same way a human body wears one.
 ##
 ## The parts are saved as meshes under assets/meshes/characters/ (one thigh, shin and hand
 ## shared by all four limbs) and put together in scenes/characters/walking_chair.tscn as a
@@ -21,11 +22,10 @@ const MESH_DIR := "res://assets/meshes/characters/"
 const SCENE_PATH := "res://scenes/characters/walking_chair.tscn"
 const WOOD := preload("res://assets/materials/environment/wooden_planks.tres")
 const FLESH_PATH := "res://assets/materials/characters/chair_flesh.tres"
-const BONE_PATH := "res://assets/materials/characters/chair_bone_mask.tres"
+const SCRIPT := preload("res://scenes/characters/walking_chair.gd")
+const MASK := preload("res://resources/items/chair_mask.tres")
 
 const FLESH_COLOR := Color("8a8480")
-const BONE_COLOR := Color("ebe6da")
-const SOCKET_COLOR := Color("2a2220")
 
 ## The seat's radius, metres.
 const SEAT_RADIUS := 0.26
@@ -44,9 +44,8 @@ const LIMBS := [
 	["BL", Vector3(-0.17, 0.0, 0.15), -0.32, -0.3, 0.25, 0.18],
 	["BR", Vector3(0.17, 0.0, 0.15), -0.32, 0.3, 0.25, -0.18],
 ]
-## The skull face is modelled at a small skull's size and hung a third larger, as big as
-## in the reference.
-const SKULL_SCALE := 1.3
+## The round head's radius, metres: as big as the skull in the reference.
+const HEAD_RADIUS := 0.15
 ## The limb that reaches instead of standing.
 const REACHING := "FR"
 
@@ -55,21 +54,15 @@ const WALK_TIME := 1.1
 const WALK_KEYS := 8
 
 var _flesh: StandardMaterial3D
-var _bone: StandardMaterial3D
-var _socket: StandardMaterial3D
 var _unique: Array[Node] = []
 
 
 func _init() -> void:
 	uv_scale = 3.0
 	_flesh = _matte(FLESH_COLOR, FLESH_PATH)
-	_bone = _matte(BONE_COLOR, BONE_PATH)
-	_socket = StandardMaterial3D.new()
-	_socket.albedo_color = SOCKET_COLOR
-	_socket.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	var builders := {
 		"seat": _seat_mesh, "thigh": _thigh_mesh, "shin": _shin_mesh,
-		"hand": _hand_mesh, "skull": _skull_mesh,
+		"hand": _hand_mesh, "head": _head_mesh,
 	}
 	var ok := true
 	for key in builders:
@@ -189,28 +182,14 @@ func _hand_mesh() -> ArrayMesh:
 	return mesh
 
 
-## The skull face, centred on its pivot and looking down -Z: a round bone cranium with a
-## narrower jaw, two big dark sockets and a row of teeth.
-func _skull_mesh() -> ArrayMesh:
-	var bone := _begin()
-	_lathe(bone, _ball_profile(0.12, 7), 9, Transform3D(Basis.from_scale(Vector3(1.0, 0.92, 1.0)), Vector3.ZERO))
-	var jaw: Array[Vector2] = [
-		Vector2(0.0, -0.15), Vector2(0.045, -0.15), Vector2(0.07, -0.11), Vector2(0.08, -0.06),
-		Vector2(0.0, -0.04),
-	]
-	_lathe(bone, jaw, 8, Transform3D(Basis.from_scale(Vector3(1.0, 1.0, 0.85)), Vector3(0, 0, -0.035)))
-	var socket := _begin()
-	for x in [-0.048, 0.048]:
-		var at := Transform3D(Basis.from_scale(Vector3(1.0, 1.1, 0.45)), Vector3(x, -0.005, -0.098))
-		_lathe(socket, _ball_profile(0.04, 5), 8, at)
-	# Nose hole and teeth.
-	_lathe(socket, _ball_profile(0.016, 4), 6, Transform3D(Basis.from_scale(Vector3(1.0, 1.4, 0.5)), Vector3(0, -0.06, -0.106)))
-	for i in 5:
-		var x := lerpf(-0.03, 0.03, i / 4.0)
-		_slab(socket, Vector3(x, -0.105, -0.1), Vector3(x, -0.135, -0.098), 0.004, 0.01)
+## The head: a plain ball of the limbs' gray clay, centred on its pivot, with a short
+## stalk up to the neck. It has no face of its own; it wears a mask.
+func _head_mesh() -> ArrayMesh:
+	var tool := _begin()
+	_lathe(tool, _ball_profile(HEAD_RADIUS, 8), 12, Transform3D.IDENTITY)
+	_tube(tool, Vector3(0, HEAD_RADIUS * 0.7, 0.02), Vector3(0, HEAD_RADIUS + 0.06, 0.05), 0.045, 0.035, 7)
 	var mesh := ArrayMesh.new()
-	_commit(mesh, bone, _bone)
-	_commit(mesh, socket, _socket)
+	_commit(mesh, tool, _flesh)
 	return mesh
 
 
@@ -263,13 +242,14 @@ func _ball_profile(r: float, rings: int) -> Array[Vector2]:
 func _build_scene() -> Error:
 	var root := Node3D.new()
 	root.name = "WalkingChair"
+	root.set_script(SCRIPT)
+	root.set("mask", MASK)
 	var body := _pivot(root, "Body", Vector3.ZERO, true)
 	_part(body, "Seat", "seat")
 	var neck := _pivot(body, "Neck", Vector3(0, -0.02, -0.2), true)
 	neck.rotation.x = -0.25
-	var skull := _part(neck, "Skull", "skull")
-	skull.position = Vector3(0, -0.16, -0.06)
-	skull.scale = Vector3.ONE * SKULL_SCALE
+	var head := _pivot(neck, "Head", Vector3(0, -0.17, -0.06), true)
+	_part(head, "Ball", "head")
 	var lowest := INF
 	for limb in LIMBS:
 		var corner: String = limb[0]

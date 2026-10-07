@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/characters/chair_mask.tres" id="1_mask"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_face"]
+material = ExtResource("1_mask")
+size = Vector2(0.24, 0.27)
+
+[node name="ChairMask" type="Node3D"]
+
+[node name="Face" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+mesh = SubResource("QuadMesh_face")
