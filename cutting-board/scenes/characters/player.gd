@@ -150,6 +150,10 @@ var _was_on_floor := true
 ## nothing at all. The opening (IntroSequence) holds the player still while they are made.
 enum ControlMode { FULL, LOOK_ONLY, NONE }
 var control := ControlMode.FULL
+## The timed use under way (a glue dab), until it lands or is cancelled; and whether it
+## has got past its first dab, after which cancelling still spends it.
+var _timed_use: Usable = null
+var _timed_use_spent := false
 
 
 func _ready() -> void:
@@ -173,6 +177,7 @@ func _ready() -> void:
 	hotbar.setup(inventory, hands, interactor)
 	# The blow lands when the animation says it does, not when the button was pressed.
 	arms.hit.connect(_on_arm_hit)
+	arms.beat.connect(_on_arm_beat)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
 	# The hidden body wears whatever mask is in the Mask slot, so the face it falls with
@@ -190,6 +195,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _dead or control == ControlMode.NONE:
+		return
+	# A timed use holds the view and both hands; moving off is what cancels it, and that
+	# is read in _physics_process.
+	if is_using():
 		return
 	if event is InputEventMouseMotion and MouseGrab.is_captured():
 		rotate_y(-event.relative.x * mouse_sensitivity)
@@ -264,9 +273,57 @@ func use_held(hand: HandSlot) -> bool:
 	var usable := Usable.find_in(hand.get_held())
 	if usable == null or not usable.is_used_in_hand():
 		return false
-	if not usable.use(self):
+	if usable.is_timed():
+		if not usable.can_be_used_by(self) or not _start_timed_use(usable, hand):
+			Sfx.play(refuse_sound)
+	elif not usable.use(self):
 		Sfx.play(refuse_sound)
 	return true
+
+
+## Whether a timed use from the hand (glue) has the body: both arms, the view and the
+## feet are taken until its animation is over.
+func is_using() -> bool:
+	return arms.is_two_armed()
+
+
+## Starts a timed use: its two-armed animation plays, mirrored when the item is in the
+## left hand so the hand holding it is the one that works. The use itself lands on the
+## animation's "mend" beat (_on_arm_beat).
+func _start_timed_use(usable: Usable, hand: HandSlot) -> bool:
+	if not arms.play_action(usable.use_action, ArmAnimator.Arm.BOTH, hand.get_item_data(), hand == hand_left):
+		return false
+	_timed_use = usable
+	_timed_use_spent = false
+	return true
+
+
+## Cuts a timed use short — a hit, or the player moving off. Before the first dab nothing
+## is lost; after it the dab is in the crack and spent all the same.
+func cancel_use() -> void:
+	if _timed_use == null:
+		return
+	var usable := _timed_use
+	_timed_use = null
+	arms.cancel()
+	if _timed_use_spent and is_instance_valid(usable):
+		usable.waste(self)
+
+
+func _on_arm_beat(beat_name: StringName) -> void:
+	if _timed_use == null or not is_instance_valid(_timed_use):
+		_timed_use = null
+		return
+	_timed_use.use_beat.emit(beat_name, self)
+	match beat_name:
+		&"dab":
+			_timed_use_spent = true
+		&"mend":
+			# The use lands; the view still comes back up after it, uncancellable.
+			var usable := _timed_use
+			_timed_use = null
+			if not usable.use(self):
+				usable.waste(self)
 
 
 ## Puts on what a hand is holding, if it is something worn — a mask picked up off a body.
@@ -341,6 +398,12 @@ func _physics_process(delta: float) -> void:
 	# A free cursor means something is in front of the player — the inventory, or an
 	# unfocused window — so the body stops taking movement input until look is captured.
 	var controlling := MouseGrab.is_captured() and control == ControlMode.FULL
+	# Rooted while a timed use runs: trying to move or jump cancels it, and the body only
+	# answers from the next step on.
+	if is_using():
+		if controlling and _wants_to_move():
+			cancel_use()
+		controlling = false
 
 	if not is_on_floor():
 		velocity += get_gravity() * delta
@@ -385,12 +448,18 @@ func _physics_process(delta: float) -> void:
 	_update_arms(delta)
 
 
+func _wants_to_move() -> bool:
+	return Input.is_action_just_pressed("jump") \
+			or not Input.get_vector("move_left", "move_right", "move_forward", "move_back").is_zero_approx()
+
+
 func _process(delta: float) -> void:
 	if _dead:
 		_follow_body(delta)
 		return
 	_kick = _kick.lerp(Vector3.ZERO, 1.0 - exp(-hit_kick_recovery * delta))
-	camera.rotation = _kick
+	# The arms' own view tilt, for an action that looks down at the body.
+	camera.rotation = _kick + Vector3(arms.view_tilt, 0.0, 0.0)
 
 
 func _on_item_stowed(_data: ItemData) -> void:
@@ -403,6 +472,8 @@ func _on_item_stowed(_data: ItemData) -> void:
 func _on_damaged(info: DamageInfo) -> void:
 	# Even the killing blow: a mask it breaks is not left to fall with the body.
 	body.hit_mask(info)
+	# Any hit breaks off a glue use.
+	cancel_use()
 	if not health.is_alive():
 		return
 	Sfx.play(hurt_sound)

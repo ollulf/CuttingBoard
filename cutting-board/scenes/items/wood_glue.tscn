@@ -29,6 +29,7 @@ impact_damage = 4
 unique_name_in_owner = true
 uses_remaining = 1
 held_verb = "Apply"
+use_action = &"use"
 
 [node name="Destructible" parent="." index="4"]
 durability = 40
