@@ -26,7 +26,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	var region := _build_floor()
-	await _bake(region)
+	await TestWorld.bake(region)
 	await _send_to(Vector3(4, 0, -3), "open ground")
 	await _send_to(Vector3(-5, 0, 2), "open ground, far")
 	await _send_to(BLOCK_CENTER, "inside a block")
@@ -194,43 +194,9 @@ func _check_still(stats: Dictionary, label: String) -> void:
 ## A flat floor with a solid block on it, and a navigation region baked from both, set
 ## up like test_level's.
 func _build_floor() -> NavigationRegion3D:
-	var floor_body := StaticBody3D.new()
-	floor_body.add_to_group(&"navigation_source")
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(60, 1, 60)
-	shape.shape = box
-	shape.position = Vector3(0, -0.5, 0)
-	floor_body.add_child(shape)
-	add_child(floor_body)
-	var block := StaticBody3D.new()
-	block.add_to_group(&"navigation_source")
-	var block_shape := CollisionShape3D.new()
-	var block_box := BoxShape3D.new()
-	block_box.size = BLOCK_SIZE
-	block_shape.shape = block_box
-	block_shape.position = BLOCK_CENTER + Vector3.UP * BLOCK_SIZE.y * 0.5
-	block.add_child(block_shape)
-	add_child(block)
-	var nav_mesh := NavigationMesh.new()
-	nav_mesh.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
-	nav_mesh.geometry_source_group_name = &"navigation_source"
-	nav_mesh.agent_radius = 0.4
-	nav_mesh.agent_max_climb = 0.3
-	var region := NavigationRegion3D.new()
-	region.navigation_mesh = nav_mesh
-	add_child(region)
-	return region
-
-
-func _bake(region: NavigationRegion3D) -> void:
-	region.bake_navigation_mesh(false)
-	var map := get_world_3d().navigation_map
-	var before := NavigationServer3D.map_get_iteration_id(map)
-	for i in 120:
-		await get_tree().physics_frame
-		if NavigationServer3D.map_get_iteration_id(map) != before:
-			break
+	TestWorld.add_floor(self, 60)
+	TestWorld.add_slab(self, BLOCK_SIZE, BLOCK_CENTER + Vector3.UP * BLOCK_SIZE.y * 0.5)
+	return TestWorld.add_nav_region(self)
 
 
 func _in_block(point: Vector3) -> bool:

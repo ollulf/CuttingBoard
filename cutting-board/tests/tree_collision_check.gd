@@ -82,7 +82,7 @@ func _run() -> void:
 		ball.global_position.x > big.center.x + big.radius - 0.05)
 
 	nav_region.bake_navigation_mesh(false)
-	await _nav_synced(nav_region, Vector3(-5, 0, 0))
+	await TestWorld.nav_synced(nav_region, Vector3(-5, 0, 0))
 	var map := get_world_3d().navigation_map
 	for tree in trees:
 		var trunk := _trunk_of(tree)
@@ -176,31 +176,6 @@ func _check(what: String, ok: bool) -> void:
 
 func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
-
-
-## Waits until the navigation map has really picked up the freshly baked region: the
-## bake is done, the region is on the map, `probe` snaps onto its navmesh, and the map
-## has synced twice more after that. Under CPU load (parallel test runs) the map sync
-## lags behind the physics frames, so this polls real conditions with a wall-time limit.
-## Same as fence_collision_check's helper.
-func _nav_synced(region: NavigationRegion3D, probe: Vector3) -> void:
-	var map := get_world_3d().navigation_map
-	var deadline := Time.get_ticks_msec() + 20000
-	while region.is_baking() and Time.get_ticks_msec() < deadline:
-		await get_tree().physics_frame
-	while Time.get_ticks_msec() < deadline:
-		await get_tree().physics_frame
-		if not NavigationServer3D.map_get_regions(map).has(region.get_rid()):
-			continue
-		var snapped := NavigationServer3D.map_get_closest_point(map, probe)
-		if Vector2(snapped.x - probe.x, snapped.z - probe.z).length() < 0.1:
-			break
-	for i in 2:
-		var before := NavigationServer3D.map_get_iteration_id(map)
-		while NavigationServer3D.map_get_iteration_id(map) == before \
-				and Time.get_ticks_msec() < deadline:
-			await get_tree().physics_frame
-	await _physics_frames(2)
 
 
 func _physics_frames(count: int) -> void:

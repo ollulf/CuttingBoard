@@ -147,7 +147,7 @@ func _check_nav_around_fence() -> void:
 	var fence: Node3D = FENCE_1X2.instantiate()
 	region.add_child(fence)
 	region.bake_navigation_mesh(false)
-	await _nav_synced(region, Vector3(0, 0, -3))
+	await TestWorld.nav_synced(region, Vector3(0, 0, -3))
 	var path := NavigationServer3D.map_get_path(get_world_3d().navigation_map,
 			Vector3(0, 0, -3), Vector3(0, 0, 3), true)
 	print("  path: ", path)
@@ -167,7 +167,7 @@ func _check_paddock_nav() -> void:
 	region.add_child(VILLAGE.instantiate())
 	region.bake_navigation_mesh(false)
 	var start := Vector3(-14.7, 0, 20.0)
-	await _nav_synced(region, start)
+	await TestWorld.nav_synced(region, start)
 	var goal := Vector3(-14.7, 0, 26.6)
 	var path := NavigationServer3D.map_get_path(get_world_3d().navigation_map, start, goal, true)
 	print("  paddock path: ", path)
@@ -234,30 +234,6 @@ func _reaches(path: PackedVector3Array, goal: Vector3) -> bool:
 		return false
 	var end := path[path.size() - 1]
 	return Vector2(end.x - goal.x, end.z - goal.z).length() < 0.5
-
-
-## Waits until the navigation map has really picked up the freshly baked region: the
-## bake is done, the region is on the map, `probe` snaps onto its navmesh, and the map
-## has synced twice more after that. Under CPU load (parallel test runs) the map sync
-## lags behind the physics frames, so this polls real conditions with a wall-time limit.
-func _nav_synced(region: NavigationRegion3D, probe: Vector3) -> void:
-	var map := get_world_3d().navigation_map
-	var deadline := Time.get_ticks_msec() + 20000
-	while region.is_baking() and Time.get_ticks_msec() < deadline:
-		await get_tree().physics_frame
-	while Time.get_ticks_msec() < deadline:
-		await get_tree().physics_frame
-		if not NavigationServer3D.map_get_regions(map).has(region.get_rid()):
-			continue
-		var snapped := NavigationServer3D.map_get_closest_point(map, probe)
-		if Vector2(snapped.x - probe.x, snapped.z - probe.z).length() < 0.1:
-			break
-	for i in 2:
-		var before := NavigationServer3D.map_get_iteration_id(map)
-		while NavigationServer3D.map_get_iteration_id(map) == before \
-				and Time.get_ticks_msec() < deadline:
-			await get_tree().physics_frame
-	await _physics_frames(2)
 
 
 func _physics_frames(count: int) -> void:

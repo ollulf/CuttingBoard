@@ -22,7 +22,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	var region := _build_floor()
-	await _bake(region)
+	await TestWorld.bake(region)
 
 	var monger: Npc = MONGER.instantiate()
 	var villager: Npc = VILLAGER.instantiate()
@@ -115,39 +115,9 @@ func _finish() -> void:
 ## A flat floor with a wall across the straight line to the goal, and a navigation region
 ## baked from both, set up like test_level's.
 func _build_floor() -> NavigationRegion3D:
-	_slab(Vector3(60, 1, 60), Vector3(0, -0.5, 0))
-	_slab(Vector3(3, 2, 1), Vector3(0, 1, 3.5))
-	var nav_mesh := NavigationMesh.new()
-	nav_mesh.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
-	nav_mesh.geometry_source_group_name = &"navigation_source"
-	nav_mesh.agent_radius = 0.4
-	nav_mesh.agent_max_climb = 0.3
-	var region := NavigationRegion3D.new()
-	region.navigation_mesh = nav_mesh
-	add_child(region)
-	return region
-
-
-func _slab(size: Vector3, center: Vector3) -> void:
-	var slab := StaticBody3D.new()
-	slab.add_to_group(&"navigation_source")
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = size
-	shape.shape = box
-	shape.position = center
-	slab.add_child(shape)
-	add_child(slab)
-
-
-func _bake(region: NavigationRegion3D) -> void:
-	region.bake_navigation_mesh(false)
-	var map := get_world_3d().navigation_map
-	var before := NavigationServer3D.map_get_iteration_id(map)
-	for i in 120:
-		await get_tree().physics_frame
-		if NavigationServer3D.map_get_iteration_id(map) != before:
-			break
+	TestWorld.add_floor(self, 60)
+	TestWorld.add_slab(self, Vector3(3, 2, 1), Vector3(0, 1, 3.5))
+	return TestWorld.add_nav_region(self)
 
 
 func _flat(v: Vector3) -> Vector3:
