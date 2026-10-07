@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://c360c8goxa7uh"]
 
 [ext_resource type="PackedScene" uid="uid://1aa0wu7c7xel" path="res://scenes/characters/player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scenes/levels/intro_sequence.gd" id="90_intro"]
 [ext_resource type="PackedScene" path="res://scenes/items/carryable_base.tscn" id="2_yautc"]
 [ext_resource type="PackedScene" uid="uid://6l5ghah5ecm" path="res://scenes/environment/buildings/house_1x2.tscn" id="3_fr1um"]
 [ext_resource type="PackedScene" uid="uid://cs66pedltoe0j" path="res://scenes/environment/foliage/trees/tree_1_large.tscn" id="4_v45ci"]
@@ -183,3 +184,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 14)
 
 [node name="Bandit2" parent="." instance=ExtResource("12_bandit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 12)
+
+[node name="IntroSequence" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("90_intro")
+player = NodePath("../Player")
