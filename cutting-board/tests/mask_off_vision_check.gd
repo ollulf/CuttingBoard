@@ -19,9 +19,7 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	var player = PLAYER.instantiate()
-	# The player starts bare-faced since the opening; these checks begin masked.
-	player.get_node("%Equipment").starting_items = Array([preload("res://resources/items/player_mask.tres")], TYPE_OBJECT, &"Resource", ItemData)
+	var player = TestWorld.masked_player(PLAYER)
 	add_child(player)
 	var equipment: Equipment = player.equipment
 	var vision: MaskOffVision = player.get_node("MaskOffVision")

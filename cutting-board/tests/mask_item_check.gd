@@ -25,9 +25,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	_add_floor()
-	var player = PLAYER.instantiate()
-	# The player starts bare-faced since the opening; these checks begin masked.
-	player.get_node("%Equipment").starting_items = Array([preload("res://resources/items/player_mask.tres")], TYPE_OBJECT, &"Resource", ItemData)
+	var player = TestWorld.masked_player(PLAYER)
 	add_child(player)
 	await _physics_frames(5)
 	_starting_mask(player)

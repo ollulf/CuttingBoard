@@ -2,11 +2,22 @@ class_name TestWorld
 extends RefCounted
 
 ## Shared set-up for the headless checks that need ground to stand on and a navmesh to
-## walk it: solid slabs, a navigation region baked from them, and the waits that let the
-## navigation map catch up with a bake. Every check used to carry its own copy of these.
+## walk it: solid slabs, a navigation region baked from them, the waits that let the
+## navigation map catch up with a bake, and a player who starts masked. Every check used
+## to carry its own copy of these.
 
 ## The group the slabs join, and that the region bakes its navmesh from.
 const NAV_SOURCE := &"navigation_source"
+## The mask the player owns, worn from the start by masked_player.
+const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
+
+
+## An instance of the player scene that starts with their own mask on: the player starts
+## bare-faced since the opening, and most mask checks begin masked. Not added to the tree.
+static func masked_player(scene: PackedScene) -> Node:
+	var player := scene.instantiate()
+	(player.get_node("%Equipment") as Equipment).starting_items = [PLAYER_MASK]
+	return player
 
 
 ## Waits `count` physics frames of the tree `node` is in.
