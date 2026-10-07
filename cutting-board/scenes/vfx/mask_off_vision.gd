@@ -41,7 +41,9 @@ func _ready() -> void:
 	# Copy the game camera after everything else has moved it this frame.
 	process_priority = 1000
 	var beacon := _beacon.material as ShaderMaterial
-	beacon.set_shader_parameter("beacon", _beacon_render.get_texture())
+	# The rect draws nothing without a texture; the shader samples it pixel-snapped itself.
+	_beacon.texture = _beacon_render.get_texture()
+	beacon.set_shader_parameter("beacon", _beacon.texture)
 	beacon.set_shader_parameter("pixel_rows", float(BEACON_ROWS))
 	if equipment != null:
 		equipment.changed.connect(_on_equipment_changed)
