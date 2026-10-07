@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/visual/glue_chest_concept.gd" id="1_concept"]
+
+[node name="GlueChestConcept" type="Node3D"]
+script = ExtResource("1_concept")
