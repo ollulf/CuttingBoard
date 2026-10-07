@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
 [ext_resource type="Script" path="res://scripts/components/health_regen.gd" id="99_regen"]
@@ -16,6 +16,9 @@
 [ext_resource type="Resource" path="res://resources/factions/villagers.tres" id="13_faction"]
 [ext_resource type="Script" path="res://scenes/characters/mask_burn_ritual.gd" id="14_ritual"]
 [ext_resource type="PackedScene" path="res://scenes/vfx/mask_beacon.tscn" id="15_beacon"]
+[ext_resource type="Script" path="res://scripts/components/dialogue.gd" id="16_dialogue"]
+[ext_resource type="Resource" path="res://resources/items/player_mask.tres" id="17_first_mask"]
+[ext_resource type="Resource" path="res://resources/audio/monger_voice.tres" id="18_voice"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_monger"]
 radius = 0.5
@@ -114,3 +117,12 @@ script = ExtResource("14_ritual")
 [node name="MaskBeacon" parent="." node_paths=PackedStringArray("visual") instance=ExtResource("15_beacon")]
 unique_name_in_owner = true
 visual = NodePath("../Visual")
+
+[node name="Dialogue" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("16_dialogue")
+speaker_name = "Mask-Monger"
+first_lines = PackedStringArray("Oh! Hullo, hullo! A fresh one, still smelling of glue. Welcome to the world, little woodling.", "You're bumping about in the grain, aren't you? Faces are for seeing. No face, no world. Everyone knows that. Well, everyone with a face.", "Here. I carved this one while the kettle sang. Hold still, it only tickles a little.", "There! Now the world can see you back. Look after it. A face is a promise you wear on the front.")
+repeat_lines = PackedStringArray("Wearing it well, woodling. Bring me masks you have no use for, and I'll trade you something with a soul in it.")
+gift = ExtResource("17_first_mask")
+voice = ExtResource("18_voice")

@@ -84,6 +84,12 @@ func _run() -> void:
 	_check("standing on the floor after landing", player.is_on_floor())
 	_check("still standing after a second (no fall damage)%s" % (" " + str(_hits) if _hits else ""),
 		player.health.is_alive() and player.health.get_current() >= player.health.max_health)
+	# --skip-intro stands the player on the same spot without the fall.
+	player.global_position = Vector3(0, 1, 0)
+	intro.place_at_landing()
+	var flat := Vector2(player.global_position.x, player.global_position.z)
+	_check("skipping the intro lands at the same spot",
+		flat.distance_to(Vector2(intro.landing_spot.x, intro.landing_spot.z)) < 0.1)
 	_finish()
 
 
@@ -92,8 +98,18 @@ func _check_landed(intro: IntroSequence, player, hud: CanvasLayer) -> void:
 	_check("lands at the landing spot",
 		flat.distance_to(Vector2(intro.landing_spot.x, intro.landing_spot.z)) < 0.5)
 	_check("lands on the ground", absf(player.global_position.y - intro._ground_y) < 0.5)
-	# The meadow is near zero; anything higher is a roof or a crate.
-	_check("lands on the meadow, not on a roof", intro._ground_y < 1.0)
+	# The village square is near zero; anything higher is a roof or a crate.
+	_check("lands on the ground, not on a roof", intro._ground_y < 1.0)
+	var monger := intro.owner.find_child("MaskMonger", true, false) as Node3D
+	if monger:
+		var to_monger: Vector3 = monger.global_position - player.global_position
+		to_monger.y = 0.0
+		var facing: Vector3 = -player.global_basis.z
+		_check("lands next to the Mask-Monger (%.1f m)" % to_monger.length(),
+			to_monger.length() > 1.2 and to_monger.length() < 4.0)
+		_check("lands facing the Mask-Monger", facing.dot(to_monger.normalized()) > 0.9)
+	else:
+		_check("the level has a Mask-Monger", false)
 	_check("control is handed over", player.control == intro.CONTROL_FULL
 		and player.is_physics_processing())
 	_check("the HUD is back", hud.visible)

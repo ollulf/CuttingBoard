@@ -1,8 +1,8 @@
 class_name IntroSequence
 extends Node
 ## The opening (docs/concepts/first-five-minutes.md, round 2): the player is made in the
-## dark, is born, sees the bare-face grain, then falls from the sky onto the meadow
-## outside the village and is handed control.
+## dark, is born, sees the bare-face grain, then falls from the sky into the village
+## square, next to the Mask-Monger, and is handed control.
 ##
 ## Beats, in seconds from the start: 0 to 32 total black (the Builder's workshop, heard
 ## only), 32 to 38 the heart-knock, 38 to 44 the grain with mouse look only, 44 to 52 the
@@ -17,10 +17,11 @@ signal finished
 ## Off skips the opening in the editor's play button too.
 @export var enabled := true
 @export var player: CharacterBody3D
-## Where the player touches down: on the meadow outside the village, looking at the market.
-@export var landing_spot := Vector3(1.0, 0.0, 1.0)
-## Facing at the landing, radians around Y (0 looks down -Z, at the village).
-@export var landing_yaw := 0.02
+## Where the player touches down: in the middle of the village, a couple of metres in
+## front of the Mask-Monger, who has the first mask for them.
+@export var landing_spot := Vector3(1.5, 0.0, -45.85)
+## Facing at the landing, radians around Y (0 looks down -Z): at the Mask-Monger.
+@export var landing_yaw := -2.69
 ## How high above the ground the fall starts.
 @export var fall_height := 40.0
 ## Seconds Esc must be held to skip.
@@ -96,7 +97,13 @@ static func skip_requested() -> bool:
 
 func _ready() -> void:
 	set_process(false)
-	if not enabled or skip_requested() or player == null:
+	if not enabled or player == null:
+		return
+	if skip_requested():
+		# No opening, but the same landing spot, standing.
+		await get_tree().process_frame
+		if get_tree().current_scene == owner:
+			place_at_landing()
 		return
 	# Only the level being played gets an opening, never one a test instanced.
 	await get_tree().process_frame
@@ -245,6 +252,14 @@ func _hole(t: float) -> float:
 
 
 ## Holding Esc: straight to the ground, no fall.
+## Stands the player on the landing spot, facing the landing way, with no fall.
+func place_at_landing() -> void:
+	_p = player
+	_ground_y = _find_ground()
+	_look_yaw = landing_yaw
+	_place(0.0)
+
+
 func skip() -> void:
 	_land()
 

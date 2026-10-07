@@ -104,8 +104,13 @@ func interact(inventory: Inventory = null) -> void:
 	if container:
 		container_opened.emit(container)
 	var usable := _get_component(get_hovered(), "Usable") as Usable
-	if usable:
-		usable.use(get_owner())
+	if usable and usable.use(get_owner()):
+		return
+	# Talking is the fallback when the object's own Usable has nothing to do (the
+	# Mask-Monger with no mask on offer).
+	var dialogue := Dialogue.find_dialogue_in(get_hovered())
+	if dialogue:
+		dialogue.use(get_owner())
 
 
 ## The inventory of the container under the crosshair, or null if what is there is not
@@ -329,6 +334,7 @@ func _is_interactable(node: Node3D) -> bool:
 	return (
 		_get_component(node, "Carryable") != null
 		or _get_component(node, "Usable") != null
+		or _get_component(node, "Dialogue") != null
 		or _container_of(node) != null
 	)
 
