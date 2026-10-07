@@ -2,12 +2,13 @@ extends "res://tools/import/mesh_builder.gd"
 
 ## Builds the Carver, concept C ("The Mask Orchard") in 3D: a thin demigod sitting cross-
 ## legged on a huge tree stump, carving masks the whole time. Sixteen arms fan out round him
-## like a tool rack, each holding a wooden carving tool or a half-finished mask. His face is
-## a huge mask cut from a slice of the trunk: growth rings, a crown of spikes, three ember
-## eyes, tear grooves and a sad mouth. Live branches rise from the back of the stump and the
-## finished masks hang from them like fruit. Round the stump lie his materials and his
-## rejects: stacked and leaning boards, rough blanks and nearly finished masks, shavings,
-## a chopping block and a small workbench.
+## like a tool rack from his long, hunched torso, each holding a wooden carving tool or a
+## half-finished mask. His face is a huge tall mask after the user's sketch: a jagged star
+## outline, longest at the top, a ragged beard, three ember eyes (one on the brow) and a sad
+## mouth. Live branches rise from the back of the stump and the finished masks hang from
+## them like fruit, between lanterns. Round the stump lie his materials and his rejects:
+## stacked and leaning boards, rough blanks and nearly finished masks, shavings, a chopping
+## block and a small workbench, lit by candles and a brazier.
 ##
 ## The parts are saved as meshes under assets/meshes/characters/carver_*.res and put
 ## together in scenes/characters/carver.tscn. Each arm is a chain of pivots, ShoulderN >
@@ -30,14 +31,28 @@ const BONE_COLOR := Color("d9cbaa")
 const SKIN_COLOR := Color("5e4c3d")
 const SHADOW_COLOR := Color("1e1512")
 const SHAVING_COLOR := Color("d2a96c")
-const EMBER_COLOR := Color("e0502a")
+## The eyes and coals: unshaded, so this is the colour on screen; kept bright enough to
+## stay ember-red through the PSX grade.
+const EMBER_COLOR := Color("ff6a2c")
+const FLAME_COLOR := Color("ffd27a")
+const LAMP_LIGHT := Color("ffae5c")
+const FLICKER := preload("res://scripts/components/light_flicker.gd")
 
 ## The stump: its height and radii (top, foot), metres.
 const STUMP_H := 2.0
 const STUMP_TOP := 1.25
 const STUMP_FOOT := 1.55
-## The face mask's radius without its spikes, and how far it stands out from his neck.
+## The face mask's size (its body is 0.72 of this wide and 1.15 tall each way from the
+## middle, before the spikes).
 const MASK_RADIUS := 1.0
+## His spine, pelvis up (he faces -Z, so +Z is his back): long, bowing back into a round
+## hunch and then forward to the neck. SPINE_R is how thick he is at each point.
+const SPINE := [
+	Vector3(0, 0.3, 0.02), Vector3(0, 1.0, 0.2), Vector3(0, 1.75, 0.42),
+	Vector3(0, 2.45, 0.42), Vector3(0, 2.95, 0.12), Vector3(0, 3.2, -0.25),
+]
+const SPINE_R := [0.16, 0.2, 0.26, 0.28, 0.24, 0.17]
+const NECK_END := Vector3(0, 3.3, -0.7)
 ## The arms: how many, the angles of the fan (from straight down, round through his
 ## sides, leaving the top free for the mask), and the bone lengths.
 const ARMS := 16
@@ -57,6 +72,7 @@ var _skin: StandardMaterial3D
 var _shadow: StandardMaterial3D
 var _shaving: StandardMaterial3D
 var _ember: StandardMaterial3D
+var _flame: StandardMaterial3D
 var _unique: Array[Node] = []
 var _rng := RandomNumberGenerator.new()
 
@@ -68,7 +84,9 @@ func _init() -> void:
 	_shadow = _matte(SHADOW_COLOR, "carver_shadow.tres")
 	_shaving = _matte(SHAVING_COLOR, "carver_shaving.tres")
 	_ember = _glow(EMBER_COLOR, "carver_ember.tres")
+	_flame = _glow(FLAME_COLOR, "carver_flame.tres")
 	var builders := {
+		"lantern": _lantern_mesh, "candle": _candle_mesh, "brazier": _brazier_mesh,
 		"stump": _stump_mesh, "yard": _yard_mesh, "body": _body_mesh,
 		"face": _face_mask.bind(MASK_RADIUS, 3, 15),
 		"fruit": _face_mask.bind(0.24, 3, 9),
@@ -289,8 +307,9 @@ func _curl(tool: SurfaceTool, at: Vector3, turn: float, r: float) -> void:
 		prev = p
 
 
-## His body: crossed legs on the stump, a thin long torso with the ribs showing, a neck.
-## The pelvis sits at the origin (the scene puts it on the stump), the neck ends at y 2.0.
+## His body: crossed legs on the stump, a long thin torso whose back rounds into a hunch,
+## the ribs showing on the chest, and a neck reaching forward and down out of the hunch.
+## The pelvis sits at the origin (the scene puts it on the stump); the neck ends at NECK_END.
 func _body_mesh() -> ArrayMesh:
 	var t := _surfaces([_skin, _bone])
 	# Crossed legs: thighs out and forward, shins folded back across.
@@ -302,96 +321,163 @@ func _body_mesh() -> ArrayMesh:
 		_tube(t[_skin], knee, ankle, 0.09, 0.06, 6)
 		_tube(t[_skin], ankle, ankle + Vector3(-side * 0.25, -0.02, -0.08), 0.06, 0.04, 5)
 	_tube(t[_skin], Vector3(0, 0.0, 0.0), Vector3(0, 0.35, 0.02), 0.26, 0.17, 7)
-	# The torso: long, thin, leaning forward over the work.
-	_tube(t[_skin], Vector3(0, 0.3, 0.02), Vector3(0, 1.05, -0.05), 0.15, 0.22, 7)
-	_tube(t[_skin], Vector3(0, 1.05, -0.05), Vector3(0, 1.55, -0.02), 0.22, 0.26, 7)
-	# Ribs: pale bars across the chest and the back.
+	# The torso: a chain of tubes up the curved spine, swelling at the hunch. Balls at the
+	# joints keep the curve round.
+	for k in SPINE.size() - 1:
+		_tube(t[_skin], SPINE[k], SPINE[k + 1], SPINE_R[k], SPINE_R[k + 1], 8)
+		if k > 0:
+			_ball(t[_skin], SPINE[k], SPINE_R[k])
+	# Ribs on the chest only (nothing sticks out of his back): pale bars under the hunch.
 	for i in 5:
-		var y := 0.95 + i * 0.12
+		var y := 1.45 + i * 0.17
+		var c := _spine_at(y)
 		var w := 0.2 + i * 0.012
-		for z in [-1.0, 1.0]:
-			_slab(t[_bone], Vector3(-w, y, z * (w * 0.85) - 0.04), Vector3(w, y - 0.04, z * (w * 0.85) - 0.04), 0.04, 0.035)
-	# The spine's knobs down his back.
-	for i in 8:
-		var y := 0.4 + i * 0.15
-		_tube(t[_bone], Vector3(0, y, 0.14 + 0.06 * sin(i)), Vector3(0, y + 0.07, 0.16), 0.045, 0.02, 4)
-	# The neck, bowed, up to where the mask hangs.
-	_tube(t[_skin], Vector3(0, 1.5, -0.02), Vector3(0, 2.0, -0.12), 0.09, 0.07, 6)
+		_slab(t[_bone], c + Vector3(-w, 0, -w * 0.9), c + Vector3(w, -0.04, -w * 0.9), 0.04, 0.035)
+	# The neck, out of the front of the hunch, reaching forward to the mask.
+	_tube(t[_skin], SPINE[SPINE.size() - 1], NECK_END, 0.14, 0.09, 6)
 	return _finish(t)
 
 
-## A mask cut from a slice of trunk, facing -Z, centred on the origin. `stage` is how far
-## the carving has got: 0 a rough disc, 1 growth rings cut in, 2 eyes and mouth marked out,
-## 3 finished (ember eyes, tear grooves). `spikes` is how many points crown its rim.
+## A rough ball of radius `r` at `c`, to round off the joints between tubes.
+func _ball(tool: SurfaceTool, c: Vector3, r: float) -> void:
+	var profile: Array[Vector2] = []
+	for k in 5:
+		var a := lerpf(-PI * 0.5, PI * 0.5, k / 4.0)
+		profile.append(Vector2(cos(a) * r, r + sin(a) * r))
+	_lathe(tool, profile, 8, Transform3D(Basis.IDENTITY, c + Vector3.DOWN * r))
+
+
+## The point on his spine at height `y` (straight lines between the SPINE points).
+func _spine_at(y: float) -> Vector3:
+	for k in SPINE.size() - 1:
+		var a: Vector3 = SPINE[k]
+		var b: Vector3 = SPINE[k + 1]
+		if y <= b.y or k == SPINE.size() - 2:
+			return a.lerp(b, clampf((y - a.y) / (b.y - a.y), 0.0, 1.0))
+	return SPINE[0]
+
+
+## A mask, taller than wide, facing -Z and centred on the origin, after the user's sketch:
+## a jagged star of an outline with its longest points at the top and a ragged beard below
+## the mouth, a face that bulges a little, faint growth rings in the grain. `stage` is how
+## far the carving has got: 0 a rough oval, 1 grain rings cut in, 2 eyes and mouth marked
+## out, 3 finished (glowing eyes). `spikes` is how many points the outline has (0: none).
 func _face_mask(radius: float, stage: int, spikes: int) -> ArrayMesh:
 	var t := _surfaces([WOOD, BARK, _shadow, _ember])
+	var rx := radius * 0.72
+	var ry := radius * 1.15
 	var depth := radius * 0.22
-	var face_on := Transform3D(Basis(Vector3.RIGHT, -PI / 2.0), Vector3.ZERO)
-	var plate: Array[Vector2] = [Vector2(0.0, -depth * 0.3), Vector2(radius, -depth * 0.3)]
-	if stage == 0:
-		plate.append_array([Vector2(radius, depth * 0.4), Vector2(0.0, depth * 0.5)])
-	else:
-		for ring in 5:
-			var r := radius * (1.0 - ring * 0.18)
-			var h := depth * (0.35 + ring * 0.12)
-			plate.append(Vector2(r, h))
-			plate.append(Vector2(r - radius * 0.05, h + depth * 0.06 * (ring % 2 * 2 - 1)))
-		plate.append(Vector2(0.0, depth * 0.95))
-	_lathe(t[WOOD], plate, 16 if stage > 0 else 9, face_on)
-	# The bark rim, a thin dark band round the slice.
-	var rim: Array[Vector2] = [
-		Vector2(radius * 0.97, -depth * 0.35), Vector2(radius * 1.04, -depth * 0.3),
-		Vector2(radius * 1.04, depth * 0.3), Vector2(radius * 0.97, depth * 0.36),
-	]
-	_lathe(t[BARK], rim, 16 if stage > 0 else 9, face_on)
-	# The crown: spikes round the rim, longest at the top, thinning down the sides.
-	for i in spikes:
-		var a := PI * 0.5 + lerpf(-PI * 0.85, PI * 0.85, (i + 0.5) / spikes)
-		var top := cos(a - PI * 0.5)
-		var length := radius * (0.25 + 0.45 * maxf(top, 0.0)) * (1.0 if i % 2 == 0 else 0.7)
-		_spike(t[BARK] if i % 3 == 1 else t[WOOD], a, radius * 0.95, radius * 0.11, depth * 0.5, length)
+	# The outline, round from the top: a tip then a notch for each spike.
+	var outline: Array[Vector2] = []
+	var count := spikes if spikes > 0 else 14
+	for i in count:
+		for half in 2:
+			var a := PI * 0.5 + TAU * (i + half * 0.5) / count + _rng.randf_range(-0.08, 0.08)
+			var e := Vector2(cos(a) * rx, sin(a) * ry)
+			var grow := 0.0
+			if spikes > 0 and half == 0:
+				var up := sin(a)
+				if up > 0.45:
+					grow = 0.75 * up * (1.0 if i % 2 == 0 else 0.55)
+				elif up < -0.5:
+					grow = 0.3 + 0.2 * (i % 2)
+				else:
+					grow = 0.22
+				grow *= _rng.randf_range(0.8, 1.2)
+			elif spikes > 0:
+				grow = -0.1
+			else:
+				grow = _rng.randf_range(-0.04, 0.04)
+			outline.append(e * (1.0 + grow))
+	# Front: a low cone from the edge to the bulge in the middle; back: flat-ish; the edge
+	# between them is bark.
+	var front_middle := Vector3(0, 0, -depth)
+	var back_middle := Vector3(0, 0, depth * 0.5)
+	for k in outline.size():
+		var p := outline[k]
+		var q := outline[(k + 1) % outline.size()]
+		var pf := Vector3(p.x, p.y, -depth * 0.3)
+		var qf := Vector3(q.x, q.y, -depth * 0.3)
+		var pb := Vector3(p.x, p.y, depth * 0.3)
+		var qb := Vector3(q.x, q.y, depth * 0.3)
+		_face(t[WOOD], [front_middle, pf, qf], Vector3.FORWARD)
+		_face(t[BARK], [back_middle, pb, qb], Vector3.BACK)
+		_face(t[BARK], [pf, qf, qb, pb], Vector3((p.x + q.x) * 0.5, (p.y + q.y) * 0.5, 0.0))
+	if stage >= 1:
+		# Grain: faint oval rings standing just proud of the face.
+		for s in [0.78, 0.55, 0.32]:
+			var prev := Vector3.ZERO
+			for k in 15:
+				var a := TAU * k / 14.0
+				var p := Vector3(cos(a) * rx * s, sin(a) * ry * s, _front_z(depth, s) - radius * 0.012)
+				if k > 0:
+					_tube(t[BARK], prev, p, radius * 0.014, radius * 0.014, 4)
+				prev = p
 	if stage < 2:
 		return _finish(t)
-	var front := -depth * 0.95
-	# Three eyes: two wide-set under one on the brow. Sockets cut dark, ember inside once
-	# finished.
-	for eye in [Vector2(-0.36, 0.12), Vector2(0.36, 0.12), Vector2(0.0, 0.47)]:
-		var c := Vector3(eye.x * radius, eye.y * radius, front)
-		var socket: Array[Vector2] = [Vector2(0, 0), Vector2(radius * 0.15, 0), Vector2(radius * 0.13, depth * 0.25), Vector2(0, depth * 0.25)]
-		_lathe(t[_shadow], socket, 8, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0).scaled(Vector3(1.0, 0.7, 1.0)), c))
+	# Three eyes: one high on the brow, two below it. Sockets cut dark, the ember glow
+	# standing out of them once finished.
+	for eye in [Vector2(0.0, 0.5), Vector2(-0.3, 0.08), Vector2(0.3, 0.08)]:
+		var c := Vector3(eye.x * radius, eye.y * radius, 0.0)
+		c.z = _front_z(depth, Vector2(c.x / rx, c.y / ry).length())
+		var socket: Array[Vector2] = [Vector2(0, 0), Vector2(radius * 0.15, 0), Vector2(radius * 0.13, depth * 0.3), Vector2(0, depth * 0.3)]
+		_lathe(t[_shadow], socket, 8, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0).scaled(Vector3(0.85, 1.0, 1.0)), c))
 		if stage >= 3:
-			var glow: Array[Vector2] = [Vector2(0, 0), Vector2(radius * 0.07, 0), Vector2(0, depth * 0.3)]
-			_lathe(t[_ember], glow, 6, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0), c + Vector3(0, 0, -depth * 0.2)))
-		# Tear grooves down from the outer eyes.
-		if eye.y < 0.3 and stage >= 3:
-			for k in 3:
-				var x: float = eye.x * radius + (k - 1) * radius * 0.05
-				_slab(t[_shadow], Vector3(x, eye.y * radius - radius * 0.14, front * 0.9),
-					Vector3(x + eye.x * 0.06, eye.y * radius - radius * (0.4 + 0.08 * (k % 2)), front * 0.85),
-					radius * 0.03, radius * 0.025)
-	# The sad mouth: an arc whose corners droop.
+			var glow: Array[Vector2] = [Vector2(0, 0), Vector2(radius * 0.1, 0), Vector2(radius * 0.06, depth * 0.3), Vector2(0, depth * 0.4)]
+			_lathe(t[_ember], glow, 8, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0), c + Vector3(0, 0, -depth * 0.25)))
+	# The sad mouth: an arch whose corners hang down low.
 	var prev := Vector3.ZERO
 	for k in 9:
 		var u := lerpf(-1.0, 1.0, k / 8.0)
-		var p := Vector3(u * radius * 0.42, -radius * (0.42 + 0.2 * u * u), front * 0.92)
+		var p := Vector3(u * radius * 0.36, -radius * (0.38 + 0.32 * u * u), 0.0)
+		p.z = _front_z(depth, Vector2(p.x / rx, p.y / ry).length()) - radius * 0.02
 		if k > 0:
-			_slab(t[_shadow], prev, p, radius * 0.04, radius * 0.07)
+			_tube(t[_shadow], prev, p, radius * 0.055, radius * 0.055, 5)
 		prev = p
 	return _finish(t)
 
 
-## One spike of the crown: a flat pyramid from the rim at angle `a` outwards.
-func _spike(tool: SurfaceTool, a: float, from: float, half_width: float, thick: float, length: float) -> void:
-	var out := Vector3(cos(a), sin(a), 0.0)
-	var across := Vector3(-sin(a), cos(a), 0.0) * half_width
-	var base := out * from
-	var tip := out * (from + length) + Vector3(0, 0, -thick * 0.3)
-	var c := [base - across + Vector3(0, 0, -thick), base + across + Vector3(0, 0, -thick),
-		base + across + Vector3(0, 0, thick * 0.5), base - across + Vector3(0, 0, thick * 0.5)]
-	var middle := base + out * length * 0.3
-	for k in 4:
-		var face := [c[k], c[(k + 1) % 4], tip]
-		_face(tool, face, (c[k] + c[(k + 1) % 4] + tip) / 3.0 - middle)
+## How far forward the mask's face stands at `d` of the way out from its middle (0..1).
+func _front_z(depth: float, d: float) -> float:
+	return lerpf(-depth, -depth * 0.3, clampf(d, 0.0, 1.0))
+
+
+## The lamps round him. A lantern: a small iron box with a flame showing through, hung by
+## its ring at the origin.
+func _lantern_mesh() -> ArrayMesh:
+	var t := _surfaces([METAL, _flame])
+	var body: Array[Vector2] = [Vector2(0, -0.42), Vector2(0.12, -0.42), Vector2(0.14, -0.38), Vector2(0.14, -0.12), Vector2(0.06, -0.04), Vector2(0, -0.04)]
+	_lathe(t[METAL], body, 4, Transform3D.IDENTITY)
+	_tube(t[METAL], Vector3(0, -0.05, 0), Vector3(0, 0.0, 0), 0.03, 0.03, 4)
+	var flame: Array[Vector2] = [Vector2(0, -0.39), Vector2(0.155, -0.36), Vector2(0.155, -0.16), Vector2(0, -0.13)]
+	_lathe(t[_flame], flame, 4, Transform3D(Basis(Vector3.UP, PI / 4.0), Vector3.ZERO))
+	return _finish(t)
+
+
+## A fat candle with its flame, standing at the origin.
+func _candle_mesh() -> ArrayMesh:
+	var t := _surfaces([_shaving, _flame])
+	_tube(t[_shaving], Vector3.ZERO, Vector3(0, 0.22, 0), 0.07, 0.065, 6)
+	var flame: Array[Vector2] = [Vector2(0, 0.22), Vector2(0.035, 0.27), Vector2(0, 0.36)]
+	_lathe(t[_flame], flame, 5, Transform3D.IDENTITY)
+	return _finish(t)
+
+
+## An iron brazier on three legs, heaped with embers.
+func _brazier_mesh() -> ArrayMesh:
+	var t := _surfaces([METAL, _ember, _flame])
+	var bowl: Array[Vector2] = [Vector2(0, 0.55), Vector2(0.2, 0.55), Vector2(0.45, 0.8), Vector2(0.42, 0.82), Vector2(0, 0.62)]
+	_lathe(t[METAL], bowl, 8, Transform3D.IDENTITY)
+	for k in 3:
+		var a := TAU * k / 3.0
+		_tube(t[METAL], Vector3(cos(a) * 0.3, 0.7, sin(a) * 0.3), Vector3(cos(a) * 0.4, 0.0, sin(a) * 0.4), 0.03, 0.03, 4)
+	for k in 7:
+		var a := TAU * k / 7.0
+		var at := Vector3(cos(a), 0, sin(a)) * _rng.randf_range(0.08, 0.3) + Vector3.UP * 0.7
+		_tube(t[_ember], at, at + Vector3(_rng.randf_range(-0.1, 0.1), 0.08, _rng.randf_range(-0.1, 0.1)), 0.07, 0.05, 5)
+	var flame: Array[Vector2] = [Vector2(0, 0.72), Vector2(0.18, 0.8), Vector2(0, 1.15)]
+	_lathe(t[_flame], flame, 5, Transform3D.IDENTITY)
+	return _finish(t)
 
 
 ## The upper arm, along +X from the shoulder: long, thin, knobbed at the elbow.
@@ -486,19 +572,64 @@ func _build_scene() -> Error:
 		var mask := _part(loose, "Mask%d" % i, item[0])
 		mask.position = item[1]
 		mask.rotation = item[2]
+	# Lights round him: lanterns hung from the branches, candles on the stump, the roots
+	# and the workbench, and a brazier of embers out front. Most of them flicker.
+	var lights := _pivot(root, "Lights", Vector3.ZERO)
+	var branches := _branches()
+	for i in [0, 2, 4, 6, 8, 10]:
+		var points: Array = branches[i]
+		var p: Vector3 = (points[1] as Vector3).lerp(points[2], 0.5 + 0.15 * (i % 3))
+		var hang := _pivot(lights, "Lantern%d" % (i / 2), p)
+		var drop: float = 0.4 + 0.15 * (i % 3)
+		var cord := MeshInstance3D.new()
+		cord.name = "String"
+		var line := CylinderMesh.new()
+		line.top_radius = 0.01
+		line.bottom_radius = 0.01
+		line.height = drop
+		line.radial_segments = 4
+		line.material = _shadow
+		cord.mesh = line
+		cord.position = Vector3(0, -drop * 0.5, 0)
+		hang.add_child(cord)
+		_part(hang, "Lantern", "lantern").position = Vector3(0, -drop, 0)
+		_lamp(hang, "Light", Vector3(0, -drop - 0.25, 0), LAMP_LIGHT, 1.4, 4.5, true)
+	var candles := [
+		# On the stump's cut top, round the front edge.
+		Vector3(-0.95, STUMP_H, -0.7), Vector3(-0.55, STUMP_H, -1.05), Vector3(0.75, STUMP_H, -0.9),
+		Vector3(1.05, STUMP_H, -0.45),
+		# On the roots.
+		Vector3(-2.2, 0.3, -1.6), Vector3(2.0, 0.3, -2.05), Vector3(-2.5, 0.25, 1.4),
+		# On the workbench.
+		Vector3(2.6, 0.85, 1.0), Vector3(2.85, 0.85, 1.3),
+	]
+	for i in candles.size():
+		var spot := _pivot(lights, "Candle%d" % i, candles[i])
+		_part(spot, "Candle", "candle")
+		# One light per little group of candles is enough.
+		if i in [0, 3, 4, 5, 6, 7]:
+			_lamp(spot, "Light", Vector3(0, 0.5, 0), LAMP_LIGHT, 0.9, 3.0, true)
+	var brazier := _pivot(lights, "Brazier", Vector3(-1.1, 0, -3.1))
+	_part(brazier, "Brazier", "brazier")
+	_lamp(brazier, "Light", Vector3(0, 1.3, 0), Color("ff8a3c"), 2.2, 6.5, true)
 	# Him: the pelvis on the stump, the mask on his bowed neck.
 	var body := _pivot(root, "Body", Vector3(0, STUMP_H + 0.05, 0.1), true)
 	_part(body, "Torso", "body")
-	var head := _pivot(body, "Head", Vector3(0, 2.25, -0.35), true)
-	head.rotation.x = 0.12
+	var head := _pivot(body, "Head", NECK_END + Vector3(0, 0.25, -0.25), true)
+	head.rotation.x = 0.15
 	_part(head, "Mask", "face")
+	# A dim ember light just in front of the mask, so the eyes cast a glow on it.
+	_lamp(head, "EyeGlow", Vector3(0, 0.2, -0.6), Color("ff6a2c"), 0.8, 2.2)
 	# The arms, fanned round his chest, elbows bending forward so the hands meet in front.
+	# Along the long torso: the arms that hang low grow from low on it, the raised ones
+	# from up under the hunch.
 	for i in ARMS:
 		var u := float(i) / (ARMS - 1)
 		var angle := lerpf(FAN_FROM, FAN_TO, u)
 		var out := Vector3(sin(angle), -cos(angle), 0.0)
-		var shoulder := _pivot(body, "Shoulder%d" % i, Vector3(0, 1.25, 0.05) + out * 0.18, true)
 		var low := 1.0 - absf(angle) / PI
+		var root_at := _spine_at(lerpf(2.7, 1.5, low)) + Vector3(out.x * 0.24, 0.0, -0.06)
+		var shoulder := _pivot(body, "Shoulder%d" % i, root_at, true)
 		shoulder.basis = Basis(Vector3.BACK, angle - PI * 0.5) * Basis(Vector3.UP, 0.12 + 0.25 * low)
 		_part(shoulder, "UpperArm", "upper_arm")
 		var elbow := _pivot(shoulder, "Elbow%d" % i, Vector3(UPPER_ARM, 0, 0), true)
@@ -537,6 +668,21 @@ func _pivot(p: Node3D, node_name: String, at: Vector3, unique := false) -> Node3
 	if unique:
 		_unique.append(n)
 	return n
+
+
+## A warm point light, flickering like a flame when `flicker` is set.
+func _lamp(p: Node3D, node_name: String, at: Vector3, col: Color, energy: float, reach: float, flicker := false) -> OmniLight3D:
+	var light := OmniLight3D.new()
+	light.name = node_name
+	light.position = at
+	light.light_color = col
+	light.light_energy = energy
+	light.omni_range = reach
+	light.omni_attenuation = 1.2
+	if flicker:
+		light.set_script(FLICKER)
+	p.add_child(light)
+	return light
 
 
 func _part(p: Node3D, node_name: String, mesh_key: String) -> MeshInstance3D:

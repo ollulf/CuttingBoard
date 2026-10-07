@@ -38,3 +38,17 @@ slow code idle in `scenes/characters/carver.gd`. Not placed in any level.
 - Around the stump: a plank stack and leaning boards, rough blanks to nearly finished masks,
   shaving heaps and curls, a chopping block with an axe, a workbench.
 - Capture: `tests/visual/carver_capture.tscn` (`--shots=<dir>`, `--clip` for the idle).
+
+## Round 3: longer body, sketch mask, lamps
+
+- Torso longer (spine points `SPINE` in the builder), bowing back into a round hunch; the
+  neck reaches forward out of it. Arms now root along the torso: low arms low, raised arms
+  up under the hunch. Seated, the mask's top spikes reach about 7.5 m.
+- Mask after the sketch: taller than wide, jagged star outline longest at the top, ragged
+  beard, one eye on the brow over two, sad mouth, faint grain rings. No trunk-slice disc,
+  no separate crown.
+- Removed from his back: spine knobs, back ribs, backward crown spikes.
+- Lights (`Lights` node): six lanterns on the branches, candles on the stump, roots and
+  workbench, a brazier, and an eye glow; most use `LightFlicker`. Eyes are a hot orange
+  (pure red turned brown through the PSX palette).
+- The capture scene is now dusk-lit and has a side view.
