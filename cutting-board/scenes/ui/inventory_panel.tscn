@@ -1,9 +1,9 @@
 [gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/inventory_panel.gd" id="1_panel"]
+[ext_resource type="Script" path="res://scenes/ui/inventory_panel.gd" id="1_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_tooltip.tscn" id="2_tooltip"]
 [ext_resource type="FontFile" path="res://assets/fonts/Cubix_Mystical.ttf" id="3_mystical"]
-[ext_resource type="Script" path="res://scripts/ui/paper_doll.gd" id="4_doll"]
+[ext_resource type="Script" path="res://scenes/ui/paper_doll.gd" id="4_doll"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
 bg_color = Color(0.039, 0.031, 0.055, 0.9)

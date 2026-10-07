@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/charge_bar.gd" id="1_charge_bar"]
+[ext_resource type="Script" path="res://scenes/ui/charge_bar.gd" id="1_charge_bar"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_bg"]
 size = Vector2(0.14, 0.02)

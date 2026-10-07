@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b7tjn3n22jqbt"]
 
-[ext_resource type="Script" uid="uid://ccvpfug3m1854" path="res://scripts/ui/interaction_prompts.gd" id="1_6ll6g"]
+[ext_resource type="Script" uid="uid://ccvpfug3m1854" path="res://scenes/ui/interaction_prompts.gd" id="1_6ll6g"]
 [ext_resource type="Texture2D" uid="uid://cil2u4nvwybgg" path="res://assets/ui/icons/crosshair.png" id="2_ig75s"]
 [ext_resource type="PackedScene" path="res://scenes/ui/tooltip.tscn" id="3_4ed8p"]
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="4_invpanel"]
@@ -11,7 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/vfx/funhouse_mirror.tscn" id="8_mirror"]
 [ext_resource type="PackedScene" path="res://scenes/ui/mend_overlay.tscn" id="9_mend"]
 [ext_resource type="PackedScene" path="res://scenes/ui/cheat_menu.tscn" id="10_cheats"]
-[ext_resource type="Script" path="res://scripts/ui/stamina_bar.gd" id="11_stamina"]
+[ext_resource type="Script" path="res://scenes/ui/stamina_bar.gd" id="11_stamina"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1616519425]
 script = ExtResource("1_6ll6g")

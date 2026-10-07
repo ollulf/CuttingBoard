@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/tooltip.gd" id="1_tooltip"]
+[ext_resource type="Script" path="res://scenes/ui/tooltip.gd" id="1_tooltip"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 10.0
