@@ -5,24 +5,49 @@ extends Node3D
 ##
 ## A slow idle by code, on top of the built pose: the arms holding work turn their masks,
 ## the carving arms next to them scrape at them in short strokes, and the rest of the fan
-## sways a little, each arm off the others' beat. His head bows and lifts slowly.
+## sways a little, each arm off the others' beat. His head bows and lifts slowly, and the
+## face mask on it is not quite still: it drifts and tilts on its own, and now and then
+## twitches, a quick snap of a few degrees that eases back.
 
 ## Arms (by index) that carve: their elbows pump and wrists flick.
 const CARVING := [4, 6, 9, 10]
 ## Arms that hold a mask and turn it.
 const TURNING := [5, 7, 8, 11]
 
+## The mask's twitches: seconds between them (min, max), the largest snap (radians) and
+## shift, and how fast a twitch fades back (per second).
+const TWITCH_GAP := Vector2(1.5, 4.0)
+const TWITCH_ANGLE := 0.27
+const TWITCH_OFFSET := 0.09
+const TWITCH_FADE := 5.0
+## Scale of the slow drift and tilt (1 = about 2 degrees).
+const DRIFT_SCALE := 3.0
+
 ## How fast the whole idle runs (1 = as built).
 @export var speed := 1.0
+## Seed for the mask's twitches (0 = random each run).
+@export var twitch_seed := 0
 
 var _rest := {}
 var _time := 0.0
+var _rng := RandomNumberGenerator.new()
+var _mask_rest: Transform3D
+## The current twitch, fading to zero: its turn (axis * angle) and shift.
+var _twitch_turn := Vector3.ZERO
+var _twitch_shift := Vector3.ZERO
+var _next_twitch := 0.0
 
 
 func _ready() -> void:
 	for node in find_children("Shoulder*", "Node3D") + find_children("Elbow*", "Node3D") + find_children("Wrist*", "Node3D"):
 		_rest[node] = node.basis
 	_rest[%Head] = %Head.basis
+	_mask_rest = %Mask.transform
+	if twitch_seed != 0:
+		_rng.seed = twitch_seed
+	else:
+		_rng.randomize()
+	_next_twitch = _rng.randf_range(TWITCH_GAP.x, TWITCH_GAP.y)
 
 
 func _process(delta: float) -> void:
@@ -44,3 +69,25 @@ func _process(delta: float) -> void:
 		else:
 			elbow.basis = _rest[elbow] * Basis(Vector3.UP, 0.06 * sin(phase * 1.3))
 	%Head.basis = _rest[%Head] * Basis(Vector3.RIGHT, 0.05 * sin(_time * 0.4))
+	_move_mask(delta * speed)
+
+
+## The face mask moving on its own against the head: a slow uneven drift and tilt, plus
+## sudden small twitches that snap in at once and ease back.
+func _move_mask(delta: float) -> void:
+	if _time >= _next_twitch:
+		_next_twitch = _time + _rng.randf_range(TWITCH_GAP.x, TWITCH_GAP.y)
+		var axis := Vector3(_rng.randf_range(-0.5, 0.5), _rng.randf_range(-0.6, 0.6), _rng.randf_range(-1.0, 1.0))
+		_twitch_turn = axis.normalized() * TWITCH_ANGLE * _rng.randf_range(0.5, 1.0)
+		_twitch_shift = Vector3(_rng.randf_range(-1.0, 1.0), _rng.randf_range(-1.0, 1.0), 0.0) * TWITCH_OFFSET
+	var fade := exp(-TWITCH_FADE * delta)
+	_twitch_turn *= fade
+	_twitch_shift *= fade
+	# Two off-beat sines per axis, so the drift never quite repeats.
+	var drift := Vector3(
+			0.02 * sin(_time * 0.53) + 0.01 * sin(_time * 1.31 + 2.0),
+			0.025 * sin(_time * 0.37 + 1.0) + 0.01 * sin(_time * 0.97),
+			0.03 * sin(_time * 0.29 + 4.0) + 0.012 * sin(_time * 1.13 + 0.5))
+	var turn := drift * DRIFT_SCALE + _twitch_turn
+	var tilt := Basis.IDENTITY if turn.is_zero_approx() else Basis(turn.normalized(), turn.length())
+	%Mask.transform = Transform3D(tilt * _mask_rest.basis, _mask_rest.origin + _twitch_shift)
