@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/railroad_spike.png" id="1_6cujy"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_cksae"]
+diffuse_texture = ExtResource("1_6cujy")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Railroad Spike"
+icon = SubResource("CanvasTexture_cksae")
+description = "Ammunition for the Churn Thumper. Pull it back out of whatever it went into."
+weight = 0.4
+grid_size = Vector2i(2, 1)
+world_scene_path = "res://scenes/items/railroad_spike.tscn"

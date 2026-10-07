@@ -52,6 +52,7 @@ func _run() -> void:
 			var across := fist.x / half_width
 			_check(absf(across) < CENTRE_SPAN, "%s %s lands near the centre (%.2f of half-width)" % [side, animation_name, across])
 	_check_two_armed(player, camera)
+	_check_fire(player, camera)
 	_check_walk(player, camera)
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
@@ -90,7 +91,10 @@ func _check_walk(player: Node3D, camera: Camera3D) -> void:
 func _check_two_armed(player: Node3D, camera: Camera3D) -> void:
 	var arms: ArmAnimator = player.get_node("%Arms")
 	var anim_player: AnimationPlayer = player.get_node("%LeftPlayer")
-	for animation_name in ["use_glue_both", arms._mirrored("use_glue_both")]:
+	for animation_name in [
+		"use_glue_both", arms._mirrored("use_glue_both"),
+		"rearm_thumper_both", arms._mirrored("rearm_thumper_both"),
+	]:
 		var length := anim_player.get_animation(animation_name).length
 		anim_player.play(animation_name)
 		var worst := -INF
@@ -106,6 +110,24 @@ func _check_two_armed(player: Node3D, camera: Camera3D) -> void:
 		_check(is_zero_approx(arms.view_tilt), "%s ends with the view level" % animation_name)
 		anim_player.stop()
 	camera.rotation.x = 0.0
+
+
+## The Churn Thumper's recoil jerk, on either arm: the cut end stays hidden through it.
+func _check_fire(player: Node3D, camera: Camera3D) -> void:
+	for side in ["Left", "Right"]:
+		var anim_player: AnimationPlayer = player.get_node("%%%sPlayer" % side)
+		var skeleton: Skeleton3D = player.get_node("%%Arm%sSkeleton" % side)
+		var animation_name := "fire_thumper_%s" % side.to_lower()
+		var length := anim_player.get_animation(animation_name).length
+		anim_player.play(animation_name)
+		var worst := -INF
+		var t := 0.0
+		while t <= length:
+			anim_player.seek(t, true)
+			worst = maxf(worst, _view_overlap(camera, skeleton))
+			t += 0.01
+		_check(worst < 0.0, "%s %s keeps the arm's cut end out of view (margin %.3f)" % [side, animation_name, -worst])
+		anim_player.stop()
 
 
 ## When the animation's emit_hit key fires.

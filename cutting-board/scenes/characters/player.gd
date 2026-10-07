@@ -326,6 +326,20 @@ func _on_arm_beat(beat_name: StringName) -> void:
 				usable.waste(self)
 
 
+## The kick of something fired from the hand (the Churn Thumper): the view jolts up by
+## `kick` radians and settles like a hit does, the body is shoved by `push` (metres per
+## second, kept through a short stagger so it carries), and the arm holding `source`
+## jerks back with its "fire" animation.
+func recoil(kick: float, push: Vector3, source: Node3D = null) -> void:
+	_kick.x += kick
+	velocity += push
+	_stagger = maxf(_stagger, stagger_time * 0.5)
+	for hand in hands:
+		if source and hand.get_held() == source:
+			var arm := ArmAnimator.Arm.LEFT if hand == hand_left else ArmAnimator.Arm.RIGHT
+			arms.play_action(&"fire", arm, hand.get_item_data())
+
+
 ## Puts on what a hand is holding, if it is something worn — a mask picked up off a body.
 ## Whatever that slot had on comes off into the same hand, so a click swaps the two
 ## faces, and a second click swaps them back. Returns false, touching nothing, when the

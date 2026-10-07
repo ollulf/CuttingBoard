@@ -50,6 +50,11 @@ func _init() -> void:
 		"glue": _make_glue,
 		"breath": _make_breaths,
 		"breath_concepts": _make_breath_concepts,
+		# The Churn Thumper.
+		"thumper_fire": _make_thumper_fire,
+		"thumper_dry": _make_thumper_dry,
+		"thumper_creak": _make_thumper_creak,
+		"thumper_latch": _make_thumper_latch,
 		# World.
 		"impact_wood": _make_wood_impacts,
 		"impact_stone": _make_stone_impacts,
@@ -279,6 +284,44 @@ func _make_glue() -> void:
 		var creak := _grains(_tone(0.28, rng.randf_range(170.0, 200.0), rng.randf_range(115.0, 135.0), 0.25), 0.55, 0.005)
 		_mix(out, _shape(creak, 0.04, 0.12), _seconds(at + 0.03), 0.45)
 		_save("sfx/glue_%d" % (take + 1), _softclip(out, 1.2), 0.8)
+
+
+## The Churn Thumper firing: the dasher slamming into the lid (a deep hollow barrel
+## thump), the clack of the spike leaving it, and the whoosh of the spike going away.
+func _make_thumper_fire() -> void:
+	for take in 2:
+		var out := _silence(0.5)
+		var f0 := rng.randf_range(70.0, 85.0)
+		_mix(out, _tone(0.22, f0 * 2.2, f0, 0.05), 0, 1.0)
+		_mix(out, _modes(0.3, [f0 * 2.0, f0 * 4.6, f0 * 7.3], [0.1, 0.05, 0.03], [1.0, 0.5, 0.3]), 0, 0.7)
+		_mix(out, _shape(_highpass(_noise(0.03), 1500.0, 0.7), 0.0003, 0.008), 0, 0.8)
+		_mix(out, _whoosh(0.3, 1800.0, 900.0, 300.0, 1.4, 0.15), _seconds(0.02), 0.6)
+		_save("sfx/thumper_fire_%d" % (take + 1), _softclip(out, 2.0), 0.95)
+
+
+## Letting go of the latch with nothing in the lid: a small dry clack and a rattle.
+func _make_thumper_dry() -> void:
+	var out := _silence(0.2)
+	_mix(out, _knock(rng.randf_range(620.0, 700.0)), 0, 1.0)
+	_mix(out, _knock(rng.randf_range(900.0, 1000.0)), _seconds(0.05), 0.4)
+	_save("sfx/thumper_dry_1", out, 0.7)
+
+
+## The inner-tube straps stretching as the dasher is hauled back: a rubbery stick-slip
+## creak rising in pitch as they tighten.
+func _make_thumper_creak() -> void:
+	for take in 2:
+		var length := rng.randf_range(0.4, 0.5)
+		var out := _creak(length, 30.0, 90.0, rng.randf_range(260.0, 320.0))
+		_save("sfx/thumper_creak_%d" % (take + 1), _envelope(out, 0.1, 0.25), 0.7)
+
+
+## The latch dropping over the dasher: a sharp iron-on-wood click.
+func _make_thumper_latch() -> void:
+	var out := _silence(0.18)
+	_mix(out, _knock(rng.randf_range(1100.0, 1250.0)), 0, 1.0)
+	_mix(out, _shape(_highpass(_noise(0.01), 3000.0, 0.7), 0.0002, 0.003), 0, 0.8)
+	_save("sfx/thumper_latch_1", out, 0.8)
 
 
 ## The player out of breath, as a wooden body breathes: air dragged in and shoved out

@@ -19,6 +19,8 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/decoration/2_box.tscn" id="17_ramds"]
 [ext_resource type="PackedScene" path="res://scenes/environment/foliage/rocks/1_rock.tscn" id="18_adgxt"]
 [ext_resource type="PackedScene" path="res://scenes/characters/bandit.tscn" id="bandit"]
+[ext_resource type="PackedScene" path="res://scenes/items/churn_thumper.tscn" id="thumper"]
+[ext_resource type="PackedScene" path="res://scenes/items/railroad_spike.tscn" id="spike"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uevve"]
 albedo_color = Color(0.55, 0.16, 0.14, 1)
@@ -205,6 +207,22 @@ mesh = SubResource("BoxMesh_0mnj0")
 [node name="LootChest" parent="Den" unique_id=1311108287 groups=["navigation_source"] instance=ExtResource("4_hvurb")]
 unique_name_in_owner = true
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.6, 0, -1.7)
+
+[node name="ChurnThumper" parent="Den" instance=ExtResource("thumper")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.5, 0.05, -1.5)
+armed = true
+
+[node name="Spike0" parent="Den" instance=ExtResource("spike")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 0.03, -0.9)
+
+[node name="Spike1" parent="Den" instance=ExtResource("spike")]
+transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -0.75, 0.03, -0.85)
+
+[node name="Spike2" parent="Den" instance=ExtResource("spike")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.85, 0.03, -0.7)
+
+[node name="Spike3" parent="Den" instance=ExtResource("spike")]
+transform = Transform3D(0.9659258, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.9659258, -0.6, 0.03, -0.65)
 
 [node name="Lantern" parent="Den" unique_id=1884430986 instance=ExtResource("5_4i1o3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)

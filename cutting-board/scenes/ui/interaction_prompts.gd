@@ -96,12 +96,14 @@ func _update_hand_prompt(prompt: Tooltip, key: String, hand: HandSlot) -> void:
 	var usable := Usable.find_in(hand.get_held())
 	if hand.is_free() and _hovering_carryable():
 		prompt.show_prompt(key, "Pick up")
-	elif held and held.is_weapon():
-		prompt.show_prompt(key, "Swing %s" % held.display_name)
 	elif Equipment.slot_for(held) != Equipment.NO_SLOT:
 		prompt.show_prompt(key, "Put on %s" % held.display_name)
+	# Before the swing, as in the click itself: a weapon used from the hand (the Churn
+	# Thumper) fires or rearms rather than swinging.
 	elif held and usable and usable.is_used_in_hand():
 		prompt.show_prompt(key, "%s %s" % [usable.held_verb, held.display_name])
+	elif held and held.is_weapon():
+		prompt.show_prompt(key, "Swing %s" % held.display_name)
 	elif not hand.is_free():
 		prompt.show_prompt("Shift+" + key, "Drop")
 	else:

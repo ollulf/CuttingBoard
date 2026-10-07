@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/items/carryable_usable_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scenes/items/churn_thumper.gd" id="2_script"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/nail_gun_g_churn_thumper.res" id="3_mesh"]
+[ext_resource type="Resource" path="res://resources/items/churn_thumper.tres" id="4_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_thumper"]
+size = Vector3(0.17, 0.24, 0.58)
+
+[node name="ChurnThumper" instance=ExtResource("1_base")]
+mass = 5.0
+script = ExtResource("2_script")
+
+[node name="MeshInstance3D" parent="." index="0"]
+mesh = ExtResource("3_mesh")
+
+[node name="CollisionShape3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.15)
+shape = SubResource("BoxShape3D_thumper")
+
+[node name="Carryable" parent="." index="2"]
+item_data = ExtResource("4_item")
+impact_damage = 14
+
+[node name="Usable" parent="." index="3"]
+unique_name_in_owner = true
+held_verb = "Fire"
+
+[node name="Destructible" parent="." index="4"]
+durability = 240

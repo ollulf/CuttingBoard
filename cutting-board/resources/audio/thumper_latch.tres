@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SoundBank" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sound_bank.gd" id="1_bank"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/thumper_latch_1.wav" id="2_take"]
+
+[resource]
+script = ExtResource("1_bank")
+streams = Array[AudioStream]([ExtResource("2_take")])
+volume_db = -8
+volume_jitter_db = 1.5
+pitch = 1.0
+pitch_jitter = 0.06
+bus = &"SFX"
+cooldown = 0
+unit_size = 3
+max_distance = 30
