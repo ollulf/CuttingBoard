@@ -1,0 +1,289 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_seat.res" id="1_aeasy"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_skull.res" id="2_lkvin"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_thigh.res" id="3_v3bf4"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_shin.res" id="4_qefib"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/characters/walking_chair_hand.res" id="5_kwk87"]
+
+[sub_resource type="Animation" id="Animation_tkjs6"]
+length = 1.1
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 1.1367154, 0), Vector3(0, 1.1067154, 0), Vector3(0, 1.0767155, 0), Vector3(0, 1.1067154, 0), Vector3(0, 1.1367154, 0), Vector3(0, 1.1067154, 0), Vector3(0, 1.0767155, 0), Vector3(0, 1.1067154, 0), Vector3(0, 1.1367154, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0, 0, 0.02828427), Vector3(0, 0, 0.04), Vector3(0, 0, 0.02828427), Vector3(0, 0, 4.898587e-18), Vector3(0, 0, -0.02828427), Vector3(0, 0, -0.04), Vector3(0, 0, -0.02828427), Vector3(0, 0, -9.797174e-18)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body/HipFL:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.32, 0, -0.3), Vector3(0.532132, 0, -0.3), Vector3(0.62, 0, -0.3), Vector3(0.532132, 0, -0.3), Vector3(0.32, 0, -0.3), Vector3(0.10786796, 0, -0.3), Vector3(0.02, 0, -0.3), Vector3(0.10786796, 0, -0.3), Vector3(0.32, 0, -0.3)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Body/KneeFL:rotation")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.25, 0, 0.18), Vector3(0.10355339, 0, 0.18), Vector3(-0.25, 0, 0.18), Vector3(-0.25, 0, 0.18), Vector3(-0.25, 0, 0.18), Vector3(-0.25, 0, 0.18), Vector3(-0.25, 0, 0.18), Vector3(0.10355339, 0, 0.18), Vector3(0.25, 0, 0.18)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Body/WristFL:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.5763159, 0.3000762, -0.02972624), Vector3(-0.63617855, 0.25435886, -0.066120505), Vector3(-0.37764242, 0.15168616, -0.019606456), Vector3(-0.2954455, 0.154555, 0.012534588), Vector3(-0.097357176, 0.16795355, 0.08995112), Vector3(0.099864855, 0.19067268, 0.1700238), Vector3(0.18117206, 0.20316091, 0.2048635), Vector3(-0.2392926, 0.26009762, 0.0924841), Vector3(-0.5763159, 0.3000762, -0.02972624)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Body/HipFR:rotation")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.32, 0, 0.3), Vector3(0.10786796, 0, 0.3), Vector3(0.02, 0, 0.3), Vector3(0.10786796, 0, 0.3), Vector3(0.32, 0, 0.3), Vector3(0.532132, 0, 0.3), Vector3(0.62, 0, 0.3), Vector3(0.532132, 0, 0.3), Vector3(0.32, 0, 0.3)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Body/KneeFR:rotation")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.25, 0, -0.18), Vector3(-0.25, 0, -0.18), Vector3(-0.25, 0, -0.18), Vector3(0.10355339, 0, -0.18), Vector3(0.25, 0, -0.18), Vector3(0.10355339, 0, -0.18), Vector3(-0.25, 0, -0.18), Vector3(-0.25, 0, -0.18), Vector3(-0.25, 0, -0.18)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Body/WristFR:rotation")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.097357176, -0.16795355, -0.08995112), Vector3(0.099864855, -0.19067268, -0.1700238), Vector3(0.18117206, -0.20316091, -0.2048635), Vector3(-0.2392926, -0.26009762, -0.0924841), Vector3(-0.5763159, -0.3000762, 0.02972624), Vector3(-0.63617855, -0.25435886, 0.066120505), Vector3(-0.37764242, -0.15168616, 0.019606456), Vector3(-0.2954455, -0.154555, -0.012534588), Vector3(-0.097357176, -0.16795355, -0.08995112)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Body/HipBL:rotation")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.32, 0, -0.3), Vector3(-0.532132, 0, -0.3), Vector3(-0.62, 0, -0.3), Vector3(-0.532132, 0, -0.3), Vector3(-0.32, 0, -0.3), Vector3(-0.10786796, 0, -0.3), Vector3(-0.02, 0, -0.3), Vector3(-0.10786796, 0, -0.3), Vector3(-0.32, 0, -0.3)]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("Body/KneeBL:rotation")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.25, 0, 0.18), Vector3(0.25, 0, 0.18), Vector3(0.25, 0, 0.18), Vector3(-0.10355339, 0, 0.18), Vector3(-0.25, 0, 0.18), Vector3(-0.10355339, 0, 0.18), Vector3(0.25, 0, 0.18), Vector3(0.25, 0, 0.18), Vector3(0.25, 0, 0.18)]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("Body/WristBL:rotation")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.042454015, 0.3303293, 0.12550361), Vector3(0.2524462, 0.36337167, 0.15565726), Vector3(0.33877078, 0.3814289, 0.17131162), Vector3(0.5786264, 0.35384247, 0.28849846), Vector3(0.5122921, 0.2820421, 0.27822074), Vector3(0.16574398, 0.24513341, 0.19629982), Vector3(-0.25687572, 0.30357328, 0.09238186), Vector3(-0.16901498, 0.30923307, 0.1015734), Vector3(0.042454015, 0.3303293, 0.12550361)]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("Body/HipBR:rotation")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.32, 0, 0.3), Vector3(-0.10786796, 0, 0.3), Vector3(-0.02, 0, 0.3), Vector3(-0.10786796, 0, 0.3), Vector3(-0.32, 0, 0.3), Vector3(-0.532132, 0, 0.3), Vector3(-0.62, 0, 0.3), Vector3(-0.532132, 0, 0.3), Vector3(-0.32, 0, 0.3)]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("Body/KneeBR:rotation")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.25, 0, -0.18), Vector3(-0.10355339, 0, -0.18), Vector3(0.25, 0, -0.18), Vector3(0.25, 0, -0.18), Vector3(0.25, 0, -0.18), Vector3(0.25, 0, -0.18), Vector3(0.25, 0, -0.18), Vector3(-0.10355339, 0, -0.18), Vector3(-0.25, 0, -0.18)]
+}
+tracks/13/type = "value"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("Body/WristBR:rotation")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = {
+"times": PackedFloat32Array(0, 0.1375, 0.275, 0.4125, 0.55, 0.6875, 0.825, 0.9625, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.5122921, -0.2820421, -0.27822074), Vector3(0.16574398, -0.24513341, -0.19629982), Vector3(-0.25687572, -0.30357328, -0.09238186), Vector3(-0.16901498, -0.30923307, -0.1015734), Vector3(0.042454015, -0.3303293, -0.12550361), Vector3(0.2524462, -0.36337167, -0.15565726), Vector3(0.33877078, -0.3814289, -0.17131162), Vector3(0.5786264, -0.35384247, -0.28849846), Vector3(0.5122921, -0.2820421, -0.27822074)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_r0ml3"]
+_data = {
+&"walk": SubResource("Animation_tkjs6")
+}
+
+[node name="WalkingChair" type="Node3D" unique_id=228918680]
+
+[node name="Body" type="Node3D" parent="." unique_id=638721606]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1067154, 0)
+
+[node name="Seat" type="MeshInstance3D" parent="Body" unique_id=1797113889]
+mesh = ExtResource("1_aeasy")
+
+[node name="Neck" type="Node3D" parent="Body" unique_id=1239072199]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0.9689124, 0.24740396, 0, -0.24740396, 0.9689124, 0, -0.02, -0.2)
+
+[node name="Skull" type="MeshInstance3D" parent="Body/Neck" unique_id=1577957613]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, -0.16, -0.06)
+mesh = ExtResource("2_lkvin")
+
+[node name="HipFL" type="Node3D" parent="Body" unique_id=449089414]
+unique_name_in_owner = true
+transform = Transform3D(0.9553365, 0.29552022, 0, -0.28051826, 0.90683925, -0.31456655, -0.092960775, 0.3005169, 0.94923544, -0.17, 0, -0.15)
+
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipFL" unique_id=368554787]
+mesh = ExtResource("3_v3bf4")
+
+[node name="KneeFL" type="Node3D" parent="Body/HipFL" unique_id=2131182873]
+unique_name_in_owner = true
+transform = Transform3D(0.9838437, -0.17902958, 0, 0.17346399, 0.9532584, 0.24740396, -0.04429263, -0.24340683, 0.9689124, 0, -0.46, 0)
+
+[node name="Shin" type="MeshInstance3D" parent="Body/HipFL/KneeFL" unique_id=221874233]
+mesh = ExtResource("4_qefib")
+
+[node name="WristFL" type="Node3D" parent="Body/HipFL/KneeFL" unique_id=1202342119]
+unique_name_in_owner = true
+transform = Transform3D(0.9804833, -0.10474919, 0.16637345, 0.089404486, 0.9912407, 0.09720342, -0.17509812, -0.08043181, 0.98126, 0, -0.62, 0)
+
+[node name="Hand" type="MeshInstance3D" parent="Body/HipFL/KneeFL/WristFL" unique_id=853797406]
+mesh = ExtResource("5_kwk87")
+
+[node name="HipFR" type="Node3D" parent="Body" unique_id=708509116]
+unique_name_in_owner = true
+transform = Transform3D(0.99280864, -0.119712204, 0, 0.11836796, 0.9816605, -0.14943814, 0.017889569, 0.14836349, 0.9887711, 0.17, 0, -0.15)
+
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipFR" unique_id=1042890950]
+mesh = ExtResource("3_v3bf4")
+
+[node name="KneeFR" type="Node3D" parent="Body/HipFR" unique_id=1093647425]
+unique_name_in_owner = true
+transform = Transform3D(0.99875027, 0.04997917, 0, -0.010945771, 0.21873295, -0.9757234, -0.048765846, 0.974504, 0.21900666, 0, -0.46, 0)
+
+[node name="Shin" type="MeshInstance3D" parent="Body/HipFR/KneeFR" unique_id=2066293653]
+mesh = ExtResource("4_qefib")
+
+[node name="WristFR" type="Node3D" parent="Body/HipFR/KneeFR" unique_id=1089550231]
+unique_name_in_owner = true
+transform = Transform3D(0.99287814, 0.11277199, 0.038409665, 0.023434749, -0.5009883, 0.86513656, 0.11680596, -0.85807514, -0.5000632, 0, -0.62, 0)
+
+[node name="Hand" type="MeshInstance3D" parent="Body/HipFR/KneeFR/WristFR" unique_id=2067161854]
+mesh = ExtResource("5_kwk87")
+
+[node name="HipBL" type="Node3D" parent="Body" unique_id=979203043]
+unique_name_in_owner = true
+transform = Transform3D(0.9553365, 0.29552022, 0, -0.28051826, 0.90683925, 0.31456655, 0.092960775, -0.3005169, 0.94923544, -0.17, 0, 0.15)
+
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipBL" unique_id=108543857]
+mesh = ExtResource("3_v3bf4")
+
+[node name="KneeBL" type="Node3D" parent="Body/HipBL" unique_id=887911364]
+unique_name_in_owner = true
+transform = Transform3D(0.9838437, -0.17902958, 0, 0.17346399, 0.9532584, -0.24740396, 0.04429263, 0.24340683, 0.9689124, 0, -0.46, 0)
+
+[node name="Shin" type="MeshInstance3D" parent="Body/HipBL/KneeBL" unique_id=1019617632]
+mesh = ExtResource("4_qefib")
+
+[node name="WristBL" type="Node3D" parent="Body/HipBL/KneeBL" unique_id=926039835]
+unique_name_in_owner = true
+transform = Transform3D(0.9402187, -0.10474919, 0.3240623, 0.12506162, 0.9912407, -0.042441234, -0.31677806, 0.08043181, 0.9450832, 0, -0.62, 0)
+
+[node name="Hand" type="MeshInstance3D" parent="Body/HipBL/KneeBL/WristBL" unique_id=373021034]
+mesh = ExtResource("5_kwk87")
+
+[node name="HipBR" type="Node3D" parent="Body" unique_id=740479255]
+unique_name_in_owner = true
+transform = Transform3D(0.9553365, -0.29552022, 0, 0.28051826, 0.90683925, 0.31456655, -0.092960775, -0.3005169, 0.94923544, 0.17, 0, 0.15)
+
+[node name="Thigh" type="MeshInstance3D" parent="Body/HipBR" unique_id=523449897]
+mesh = ExtResource("3_v3bf4")
+
+[node name="KneeBR" type="Node3D" parent="Body/HipBR" unique_id=362118541]
+unique_name_in_owner = true
+transform = Transform3D(0.9838437, 0.17902958, 0, -0.17346399, 0.9532584, -0.24740396, -0.04429263, 0.24340683, 0.9689124, 0, -0.46, 0)
+
+[node name="Shin" type="MeshInstance3D" parent="Body/HipBR/KneeBR" unique_id=1739020384]
+mesh = ExtResource("4_qefib")
+
+[node name="WristBR" type="Node3D" parent="Body/HipBR/KneeBR" unique_id=1412211011]
+unique_name_in_owner = true
+transform = Transform3D(0.9402187, 0.10474919, -0.3240623, -0.12506162, 0.9912407, -0.042441234, 0.31677806, 0.08043181, 0.9450832, 0, -0.62, 0)
+
+[node name="Hand" type="MeshInstance3D" parent="Body/HipBR/KneeBR/WristBR" unique_id=1707562128]
+mesh = ExtResource("5_kwk87")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=438066288]
+unique_name_in_owner = true
+libraries/ = SubResource("AnimationLibrary_r0ml3")
