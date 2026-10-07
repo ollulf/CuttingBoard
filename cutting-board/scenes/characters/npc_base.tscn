@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
 [ext_resource type="Script" path="res://scripts/components/health_regen.gd" id="99_regen"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="13_inventory"]
 [ext_resource type="PackedScene" path="res://scenes/characters/human_body.tscn" id="14_human"]
 [ext_resource type="Script" path="res://scripts/npc/body_animator.gd" id="16_body_animator"]
+[ext_resource type="Script" path="res://scripts/npc/holster.gd" id="17_holster"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
 radius = 0.3
@@ -51,6 +52,20 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.34, 0.95, -0.15)
 script = ExtResource("12_hand_slot")
 display_name = "Left Hand"
+
+[node name="HipSlotRight" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+position = Vector3(0.2, 0.9, 0.04)
+rotation = Vector3(2.79, 0, -0.12)
+script = ExtResource("12_hand_slot")
+display_name = "Right Hip"
+
+[node name="HipSlotLeft" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+position = Vector3(-0.2, 0.9, 0.04)
+rotation = Vector3(2.79, 0, 0.12)
+script = ExtResource("12_hand_slot")
+display_name = "Left Hip"
 
 [node name="Eyes" type="Node3D" parent="."]
 unique_name_in_owner = true
@@ -115,3 +130,7 @@ script = ExtResource("15_throw")
 [node name="BodyAnimator" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("16_body_animator")
+
+[node name="Holster" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("17_holster")

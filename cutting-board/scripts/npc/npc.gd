@@ -78,6 +78,8 @@ extends CharacterBody3D
 @onready var hand_right: HandSlot = %HandSlotRight
 @onready var inventory: Inventory = %Inventory
 @onready var hands: Array[HandSlot] = [hand_right, hand_left]
+## Puts the weapon away at the hip out of combat. Not every NPC has one.
+@onready var holster: Holster = get_node_or_null(^"%Holster")
 
 ## Where the NPC was placed, which is what it wanders around.
 var home := Vector3.ZERO
@@ -209,6 +211,9 @@ func strike_at(target: Node3D) -> void:
 	var aim_point := target.global_position + Vector3.UP * sight.target_height
 	if not eyes.global_position.is_equal_approx(aim_point):
 		eyes.look_at(aim_point)
+	# A weapon still at the hip comes out before the first blow, never after it.
+	if holster:
+		holster.draw_now()
 	melee.play_swing()
 	melee.strike(get_weapon_hand())
 
@@ -293,10 +298,14 @@ func throw_from(hand: HandSlot, launch: Vector3) -> void:
 	Sfx.play_at(throw_sound, thrown.global_position)
 
 
-## Lets go of whatever each hand holds, leaving it in the world at rest.
+## Lets go of whatever each hand holds, and whatever hangs at the hips, leaving it in
+## the world at rest.
 func drop_held() -> void:
 	for hand in hands:
 		_release_to_world(hand)
+	if holster:
+		for hip in holster.get_slots():
+			_release_to_world(hip)
 
 
 ## Takes what `hand` holds out of it and puts it back in the level as a loose item.
