@@ -168,7 +168,7 @@ func _rebuild() -> void:
 
 ## One square: the key it answers to in the corner, and whatever it is linked to filling
 ## the rest of it. A square whose item is in hand right now is outlined, which is the
-## only state the bar has to tell apart â€” everything else is simply "assigned or not".
+## only state the bar has to tell apart — everything else is simply "assigned or not".
 func _make_slot(index: int) -> Control:
 	var slot := _hotbar.get_slot(index)
 	var held := slot != null and slot.is_held()
@@ -177,7 +177,7 @@ func _make_slot(index: int) -> Control:
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.custom_minimum_size = Vector2(slot_size, slot_size)
 	# The styles draw their outline in their expand margin, outside the square, so the
-	# square itself â€” what the inventory screen hit-tests â€” is the dark fill alone.
+	# square itself — what the inventory screen hit-tests — is the dark fill alone.
 	box.add_theme_stylebox_override("panel", held_slot_style if held else slot_style)
 
 	var centre := CenterContainer.new()

@@ -456,14 +456,9 @@ func _begin_hand_drag(hand: HandSlot, pos: Vector2) -> void:
 	if _interactor == null or data == null:
 		return
 	_drag_hand = hand
-	_drag_data = data
-	# Read off the live object, which is where the wear has been landing.
 	# A hand holds an object, not a shape in a grid, so an item always comes out of one
 	# upright and is turned from there if it has to be.
-	_drag_rotated = false
-	_drag_grab_cell = Vector2i.ZERO
-	# Grabbed in the middle, since a hand has no square the cursor landed on.
-	_drag_grab_pixels = Vector2(_span(data.grid_size.x), _span(data.grid_size.y)) * 0.5
+	_grab_upright(data)
 	_dim_tile(hand)
 	_start_ghost(pos)
 
@@ -476,10 +471,7 @@ func _begin_wear_drag(slot: int, pos: Vector2) -> void:
 	if data == null:
 		return
 	_drag_wear = slot
-	_drag_data = data
-	_drag_rotated = false
-	_drag_grab_cell = Vector2i.ZERO
-	_drag_grab_pixels = Vector2(_span(data.grid_size.x), _span(data.grid_size.y)) * 0.5
+	_grab_upright(data)
 	_dim_tile(_wear_boxes[slot])
 	_start_ghost(pos)
 
@@ -493,13 +485,17 @@ func _begin_hotbar_drag(index: int, pos: Vector2) -> void:
 	if slot == null or slot.entry == null:
 		return
 	_drag_hotbar = index
-	_drag_data = slot.data
+	_grab_upright(slot.data)
+	_start_ghost(pos)
+
+
+## Puts `data` on the cursor upright and grabbed in the middle: a hand, a worn slot or a
+## hotbar square has no grid square the cursor could have landed on.
+func _grab_upright(data: ItemData) -> void:
+	_drag_data = data
 	_drag_rotated = false
 	_drag_grab_cell = Vector2i.ZERO
-	_drag_grab_pixels = (
-		Vector2(_span(_drag_data.grid_size.x), _span(_drag_data.grid_size.y)) * 0.5
-	)
-	_start_ghost(pos)
+	_drag_grab_pixels = Vector2(_span(data.grid_size.x), _span(data.grid_size.y)) * 0.5
 
 
 func _start_ghost(pos: Vector2) -> void:
