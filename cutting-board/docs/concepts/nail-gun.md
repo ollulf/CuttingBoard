@@ -9,6 +9,21 @@ Models: `tools/import/build_nail_guns.gd` writes `assets/meshes/props/nail_gun_*
 round 2 ammo `nail_ammo_*.res` (laid out like the saw: grip at the origin along +Y, barrel along
 -Z). Photos: `tests/visual/nail_gun_capture.tscn -- --shots=<dir> [--round=2] [--plain]`.
 
+## Rounds 3-4: G, Churn Thumper, implemented
+
+- Items: `churn_thumper.tres` (weapon, 4x2, durability 240, 6 wear per shot) and
+  `railroad_spike.tres` (2x1), each with a world scene and icon. One armed Thumper and 4 spikes
+  lie in the bandit camp den.
+- Armed + a spike in the bag: a click fires one spike (pierce damage). It sticks in what it hits
+  and can be picked up again with E. Recoil kicks the view, pushes the player back and jerks the
+  arm (`fire_thumper_left/right`). Armed with no spike: a dry click.
+- Unarmed: a click plays the two-armed `rearm_thumper_both` (1.35 s, strap creak, latch click);
+  moving cancels it. No melee. The prompt reads "Fire" or "Rearm".
+- Held like every item at rest: the arms' rest pose sits below the frame, so the Thumper shows
+  when it fires or is rearmed.
+- Checks: `tests/churn_thumper_check.tscn`; clip: `tests/visual/thumper_capture.tscn`
+  (test level, fires at the training dummy, then rearms).
+
 ## Round 2: blunderbusses with big nails
 
 Feedback: think blunderbuss, bigger nails, it doesn't have to look like a gun. Ammo is now a
