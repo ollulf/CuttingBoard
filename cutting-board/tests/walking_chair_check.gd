@@ -1,7 +1,8 @@
 extends Node3D
 
 ## Headless checks for the walking chair creature (scenes/characters/chair_creature.tscn):
-## it walks along the navigation mesh, its hands stay put while they carry weight, a hit
+## it walks along the navigation mesh one limb at a time (two at most when it scuttles),
+## its hands stay put while they carry weight, a hit
 ## sends it off, and killed it collapses and drops its mask. Prints PASS/FAIL per check
 ## and quits with the number of failures as the exit code.
 ##
@@ -44,41 +45,26 @@ func _run() -> void:
 	# Around the slab to the far side: the straight line runs into it.
 	var goal := Vector3(0, 0, 7)
 	locomotion.move_to(goal)
-	var corners := ["FL", "FR", "BL", "BR"]
-	var last := {}
-	var worst := 0.0
-	var planted_frames := 0
-	var swings := 0
-	var waited := 0.0
-	while locomotion.is_moving() and waited < 25.0:
-		# Sampled once the chair has posed itself this frame (process_frame comes before
-		# the nodes' own _process).
-		await _posed
-		waited += get_process_delta_time()
-		for corner in corners:
-			var wrist := chair.get_node("%Wrist" + corner) as Node3D
-			if chair.planted_hand(corner) == null:
-				if last.has(corner):
-					swings += 1
-				last.erase(corner)
-				continue
-			if last.has(corner):
-				var drift := (last[corner] as Vector3).distance_to(wrist.global_position)
-				worst = maxf(worst, drift)
-				planted_frames += 1
-			last[corner] = wrist.global_position
+	var walk: Dictionary = await _watch_gait(chair, locomotion)
 	var flat := Vector3(creature.global_position.x, 0, creature.global_position.z)
 	_check("walks around the slab to the goal (%.2f m off)" % flat.distance_to(goal),
 		flat.distance_to(goal) < 1.0)
-	_check("lifts its hands to step (%d swings)" % swings, swings >= 6)
-	_check("planted hands do not slide (worst %.4f m over %d frames)" % [worst, planted_frames],
-		planted_frames > 100 and worst < SLIDE_TOLERANCE)
+	_check("lifts its hands to step (%d swings)" % walk.swings, walk.swings >= 12)
+	_check("planted hands do not slide (worst %.4f m over %d frames)" % [walk.worst, walk.planted],
+		walk.planted > 100 and walk.worst < SLIDE_TOLERANCE)
+	_check("walking, each limb steps on its own: one hand up at a time (%d frames with two)"
+		% walk.two_up, walk.most_up == 1)
 
 	var info := DamageInfo.new(10)
 	info.position = creature.global_position + Vector3(0, 0.6, -1)
 	health.apply_damage(info)
 	await _physics_frames(5)
 	_check("a hit sends it moving", locomotion.is_moving())
+	var run: Dictionary = await _watch_gait(chair, locomotion)
+	_check("scuttling, at most two hands are off the ground (most %d)" % run.most_up,
+		run.most_up <= 2 and run.swings >= 4)
+	_check("scuttling, planted hands do not slide (worst %.4f m)" % run.worst,
+		run.worst < SLIDE_TOLERANCE)
 
 	var killing := DamageInfo.new(1000)
 	killing.position = creature.global_position
@@ -92,6 +78,38 @@ func _run() -> void:
 			dropped = true
 	_check("drops its mask", dropped)
 	_finish()
+
+
+## Watches the chair's hands while it moves: the worst frame-to-frame drift of a planted
+## hand, how many frames that covers, how many steps it takes, and how many hands are up
+## at once.
+func _watch_gait(chair: Node3D, locomotion: Locomotion) -> Dictionary:
+	var stats := {"worst": 0.0, "planted": 0, "swings": 0, "most_up": 0, "two_up": 0}
+	var last := {}
+	var waited := 0.0
+	while locomotion.is_moving() and waited < 25.0:
+		# Sampled once the chair has posed itself this frame (process_frame comes before
+		# the nodes' own _process).
+		await _posed
+		waited += get_process_delta_time()
+		var up := 0
+		for corner in ["FL", "FR", "BL", "BR"]:
+			var wrist := chair.get_node("%Wrist" + corner) as Node3D
+			if chair.planted_hand(corner) == null:
+				up += 1
+				if last.has(corner):
+					stats.swings += 1
+				last.erase(corner)
+				continue
+			if last.has(corner):
+				var drift := (last[corner] as Vector3).distance_to(wrist.global_position)
+				stats.worst = maxf(stats.worst, drift)
+				stats.planted += 1
+			last[corner] = wrist.global_position
+		stats.most_up = maxi(stats.most_up, up)
+		if up >= 2:
+			stats.two_up += 1
+	return stats
 
 
 func _finish() -> void:
