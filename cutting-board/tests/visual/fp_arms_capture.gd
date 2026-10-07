@@ -7,15 +7,20 @@ extends Node3D
 ##
 ## Needs a real window; under --headless nothing is saved. --plain turns the retro
 ## screen off, for reading shapes rather than the look. --clip throws a few punches
-## instead, to record with --write-movie; --walk walks with a hammer and a rock in hand.
+## instead, to record with --write-movie; --walk walks with a hammer and a rock in hand;
+## --swing chops with a hammer and a saw.
 
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const HAMMER := preload("res://scenes/items/hammer.tscn")
 const ROCK := preload("res://scenes/items/rock.tscn")
+const SAW := preload("res://scenes/items/saw.tscn")
+const HAMMER_DATA := preload("res://resources/items/hammer.tres")
+const SAW_DATA := preload("res://resources/items/saw.tres")
 
 var _shots_dir := ""
 var _clip_only := false
 var _walk_only := false
+var _swing_only := false
 var _player: Node3D
 var _side_camera: Camera3D
 
@@ -28,6 +33,8 @@ func _ready() -> void:
 			_clip_only = true
 		elif arg == "--walk":
 			_walk_only = true
+		elif arg == "--swing":
+			_swing_only = true
 		elif arg == "--plain":
 			PsxScreen.enabled = false
 	_build_stage()
@@ -41,6 +48,8 @@ func _ready() -> void:
 	add_child(_side_camera)
 	if _walk_only:
 		_walk_clip.call_deferred()
+	elif _swing_only:
+		_swing_clip.call_deferred()
 	else:
 		(_clip if _clip_only else _tour).call_deferred()
 
@@ -67,6 +76,8 @@ func _tour() -> void:
 	first_person.make_current()
 	await _shot("07_holding")
 	await _pose("punch_unarmed_right", 0.18, "08_holding_punch_right")
+	await _pose("punch_weapon_right", 0.16, "08b_swing_right_windup")
+	await _pose("punch_weapon_right", 0.3, "08c_swing_right_hit")
 	_side_camera.make_current()
 	_side_camera.global_position = Vector3(2.0, 1.5, -0.6)
 	_side_camera.look_at(Vector3(0.0, 1.3, -0.7), Vector3.UP)
@@ -82,6 +93,19 @@ func _clip() -> void:
 	for arm in [ArmAnimator.Arm.LEFT, ArmAnimator.Arm.RIGHT, ArmAnimator.Arm.LEFT]:
 		arms.play_action(&"punch", arm)
 		await _wait(0.6)
+	get_tree().quit()
+
+
+## Chops with a hammer in the right hand and a saw in the left, then quits.
+func _swing_clip() -> void:
+	(_player.get_node("%Camera3D") as Camera3D).make_current()
+	_hold(HAMMER, "%HandSlotRight")
+	_hold(SAW, "%HandSlotLeft")
+	await _wait(0.4)
+	var arms: ArmAnimator = _player.get_node("%Arms")
+	for arm in [ArmAnimator.Arm.RIGHT, ArmAnimator.Arm.LEFT, ArmAnimator.Arm.RIGHT]:
+		arms.play_action(&"punch", arm, HAMMER_DATA if arm == ArmAnimator.Arm.RIGHT else SAW_DATA)
+		await _wait(0.8)
 	get_tree().quit()
 
 

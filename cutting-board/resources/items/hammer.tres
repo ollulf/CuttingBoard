@@ -12,6 +12,7 @@ script = ExtResource("1_script")
 display_name = "Hammer"
 icon = SubResource("CanvasTexture_f063l")
 item_type = 1
+animation_set = &"weapon"
 weight = 6.0
 durability = 220
 grid_size = Vector2i(3, 1)

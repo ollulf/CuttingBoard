@@ -12,6 +12,7 @@ script = ExtResource("1_script")
 display_name = "Saw"
 icon = SubResource("CanvasTexture_rxxoc")
 item_type = 1
+animation_set = &"weapon"
 description = "A carpenter's hand saw. Light and quick in the hand, and the teeth bite."
 weight = 1.5
 durability = 150

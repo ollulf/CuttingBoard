@@ -12,6 +12,7 @@ script = ExtResource("1_script")
 display_name = "Wooden Plank"
 icon = SubResource("CanvasTexture_8xfwv")
 item_type = 1
+animation_set = &"weapon"
 weight = 14.0
 durability = 160
 grid_size = Vector2i(6, 1)
