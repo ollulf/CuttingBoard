@@ -18,9 +18,9 @@ signal finished
 @export var enabled := true
 @export var player: CharacterBody3D
 ## Where the player touches down: on the meadow outside the village, looking at the market.
-@export var landing_spot := Vector3(-4.0, 0.0, -1.0)
+@export var landing_spot := Vector3(1.0, 0.0, 1.0)
 ## Facing at the landing, radians around Y (0 looks down -Z, at the village).
-@export var landing_yaw := 0.0
+@export var landing_yaw := 0.02
 ## How high above the ground the fall starts.
 @export var fall_height := 40.0
 ## Seconds Esc must be held to skip.

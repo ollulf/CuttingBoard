@@ -78,6 +78,8 @@ func _check_landed(intro: IntroSequence, player, hud: CanvasLayer) -> void:
 	_check("lands at the landing spot",
 		flat.distance_to(Vector2(intro.landing_spot.x, intro.landing_spot.z)) < 0.5)
 	_check("lands on the ground", absf(player.global_position.y - intro._ground_y) < 0.5)
+	# The meadow is near zero; anything higher is a roof or a crate.
+	_check("lands on the meadow, not on a roof", intro._ground_y < 1.0)
 	_check("control is handed over", player.control == intro.CONTROL_FULL
 		and player.is_physics_processing())
 	_check("the HUD is back", hud.visible)
