@@ -18,8 +18,10 @@ extends Node3D
 ##
 ## Animation, not procedural motion, is what lives here. The walk bob and jump lift in
 ## player.gd are written to the ArmLeftPivot / ArmRightPivot nodes above each arm, and
-## these animations move the arm inside its pivot, so the two compose instead of
-## overwriting one another every frame.
+## these animations pose the bones of the arm's skeleton inside its pivot (UpperArm,
+## Forearm and Hand, see tools/import/build_fp_arms.gd), so the two compose instead of
+## overwriting one another every frame. Each animation starts and ends on the idle pose
+## the skeletons rest in, a slightly bent elbow and wrist.
 
 ## The moment a blow lands, fired from a method track inside the animation itself rather
 ## than on a timer here, so retiming a swing in the editor retimes its damage with it.

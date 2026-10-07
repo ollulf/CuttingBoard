@@ -4,37 +4,41 @@
 resource_name = "punch_unarmed_left"
 length = 0.35
 step = 0.01
-tracks/0/type = "value"
+tracks/0/type = "position_3d"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("ArmLeftPivot/ArmLeft:position")
+tracks/0/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:UpperArm")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.08, 0.18, 0.35),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
-"update": 0,
-"values": [Vector3(0, 0, 0), Vector3(0, -0.02, 0.12), Vector3(0.18, 0.05, -0.45), Vector3(0, 0, 0)]
-}
-tracks/1/type = "value"
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.345, 0.08, 1, 0, -0.03, 0.465, 0.18, 1, 0.305, -0.22, 0.231, 0.35, 1, 0, 0, 0.345)
+tracks/1/type = "rotation_3d"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("ArmLeftPivot/ArmLeft:rotation")
+tracks/1/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:UpperArm")
 tracks/1/interp = 2
 tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.08, 0.18, 0.35),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
-"update": 0,
-"values": [Vector3(0, 0, 0), Vector3(0, 0.09, 0), Vector3(0, -0.3, 0), Vector3(0, 0, 0)]
-}
-tracks/2/type = "method"
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1, 0.08, 1, -0.05, 0.045, 0, 0.99797, 0.18, 1, 0.24284, -0.15436, 0, 0.95771, 0.35, 1, 0, 0, 0, 1)
+tracks/2/type = "rotation_3d"
 tracks/2/imported = false
 tracks/2/enabled = true
-tracks/2/path = NodePath(".")
-tracks/2/interp = 1
+tracks/2/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:Forearm")
+tracks/2/interp = 2
 tracks/2/loop_wrap = true
-tracks/2/keys = {
+tracks/2/keys = PackedFloat32Array(0, 1, 0.05996, 0, 0, 0.9982, 0.08, 1, 0.2474, 0, 0, 0.96891, 0.18, 1, -0.025, 0, 0, 0.99969, 0.35, 1, 0.05996, 0, 0, 0.9982)
+tracks/3/type = "rotation_3d"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:Hand")
+tracks/3/interp = 2
+tracks/3/loop_wrap = true
+tracks/3/keys = PackedFloat32Array(0, 1, -0.04, 0, 0, 0.9992, 0.08, 1, -0.07493, 0, 0, 0.99719, 0.18, 1, 0.02, 0, 0, 0.9998, 0.35, 1, -0.04, 0, 0, 0.9992)
+tracks/4/type = "method"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath(".")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
 "times": PackedFloat32Array(0.18),
 "transitions": PackedFloat32Array(1),
 "values": [{
@@ -47,37 +51,41 @@ tracks/2/keys = {
 resource_name = "punch_unarmed_right"
 length = 0.35
 step = 0.01
-tracks/0/type = "value"
+tracks/0/type = "position_3d"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("ArmRightPivot/ArmRight:position")
+tracks/0/path = NodePath("ArmRightPivot/ArmRightSkeleton:UpperArm")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.08, 0.18, 0.35),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
-"update": 0,
-"values": [Vector3(0, 0, 0), Vector3(0, -0.02, 0.12), Vector3(-0.18, 0.05, -0.45), Vector3(0, 0, 0)]
-}
-tracks/1/type = "value"
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.345, 0.08, 1, 0, -0.03, 0.465, 0.18, 1, -0.305, -0.22, 0.231, 0.35, 1, 0, 0, 0.345)
+tracks/1/type = "rotation_3d"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("ArmRightPivot/ArmRight:rotation")
+tracks/1/path = NodePath("ArmRightPivot/ArmRightSkeleton:UpperArm")
 tracks/1/interp = 2
 tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.08, 0.18, 0.35),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
-"update": 0,
-"values": [Vector3(0, 0, 0), Vector3(0, -0.09, 0), Vector3(0, 0.3, 0), Vector3(0, 0, 0)]
-}
-tracks/2/type = "method"
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1, 0.08, 1, -0.05, -0.045, 0, 0.99797, 0.18, 1, 0.24284, 0.15436, 0, 0.95771, 0.35, 1, 0, 0, 0, 1)
+tracks/2/type = "rotation_3d"
 tracks/2/imported = false
 tracks/2/enabled = true
-tracks/2/path = NodePath(".")
-tracks/2/interp = 1
+tracks/2/path = NodePath("ArmRightPivot/ArmRightSkeleton:Forearm")
+tracks/2/interp = 2
 tracks/2/loop_wrap = true
-tracks/2/keys = {
+tracks/2/keys = PackedFloat32Array(0, 1, 0.05996, 0, 0, 0.9982, 0.08, 1, 0.2474, 0, 0, 0.96891, 0.18, 1, -0.025, 0, 0, 0.99969, 0.35, 1, 0.05996, 0, 0, 0.9982)
+tracks/3/type = "rotation_3d"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("ArmRightPivot/ArmRightSkeleton:Hand")
+tracks/3/interp = 2
+tracks/3/loop_wrap = true
+tracks/3/keys = PackedFloat32Array(0, 1, -0.04, 0, 0, 0.9992, 0.08, 1, -0.07493, 0, 0, 0.99719, 0.18, 1, 0.02, 0, 0, 0.9998, 0.35, 1, -0.04, 0, 0, 0.9992)
+tracks/4/type = "method"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath(".")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
 "times": PackedFloat32Array(0.18),
 "transitions": PackedFloat32Array(1),
 "values": [{
