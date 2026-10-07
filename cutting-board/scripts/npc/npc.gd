@@ -82,8 +82,8 @@ extends CharacterBody3D
 ## Where the NPC was placed, which is what it wanders around.
 var home := Vector3.ZERO
 
-## actor -> time (seconds) the grudge against it runs out.
-var _grudges := {}
+## Whoever this NPC holds a grudge against, and until when.
+var _grudges := GrudgeBook.new()
 
 
 func _ready() -> void:
@@ -162,7 +162,7 @@ func get_attack_target() -> Node3D:
 func hold_grudge(actor: Node3D) -> void:
 	if actor == null or actor == self or not is_instance_valid(actor) or grudge_duration <= 0.0:
 		return
-	_grudges[actor] = _now() + grudge_duration
+	_grudges.hold(actor, grudge_duration)
 	memory.remember(actor)
 
 
@@ -183,15 +183,7 @@ func has_grudge_against(actor: Node3D) -> bool:
 ## out, once its target is dead or gone, and once Memory has let the target go — lost
 ## from sight for longer than Memory.forget_after.
 func get_grudges() -> Array[Node3D]:
-	var now := _now()
-	var held: Array[Node3D] = []
-	for actor in _grudges.keys():
-		if (not is_instance_valid(actor) or now > float(_grudges[actor])
-				or not Health.is_node_alive(actor) or not memory.knows(actor)):
-			_grudges.erase(actor)
-			continue
-		held.append(actor)
-	return held
+	return _grudges.get_held(memory)
 
 
 ## How keen an action should be to fight `target`: `retaliation` for someone this NPC
@@ -291,33 +283,33 @@ func stow(hand: HandSlot) -> bool:
 ## space. Released like the player's throw, so the item arms itself and hurts what it
 ## lands on.
 func throw_from(hand: HandSlot, launch: Vector3) -> void:
-	var item := hand.release()
-	if item == null:
-		return
-	item.reparent(get_parent(), true)
-	var carryable := item.get_node_or_null("Carryable") as Carryable
-	if carryable:
-		carryable.return_to_world()
-	var body := item as RigidBody3D
-	if body == null:
+	var thrown := _release_to_world(hand) as RigidBody3D
+	if thrown == null:
 		return
 	# The hand sits right at the body's side, so the item is kept from colliding with
 	# its own thrower until it has had a moment to clear it.
-	HumanBody.keep_clear_of(body, self)
-	body.linear_velocity = launch
-	Sfx.play_at(throw_sound, body.global_position)
+	HumanBody.keep_clear_of(thrown, self)
+	thrown.linear_velocity = launch
+	Sfx.play_at(throw_sound, thrown.global_position)
 
 
 ## Lets go of whatever each hand holds, leaving it in the world at rest.
 func drop_held() -> void:
 	for hand in hands:
-		var item := hand.release()
-		if item == null:
-			continue
-		item.reparent(get_parent(), true)
-		var carryable := item.get_node_or_null("Carryable") as Carryable
-		if carryable:
-			carryable.return_to_world()
+		_release_to_world(hand)
+
+
+## Takes what `hand` holds out of it and puts it back in the level as a loose item.
+## Returns it, or null when the hand was empty.
+func _release_to_world(hand: HandSlot) -> Node3D:
+	var item := hand.release()
+	if item == null:
+		return null
+	item.reparent(get_parent(), true)
+	var carryable := item.get_node_or_null("Carryable") as Carryable
+	if carryable:
+		carryable.return_to_world()
+	return item
 
 
 func _equip_loadout() -> void:
@@ -335,33 +327,12 @@ func _equip_loadout() -> void:
 
 ## One roll per extra_items entry against its chance; returns the ones that came up.
 func pick_extra_items() -> Array[ItemData]:
-	var picked: Array[ItemData] = []
-	for i in extra_items.size():
-		var chance := extra_item_chances[i] if i < extra_item_chances.size() else 0.0
-		if extra_items[i] and randf() < chance:
-			picked.append(extra_items[i])
-	return picked
+	return LoadoutRoll.pick_by_chance(extra_items, extra_item_chances)
 
 
 ## One draw from weapon_pool by weapon_weights, or null for bare hands.
 func pick_random_weapon() -> ItemData:
-	var total := maxf(bare_hands_weight, 0.0)
-	for i in weapon_pool.size():
-		total += _weapon_weight(i)
-	if total <= 0.0:
-		return null
-	var roll := randf() * total
-	for i in weapon_pool.size():
-		roll -= _weapon_weight(i)
-		if roll < 0.0:
-			return weapon_pool[i]
-	return null
-
-
-func _weapon_weight(index: int) -> float:
-	if weapon_pool[index] == null:
-		return 0.0
-	return maxf(weapon_weights[index], 0.0) if index < weapon_weights.size() else 1.0
+	return LoadoutRoll.pick_weighted(weapon_pool, weapon_weights, bare_hands_weight)
 
 
 ## Takes up this NPC's grudge against `attacker` in the allies standing by that have it
@@ -382,10 +353,6 @@ func _rally_allies(attacker: Node3D) -> void:
 		if not ally.hears_allies and ally.memory.seconds_since_seen(self) > defend_sight_window:
 			continue
 		ally.hold_grudge(attacker)
-
-
-func _now() -> float:
-	return Time.get_ticks_msec() / 1000.0
 
 
 ## Being hit by someone is as good as seeing them: an NPC struck from behind turns to
