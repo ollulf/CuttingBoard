@@ -81,7 +81,7 @@ signal drop_requested(inventory: Inventory, entry: InventoryEntry)
 @onready var _container_title: Label = %ContainerTitle
 @onready var _container_size: Label = %ContainerSize
 @onready var _container_grid: Control = %ContainerGrid
-@onready var _nearby_empty: Control = %NearbyEmpty
+@onready var _container_frame: Control = %ContainerFrame
 @onready var _health_bar: ProgressBar = %HealthBar
 @onready var _health_value: Label = %HealthValue
 @onready var _figure: PaperDoll = %Figure
@@ -969,20 +969,15 @@ func _rebuild() -> void:
 	_rebuild_equipment()
 
 
-## The left-hand panel is always there, so the screen does not jump about as chests are
-## opened and shut; with nothing open it says so in place of a grid.
+## The container panel only shows while looting; the plain bag shows the equipment instead.
 func _rebuild_nearby() -> void:
-	_container_grid.visible = _container != null
-	# Looting shows just the two grids; the equipment comes back with the plain bag.
+	_container_frame.visible = _container != null
 	_equip_frame.visible = _container == null
-	_nearby_empty.visible = _container == null
 	if _container:
 		_rebuild_grid(Side.CONTAINER)
 		return
 	for child in _container_grid.get_children():
 		child.queue_free()
-	_container_title.text = "Nearby"
-	_container_size.text = ""
 
 
 func _rebuild_grid(side: int) -> void:

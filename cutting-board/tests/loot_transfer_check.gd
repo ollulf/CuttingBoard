@@ -36,6 +36,7 @@ func _run() -> void:
 	_panel.open()
 	await _frames(3)
 	_check("plain inventory shows the equipment", equip_frame.visible)
+	_check("plain inventory hides the container panel", not _panel._container_frame.visible)
 	pack.add_at(HAMMER, Vector2i(0, 0), 7)
 	await _frames(2)
 	_double_click(InventoryPanel.Side.PLAYER, Vector2i(0, 0))
@@ -50,7 +51,7 @@ func _run() -> void:
 	_panel.open_container(chest)
 	await _frames(3)
 	_check("looting hides the equipment", not equip_frame.visible)
-	_check("looting shows the container grid", _panel._container_grid.visible)
+	_check("looting shows the container panel", _panel._container_frame.is_visible_in_tree())
 	_check("hands are not hit-tested while hidden",
 		_panel._hand_at(_panel._local_rect(_panel._hand_boxes[0]).get_center()) == null)
 
