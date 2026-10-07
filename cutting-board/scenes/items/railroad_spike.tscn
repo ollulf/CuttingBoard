@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/items/railroad_spike.gd" id="1_script"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/nail_ammo_railroad_spike.res" id="2_mesh"]
+[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="3_carryable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="4_destructible"]
+[ext_resource type="Resource" path="res://resources/items/railroad_spike.tres" id="5_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_spike"]
+size = Vector3(0.04, 0.04, 0.17)
+
+[node name="RailroadSpike" type="RigidBody3D"]
+mass = 0.4
+script = ExtResource("1_script")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = ExtResource("2_mesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_spike")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("3_carryable")
+item_data = ExtResource("5_item")
+impact_damage = 6
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("4_destructible")
+indestructible = true

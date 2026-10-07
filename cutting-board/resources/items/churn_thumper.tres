@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/churn_thumper.png" id="1_smmou"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_a35mi"]
+diffuse_texture = ExtResource("1_smmou")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Churn Thumper"
+icon = SubResource("CanvasTexture_a35mi")
+item_type = 1
+description = "A butter churn on a stock. Haul the dasher back against the inner tubes, latch it, and it slams one railroad spike out of the lid."
+animation_set = &"thumper"
+weight = 5.0
+durability = 240
+wear_per_hit = 6
+grid_size = Vector2i(4, 2)
+world_scene_path = "res://scenes/items/churn_thumper.tscn"

@@ -294,8 +294,117 @@ tracks/9/keys = {
 }]
 }
 
+[sub_resource type="Animation" id="Animation_rearm_thumper_both"]
+resource_name = "rearm_thumper_both"
+length = 1.35
+step = 0.01
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:view_tilt")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 1.05, 1.35),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [0.0, -0.3, -0.3, 0.0]
+}
+tracks/1/type = "position_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:UpperArm")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0, 0.345, 0.25, 1, 0.22, -0.15, 0.3, 0.35, 1, 0.22, -0.15, 0.31, 0.9, 1, 0.2, -0.17, 0.47, 1.0, 1, 0.2, -0.17, 0.46, 1.35, 1, 0, 0, 0.345)
+tracks/2/type = "rotation_3d"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:UpperArm")
+tracks/2/interp = 2
+tracks/2/loop_wrap = true
+tracks/2/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1, 0.25, 1, 0.1, -0.25, 0.05, 0.9617, 0.9, 1, 0.15, -0.3, 0.05, 0.9407, 1.0, 1, 0.15, -0.3, 0.05, 0.9407, 1.35, 1, 0, 0, 0, 1)
+tracks/3/type = "rotation_3d"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:Hand")
+tracks/3/interp = 2
+tracks/3/loop_wrap = true
+tracks/3/keys = PackedFloat32Array(0, 1, -0.04, 0, 0, 0.9992, 0.25, 1, 0.38, 0, 0, 0.925, 0.9, 1, 0.42, 0, 0, 0.9075, 1.0, 1, 0.42, 0, 0, 0.9075, 1.35, 1, -0.04, 0, 0, 0.9992)
+tracks/4/type = "position_3d"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("ArmRightPivot/ArmRightSkeleton:UpperArm")
+tracks/4/interp = 2
+tracks/4/loop_wrap = true
+tracks/4/keys = PackedFloat32Array(0, 1, 0, 0, 0.345, 0.25, 1, -0.08, -0.06, 0.38, 0.9, 1, -0.08, -0.08, 0.36, 0.97, 1, -0.08, -0.04, 0.37, 1.05, 1, -0.08, -0.06, 0.38, 1.35, 1, 0, 0, 0.345)
+tracks/5/type = "method"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath(".")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0.4, 0.7, 0.95, 1.0),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"values": [{
+"args": [&"creak"],
+"method": &"emit_beat"
+}, {
+"args": [&"creak"],
+"method": &"emit_beat"
+}, {
+"args": [&"latch"],
+"method": &"emit_beat"
+}, {
+"args": [&"mend"],
+"method": &"emit_beat"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_fire_thumper_left"]
+resource_name = "fire_thumper_left"
+length = 0.45
+step = 0.01
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:UpperArm")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.345, 0.05, 1, 0, 0.05, 0.44, 0.45, 1, 0, 0, 0.345)
+tracks/1/type = "rotation_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ArmLeftPivot/ArmLeftSkeleton:Hand")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, -0.04, 0, 0, 0.9992, 0.05, 1, -0.26, 0, 0, 0.9656, 0.45, 1, -0.04, 0, 0, 0.9992)
+
+[sub_resource type="Animation" id="Animation_fire_thumper_right"]
+resource_name = "fire_thumper_right"
+length = 0.45
+step = 0.01
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ArmRightPivot/ArmRightSkeleton:UpperArm")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.345, 0.05, 1, 0, 0.05, 0.44, 0.45, 1, 0, 0, 0.345)
+tracks/1/type = "rotation_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ArmRightPivot/ArmRightSkeleton:Hand")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, -0.04, 0, 0, 0.9992, 0.05, 1, -0.26, 0, 0, 0.9656, 0.45, 1, -0.04, 0, 0, 0.9992)
+
 [resource]
 _data = {
+&"fire_thumper_left": SubResource("Animation_fire_thumper_left"),
+&"fire_thumper_right": SubResource("Animation_fire_thumper_right"),
+&"rearm_thumper_both": SubResource("Animation_rearm_thumper_both"),
 &"punch_unarmed_left": SubResource("Animation_punch_unarmed_left"),
 &"punch_unarmed_right": SubResource("Animation_punch_unarmed_right"),
 &"punch_weapon_left": SubResource("Animation_punch_weapon_left"),
