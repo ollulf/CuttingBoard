@@ -29,3 +29,14 @@ with two knocks, heal at the end, view back up, 2.8 s in all. Mock-up only: the 
 meshes swung by tweens (an elbow bend needs the arm rig), torso and plank are placeholder boxes,
 and nothing in the player or glue gameplay changed. At night the amber in the crack reads weakly,
 so the real glue may want more emission. Record it with `--write-movie <out>.avi --fixed-fps 30`.
+
+## Round 3: on the arm rig
+
+The mock-up now instances `player.tscn` (processing off) and plays a two-armed bone animation,
+`use_glue_both` (`<action>_<set>_<side>`), on its skinned arms: elbows and wrists bend, the pot
+sits in `%HandSlotRight`, the left palm presses the plank, and each UpperArm cut end slides in
+and down below the view while reaching, as the punches do. The keys are solved from palm targets
+on the chest by a two-bone reach in the script; `--save-library` writes them to
+`tests/visual/glue_use_concept_anims.tres`, ready to tune and move into `arms.tres` later. The
+glue in the crack is lighter and glows (emission 1.1), so it reads at night. `arms.tres` and
+player gameplay are unchanged. Still open: whether a cancelled use keeps or spends the glue.
