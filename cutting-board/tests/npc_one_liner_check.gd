@@ -4,7 +4,8 @@ extends Node3D
 ## "E Talk" to a bare-faced or villager-masked player and says one line from its pool,
 ## pausing its Brain for it; two talks in a row never say the same line; a hit puts an
 ## end to it; a bandit offers nothing to a stranger, but talks to a bandit-masked player
-## and the prompt follows the mask straight away. Prints PASS/FAIL per check and quits
+## and the prompt follows the mask straight away; villagers and bandits speak with blips
+## of their own, not the Mask-Monger's, each NPC at its own pitch. Prints PASS/FAIL per check and quits
 ## with the number of failures as the exit code.
 ##
 ##   godot --headless --fixed-fps 60 --path cutting-board res://tests/npc_one_liner_check.tscn
@@ -14,6 +15,7 @@ const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER_MASK := preload("res://resources/items/villager_mask.tres")
 const BANDIT_MASK := preload("res://resources/items/bandit_mask.tres")
+const MONGER_VOICE := preload("res://resources/audio/monger_voice.tres")
 
 var _failures := 0
 var _player: Node3D
@@ -45,6 +47,7 @@ func _run() -> void:
 
 	await _villager()
 	await _bandit()
+	await _voices()
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
 
@@ -129,6 +132,43 @@ func _bandit() -> void:
 	_equipment.unequip(Equipment.Slot.MASK)
 	await _physics_frames(2)
 	_check("the mask off, Talk is gone again", dialogue.get_prompt(_player) == "")
+
+
+## Villagers and bandits each speak with their own blips, not the Mask-Monger's, and every
+## NPC gets its own pitch within the spread.
+func _voices() -> void:
+	var villager := _spawn(VILLAGER)
+	var bandit := _spawn(BANDIT)
+	var other := _spawn(VILLAGER)
+	await _physics_frames(2)
+	var villager_voice := (villager.get_node("%Dialogue") as Dialogue).voice
+	var bandit_voice := (bandit.get_node("%Dialogue") as Dialogue).voice
+	var monger_streams: Array[AudioStream] = MONGER_VOICE.streams
+	_check("villager and bandit have voice banks of their own", villager_voice != null
+			and bandit_voice != null and villager_voice != bandit_voice
+			and villager_voice != MONGER_VOICE and bandit_voice != MONGER_VOICE)
+	var shared := 0
+	for stream in villager_voice.streams + bandit_voice.streams:
+		if stream in monger_streams:
+			shared += 1
+	for stream in villager_voice.streams:
+		if stream in bandit_voice.streams:
+			shared += 1
+	_check("their blips are their own (%d shared takes)" % shared, shared == 0
+			and villager_voice.streams.size() >= 4 and bandit_voice.streams.size() >= 4)
+	var pitches: Array[float] = []
+	var labels := ["a villager", "the bandit", "another villager"]
+	for i in 3:
+		var npc: Npc = [villager, bandit, other][i]
+		var dialogue := npc.get_node("%Dialogue") as Dialogue
+		pitches.append(dialogue.voice_pitch)
+		_check("%s voice pitch %.3f within its spread" % [labels[i], dialogue.voice_pitch],
+				dialogue.voice_pitch_spread > 0.0
+				and absf(dialogue.voice_pitch - 1.0) <= dialogue.voice_pitch_spread)
+	_check("two villagers differ in pitch", pitches[0] != pitches[2])
+	for npc in [villager, bandit, other]:
+		npc.queue_free()
+	await _physics_frames(2)
 
 
 func _spawn(scene: PackedScene) -> Npc:

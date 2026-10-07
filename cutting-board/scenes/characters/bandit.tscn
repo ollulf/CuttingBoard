@@ -44,3 +44,4 @@ unique_name_in_owner = true
 script = ExtResource("8_dialogue")
 one_liners = PackedStringArray("Nice mask, brother. Ugly as sin. Perfect.", "Back to Hollowstump by dark, or the boss counts you as firewood.", "Next raid we go for the glue pots. No glue, no village. Simple sums.", "That face of yours. Carved it yourself? Looks proper mean. Good.", "Villagers squeak when you knock on 'em. Like a door that owes you money.", "Don't look at me like that. Well, do. Your mask's got a lovely scowl.", "I'd tell you the password, brother, but I sawed it off and lost it.", "Quiet day. Too quiet. Somebody go kick a fence.", "If the Monger asks, you never saw me. If she asks my mask, it never saw your mask.")
 voice = ExtResource("9_voice")
+voice_pitch_spread = 0.08
