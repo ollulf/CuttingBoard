@@ -31,6 +31,12 @@ func _run() -> void:
 	# Looking down +Z, at the Monger.
 	player.rotation.y = PI
 	await _physics_frames(10)
+	# He is invincible: a beating well past his 120 health leaves him talking.
+	for i in 15:
+		monger.health.apply_damage(DamageInfo.new(20))
+	await _physics_frames(10)
+	_check("a beating leaves him alive at full health", monger.health.is_alive()
+		and monger.health.get_current() == monger.health.max_health)
 
 	var dialogue := monger.get_node("%Dialogue") as Dialogue
 	var interactor := player.get_node("%Interactor") as Interactor

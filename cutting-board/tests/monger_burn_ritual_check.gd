@@ -30,6 +30,12 @@ func _run() -> void:
 	monger.global_position = Vector3(0, 0.05, 0)
 	player.global_position = Vector3(0, 0.05, -2.0)
 	await _physics_frames(10)
+	# He is invincible: a beating well past his 120 health leaves the ritual working.
+	for i in 15:
+		monger.health.apply_damage(DamageInfo.new(20))
+	await _physics_frames(10)
+	_check("a beating leaves him alive at full health", monger.health.is_alive()
+		and monger.health.get_current() == monger.health.max_health)
 
 	var ritual := monger.get_node("%Usable") as MaskBurnRitual
 	var interactor := player.get_node("%Interactor") as Interactor
