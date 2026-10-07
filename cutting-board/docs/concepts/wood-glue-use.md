@@ -19,3 +19,13 @@ the tween).
 | **C. Two-hand brush** | Left hand holds the pot; right hand dips a stick and paints the back of the left hand; hold to keep brushing | 1.6 s per stroke, held | During, one part per stroke | Hit or sprint stops after the current stroke | plip, swish per stroke, creak |
 
 Open choice: whether a cancelled use keeps or spends the dab (A keeps it until the first stroke).
+
+## Round 2: B in the engine
+
+`tests/visual/glue_chest_concept.tscn` plays concept B in the village at night (tallow fair
+lighting, PSX screen) with the first-person arm meshes, the `wood_glue_a` pot and the real
+`MendOverlay` glow: tilt down 0.5 s, two dabs (glue fills the crack), left palm clamps and holds
+with two knocks, heal at the end, view back up, 2.8 s in all. Mock-up only: the arms are rigid
+meshes swung by tweens (an elbow bend needs the arm rig), torso and plank are placeholder boxes,
+and nothing in the player or glue gameplay changed. At night the amber in the crack reads weakly,
+so the real glue may want more emission. Record it with `--write-movie <out>.avi --fixed-fps 30`.
