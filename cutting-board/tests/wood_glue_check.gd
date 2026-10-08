@@ -22,7 +22,8 @@ func _ready() -> void:
 
 func _run() -> void:
 	_add_floor()
-	var player = PLAYER.instantiate()
+	# Masked: the mask is the health glue mends (a bare face has too little to test with).
+	var player = TestWorld.masked_player(PLAYER)
 	add_child(player)
 	await _physics_frames(5)
 	_record()

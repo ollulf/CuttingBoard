@@ -137,14 +137,14 @@ func _player_mask_breaks() -> void:
 	await _physics_frames(5)
 	var equipment: Equipment = player.equipment
 	var body: HumanBody = player.body
-	_toughen(player)
 	_check("the player's body wears their mask", body.mask == PLAYER_MASK)
 	_check("at the slot's wear", body.mask_durability == equipment.get_durability(MASK))
+	# The player's mask is their health (player_mask_health_check), so every blow wears it.
 	_hit(player, player.global_position + Vector3(0, 1.0, -0.4), 10)
-	_check("a body blow leaves the player's mask alone", equipment.get_durability(MASK) == PLAYER_MASK.durability)
+	_check("a body blow wears the player's mask", equipment.get_durability(MASK) == PLAYER_MASK.durability - 10)
 	_hit(player, _head_point(body), 10)
-	_check("a head blow wears the mask in the Mask slot", equipment.get_durability(MASK) == PLAYER_MASK.durability - 10)
-	for i in 9:
+	_check("a head blow wears the mask in the Mask slot", equipment.get_durability(MASK) == PLAYER_MASK.durability - 20)
+	for i in 8:
 		_hit(player, _head_point(body), 10)
 	await _frames(2)
 	_check("the player's mask breaks", body.mask == null)

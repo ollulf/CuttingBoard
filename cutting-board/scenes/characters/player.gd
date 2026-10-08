@@ -95,6 +95,17 @@ extends CharacterBody3D
 @export var refuse_sound: SoundBank = preload("res://resources/audio/ui_invalid.tres")
 @export_group("")
 
+@export_group("Mask health")
+## The worn mask's durability is the player's health: its full durability is the
+## maximum, what it has left is the current, and a blow wears it. When it breaks the
+## player goes on bare-faced with this much health at most, and only dies once that is
+## gone too.
+@export var bare_health := 20
+## What the bare face has left at the start; -1 is all of bare_health. It is kept apart
+## from any mask, so taking one off does not refill it.
+@export var bare_health_start := -1
+@export_group("")
+
 @onready var camera_pivot: Node3D = %CameraPivot
 @onready var collision_shape: CollisionShape3D = %CollisionShape3D
 ## The bob and jump lift are written to the pivots, never to the arms themselves: the
@@ -146,6 +157,8 @@ var _winded := false
 var _kick := Vector3.ZERO
 var _stagger := 0.0
 var _dead := false
+## What the bare face has left, of bare_health: health whenever no mask is on.
+var _bare_current := 0
 ## Where the death camera sits relative to the body it watches.
 var _death_cam_offset := Vector3.ZERO
 ## Which foot plant of the arm bob was last heard, so each one makes exactly one step.
@@ -186,16 +199,17 @@ func _ready() -> void:
 	arms.beat.connect(_on_arm_beat)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
+	# The mask is the player's health: whatever health does is written back to the
+	# mask's wear, and a mask that runs dry breaks rather than killing.
+	_bare_current = bare_health if bare_health_start < 0 else mini(bare_health_start, bare_health)
+	health.changed.connect(_on_health_changed)
+	health.emptied.connect(_on_health_emptied)
 	# The hidden body wears whatever mask is in the Mask slot, so the face it falls with
 	# is the one the player had on. Synced once here: the starting mask went on before
 	# this script was ready to hear about it.
 	equipment.changed.connect(_wear_mask)
 	_wear_mask()
-	# The other way round, a blow to the face wears the mask on the body, and the Mask
-	# slot keeps the score: what it has left, and nothing at all once it breaks.
-	body.mask_damaged.connect(
-		func(durability: int) -> void: equipment.set_durability(Equipment.Slot.MASK, durability)
-	)
+	# A mask that splits on the body leaves the Mask slot empty.
 	body.mask_broken.connect(func() -> void: equipment.unequip(Equipment.Slot.MASK))
 
 
@@ -370,10 +384,48 @@ func wear_held(hand: HandSlot) -> bool:
 	return true
 
 
-## The hidden body keeps the face the player has on, ready for when it falls.
+## The hidden body keeps the face the player has on, ready for when it falls, and
+## health becomes that mask's durability — or the bare face's pool with none on.
 func _wear_mask() -> void:
-	body.mask = equipment.get_item(Equipment.Slot.MASK) as MaskData
+	var mask := equipment.get_item(Equipment.Slot.MASK) as MaskData
+	if body.mask != mask:
+		body.mask = mask
 	body.mask_durability = equipment.get_durability(Equipment.Slot.MASK)
+	if _dead:
+		return
+	if _wears_health_mask():
+		health.set_pool(equipment.get_durability(Equipment.Slot.MASK), mask.durability)
+	else:
+		health.set_pool(_bare_current, bare_health)
+
+
+## Whether health is the worn mask's durability right now. A mask authored with no
+## durability never breaks, so it is no pool of its own: the bare face's counts.
+func _wears_health_mask() -> bool:
+	var mask := equipment.get_item(Equipment.Slot.MASK)
+	return mask != null and mask.durability > 0
+
+
+## Damage and mending land on health; the mask, or the bare face, keeps the result.
+func _on_health_changed(current: int, _maximum: int) -> void:
+	if _dead:
+		return
+	if _wears_health_mask():
+		equipment.set_durability(Equipment.Slot.MASK, current)
+	else:
+		_bare_current = current
+
+
+## The worn mask ran dry: it splits off the face (the body plays the break and drops the
+## Shattered Mask, and its mask_broken empties the slot), and the player stands on with
+## the bare face's health. With no mask on, this is the end, and Health goes on to died.
+func _on_health_emptied(_info: DamageInfo) -> void:
+	if _dead or not _wears_health_mask():
+		return
+	body.break_mask()
+	# A body with no face to break (it never got one) still loses the mask.
+	if not equipment.is_free(Equipment.Slot.MASK):
+		equipment.unequip(Equipment.Slot.MASK)
 
 
 ## Throws a blow with one arm. What the hand is holding chooses the animation, which is
@@ -499,8 +551,8 @@ func pickup_sound_for(data: ItemData) -> SoundBank:
 ## to the face, sideways from one to the side — and knocks the player back a step. The
 ## body itself is not drawn while alive, so there is no flinch to show.
 func _on_damaged(info: DamageInfo) -> void:
-	# Even the killing blow: a mask it breaks is not left to fall with the body.
-	body.hit_mask(info)
+	# The mask has already taken this blow: its durability is health
+	# (_on_health_changed), and one that ran dry broke in _on_health_emptied.
 	# Any hit breaks off a glue use.
 	cancel_use()
 	if not health.is_alive():

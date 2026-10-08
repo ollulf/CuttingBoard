@@ -430,6 +430,13 @@ func hit_mask(info: DamageInfo) -> void:
 		_break_mask()
 
 
+## Breaks the worn mask outright, whatever it has left — the player's, once its
+## durability (their health) runs out. Nothing happens with no mask on.
+func break_mask() -> void:
+	if _face and not _limp:
+		_break_mask()
+
+
 ## The mask splits and falls from the face in pieces, leaving a Shattered Mask where it
 ## was. Seen
 ## from behind it — the player's own, in first person — it is only heard: the pieces

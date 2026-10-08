@@ -9,6 +9,9 @@ extends Node
 signal damaged(info: DamageInfo)
 signal died(info: DamageInfo)
 signal changed(current: int, maximum: int)
+## The pool just ran dry, before died. A listener can refill it here (set_pool), and then
+## nothing dies: that is how the player's mask takes the blow that breaks it.
+signal emptied(info: DamageInfo)
 
 @export var max_health := 100
 @export var invulnerable := false
@@ -42,6 +45,8 @@ func apply_damage(info: DamageInfo) -> void:
 		return
 	_current = maxi(_current - info.amount, 0)
 	changed.emit(_current, max_health)
+	if _current == 0 and not invincible:
+		emptied.emit(info)
 	damaged.emit(info)
 	if invincible:
 		reset()
@@ -54,6 +59,18 @@ func heal(amount: int) -> void:
 	if amount <= 0 or not is_alive():
 		return
 	_current = mini(_current + amount, max_health)
+	changed.emit(_current, max_health)
+
+
+## Swaps in a different pool altogether: a new maximum and what is left of it. Unlike
+## heal() it can lower health too, and it never counts as a hit or a death.
+func set_pool(current: int, maximum: int) -> void:
+	maximum = maxi(maximum, 1)
+	current = clampi(current, 0, maximum)
+	if current == _current and maximum == max_health:
+		return
+	max_health = maximum
+	_current = current
 	changed.emit(_current, max_health)
 
 
