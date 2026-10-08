@@ -133,8 +133,10 @@ func _show_line() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if not is_instance_valid(_listener) or (_npc
-			and _listener.global_position.distance_to(_npc.global_position) > talk_range):
+	# Not on an Npc (the Carver talks from his stump's body): measure from the parent.
+	var anchor := _npc if _npc else get_parent() as Node3D
+	if not is_instance_valid(_listener) or (anchor
+			and _listener.global_position.distance_to(anchor.global_position) > talk_range):
 		_end(false)
 
 

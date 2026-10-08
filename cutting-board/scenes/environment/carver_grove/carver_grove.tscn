@@ -2,6 +2,12 @@
 
 [ext_resource type="Script" path="res://scenes/environment/carver_grove/carver_grove.gd" id="1_grove"]
 [ext_resource type="PackedScene" path="res://scenes/characters/carver.tscn" id="2_carver"]
+[ext_resource type="Script" path="res://scripts/components/dialogue.gd" id="3_dialogue"]
+[ext_resource type="Resource" path="res://resources/audio/carver_voice.tres" id="4_voice"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_talk"]
+height = 3.8
+radius = 1.55
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_stump"]
 height = 2.0
@@ -52,3 +58,20 @@ shape = SubResource("BoxShape3D_planks")
 [node name="Brazier" type="CollisionShape3D" parent="Collision"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1, 0.42, -3.1)
 shape = SubResource("CylinderShape3D_brazier")
+
+[node name="TalkBody" type="StaticBody3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="TalkBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
+shape = SubResource("CylinderShape3D_talk")
+
+[node name="Dialogue" type="Node" parent="TalkBody"]
+unique_name_in_owner = true
+script = ExtResource("3_dialogue")
+speaker_name = "The Carver"
+first_lines = PackedStringArray("Ah. Footsteps, and no face above them. Come closer, little one. The stump does not mind company.", "Every face in this valley passed under my knife. Every brow, every grin, every scowl the bandits wear. I remember the grain of each.", "But not yours. A thousand winters I have searched the wood, and your face was never in it.", "Perhaps that is why my mouth turns down. Go. Wear what the Monger sells you. I will keep carving.")
+repeat_lines = PackedStringArray("Still faceless. Still welcome. Sit, if you like. The wood talks, for those who wait.")
+voice = ExtResource("4_voice")
+talk_range = 6.0

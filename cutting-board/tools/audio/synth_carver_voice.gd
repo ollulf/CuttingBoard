@@ -11,8 +11,13 @@ extends "res://tools/audio/synth_base.gd"
 ## Same phrases as the Monger's round 3 (synth_voice_concepts.gd), so they compare
 ## directly. The hall, glottal source and envelope are copies of that script's helpers,
 ## kept separate so the two tools can change independently.
+##
+## Pass `-- carver` to render the chosen voice (B, Splinter Bell) into
+## assets/audio/voices/carver/: its three phrases plus single syllable blips for the
+## dialogue system (bank: resources/audio/carver_voice.tres).
 
 const ROOT := "res://assets/audio/voice_concepts/carver/"
+const CARVER := "res://assets/audio/voices/carver/"
 
 ## Male vowel formants (F1, F2, F3 in Hz), roughly from Peterson & Barney, lowered 8 %
 ## for a bigger, hollower body.
@@ -40,10 +45,18 @@ var dialogue := [
 	[-2, -2, 0.08, 0.02, E], [-3, -5, 0.24, 0.0, A],
 ]
 
+## Seconds Splinter Bell's throat takes to grind up from its creaky fry to pitch; shorter
+## for the single blips, so a fast line still lands on pitch.
+var _fry := 0.09
+
 
 ## Each voice: [base pitch Hz, syllable, reverb feedback (tail length), wet gain, swell].
 ## `swell` is the gain of a reversed-reverb breath that rises into the first syllable.
 func _init() -> void:
+	if "carver" in OS.get_cmdline_user_args():
+		_render_carver()
+		quit()
+		return
 	var voices := {
 		"a_hollow_idol": [98.0, _syl_idol, 0.91, 2.4, 0.0],
 		"b_splinter_bell": [87.0, _syl_splinter, 0.89, 2.0, 0.0],
@@ -95,7 +108,7 @@ func _syl_splinter(length: float, f0a: float, f0b: float, vowel: Array) -> Packe
 	var phase := 0.0
 	var amp := 1.0
 	var jitter := 0.0
-	var fry := 0.09
+	var fry := _fry
 	for i in n:
 		var t := clampf(float(i) / _seconds(length), 0.0, 1.0)
 		var sec := float(i) / sample_rate
@@ -158,6 +171,29 @@ func _syl_mouths(length: float, f0a: float, f0b: float, vowel: Array) -> PackedF
 	_mix(out, _shape(whisper, 0.01, length * 0.6), _seconds(0.035), 1.2)
 	_mix(out, _formants(out, [200.0, 360.0], [0.5, 0.35], 15.0), 0, 0.8)
 	return out
+
+
+## The chosen Carver voice: B's three phrases (same as the concept render), then 8 blips
+## (four vowels at two pitches, 0.4 s: a 90 ms syllable with a quick 30 ms fry, the bell
+## still ringing out, and a small 0.6-feedback room instead of the hall so they stay crisp
+## at typing speed), meant to be played one per syllable with the bank's pitch jitter.
+func _render_carver() -> void:
+	var v := [87.0, _syl_splinter, 0.89, 2.0, 0.0]
+	rng.seed = hash("carver_b_splinter_bell")
+	_save_to(CARVER + "greeting", _phrase(greeting, v, 1.0), 0.8)
+	_save_to(CARVER + "wise_line", _phrase(wise, v, 1.15), 0.8)
+	_save_to(CARVER + "dialogue_blips", _phrase(dialogue, v, 1.0), 0.8)
+	_fry = 0.03
+	var vowels := {"a": A, "e": E, "o": O, "u": U}
+	for semis in [0, 4]:
+		for vowel_name in vowels:
+			var f0: float = v[0] * pow(2.0, semis / 12.0)
+			var blip := _silence(0.4)
+			_mix(blip, _syl_splinter(0.09, f0, f0 * pow(2.0, -0.5 / 12.0), vowels[vowel_name]), 0, 1.0)
+			_mix(blip, _hall(blip.duplicate(), 0.6), 0, 0.3)
+			blip = _shape(blip, 0.0, 0.38)
+			_save_to(CARVER + "blip_%s_%s" % [vowel_name, "low" if semis == 0 else "high"], blip, 0.7)
+	_fry = 0.09
 
 
 # --- Phrase and hall --------------------------------------------------------------------------
@@ -276,6 +312,11 @@ func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32
 
 ## Normalises to `peak`, fades the last 10 ms, writes 16-bit mono PCM and prints the level.
 func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
+	_save_to(ROOT + file_name, x, peak)
+
+
+## Like _save, to a full res:// path without the extension.
+func _save_to(path: String, x: PackedFloat32Array, peak: float) -> void:
 	var out := _normalized(x, peak)
 	var fade := mini(_seconds(0.01), out.size())
 	for i in fade:
@@ -286,5 +327,5 @@ func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
 		sum += v * v
 		top_out = maxf(top_out, absf(v))
 	var rms := sqrt(sum / out.size())
-	print("%s  %.2f s  peak %.1f dBFS  rms %.1f dBFS" % [file_name, float(out.size()) / sample_rate, linear_to_db(top_out), linear_to_db(rms)])
-	_write_wav(ROOT + file_name + ".wav", out, false)
+	print("%s  %.2f s  peak %.1f dBFS  rms %.1f dBFS" % [path.get_file(), float(out.size()) / sample_rate, linear_to_db(top_out), linear_to_db(rms)])
+	_write_wav(path + ".wav", out, false)

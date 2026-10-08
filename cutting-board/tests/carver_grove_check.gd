@@ -82,6 +82,38 @@ func _run() -> void:
 	var fading := lights.filter(func(l: OmniLight3D) -> bool: return l.distance_fade_enabled and not l.shadow_enabled)
 	_check("all %d lights fade with distance, no shadows" % lights.size(),
 			lights.size() > 0 and fading.size() == lights.size())
+
+	# He talks: a Dialogue voiced by his own blip bank, reached by looking at him.
+	var dialogue := grove.get_node_or_null("%Dialogue") as Dialogue
+	_check("the Carver has a Dialogue", dialogue != null)
+	if dialogue == null:
+		_finish()
+		return
+	var bank := dialogue.voice
+	_check("his voice is carver_voice.tres", bank != null
+			and bank.resource_path == "res://resources/audio/carver_voice.tres")
+	var loaded := bank.streams.filter(func(s: AudioStream) -> bool: return s != null and s.get_length() > 0.1)
+	_check("all %d voice blips load" % bank.streams.size(), bank.streams.size() == 8 and loaded.size() == 8)
+	var near := centre + forward * 2.6
+	near.y = terrain.height_at(near.x, near.z) + 1.0
+	player.global_position = near
+	player.rotation.y = atan2(forward.x, forward.z)
+	await _physics_frames(5)
+	var interactor := player.get_node("%Interactor") as Interactor
+	_check("looking at him from the stump's edge hovers his talk body",
+			interactor.get_hovered() == grove.get_node("%TalkBody"))
+	_check("offers \"Talk\"", dialogue.get_prompt(player) == "Talk")
+	var shown: Array[String] = []
+	dialogue.line_shown.connect(func(text: String) -> void: shown.append(text))
+	interactor.interact(player.get_node("%Inventory"))
+	await _physics_frames(2)
+	_check("E starts the talk with his first line", dialogue.is_talking()
+			and shown.size() == 1 and shown[0] == dialogue.first_lines[0])
+	_check("the plank names him", dialogue._speaker() == "The Carver")
+	for i in dialogue.first_lines.size():
+		dialogue.advance()
+	_check("all %d first lines are said, then the talk ends" % dialogue.first_lines.size(),
+			not dialogue.is_talking() and shown.size() == dialogue.first_lines.size() and dialogue.talked)
 	_finish()
 
 
