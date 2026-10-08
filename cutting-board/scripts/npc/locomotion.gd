@@ -14,6 +14,9 @@ extends Node
 @export var acceleration := 10.0
 ## How quickly the body turns toward its heading, higher is snappier.
 @export var turn_speed := 8.0
+## Standing still, a heading within this many degrees of the way the body faces is left
+## alone, so small sways of what it faces do not set it twitching.
+@export var hold_angle := 3.0
 ## How close to the target, measured flat, counts as having arrived.
 @export var arrive_distance := 0.6
 ## A new target nearer than this to the current one keeps the current path, so chasing
@@ -48,6 +51,17 @@ func move_to(position: Vector3, run: bool = false) -> void:
 
 func stop() -> void:
 	_moving = false
+
+
+## Where a walk from here toward `position` really ends: the end of the path to it, which
+## stops short where a wall or the edge of the navigation mesh is in the way. Without a
+## path — no baked mesh yet — `position` itself.
+func walkable_point(position: Vector3) -> Vector3:
+	var map := _agent.get_navigation_map()
+	if not map.is_valid() or NavigationServer3D.map_get_regions(map).is_empty():
+		return position
+	var path := NavigationServer3D.map_get_path(map, _body.global_position, position, true)
+	return path[-1] if not path.is_empty() else position
 
 
 func is_moving() -> bool:
@@ -135,6 +149,10 @@ func _turn(delta: float) -> void:
 	if heading.length_squared() < 0.01:
 		return
 	var yaw := atan2(-heading.x, -heading.z)
+	# Standing and already about facing it: what it faces swaying a few centimetres — a
+	# target rocked by a blow — is not worth twitching the whole body for.
+	if not _moving and absf(angle_difference(_body.rotation.y, yaw)) < deg_to_rad(hold_angle):
+		return
 	_body.rotation.y = lerp_angle(_body.rotation.y, yaw, clampf(turn_speed * delta, 0.0, 1.0))
 
 

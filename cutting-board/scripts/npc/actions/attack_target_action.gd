@@ -24,6 +24,10 @@ extends NpcAction
 ## Seen this recently counts as in sight, and is chased at its true position.
 @export var in_sight_window := 0.5
 
+## A step back that opens the gap by less than this, once the wall behind is taken into
+## account, is not worth taking.
+const MIN_STEP_BACK := 0.15
+
 var _target: Node3D
 var _until_blow := 0.0
 
@@ -75,11 +79,17 @@ func tick(npc: Npc, delta: float) -> void:
 
 ## Backs off from `goal` at a walk, still facing it. The point aimed for is a full
 ## arrival distance behind the stand-off, so Locomotion does not count it reached
-## before the gap has really opened.
+## before the gap has really opened. With its back to a wall there is nowhere to go:
+## it holds its ground instead of shuffling into the wall and out again.
 func _step_back(npc: Npc, goal: Vector3) -> void:
 	var away := npc.global_position - goal
 	away.y = 0.0
 	if away.length_squared() < 0.0001:
 		away = npc.global_basis.z
 	var step := min_distance - away.length() + npc.locomotion.arrive_distance
-	npc.locomotion.move_to(npc.global_position + away.normalized() * step)
+	var point := npc.locomotion.walkable_point(npc.global_position + away.normalized() * step)
+	var gained := Vector2(point.x - goal.x, point.z - goal.z).length() - away.length()
+	if gained < MIN_STEP_BACK:
+		npc.locomotion.stop()
+		return
+	npc.locomotion.move_to(point)
