@@ -49,6 +49,7 @@
 [ext_resource type="PackedScene" path="res://scenes/items/soul_bottle.tscn" id="46_soul_bottle"]
 [ext_resource type="PackedScene" path="res://scenes/items/pegged_rolling_pin.tscn" id="47_rolling_pin"]
 [ext_resource type="PackedScene" path="res://scenes/items/clothes_peg_knuckles.tscn" id="48_peg_knuckles"]
+[ext_resource type="PackedScene" path="res://scenes/characters/soul_trader_npc.tscn" id="49_soul_trader"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnpsc"]
 cull_mode = 2
@@ -119,6 +120,9 @@ transform = Transform3D(0.76604444, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.7660
 
 [node name="MaskMonger" parent="Market" instance=ExtResource("45_mask_monger")]
 transform = Transform3D(0.9, 0, -0.43, 0, 1, 0, 0.43, 0, 0.9, 2.6, 0, 8.4)
+
+[node name="SoulTrader" parent="Market" instance=ExtResource("49_soul_trader")]
+transform = Transform3D(0.57, 0, 0.82, 0, 1, 0, -0.82, 0, 0.57, -6.5, 0, 4.5)
 
 [node name="SoulBottle" parent="Market" instance=ExtResource("46_soul_bottle")]
 transform = Transform3D(0.9, 0, -0.43, 0, 1, 0, 0.43, 0, 0.9, 3.5, 0.09, 9.3)

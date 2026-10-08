@@ -29,3 +29,16 @@ Look A is built by `tools/import/build_soul_trader.gd` into
 `scenes/characters/soul_trader.tscn` (static; joints `%Torso`, `%Neck`, `%Head`, `%Jaw`,
 `%ArmL/R`, `%Flask1..6` named for later animation). Capture:
 `tests/visual/soul_trader_capture.tscn -- --shots=<dir> [--clip]`.
+
+## Round 2: in the game
+
+- Look A now wears a carved board mask over the jug (`%Mask` in the builder).
+- Buy only: the player can't sell anything to the trader (overrides the selling above).
+- `scenes/characters/soul_trader_npc.tscn`: collision on trader and cart, a `Trader`
+  Usable (`scripts/components/trader.gd`) offering "Trade" on E, stock as `TradeOffer`
+  sub-resources (item, price, count).
+- Trade screen = the inventory panel in trade mode (`InventoryPanel.open_trade`): stock
+  grid with price badges on the left, pack on the right; drag or double-click a stock
+  item into the pack to buy it with flasks from the pack. No counter/confirm step yet.
+- Placed in `scenes/levels/village.tscn` under Market at (-6.5, 0, 4.5).
+  Test: `tests/soul_trader_check.tscn`. Shots: `tests/visual/soul_trader_trade_capture.tscn`.

@@ -11,6 +11,9 @@ signal item_stowed(data: ItemData)
 ## A container under the crosshair was opened. The interactor owns no UI, so it reports
 ## which inventory was opened and leaves putting a screen on it to whoever owns the HUD.
 signal container_opened(inventory: Inventory)
+## A trader under the crosshair was asked to trade; as with a container, the HUD puts the
+## screen up.
+signal trader_opened(trader: Trader)
 ## The player tried to take the item under the crosshair, but the inventory has no room
 ## for it. The item stays where it is; this only lets the HUD say why.
 signal stow_refused(data: ItemData)
@@ -105,6 +108,8 @@ func interact(inventory: Inventory = null) -> void:
 		container_opened.emit(container)
 	var usable := _get_component(get_hovered(), "Usable") as Usable
 	if usable and usable.use(get_owner()):
+		if usable is Trader:
+			trader_opened.emit(usable)
 		return
 	# Talking is the fallback when the object's own Usable has nothing to do (the
 	# Mask-Monger with no mask on offer).

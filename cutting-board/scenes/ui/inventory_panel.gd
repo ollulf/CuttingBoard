@@ -43,6 +43,9 @@ extends Control
 ## The weapon's damage in a tile's corner, and the wear line along its foot: drawn once
 ## the item has lost any durability, in tile_wear_color, and in tile_worn_color under half.
 @export var damage_text_color := Color(1.0, 0.8, 0.7)
+## A trader's price on a stock tile, when the pack can pay it and when it cannot.
+@export var price_color := Color(1.0, 0.72, 0.16)
+@export var price_short_color := Color(0.75, 0.35, 0.3)
 @export var tile_wear_color := Color(0.95, 0.85, 0.55, 0.9)
 @export var tile_worn_color := Color(0.9, 0.3, 0.2, 0.95)
 @export var item_border_color := Color(0.86, 0.68, 0.36, 0.6)
@@ -120,6 +123,8 @@ var _inventory: Inventory
 ## The container whose grid is up beside the player's, or null when none is open. The
 ## panel only displays it: opening and closing is driven from the world.
 var _container: Inventory
+## The trader whose stock is the open container, or null when the container is looted.
+var _trader: Trader
 var _interactor: Interactor
 var _hands: Array[HandSlot] = []
 ## What the player is wearing. The screen only shows it and moves records in and out.
@@ -261,7 +266,27 @@ func open_container(container: Inventory) -> void:
 	open()
 
 
+## Puts a trader's stock up in the container panel, with a soul-flask price on every
+## tile. Buy only: dragging (or double-clicking) a stock item into the pack buys it with
+## flasks from the pack, and nothing goes the other way, so the trader never pays out.
+func open_trade(trader: Trader) -> void:
+	if trader == null:
+		return
+	_trader = trader
+	_bind_container(trader.get_stock())
+	# The flask count in the heading follows the pack.
+	_rebuild()
+	open()
+
+
+## True while the open container is a trader's stock rather than something to loot.
+func is_trading() -> bool:
+	return _trader != null and _container != null
+
+
 func _bind_container(container: Inventory) -> void:
+	if container == null:
+		_trader = null
 	if _container == container:
 		return
 	if _container and _container.changed.is_connected(_rebuild):
@@ -604,6 +629,9 @@ func _end_drag(pos: Vector2) -> void:
 	var wear_ok := _accepts_wear(target_wear)
 	var target_hotbar := _hotbar_at(pos)
 	var outside := _is_outside_window(pos)
+	if is_trading() and (_drag_side == Side.CONTAINER or _slot_side(slot) == Side.CONTAINER):
+		_end_trade_drag(slot, entry, from, rotated, grab)
+		return
 	_play_drop_sound(from_hotbar, target_hand, target_wear, target_hotbar, slot, outside)
 	_cancel_drag()
 
@@ -653,6 +681,39 @@ func _end_drag(pos: Vector2) -> void:
 		_take_off(from_wear, to, cell - grab, rotated)
 		return
 	_place_item(from, entry, to, cell - grab, rotated)
+
+
+## A drag that starts or ends in a trader's stock. The only move it allows is stock into
+## the pack, which is a purchase; anything dragged at the stock is refused, since the
+## trader does not buy, and the stock is not rearranged.
+func _end_trade_drag(
+	slot: Dictionary, entry: InventoryEntry, from: Inventory, rotated: bool, grab: Vector2i
+) -> void:
+	var buying := _drag_side == Side.CONTAINER and _slot_side(slot) == Side.PLAYER
+	_cancel_drag()
+	if not buying:
+		if _slot_side(slot) == Side.CONTAINER and from == _container:
+			Sfx.play(place_sound, -6.0)
+		else:
+			Sfx.play(invalid_sound)
+		return
+	if _trader.buy(entry, _inventory, slot["cell"] - grab, rotated):
+		Sfx.play(place_sound)
+	else:
+		_refuse_tile(entry)
+
+
+func _slot_side(slot: Dictionary) -> int:
+	return slot["side"] if not slot.is_empty() else NO_SIDE
+
+
+## The buzz and a red flash on the item that could not go.
+func _refuse_tile(entry: InventoryEntry) -> void:
+	Sfx.play(invalid_sound)
+	var tile := _tiles.get(entry) as Control
+	if tile:
+		tile.modulate = invalid_drop_color
+		create_tween().tween_property(tile, "modulate", Color.WHITE, 0.4)
 
 
 ## What letting go of a drag sounds like, judged the same way the drop hint was drawn
@@ -712,6 +773,13 @@ func transfer_at(pos: Vector2) -> bool:
 	var to := _container if from == _inventory else _inventory
 	var entry := from.get_entry_at(slot["cell"])
 	if entry == null:
+		return false
+	if is_trading():
+		# Buy only: from the stock it is a purchase, from the pack nothing at all.
+		if from == _container and _trader.buy(entry, _inventory):
+			Sfx.play(place_sound)
+			return true
+		_refuse_tile(entry)
 		return false
 	for rotated: bool in [entry.rotated, not entry.rotated]:
 		var free := to.find_free_origin(entry.data.footprint(rotated))
@@ -884,6 +952,10 @@ func _can_drop_at(side: int, cell: Vector2i) -> bool:
 	# An item may reuse the squares it is itself vacating, but only in the grid it is
 	# leaving — coming out of a hand, or out of the other grid, it vacates nothing here.
 	var vacating := _drag_entry if side == _drag_side else null
+	if is_trading() and (side == Side.CONTAINER or _drag_side == Side.CONTAINER):
+		# Into the stock never; out of it only into the pack, and only when affordable.
+		if side == Side.CONTAINER or not _trader.can_afford(_drag_entry, _inventory):
+			return false
 	return to.is_region_free(origin, _drag_size(), vacating)
 
 
@@ -1016,6 +1088,8 @@ func _rebuild_grid(side: int) -> void:
 	if side == Side.CONTAINER:
 		_container_title.text = inventory.get_display_name()
 		_container_size.text = size_text
+		if is_trading():
+			_container_size.text = "You have %d souls" % _trader.count_currency(_inventory)
 	else:
 		_size_label.text = size_text
 	host.custom_minimum_size = Vector2(_span(cells.x), _span(cells.y))
@@ -1026,6 +1100,9 @@ func _rebuild_grid(side: int) -> void:
 	for entry in inventory.get_entries():
 		var tile := _make_tile(entry.data, entry.rotated, entry.durability)
 		tile.position = Vector2(_offset(entry.origin.x), _offset(entry.origin.y))
+		if side == Side.CONTAINER and is_trading():
+			tile.add_child(_make_price_badge(_trader.price_of(entry),
+				_trader.can_afford(entry, _inventory)))
 		host.add_child(tile)
 		_tiles[entry] = tile
 
@@ -1208,6 +1285,24 @@ func _make_damage_badge(damage: int) -> Label:
 	label.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02))
 	label.add_theme_constant_override("outline_size", 4)
 	label.position = Vector2(4, 1)
+	return label
+
+
+## A stock item's price in soul flasks, in the tile's bottom-right corner: ember when the
+## pack holds enough to pay, dimmed red when it does not.
+func _make_price_badge(price: int, affordable: bool) -> Label:
+	var label := Label.new()
+	label.name = "PriceBadge"
+	label.text = "%d souls" % price if price != 1 else "1 soul"
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color",
+		price_color if affordable else price_short_color)
+	label.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02))
+	label.add_theme_constant_override("outline_size", 4)
+	label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 3)
+	label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	label.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	return label
 
 

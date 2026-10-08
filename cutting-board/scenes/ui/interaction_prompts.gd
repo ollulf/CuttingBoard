@@ -58,6 +58,7 @@ func _ready() -> void:
 	_mend_overlay.bind(_health)
 	_funhouse_mirror.bind(_hurt_overlay)
 	_interactor.container_opened.connect(_inventory_panel.open_container)
+	_interactor.trader_opened.connect(_inventory_panel.open_trade)
 	_interactor.hover_changed.connect(_refresh.unbind(1))
 	_hand_left.item_held.connect(_refresh.unbind(1))
 	_hand_left.item_released.connect(_refresh.unbind(1))

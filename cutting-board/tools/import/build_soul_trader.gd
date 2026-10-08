@@ -4,8 +4,9 @@ extends SceneTree
 ## soul-trader.md, look A "the Flask Peddler"): a stooped wooden puppet about 2.1 m tall
 ## whose head is a corked jug with two ember eye-holes, pushing a two-wheeled handcart.
 ## The cart's canopy beam is hung with glowing soul flasks (the currency it takes), and
-## its side rack shows the weapons and goods it sells. Concept only: no script, no
-## collision, not placed in any level.
+## its side rack shows the weapons and goods it sells. A carved board mask is tied over
+## the jug's face. This is the model only: soul_trader_npc.tscn adds the collision and
+## the trade.
 ##
 ## Built like build_mask_monger.gd: flat-coloured primitives under named Node3D pivots,
 ## the joints that would animate (%Head, %Jaw, %ArmL/%ArmR, %Flask1..) as scene-unique
@@ -86,8 +87,20 @@ func _build_trader(g: Node3D) -> void:
 	_cyl(head, "Cork", 0.065, 0.055, 0.08, WOOD_LIGHT, Vector3(0, 0.43, 0), 7)
 	_cyl(head, "Wick", 0.008, 0.008, 0.06, EMBER, Vector3(0, 0.5, 0), 3, true)
 	_ring(head, "Handle", Vector3(0.17, 0.2, 0.0), 0.07, BONE)
+	# Everyone in this world wears a face: a carved board mask tied over the jug, its
+	# eye-holes letting the ember eyes show through, a tally of notches on its brow.
+	var mask := _pivot(head, "Mask", Vector3(0, 0.16, -0.175), true)
+	_box(mask, "Board", Vector3(0.24, 0.3, 0.03), WOOD_LIGHT, Vector3.ZERO)
+	_box(mask, "Brow", Vector3(0.25, 0.04, 0.04), WOOD_DARK, Vector3(0, 0.07, -0.005))
+	_box(mask, "Nose", Vector3(0.04, 0.09, 0.05), WOOD, Vector3(0, -0.02, -0.025))
+	_box(mask, "Mouth", Vector3(0.11, 0.02, 0.01), WOOD_DARK, Vector3(0, -0.09, -0.016))
+	for k in 3:
+		_box(mask, "Notch%d" % k, Vector3(0.012, 0.035, 0.01), EMBER, Vector3(-0.03 + k * 0.03, 0.12, -0.016))
 	for s in [1, -1]:
-		_ball(head, "Eye" + _side(s), 0.03, EMBER, Vector3(0.065 * s, 0.17, -0.155), Vector3.ONE, true)
+		_box(mask, "EyeHole" + _side(s), Vector3(0.06, 0.04, 0.01), WOOD_DARK, Vector3(0.06 * s, 0.02, -0.016))
+		_ball(mask, "Eye" + _side(s), 0.018, EMBER, Vector3(0.06 * s, 0.02, -0.02), Vector3.ONE, true)
+		# Twine ties running back round the jug.
+		_box(mask, "Tie" + _side(s), Vector3(0.012, 0.012, 0.16), ROPE, Vector3(0.125 * s, 0.03, 0.08))
 	# A hinged lower lip that would flap when it haggles.
 	var jaw := _pivot(head, "Jaw", Vector3(0, 0.07, -0.13), true)
 	_box(jaw, "Lip", Vector3(0.12, 0.025, 0.06), WOOD_DARK, Vector3(0, 0, -0.02))

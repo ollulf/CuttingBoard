@@ -1,0 +1,92 @@
+[gd_scene load_steps=24 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/soul_trader.tscn" id="1_model"]
+[ext_resource type="Script" path="res://scripts/components/trader.gd" id="2_trader"]
+[ext_resource type="Script" path="res://scripts/components/inventory.gd" id="3_inventory"]
+[ext_resource type="Script" path="res://scripts/resources/trade_offer.gd" id="4_offer"]
+[ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="5_glue"]
+[ext_resource type="Resource" path="res://resources/items/plank.tres" id="6_plank"]
+[ext_resource type="Resource" path="res://resources/items/oil_lamp.tres" id="7_lamp"]
+[ext_resource type="Resource" path="res://resources/items/railroad_spike.tres" id="8_spike"]
+[ext_resource type="Resource" path="res://resources/items/chair_leg_club.tres" id="9_club"]
+[ext_resource type="Resource" path="res://resources/items/back_scratcher_rake.tres" id="10_rake"]
+[ext_resource type="Resource" path="res://resources/items/rocker_sickle.tres" id="11_sickle"]
+[ext_resource type="Resource" path="res://resources/items/pegged_rolling_pin.tres" id="12_pin"]
+[ext_resource type="Resource" path="res://resources/items/clothes_peg_knuckles.tres" id="13_knuckles"]
+
+[sub_resource type="Resource" id="Offer_glue"]
+script = ExtResource("4_offer")
+item = ExtResource("5_glue")
+price = 2
+count = 2
+
+[sub_resource type="Resource" id="Offer_plank"]
+script = ExtResource("4_offer")
+item = ExtResource("6_plank")
+price = 1
+
+[sub_resource type="Resource" id="Offer_lamp"]
+script = ExtResource("4_offer")
+item = ExtResource("7_lamp")
+price = 2
+
+[sub_resource type="Resource" id="Offer_spike"]
+script = ExtResource("4_offer")
+item = ExtResource("8_spike")
+price = 1
+count = 2
+
+[sub_resource type="Resource" id="Offer_club"]
+script = ExtResource("4_offer")
+item = ExtResource("9_club")
+price = 2
+
+[sub_resource type="Resource" id="Offer_rake"]
+script = ExtResource("4_offer")
+item = ExtResource("10_rake")
+price = 3
+
+[sub_resource type="Resource" id="Offer_sickle"]
+script = ExtResource("4_offer")
+item = ExtResource("11_sickle")
+price = 4
+
+[sub_resource type="Resource" id="Offer_pin"]
+script = ExtResource("4_offer")
+item = ExtResource("12_pin")
+price = 3
+
+[sub_resource type="Resource" id="Offer_knuckles"]
+script = ExtResource("4_offer")
+item = ExtResource("13_knuckles")
+price = 2
+
+[sub_resource type="CapsuleShape3D" id="Shape_trader"]
+radius = 0.35
+height = 2.1
+
+[sub_resource type="BoxShape3D" id="Shape_cart"]
+size = Vector3(1.8, 2.45, 1.1)
+
+[node name="SoulTrader" type="StaticBody3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+unique_name_in_owner = true
+
+[node name="TraderShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.6)
+shape = SubResource("Shape_trader")
+
+[node name="CartShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.225, -0.55)
+shape = SubResource("Shape_cart")
+
+[node name="Usable" type="Node" parent="."]
+script = ExtResource("2_trader")
+offers = Array[ExtResource("4_offer")]([SubResource("Offer_club"), SubResource("Offer_rake"), SubResource("Offer_pin"), SubResource("Offer_sickle"), SubResource("Offer_knuckles"), SubResource("Offer_plank"), SubResource("Offer_lamp"), SubResource("Offer_spike"), SubResource("Offer_glue")])
+
+[node name="Stock" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_inventory")
+grid_size = Vector2i(8, 6)
+display_name = "Soul Trader"
