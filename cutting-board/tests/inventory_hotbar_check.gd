@@ -76,8 +76,63 @@ func _run() -> void:
 	_check("key 2 draws the linked rock into the left hand",
 		_panel._hands[0].get_item_data() == ROCK)
 
+	_check_rotated_icon()
+	_check_type_and_wear()
+
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+## A rotated long item turns its icon a quarter and keeps it at the unrotated size.
+func _check_rotated_icon() -> void:
+	var long_item := ROCK.duplicate() as ItemData
+	long_item.grid_size = Vector2i(3, 1)
+	long_item.icon = PlaceholderTexture2D.new()
+	var flat := _panel._make_tile(long_item, false)
+	var tile := _panel._make_tile(long_item, true)
+	var icon := tile.get_child(0) as Control
+	var flat_icon_size: Vector2 = flat.size - Vector2(8, 8)
+	var turned := Rect2(icon.position + icon.pivot_offset - Vector2(icon.size.y, icon.size.x) / 2.0,
+		Vector2(icon.size.y, icon.size.x))
+	_check("rotated tile turns its icon a quarter", is_equal_approx(icon.rotation, PI / 2.0))
+	_check("rotated icon keeps the unrotated size", icon.size.is_equal_approx(flat_icon_size))
+	_check("rotated icon bounds fill the tile",
+		turned.is_equal_approx(Rect2(Vector2(4, 4), tile.size - Vector2(8, 8))))
+	flat.free()
+	tile.free()
+
+
+## Tiles are filled by item type, a weapon shows its damage in the corner and on the
+## tooltip, and a worn item's wear line is as long as the share it has left.
+func _check_type_and_wear() -> void:
+	var club := load("res://resources/items/chair_leg_club.tres") as ItemData
+	var mask := load("res://resources/items/bandit_mask.tres") as ItemData
+	var club_tile := _panel._make_tile(club, false, club.durability / 2)
+	var mask_tile := _panel._make_tile(mask)
+	var rock_tile := _panel._make_tile(ROCK)
+	var fill := func(tile: Control) -> Color:
+		return (tile.get_theme_stylebox("panel") as StyleBoxFlat).bg_color
+	_check("weapon tile has the weapon fill", fill.call(club_tile) == _panel.weapon_color)
+	_check("mask tile has the mask fill", fill.call(mask_tile) == _panel.mask_color)
+	_check("rock tile has the everyday fill", fill.call(rock_tile) == _panel.item_color)
+	var badge := club_tile.get_node_or_null("DamageBadge") as Label
+	_check("weapon tile shows its damage (%d)" % club.melee_damage(),
+		badge != null and club.melee_damage() > 0 and badge.text == str(club.melee_damage()))
+	_check("non-weapon tile shows no damage", rock_tile.get_node_or_null("DamageBadge") == null)
+	var wear := club_tile.get_node_or_null("WearLine") as ColorRect
+	var full := club_tile.size.x - 8
+	_check("half-worn weapon draws a half-length wear line",
+		wear != null and absf(wear.size.x - full * 0.5) <= 1.0)
+	_check("fresh mask draws no wear line", mask_tile.get_node_or_null("WearLine") == null)
+	_panel._tooltip.show_item(club, club.durability / 2)
+	var damage_label := _panel._tooltip.get_node("%DamageLabel") as Label
+	_check("tooltip shows the weapon's damage",
+		damage_label.visible and damage_label.text == "Damage  %d" % club.melee_damage())
+	_panel._tooltip.show_item(mask)
+	_check("tooltip hides damage for a mask", not damage_label.visible or mask.melee_damage() > 0)
+	_panel._tooltip.hide()
+	for tile in [club_tile, mask_tile, rock_tile]:
+		tile.free()
 
 
 func _drags(window_size: Vector2i, pack: Inventory, hotbar: Hotbar, rock: InventoryEntry) -> void:

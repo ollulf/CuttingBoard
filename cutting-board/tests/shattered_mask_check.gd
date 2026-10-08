@@ -3,7 +3,8 @@ extends Node3D
 ## Headless checks for what becomes of an NPC's mask and what the Mask-Monger does with
 ## it: the death roll (seeded) shatters the mask or leaves it its own kind but damaged; a
 ## Shattered Mask cannot be worn and is never offered for repair; a damaged mask keeps
-## its kind and faction; the Monger burns a Shattered Mask into a Soul in a Bottle; a
+## its kind and faction; a walking chair's Chair Mask wears per hit, splits off when worn
+## through and is rolled for on death the same way; the Monger burns a Shattered Mask into a Soul in a Bottle; a
 ## repair costs one soul and restores the mask to full; and without a soul nothing is
 ## mended or taken. Prints PASS/FAIL per check and quits with the number of failures as
 ## the exit code.
@@ -16,6 +17,10 @@ const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER_MASK := preload("res://resources/items/villager_mask.tres")
 const SHATTERED := preload("res://resources/items/shattered_mask.tres")
 const BOTTLE := preload("res://resources/items/soul_bottle.tres")
+const CHAIR := preload("res://scenes/characters/chair_creature.tscn")
+const CHAIR_MASK := preload("res://resources/items/chair_mask.tres")
+const CHAIR_MASK_SCENE := "res://scenes/items/chair_mask.tscn"
+const SHATTERED_SCENE := "res://scenes/items/shattered_mask.tscn"
 
 var _failures := 0
 
@@ -27,6 +32,7 @@ func _ready() -> void:
 func _run() -> void:
 	_slab(Vector3(60, 1, 60), Vector3(0, -0.5, 0))
 	await _death_roll()
+	await _chair_mask()
 	await _monger_trades()
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
@@ -67,6 +73,76 @@ func _death_roll() -> void:
 	for npc in [shattered, kept, again]:
 		npc.queue_free()
 	await _frames(2)
+
+
+## A walking chair's Chair Mask wears from every hit (twice as fast at the head), splits
+## off into a Shattered Mask when worn through, and on death is rolled for like a villager's.
+func _chair_mask() -> void:
+	var shatter_seed := _seed_where(func(r: float) -> bool: return r < 0.75)
+	var keep_seed := _seed_where(func(r: float) -> bool: return r >= 0.75)
+
+	var worn := await _spawn_chair(Vector3(-6, 0, 4), 0)
+	var chair: Node3D = worn.get_node("%Chair")
+	var full: int = CHAIR_MASK.durability
+	_check("a chair's mask starts whole", chair.mask_durability == full)
+	var body_hit := DamageInfo.new(5)
+	body_hit.position = worn.global_position + Vector3(0, 0.3, 0.4)
+	worn.health.apply_damage(body_hit)
+	_check("a hit to the chair wears its mask (%d)" % chair.mask_durability,
+			chair.mask_durability == full - 5)
+	var head_hit := DamageInfo.new(5)
+	head_hit.position = (chair.get_node("%Head") as Node3D).global_position
+	worn.health.apply_damage(head_hit)
+	_check("a hit to the head wears it twice as fast (%d)" % chair.mask_durability,
+			chair.mask_durability == full - 15)
+	var broke := [false]
+	chair.mask_broken.connect(func() -> void: broke[0] = true)
+	# Another head hit wears through what is left without killing the chair.
+	var heavy := DamageInfo.new(ceili((full - 15) / 2.0))
+	heavy.position = head_hit.position
+	worn.health.apply_damage(heavy)
+	await _physics_frames(10)
+	_check("worn through, the mask splits off mid-fight", broke[0] and chair.mask == null
+			and worn.health.is_alive())
+	_check("and leaves a Shattered Mask", _loose(SHATTERED_SCENE).size() == 1)
+
+	var shattered := await _spawn_chair(Vector3(-2, 0, 4), shatter_seed)
+	shattered.health.apply_damage(DamageInfo.new(9999))
+	await _physics_frames(30)
+	_check("a seeded roll shatters a dead chair's mask", _loose(SHATTERED_SCENE).size() == 2
+			and _loose(CHAIR_MASK_SCENE).is_empty())
+
+	var kept := await _spawn_chair(Vector3(2, 0, 4), keep_seed)
+	kept.health.apply_damage(DamageInfo.new(9999))
+	await _physics_frames(30)
+	var left := _loose(CHAIR_MASK_SCENE)
+	_check("another seed leaves it a Chair Mask", left.size() == 1)
+	if left.size() == 1:
+		var durability: int = (left[0] as Node).get_node("Destructible").durability
+		_check("damaged: 10-25%% of its durability left (%d)" % durability,
+				durability >= roundi(full * 0.1) and durability <= roundi(full * 0.25))
+	for node in [worn, shattered, kept]:
+		node.queue_free()
+	for node in get_children():
+		if node is RigidBody3D:
+			node.queue_free()
+	await _frames(2)
+
+
+func _spawn_chair(at: Vector3, roll_seed: int) -> CharacterBody3D:
+	var creature: CharacterBody3D = CHAIR.instantiate()
+	add_child(creature)
+	creature.global_position = at
+	creature.set_process(false)
+	await _physics_frames(5)
+	(creature.get_node("%Chair")).mask_rng.seed = roll_seed
+	return creature
+
+
+## The loose items lying in the check with `scene` as their world scene.
+func _loose(scene: String) -> Array:
+	return get_children().filter(func(n: Node) -> bool:
+		return n is RigidBody3D and n.scene_file_path == scene and not n.is_queued_for_deletion())
 
 
 func _monger_trades() -> void:

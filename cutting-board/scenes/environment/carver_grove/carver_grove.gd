@@ -4,6 +4,10 @@ extends Node3D
 ## workbench, the chopping block, the plank stack and the brazier, so the player and the
 ## navmesh treat them as solid. The hanging masks, boards and shavings stay walk-through.
 ##
+## He talks from %TalkBody, a cylinder a little wider than the stump that reaches up past
+## his mask: E on him or his stump says "Talk" (its %Dialogue, voiced by carver_voice.tres).
+## It lives here rather than in carver.tscn, which tools/import/build_carver.gd rebuilds.
+##
 ## His lights only shine when someone is near: each one fades out with distance, so the
 ## grove costs nothing from across the valley. The lanterns and candles themselves glow
 ## by their own material, so they still read as a landmark from afar.

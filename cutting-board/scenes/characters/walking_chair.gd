@@ -15,6 +15,11 @@ extends Node3D
 ## planted, and the gait advances with the distance the chair actually moves, so whatever
 ## moves it (a creature body, a capture script) never makes the hands slide.
 
+## The worn mask took a hit and has `durability` left.
+signal mask_damaged(durability: int)
+## The worn mask split and fell off in pieces.
+signal mask_broken
+
 ## The mask worn on the front of the head. Its worn_scene is instanced on %Head, origin at
 ## `mask_offset` from the head's centre, facing forward (-Z). Changing it swaps the face.
 @export var mask: MaskData:
@@ -34,6 +39,26 @@ extends Node3D
 @export var animate := true
 ## A clay hand slapping down at the end of its step.
 @export var step_sound: SoundBank = preload("res://resources/audio/chair_step.tres")
+
+@export_group("Mask wear")
+## The mask takes the brunt of every hit, as an NPC's does (HumanBody.npc_mask_wear):
+## worn down by the damage dealt, cracked once half of it is gone, split off the head
+## when nothing is left, and rolled for when the chair dies.
+## How many times the damage a hit to the head costs the mask, against one to the chair.
+@export var head_hit_mask_wear := 2.0
+## How close to the head's centre a hit counts as one to the head, metres.
+@export var head_hit_radius := 0.3
+## Chance the mask is shattered when the chair dies; otherwise it stays its own kind with
+## only `damaged_mask_left` of its durability.
+@export_range(0.0, 1.0) var mask_shatter_chance := 0.75
+## The share of its durability a mask that survives the chair's death keeps.
+@export var damaged_mask_left := Vector2(0.1, 0.25)
+## Heard and seen where the mask was as it breaks, like a human face's.
+@export var mask_break_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
+@export var mask_break_effect: PackedScene = preload("res://scenes/vfx/break_burst.tscn")
+## What a mask is once it has split.
+@export var shattered_mask: ItemData = preload("res://resources/items/shattered_mask.tres")
+@export_group("")
 
 ## The limbs' bones, metres (the builder's THIGH and SHIN).
 const THIGH := 0.46
@@ -55,6 +80,14 @@ const STEP_JITTER := 0.15
 const SETTLE_RATE := 1.6
 
 var _face: Node3D
+## Rolls the mask's fate when the chair dies. Seed it to make the roll repeatable.
+var mask_rng := RandomNumberGenerator.new()
+## What the worn mask has left, on the scale of its MaskData.durability; full when put on.
+var mask_durability := 0:
+	set(value):
+		mask_durability = value
+		if _face and mask and mask.durability > 0:
+			MaskWear.show_crack(_face, float(mask_durability) / mask.durability)
 ## Per corner: [hip, knee, wrist] pivots.
 var _limbs := {}
 ## Per corner: where the hand rests, in the chair's own space.
@@ -249,16 +282,27 @@ func is_collapsed() -> bool:
 	return _collapse >= 0.0
 
 
+## The mask comes off a dead chair rolled for (mask_shatter_chance): a Shattered Mask, or
+## still its own kind with little left. A mask with no durability comes off as it was.
 func _drop_mask(level: Node) -> Node3D:
 	if _face == null or mask == null or level == null:
 		return null
 	var at := _face.global_transform
 	_face.queue_free()
 	_face = null
-	var loose := mask.spawn()
+	var dropped: ItemData = mask
+	var left := -1
+	if mask.durability > 0:
+		var fate := MaskWear.roll_on_death(mask_rng, mask, mask_durability, mask_shatter_chance,
+				damaged_mask_left, shattered_mask)
+		dropped = fate[0]
+		left = fate[1]
+	var loose := dropped.spawn() if dropped else null
 	if loose == null:
 		return null
 	level.add_child(loose)
+	# A battered mask is still battered once it is off.
+	Destructible.write(loose, left)
 	loose.global_transform = at
 	if loose is RigidBody3D:
 		var away := -at.basis.z
@@ -289,6 +333,67 @@ func _put_on_mask() -> void:
 	_face = mask.worn_scene.instantiate() as Node3D
 	_face.position = mask_offset
 	%Head.add_child(_face)
+	mask_durability = mask.durability
+
+
+## A hit to the chair lands on its mask too, as on an NPC's: it wears down by the damage
+## dealt, twice as fast (head_hit_mask_wear) from a hit near the head, cracks once half of
+## it is gone, and splits off the head when nothing is left. The creature calls this when
+## its Health is damaged and still alive (the killing blow leaves the mask to the roll in
+## collapse()); a mask authored with no durability never breaks.
+func hit_mask(info: DamageInfo) -> void:
+	if is_collapsed() or _face == null or mask == null or info == null or info.amount <= 0 \
+			or mask.durability <= 0:
+		return
+	var wear := info.amount
+	if is_head_hit(info.position):
+		wear = roundi(info.amount * head_hit_mask_wear)
+	mask_durability = maxi(mask_durability - wear, 0)
+	mask_damaged.emit(mask_durability)
+	if mask_durability == 0:
+		_break_mask()
+
+
+## Whether a hit at `point` lands on the head (and the mask on it).
+func is_head_hit(point: Vector3) -> bool:
+	if point.is_zero_approx():
+		return false
+	return point.distance_to((%Head as Node3D).global_position) <= head_hit_radius
+
+
+## The mask splits and falls from the head in pieces, leaving a Shattered Mask where it
+## was. The chair fights on bare-faced.
+func _break_mask() -> void:
+	var face := _face
+	_face = null
+	Sfx.play_at(mask_break_sound, face.global_position)
+	if mask_break_effect:
+		var burst := mask_break_effect.instantiate() as Node3D
+		burst.top_level = true
+		if burst is BreakBurst:
+			# The pieces fall to the ground under the head.
+			(burst as BreakBurst).setup(face, global_position.y)
+		else:
+			burst.position = face.global_position
+		var tree := get_tree()
+		(tree.current_scene if tree.current_scene else tree.root).add_child(burst)
+	_drop_shattered.call_deferred(face.global_transform)
+	face.queue_free()
+	mask = null
+	mask_broken.emit()
+
+
+## What is left of a mask that split: a Shattered Mask, dropped where the face was.
+## Deferred by the caller: adding a body from inside a physics callback is not allowed.
+func _drop_shattered(at: Transform3D) -> void:
+	var actor := owner if owner else self
+	var level := actor.get_parent()
+	var loose := shattered_mask.spawn() as RigidBody3D if shattered_mask else null
+	if level == null or loose == null:
+		return
+	level.add_child(loose)
+	loose.global_transform = at
+	HumanBody.keep_clear_of(loose, actor, 0.5)
 
 
 ## How many hands are in the air.

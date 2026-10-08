@@ -30,6 +30,7 @@
 [ext_resource type="PackedScene" uid="uid://bsf86vjc8cwc4" path="res://scenes/environment/decoration/2_box.tscn" id="27_boxes"]
 [ext_resource type="PackedScene" path="res://scenes/environment/carver_grove/carver_grove.tscn" id="28_carver"]
 [ext_resource type="PackedScene" path="res://scenes/items/chair_leg_club.tscn" id="29_chair_leg_club"]
+[ext_resource type="PackedScene" path="res://scenes/items/wood_glue.tscn" id="30_wood_glue"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -232,6 +233,50 @@ transform = Transform3D(0.70710677, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0
 
 [node name="CarverGrove" parent="." groups=["terrain_snap"] instance=ExtResource("28_carver")]
 transform = Transform3D(0.64278764, 0, -0.76604444, 0, 1, 0, 0.76604444, 0, 0.64278764, -72, 0, 42)
+
+[node name="WoodGlueSpots" type="Node3D" parent="."]
+
+[node name="MaskMonger" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, -43)
+
+[node name="WoodGlue" parent="WoodGlueSpots/MaskMonger" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
+
+[node name="VillageEdge" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -38)
+
+[node name="WoodGlue" parent="WoodGlueSpots/VillageEdge" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
+
+[node name="CampNorth" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 0, -64.5)
+
+[node name="WoodGlue" parent="WoodGlueSpots/CampNorth" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
+
+[node name="CampWest" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51, 0, -70)
+
+[node name="WoodGlue" parent="WoodGlueSpots/CampWest" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
+
+[node name="ChairYard" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54.5, 0, -27.5)
+
+[node name="WoodGlue" parent="WoodGlueSpots/ChairYard" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
+
+[node name="CarverGrove" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 0, 39)
+
+[node name="WoodGlue" parent="WoodGlueSpots/CarverGrove" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
+
+[node name="ValleyPath" type="Node3D" parent="WoodGlueSpots" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -20)
+
+[node name="WoodGlue" parent="WoodGlueSpots/ValleyPath" instance=ExtResource("30_wood_glue")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0.42, 0)
 
 [node name="IntroSequence" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("90_intro")

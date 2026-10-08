@@ -44,6 +44,9 @@ enum Type { MISC, WEAPON, MASK, HEAD, BODY, PACK }
 ## scene would be a cyclic load. Loading lazily at drop time sidesteps that.
 @export_file("*.tscn") var world_scene_path: String
 
+## melee_damage() per world scene path, so each scene is only built once to be read.
+static var _damage_cache := {}
+
 
 ## The squares this item covers, turned on its side when `rotated`. Which way round any
 ## one item is stored is not kept here — this record is shared by every copy of the item
@@ -62,3 +65,23 @@ func spawn() -> Node3D:
 
 func is_weapon() -> bool:
 	return item_type == Type.WEAPON
+
+
+## What a blow with this item in hand deals: the impact damage authored on its world
+## scene's Carryable, which is what MeleeAttack reads off the held object. It stays on
+## the scene rather than being copied here so there is one number to tune; the inventory
+## only needs it for show, so the scene is built once, read, freed, and the answer
+## cached. Zero for an item that hits no harder than a fist.
+func melee_damage() -> int:
+	if world_scene_path.is_empty():
+		return 0
+	if _damage_cache.has(world_scene_path):
+		return _damage_cache[world_scene_path]
+	var damage := 0
+	var item := spawn()
+	if item:
+		var carryable := item.get_node_or_null("Carryable") as Carryable
+		damage = carryable.impact_damage if carryable else 0
+		item.free()
+	_damage_cache[world_scene_path] = damage
+	return damage
