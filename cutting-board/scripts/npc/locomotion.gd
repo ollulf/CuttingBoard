@@ -37,6 +37,9 @@ var _running := false
 var _facing := Vector3.ZERO
 var _has_facing := false
 var _stagger := 0.0
+## The agent's path as last walked, and the index of the waypoint being walked to.
+var _path := PackedVector3Array()
+var _path_index := 0
 
 
 ## Sets off toward `position`, at a run when `run` is true.
@@ -117,20 +120,40 @@ func _physics_process(delta: float) -> void:
 
 
 func _next_waypoint() -> Vector3:
-	var next := _agent.get_next_path_position()
+	# Asking for the next position keeps the agent's path up to date.
+	_agent.get_next_path_position()
+	var path := _agent.get_current_navigation_path()
+	if path != _path:
+		_path = path
+		_path_index = 0
 	# With no path, or once at its end — the target is off the mesh — the rest of the way
 	# is walked straight. Steering for the path's end until right on it and only then for
 	# the target would flip the body back and forth over that point every few frames.
-	if _agent.get_current_navigation_path().is_empty() or _agent.is_navigation_finished():
+	if _path_walked():
 		return _target
-	return next
+	# Waypoints are passed by flat distance. The agent measures in 3D, and on terrain the
+	# navigation mesh floats a good half metre above the ground under the feet, so it
+	# hardly ever counted a waypoint as reached: the body circled it, turning back and
+	# forth on one spot, until it happened to step close enough.
+	_path_index = maxi(_path_index, _agent.get_current_navigation_path_index())
+	while _path_index < _path.size() \
+			and _flat_distance(_body.global_position, _path[_path_index]) < _agent.path_desired_distance:
+		_path_index += 1
+	if _path_walked():
+		return _target
+	return _path[_path_index]
+
+
+## Whether there is no path to follow, or the body has walked all of it.
+func _path_walked() -> bool:
+	return _path.is_empty() or _path_index >= _path.size() or _agent.is_navigation_finished()
 
 
 ## Whether the body has walked the whole path and is now pressed against something on
 ## the straight stretch to a target off the mesh — inside a building, behind a fence.
 ## That is as close as it gets, so it counts as having arrived.
 func _blocked_short() -> bool:
-	if not _agent.is_navigation_finished() or not _body.is_on_wall():
+	if not _path_walked() or not _body.is_on_wall():
 		return false
 	var ahead := _flat(_target - _body.global_position).normalized()
 	return _body.get_wall_normal().dot(ahead) < -0.5
