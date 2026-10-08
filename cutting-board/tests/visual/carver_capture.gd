@@ -2,7 +2,8 @@ extends Node3D
 
 ## The Carver concept on a plain lit floor, with a human body beside the stump for scale:
 ## from the front, three-quarters, close on his mask, from the side (the hunch) and down in the yard. With --clip it
-## holds one view on the working arms instead, for recording the idle with Movie Maker.
+## holds one view on the working arms instead, for recording the idle with Movie Maker
+## (--clip=mask: close on his face mask, for its drift and twitches).
 ##
 ##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi
 ##     res://tests/visual/carver_capture.tscn -- --shots=<dir> [--clip]
@@ -24,6 +25,7 @@ const CLIP_VIEW := [Vector3(4.6, 4.4, -7.4), Vector3(0.0, 4.0, -0.6)]
 
 var _shots_dir := ""
 var _clip := false
+var _clip_view: Array = CLIP_VIEW
 var _camera: Camera3D
 
 
@@ -33,6 +35,9 @@ func _ready() -> void:
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg == "--plain":
 			PsxScreen.enabled = false
+		elif arg == "--clip=mask":
+			_clip = true
+			_clip_view = VIEWS[2].slice(1)
 		elif arg == "--clip":
 			_clip = true
 	var env := WorldEnvironment.new()
@@ -65,7 +70,7 @@ func _ready() -> void:
 	add_child(_camera)
 	_camera.make_current()
 	if _clip:
-		_camera.look_at_from_position(CLIP_VIEW[0], CLIP_VIEW[1])
+		_camera.look_at_from_position(_clip_view[0], _clip_view[1])
 	else:
 		_run.call_deferred()
 

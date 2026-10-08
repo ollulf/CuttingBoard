@@ -18,6 +18,7 @@ var _name_label: Label
 var _text_label: Label
 var _hint: Label
 var _voice: SoundBank
+var _voice_pitch := 1.0
 var _shown := 0.0
 var _last_blip := 0
 
@@ -67,12 +68,14 @@ func _ready() -> void:
 	column.add_child(_hint)
 
 
-func show_line(speaker: String, text: String, voice: SoundBank) -> void:
+## `voice_pitch` scales the voice bank's pitch, for a speaker's own voice.
+func show_line(speaker: String, text: String, voice: SoundBank, voice_pitch := 1.0) -> void:
 	_name_label.text = speaker
 	_name_label.visible = not speaker.is_empty()
 	_text_label.text = text
 	_text_label.visible_characters = 0
 	_voice = voice
+	_voice_pitch = voice_pitch
 	_shown = 0.0
 	_last_blip = -BLIP_EVERY
 	_hint.modulate.a = 0.0
@@ -92,7 +95,7 @@ func _process(delta: float) -> void:
 	if _voice and count - _last_blip >= BLIP_EVERY and count < _text_label.text.length() \
 			and _text_label.text[count - 1] != " ":
 		_last_blip = count
-		Sfx.play(_voice)
+		Sfx.play(_voice, 0.0, _voice_pitch)
 	if not is_typing():
 		_hint.modulate.a = 1.0
 

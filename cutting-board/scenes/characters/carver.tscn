@@ -686,6 +686,7 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9887711, -0.14943814, 0, 0.14943814, 0.9887711, 0, 3.55, -0.95)
 
 [node name="Mask" type="MeshInstance3D" parent="Body/Head" unique_id=1294952872]
+unique_name_in_owner = true
 mesh = ExtResource("14_pet1m")
 
 [node name="EyeGlow" type="OmniLight3D" parent="Body/Head" unique_id=2087103073]

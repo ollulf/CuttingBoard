@@ -32,6 +32,9 @@ signal talk_ended
 @export_multiline var one_liners: PackedStringArray = []
 ## The voice blips played while a line types out.
 @export var voice: SoundBank
+## How far this NPC's voice may sit above or below the bank's pitch, as a fraction; drawn
+## once per NPC, so a village sharing one voice bank does not all sound alike.
+@export_range(0.0, 0.3, 0.01) var voice_pitch_spread := 0.0
 ## Metres the listener may walk away before the talk breaks off.
 @export var talk_range := 5.0
 
@@ -39,6 +42,8 @@ signal talk_ended
 const CONTROL_LOOK_ONLY := 1
 
 var talked := false
+## This NPC's own pitch scale on top of the voice bank's, drawn from voice_pitch_spread.
+var voice_pitch := 1.0
 var _lines: PackedStringArray = []
 var _index := -1
 var _listener: Node3D
@@ -52,6 +57,10 @@ var _last_one_liner := -1
 
 func _ready() -> void:
 	can_use = _can_talk
+	# Its own generator, so drawing the pitch leaves the global random sequence (which
+	# seeded tests replay) untouched.
+	var rng := RandomNumberGenerator.new()
+	voice_pitch = 1.0 + rng.randf_range(-voice_pitch_spread, voice_pitch_spread)
 	used.connect(_on_used)
 	set_physics_process(false)
 
@@ -119,7 +128,7 @@ func advance() -> void:
 
 
 func _show_line() -> void:
-	_plank.show_line(_speaker(), _lines[_index], voice)
+	_plank.show_line(_speaker(), _lines[_index], voice, voice_pitch)
 	line_shown.emit(_lines[_index])
 
 
