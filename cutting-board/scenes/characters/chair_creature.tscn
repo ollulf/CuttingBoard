@@ -56,7 +56,7 @@ arrive_distance = 0.4
 [node name="Health" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("4_health")
-max_health = 60
+max_health = 90
 
 [node name="Faction" type="Node" parent="."]
 unique_name_in_owner = true

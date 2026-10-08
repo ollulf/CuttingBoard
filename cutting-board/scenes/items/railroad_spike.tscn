@@ -9,12 +9,24 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_spike"]
 size = Vector3(0.04, 0.04, 0.17)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bright"]
+albedo_color = Color(0.86, 0.82, 0.72, 1)
+metallic = 0.35
+roughness = 0.45
+rim_enabled = true
+rim = 0.6
+rim_tint = 0.3
+emission_enabled = true
+emission = Color(0.95, 0.88, 0.7, 1)
+emission_energy_multiplier = 0.25
+
 [node name="RailroadSpike" type="RigidBody3D"]
 mass = 0.4
 script = ExtResource("1_script")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = ExtResource("2_mesh")
+material_override = SubResource("StandardMaterial3D_bright")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_spike")

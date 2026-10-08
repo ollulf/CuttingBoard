@@ -13,6 +13,7 @@ const PLAYER := preload("res://scenes/characters/player.tscn")
 const DUMMY := preload("res://scenes/characters/training_dummy.tscn")
 const THUMPER := preload("res://resources/items/churn_thumper.tres")
 const SPIKE := preload("res://resources/items/railroad_spike.tres")
+const SPIKE_SCENE := preload("res://scenes/items/railroad_spike.tscn")
 
 var _failures := 0
 
@@ -69,6 +70,9 @@ func _run() -> void:
 	_check("the recoil pushes the player back", player.velocity.z > 0.5)
 	var flying := _spikes_in_world()
 	_check("one spike is in flight", flying.size() == 1)
+	# This one must stick, for the pull-out check below.
+	if not flying.is_empty():
+		flying[0].shatter_chance = 0.0
 
 	# Unarmed again: once the arm has come back from the kick, the click rearms rather
 	# than firing a second spike.
@@ -97,8 +101,35 @@ func _run() -> void:
 		await TestWorld.physics_frames(self, 2)
 		_check("E pulls the spike back into the bag", _spike_count(player) == 3 and not is_instance_valid(spike))
 
+	await _check_shatter()
+
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+## Spikes thrown straight at the floor: a seeded roll that shatters leaves nothing
+## behind, one that doesn't leaves the spike stuck, and over many rolls about half break.
+func _check_shatter() -> void:
+	var rolls := RandomNumberGenerator.new()
+	rolls.seed = 7
+	var broke := 0
+	for i in 400:
+		if rolls.randf() < 0.5:
+			broke += 1
+	_check("about half of the hits shatter (%d / 400)" % broke, broke > 160 and broke < 240)
+	for shatters in [true, false]:
+		var spike: RigidBody3D = SPIKE_SCENE.instantiate()
+		spike.shatter_chance = 1.0 if shatters else 0.0
+		spike.rng.seed = 3
+		add_child(spike)
+		spike.global_position = Vector3(5, 1.0, 0)
+		spike.launch(Vector3(0, -20, 0))
+		await TestWorld.physics_frames(self, 20)
+		if shatters:
+			_check("a shattering hit leaves no spike", not is_instance_valid(spike))
+		else:
+			_check("a sticking hit leaves the spike stuck",
+					is_instance_valid(spike) and spike.stuck_in != null and spike.freeze)
 
 
 func _record() -> void:

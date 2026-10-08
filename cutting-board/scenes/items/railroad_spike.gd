@@ -17,6 +17,15 @@ extends RigidBody3D
 ## The thunk of it going in.
 @export var impact_sound: SoundBank = preload("res://resources/audio/impact_wood.tres")
 @export var body_hit_sound: SoundBank = preload("res://resources/audio/hit_body.tres")
+## Chance that a hit breaks the spike apart instead of leaving it stuck (the damage lands
+## either way).
+@export_range(0.0, 1.0) var shatter_chance := 0.5
+## Heard and seen when it shatters.
+@export var shatter_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
+@export var shatter_effect: PackedScene = preload("res://scenes/vfx/break_burst.tscn")
+
+## Rolls the shatter chance; tests seed it.
+var rng := RandomNumberGenerator.new()
 
 ## Whether it is in the air from a shot and will stick into what it meets.
 var flying := false
@@ -83,7 +92,27 @@ func _on_body_entered(body: Node) -> void:
 		health.apply_damage(info)
 	else:
 		Sfx.play_at(impact_sound, position)
-	_stick(body, direction)
+	if rng.randf() < shatter_chance:
+		_shatter()
+	else:
+		_stick(body, direction)
+
+
+## Breaks apart on the hit: a puff of splinters and it is gone, nothing left to pull out.
+func _shatter() -> void:
+	Sfx.play_at(shatter_sound, global_position)
+	if shatter_effect and is_inside_tree():
+		var effect := shatter_effect.instantiate() as Node3D
+		# Top level, so the position set below is a world position.
+		effect.top_level = true
+		if effect is BreakBurst:
+			effect.setup(self)
+		else:
+			effect.position = global_position
+		var tree := get_tree()
+		(tree.current_scene if tree.current_scene else tree.root).add_child.call_deferred(effect)
+	set_deferred(&"contact_monitor", false)
+	queue_free()
 
 
 ## Stops dead a little way into `body` and stays there. Stuck in a moving thing it is
