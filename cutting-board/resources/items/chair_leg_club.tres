@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/chair_leg_club.png" id="1_jeg0u"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_3dhhy"]
+diffuse_texture = ExtResource("1_jeg0u")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Chair-Leg Club"
+icon = SubResource("CanvasTexture_3dhhy")
+item_type = 1
+description = "A turned leg wrenched off a walking chair, splinters and all. The heaviest club in the valley."
+animation_set = &"weapon"
+weight = 3.5
+durability = 160
+wear_per_hit = 4
+grid_size = Vector2i(3, 1)
+world_scene_path = "res://scenes/items/chair_leg_club.tscn"

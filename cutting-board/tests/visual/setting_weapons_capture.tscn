@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/visual/setting_weapons_capture.gd" id="1_capture"]
+
+[node name="SettingWeaponsCapture" type="Node3D"]
+script = ExtResource("1_capture")

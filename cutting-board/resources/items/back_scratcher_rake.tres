@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/back_scratcher_rake.png" id="1_2074k"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_drgyb"]
+diffuse_texture = ExtResource("1_2074k")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Back-Scratcher Rake"
+icon = SubResource("CanvasTexture_drgyb")
+item_type = 1
+description = "A long back scratcher with its wooden fingers filed to hooks. Flimsy, but it rakes."
+animation_set = &"weapon"
+weight = 0.9
+durability = 70
+wear_per_hit = 2
+grid_size = Vector2i(3, 1)
+world_scene_path = "res://scenes/items/back_scratcher_rake.tscn"

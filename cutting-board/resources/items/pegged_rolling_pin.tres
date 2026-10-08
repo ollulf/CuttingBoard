@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/pegged_rolling_pin.png" id="1_qiyn5"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_5q4x0"]
+diffuse_texture = ExtResource("1_qiyn5")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Pegged Rolling Pin"
+icon = SubResource("CanvasTexture_5q4x0")
+item_type = 1
+description = "A baker's rolling pin with rows of hardwood pegs knocked into it. Heavy at the head, and it bruises through anything."
+animation_set = &"weapon"
+weight = 2.5
+durability = 200
+wear_per_hit = 4
+grid_size = Vector2i(3, 1)
+world_scene_path = "res://scenes/items/pegged_rolling_pin.tscn"
