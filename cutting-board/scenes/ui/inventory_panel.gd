@@ -34,7 +34,17 @@ extends Control
 ## Where the tooltip's corner sits relative to the cursor, in pixels.
 @export var tooltip_offset := Vector2(18, 20)
 @export var empty_cell_color := Color(1, 1, 1, 0.07)
+## A tile's fill tells what kind of item it is at a glance: item_color for everyday
+## things, the others by ItemData.item_type. Wearables covers head, body and pack.
 @export var item_color := Color(0.66, 0.39, 0.16, 0.4)
+@export var weapon_color := Color(0.74, 0.2, 0.15, 0.5)
+@export var mask_color := Color(0.88, 0.82, 0.64, 0.42)
+@export var wearable_color := Color(0.33, 0.55, 0.28, 0.5)
+## The weapon's damage in a tile's corner, and the wear line along its foot: drawn once
+## the item has lost any durability, in tile_wear_color, and in tile_worn_color under half.
+@export var damage_text_color := Color(1.0, 0.8, 0.7)
+@export var tile_wear_color := Color(0.95, 0.85, 0.55, 0.9)
+@export var tile_worn_color := Color(0.9, 0.3, 0.2, 0.95)
 @export var item_border_color := Color(0.86, 0.68, 0.36, 0.6)
 @export var item_text_color := Color(0.96, 0.9, 0.76)
 ## Outline of an empty equipment slot.
@@ -407,7 +417,7 @@ func _rotate_drag(pos: Vector2) -> void:
 	# The ghost is built at a fixed size, so it has to be made again at the new one. It
 	# goes back on top of the drop hint simply by being added after it.
 	_ghost.queue_free()
-	_ghost = _make_tile(_drag_data, _drag_rotated)
+	_ghost = _make_tile(_drag_data, _drag_rotated, _drag_durability())
 	_ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_ghost)
 	_update_drag(pos)
@@ -489,6 +499,21 @@ func _begin_hotbar_drag(index: int, pos: Vector2) -> void:
 	_start_ghost(pos)
 
 
+## What the item on the cursor has left, read from wherever it was picked up, or -1 for
+## a fresh one; the ghost shows the same wear as the tile it was lifted from.
+func _drag_durability() -> int:
+	if _drag_entry:
+		return _drag_entry.durability
+	if _drag_hand:
+		return _drag_hand.get_durability()
+	if _drag_wear != Equipment.NO_SLOT:
+		return _equipment.get_durability(_drag_wear)
+	if _drag_hotbar != HotbarPanel.NO_SLOT:
+		var slot := _hotbar.get_slot(_drag_hotbar)
+		return slot.get_durability() if slot else -1
+	return -1
+
+
 ## Puts `data` on the cursor upright and grabbed in the middle: a hand, a worn slot or a
 ## hotbar square has no grid square the cursor could have landed on.
 func _grab_upright(data: ItemData) -> void:
@@ -500,7 +525,7 @@ func _grab_upright(data: ItemData) -> void:
 
 func _start_ghost(pos: Vector2) -> void:
 	Sfx.play(pick_sound)
-	_ghost = _make_tile(_drag_data, _drag_rotated)
+	_ghost = _make_tile(_drag_data, _drag_rotated, _drag_durability())
 	_ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_ghost)
 
@@ -999,7 +1024,7 @@ func _rebuild_grid(side: int) -> void:
 		for x in cells.x:
 			host.add_child(_make_cell(Vector2i(x, y)))
 	for entry in inventory.get_entries():
-		var tile := _make_tile(entry.data, entry.rotated)
+		var tile := _make_tile(entry.data, entry.rotated, entry.durability)
 		tile.position = Vector2(_offset(entry.origin.x), _offset(entry.origin.y))
 		host.add_child(tile)
 		_tiles[entry] = tile
@@ -1011,15 +1036,18 @@ func _rebuild_grid(side: int) -> void:
 func _rebuild_equipment() -> void:
 	for hand: HandSlot in _slot_boxes:
 		var data := hand.get_item_data()
-		_fill_slot(_slot_boxes[hand], hand, data, "empty", data != null)
+		_fill_slot(_slot_boxes[hand], hand, data, "empty", data != null, hand.get_durability())
 	for slot in _wear_boxes:
 		var worn := _equipment.get_item(slot) if _equipment else null
-		_fill_slot(_wear_boxes[slot], _wear_boxes[slot], worn, WEAR_NAMES[slot], false)
+		var left := _equipment.get_durability(slot) if _equipment else -1
+		_fill_slot(_wear_boxes[slot], _wear_boxes[slot], worn, WEAR_NAMES[slot], false, left)
 
 
 ## Puts an item's tile in a slot box, or the slot's name when it is empty. A hand with
 ## something in it is outlined, as its square on the hotbar is.
-func _fill_slot(box: Panel, key: Object, data: ItemData, empty_text: String, held: bool) -> void:
+func _fill_slot(
+	box: Panel, key: Object, data: ItemData, empty_text: String, held: bool, durability := -1
+) -> void:
 	for child in box.get_children():
 		child.queue_free()
 	var style := StyleBoxFlat.new()
@@ -1038,7 +1066,7 @@ func _fill_slot(box: Panel, key: Object, data: ItemData, empty_text: String, hel
 		box.add_child(label)
 		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		return
-	var tile := _make_slot_tile(data, box.size)
+	var tile := _make_slot_tile(data, box.size, durability)
 	box.add_child(tile)
 	_tiles[key] = tile
 
@@ -1046,7 +1074,7 @@ func _fill_slot(box: Panel, key: Object, data: ItemData, empty_text: String, hel
 ## An item's tile sized for a slot box rather than for the grid. It goes in upright when
 ## it fits, turned when only that fits, and shrunk to fit when neither does — a barrel
 ## in a hand is still a barrel, just drawn smaller. It is centred either way.
-func _make_slot_tile(data: ItemData, room: Vector2) -> Control:
+func _make_slot_tile(data: ItemData, room: Vector2, durability := -1) -> Control:
 	var rotated := false
 	var cells := data.footprint(false)
 	var span := Vector2(_span(cells.x), _span(cells.y))
@@ -1056,7 +1084,7 @@ func _make_slot_tile(data: ItemData, room: Vector2) -> Control:
 		if turned_span.x <= room.x and turned_span.y <= room.y:
 			rotated = true
 			span = turned_span
-	var tile := _make_tile(data, rotated)
+	var tile := _make_tile(data, rotated, durability)
 	var fit := minf(1.0, minf(room.x / span.x, room.y / span.y))
 	tile.scale = Vector2(fit, fit)
 	tile.position = ((room - span * fit) * 0.5).floor()
@@ -1079,7 +1107,9 @@ func _make_cell(cell: Vector2i) -> ColorRect:
 ## A plain Panel rather than a PanelContainer: a container grows to its content's minimum
 ## size, and a wrapping label measured before it has a width asks for one line per word,
 ## which stretched a fresh drag ghost into a tall column. A Panel keeps the footprint.
-func _make_tile(data: ItemData, rotated: bool = false) -> Control:
+##
+## `durability` is what this one item has left (-1 for fresh), drawn as the wear line.
+func _make_tile(data: ItemData, rotated: bool = false, durability: int = -1) -> Control:
 	var tile := Panel.new()
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.clip_contents = true
@@ -1090,7 +1120,7 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 	tile.custom_minimum_size = footprint
 
 	var style := StyleBoxFlat.new()
-	style.bg_color = item_color
+	style.bg_color = type_color(data)
 	style.set_border_width_all(2)
 	style.border_color = item_border_color
 	tile.add_theme_stylebox_override("panel", style)
@@ -1123,7 +1153,62 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 		content.rotation = PI / 2.0
 	else:
 		content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
+	# Overlays go after the icon, which stays the tile's first child.
+	if data.is_weapon() and data.melee_damage() > 0:
+		tile.add_child(_make_damage_badge(data.melee_damage()))
+	var share := wear_share(data, durability)
+	if share < 1.0:
+		# On a dark track the length of a whole one, so what is gone reads too and the
+		# line stands out on any fill.
+		var track := ColorRect.new()
+		track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		track.color = Color(0.06, 0.04, 0.03, 0.85)
+		track.position = Vector2(3, footprint.y - 8)
+		track.size = Vector2(footprint.x - 6, 5)
+		tile.add_child(track)
+		var wear := ColorRect.new()
+		wear.name = "WearLine"
+		wear.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wear.color = tile_worn_color if share < 0.5 else tile_wear_color
+		wear.position = track.position + Vector2(1, 1)
+		wear.size = Vector2(maxf(roundf((footprint.x - 8) * share), 2), 3)
+		tile.add_child(wear)
 	return tile
+
+
+## A tile's fill for its kind of item.
+func type_color(data: ItemData) -> Color:
+	match data.item_type:
+		ItemData.Type.WEAPON:
+			return weapon_color
+		ItemData.Type.MASK:
+			return mask_color
+		ItemData.Type.HEAD, ItemData.Type.BODY, ItemData.Type.PACK:
+			return wearable_color
+	return item_color
+
+
+## Share of its built-with durability the item has left, or 1.0 for a fresh item (-1)
+## or one that does not wear.
+static func wear_share(data: ItemData, durability: int) -> float:
+	if data.durability <= 0 or durability < 0:
+		return 1.0
+	return clampf(float(durability) / data.durability, 0.0, 1.0)
+
+
+## The weapon's damage, small in the tile's top-left corner, so two weapons can be
+## weighed against each other without opening a tooltip for each.
+func _make_damage_badge(damage: int) -> Label:
+	var label := Label.new()
+	label.name = "DamageBadge"
+	label.text = str(damage)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", damage_text_color)
+	label.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02))
+	label.add_theme_constant_override("outline_size", 4)
+	label.position = Vector2(4, 1)
+	return label
 
 
 ## True when a panel-local point lies beyond the whole window — header, all three panels
