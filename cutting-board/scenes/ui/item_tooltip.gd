@@ -1,11 +1,12 @@
 class_name ItemTooltip
 extends PanelContainer
 
-## The hover card shown beside the cursor in the inventory: what the item is, what it
-## weighs, the durability it was built with, and its description. Fill it in with
+## The hover card shown beside the cursor in the inventory: what the item is, what a
+## blow with it deals, what it weighs, the durability it was built with, and its description. Fill it in with
 ## show_item(); placing it beside the cursor is the inventory panel's job.
 
 @onready var _name_label: Label = %NameLabel
+@onready var _damage_label: Label = %DamageLabel
 @onready var _weight_label: Label = %WeightLabel
 @onready var _durability_label: Label = %DurabilityLabel
 @onready var _description_label: Label = %DescriptionLabel
@@ -27,6 +28,9 @@ func show_item(data: ItemData, durability: int = -1) -> void:
 		hide()
 		return
 	_name_label.text = data.display_name
+	var damage := data.melee_damage()
+	_damage_label.text = "Damage  %d" % damage
+	_damage_label.visible = damage > 0
 	_weight_label.text = "Weight  %s kg" % String.num(data.weight, 1)
 	_weight_label.visible = data.weight > 0.0
 	# Always shown as a fraction, undamaged included: "220 / 220" says at a glance that

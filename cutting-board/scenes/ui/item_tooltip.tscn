@@ -37,6 +37,13 @@ theme_override_font_sizes/font_size = 17
 autowrap_mode = 3
 text = "Item"
 
+[node name="DamageLabel" type="Label" parent="Rows"]
+unique_name_in_owner = true
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.92, 0.62, 0.52, 1)
+theme_override_font_sizes/font_size = 13
+text = "Damage  0"
+
 [node name="WeightLabel" type="Label" parent="Rows"]
 unique_name_in_owner = true
 mouse_filter = 2
