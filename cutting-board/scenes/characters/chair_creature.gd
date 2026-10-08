@@ -5,9 +5,11 @@ extends CharacterBody3D
 ## along the navigation mesh, pausing now and then to idle. Once it sees someone its side
 ## is hostile to, it crawls after them at a scuttle and, close enough, launches itself at
 ## them: it rocks back on its hind limbs (the tell), leaps, and slams down with both front
-## arms. Out of sight for a while, it gives up and wanders back. Killed, it collapses, its
-## mask drops off as a loose item (the way a fallen villager's does), and what it carried
-## stays on the body for the player to search, like an NPC's pockets.
+## arms. Out of sight for a while, it gives up and wanders back. Every hit wears its mask
+## down, faster near the head, until it splits off in pieces as a Shattered Mask (see
+## WalkingChair.hit_mask). Killed, it collapses and its mask drops off as a loose item,
+## rolled for the way a fallen villager's is: shattered, or its own kind badly damaged.
+## What it carried stays on the body for the player to search, like an NPC's pockets.
 ##
 ## Moving the body is Locomotion's job, as for the villagers; the chair model's own gait
 ## follows whatever distance the body covers. The leap moves the body itself, as a short
@@ -334,6 +336,7 @@ func _settle(delta: float) -> void:
 func _on_damaged(info: DamageInfo) -> void:
 	if _dead or not health.is_alive() or info == null:
 		return
+	chair.hit_mask(info)
 	var attacker := info.get_attacker()
 	if attacker and attacker != self and get_attack_target() == null \
 			and Faction.find_in(attacker):
