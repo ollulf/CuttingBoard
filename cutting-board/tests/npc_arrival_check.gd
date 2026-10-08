@@ -33,6 +33,7 @@ func _run() -> void:
 	await _send_to(BLOCK_CENTER + Vector3(1.8, 0, 0), "against a block")
 	await _wander()
 	await _fight()
+	await _cornered()
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
 
@@ -147,6 +148,44 @@ func _fight() -> void:
 		player_health.reset())
 	print("  fight: in range after %.2f s; then %s" % [waited, _describe(stats)])
 	_check_still(stats, "fight")
+	player.queue_free()
+	bandit.queue_free()
+	await _physics_frames(2)
+
+
+## A bandit backed against the block with the player crowding it, closer than it likes
+## to fight from: it cannot step back through the wall, so it must hold its ground
+## rather than shuffle into the wall and out again.
+func _cornered() -> void:
+	var player := PLAYER.instantiate()
+	var bandit: Npc = BANDIT.instantiate()
+	add_child(player)
+	add_child(bandit)
+	var wall_x := BLOCK_CENTER.x - BLOCK_SIZE.x * 0.5
+	var bandit_spot := Vector3(wall_x - 0.32, 0.05, BLOCK_CENTER.z)
+	var player_spot := Vector3(wall_x - 1.0, 0.05, BLOCK_CENTER.z)
+	bandit.global_position = bandit_spot
+	player.global_position = player_spot
+	await _physics_frames(5)
+	var player_health: Health = player.get_node("%Health")
+	player_health.max_health = 100000
+	player_health.reset()
+	bandit.memory.remember(player)
+	var pin := func() -> void:
+		player.global_position = Vector3(player_spot.x, player.global_position.y, player_spot.z)
+		player_health.reset()
+	# Time to notice the player, turn to it and try backing off.
+	for i in 90:
+		await get_tree().physics_frame
+		pin.call()
+	var stats := await _watch(bandit, 4.0, pin)
+	print("  cornered: %.2f m from the player; then %s" % [
+		bandit.flat_distance_to(player.global_position), _describe(stats)
+	])
+	# Turning is not checked: each blow rocks the player sideways for a frame before it
+	# is pinned back, and following that with its eyes is fair.
+	_check("cornered: holds its ground",
+		stats.path < 0.02 and stats.toggles == 0 and stats.gait < 0.1)
 	player.queue_free()
 	bandit.queue_free()
 	await _physics_frames(2)
