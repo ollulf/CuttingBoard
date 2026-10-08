@@ -452,14 +452,11 @@ func _drop_shattered(at: Transform3D) -> void:
 ## own kind with little left. The face shows a full crack either way; whatever it now is
 ## comes off or stays on as before.
 func _roll_mask_on_death() -> void:
-	if mask_rng.randf() < mask_shatter_chance:
-		_dead_mask = shattered_mask
-		_dead_durability = -1
-		mask_durability = 0
-	else:
-		var left := mask_rng.randf_range(damaged_mask_left.x, damaged_mask_left.y)
-		_dead_durability = clampi(roundi(mask.durability * left), 1, maxi(mask_durability, 1))
-		mask_durability = _dead_durability
+	var fate := MaskWear.roll_on_death(mask_rng, mask, mask_durability, mask_shatter_chance,
+			damaged_mask_left, shattered_mask)
+	_dead_mask = fate[0]
+	_dead_durability = fate[1]
+	mask_durability = 0 if _dead_durability < 0 else _dead_durability
 
 
 ## Draws the worn mask's wear on its face: nothing above half, then a crack running
@@ -467,19 +464,7 @@ func _roll_mask_on_death() -> void:
 func _show_wear() -> void:
 	if _face == null or mask == null or mask.durability <= 0:
 		return
-	var ratio := float(mask_durability) / mask.durability
-	var crack := 0.0 if ratio > 0.5 else remap(ratio, 0.5, 0.0, 0.4, 1.0)
-	for node in _face.find_children("*", "MeshInstance3D", true, false):
-		var mi := node as MeshInstance3D
-		var shaded := mi.material_override as ShaderMaterial
-		if shaded == null:
-			var authored := mi.get_active_material(0) as ShaderMaterial
-			if authored == null or crack == 0.0:
-				continue
-			# A copy of its own, so one cracked face does not crack every mask of its kind.
-			shaded = authored.duplicate()
-			mi.material_override = shaded
-		shaded.set_shader_parameter(&"crack", crack)
+	MaskWear.show_crack(_face, float(mask_durability) / mask.durability)
 
 
 ## The mask comes away from a falling body as the item it is — the same object as one

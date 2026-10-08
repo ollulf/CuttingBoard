@@ -80,7 +80,9 @@ func _run() -> void:
 	_check("collapses", chair.is_collapsed())
 	var dropped := false
 	for child in get_children():
-		if child is RigidBody3D and child.scene_file_path == "res://scenes/items/chair_mask.tscn":
+		# Rolled for on death (shattered_mask_check): whole but damaged, or shattered.
+		if child is RigidBody3D and child.scene_file_path in ["res://scenes/items/chair_mask.tscn",
+				"res://scenes/items/shattered_mask.tscn"]:
 			dropped = true
 	_check("drops its mask", dropped)
 	_finish()
