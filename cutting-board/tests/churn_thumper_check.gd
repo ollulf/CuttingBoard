@@ -14,6 +14,7 @@ const DUMMY := preload("res://scenes/characters/training_dummy.tscn")
 const THUMPER := preload("res://resources/items/churn_thumper.tres")
 const SPIKE := preload("res://resources/items/railroad_spike.tres")
 const SPIKE_SCENE := preload("res://scenes/items/railroad_spike.tscn")
+const VILLAGER := preload("res://scenes/characters/villager.tscn")
 
 var _failures := 0
 
@@ -102,6 +103,7 @@ func _run() -> void:
 		_check("E pulls the spike back into the bag", _spike_count(player) == 3 and not is_instance_valid(spike))
 
 	await _check_shatter()
+	await _check_ragdoll()
 
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
@@ -130,6 +132,75 @@ func _check_shatter() -> void:
 		else:
 			_check("a sticking hit leaves the spike stuck",
 					is_instance_valid(spike) and spike.stuck_in != null and spike.freeze)
+
+
+## Spikes in people hang from the limb they went into: one in a living villager stays on
+## that limb as he is killed and falls, one that kills him lands on the falling limb, and
+## one shot into a corpse sticks to the bone it struck.
+func _check_ragdoll() -> void:
+	var villager: Node3D = VILLAGER.instantiate()
+	add_child(villager)
+	villager.global_position = Vector3(-10, 0, 0)
+	await TestWorld.physics_frames(self, 10)
+	var spike := await _shoot_at(villager.body.get_center() + Vector3(0, 0.15, 0), 1)
+	var holder := spike.get_parent() as BoneAttachment3D
+	_check("a spike in a villager hangs from a bone (%s)" % spike.get_parent().name,
+			holder != null and holder.get_parent() == villager.body.skeleton)
+	var bone: PhysicalBone3D = _physical_bone(villager, holder.bone_name if holder else "")
+	var before := bone.global_transform.affine_inverse() * spike.global_position if bone else Vector3.ZERO
+	var height := spike.global_position.y
+	Health.find_in(villager).apply_damage(DamageInfo.new(9999, self, DamageInfo.Type.PIERCE))
+	await TestWorld.physics_frames(self, 150)
+	var after := bone.global_transform.affine_inverse() * spike.global_position if bone else Vector3.ZERO
+	_check("killed, the villager falls with the spike (%.2f -> %.2f)" % [height, spike.global_position.y],
+			villager.body.is_limp() and spike.global_position.y < height - 0.3)
+	_check("the spike stays on its limb as he falls (%.2f m off)" % before.distance_to(after),
+			bone != null and before.distance_to(after) < 0.15)
+
+	# The killing blow itself.
+	var victim: Node3D = VILLAGER.instantiate()
+	add_child(victim)
+	victim.global_position = Vector3(-14, 0, 0)
+	await TestWorld.physics_frames(self, 10)
+	var killer := await _shoot_at(victim.body.get_center() + Vector3(0, 0.15, 0), 9999)
+	var killer_holder := killer.get_parent() as BoneAttachment3D
+	var killer_bone: PhysicalBone3D = _physical_bone(victim, killer_holder.bone_name if killer_holder else "")
+	var killer_before := killer_bone.global_transform.affine_inverse() * killer.global_position \
+			if killer_bone else Vector3.ZERO
+	await TestWorld.physics_frames(self, 150)
+	_check("a killing spike hangs from a bone of the fallen body",
+			victim.body.is_limp() and killer_bone != null and killer.get_parent() == killer_holder)
+	_check("it stays on that limb as he falls",
+			killer_bone != null and killer_before.distance_to(
+				killer_bone.global_transform.affine_inverse() * killer.global_position) < 0.15)
+
+	# Into the corpse, straight down onto the chest.
+	var corpse := await _shoot_at(_physical_bone(villager, "Chest").global_position, 10, Vector3.UP)
+	var struck := corpse.stuck_in as PhysicalBone3D
+	var corpse_holder := corpse.get_parent() as BoneAttachment3D
+	_check("a spike in a corpse sticks in the bone it struck (%s)" % [corpse.stuck_in],
+			struck != null and corpse_holder != null and corpse_holder.bone_name == struck.bone_name)
+	_check("a spike in a corpse is still there to pull out", corpse.freeze and corpse.stuck_in != null)
+
+
+## Fires a spike that cannot shatter at `target` from 1.5 m off along `from`, and returns
+## it once it has had time to stick.
+func _shoot_at(target: Vector3, hit_damage: int, from := Vector3.BACK) -> RigidBody3D:
+	var spike: RigidBody3D = SPIKE_SCENE.instantiate()
+	spike.shatter_chance = 0.0
+	spike.damage = hit_damage
+	add_child(spike)
+	spike.global_position = target + from * 1.5
+	spike.launch(-from * 25.0)
+	await TestWorld.physics_frames(self, 10)
+	return spike
+
+
+func _physical_bone(actor: Node, bone_name: String) -> PhysicalBone3D:
+	for bone in actor.find_children("*", "PhysicalBone3D", true, false):
+		if bone.bone_name == bone_name:
+			return bone
+	return null
 
 
 func _record() -> void:

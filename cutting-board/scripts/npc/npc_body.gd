@@ -40,6 +40,13 @@ func go_limp(_info: DamageInfo = null, _carried_velocity := Vector3.ZERO) -> voi
 	went_limp.emit()
 
 
+## What something that sticks into this body at `point` (a spike) should hang from, so
+## it moves with the part it went into; `part` is the collider it struck. Null: the
+## character itself.
+func stick_point(_point: Vector3, _part: Node) -> Node3D:
+	return null
+
+
 ## A blow that may land on a worn mask.
 func hit_mask(_info: DamageInfo) -> void:
 	pass

@@ -376,6 +376,26 @@ func _put_on_mask() -> void:
 	mask_durability = mask.durability
 
 
+## A spike stuck in this body hangs from the bone it went into, through a
+## BoneAttachment3D, so it follows that limb as it is animated and, once the body falls,
+## as it tumbles. `part` is that bone when a fallen or flinching limb was struck;
+## otherwise (the standing capsule) the bone nearest `point`.
+func stick_point(point: Vector3, part: Node) -> Node3D:
+	var bone := part as PhysicalBone3D
+	if bone == null or not bone in _bones:
+		if _bones.is_empty():
+			return null
+		bone = _nearest_bone(point, _bones)
+	var attachment_name: String = "Stuck" + bone.bone_name
+	var attachment := skeleton.get_node_or_null(attachment_name) as BoneAttachment3D
+	if attachment == null:
+		attachment = BoneAttachment3D.new()
+		attachment.name = attachment_name
+		attachment.bone_name = bone.bone_name
+		skeleton.add_child(attachment)
+	return attachment
+
+
 ## Whether a hit landing at `point` is a hit on the head: at or above the base of the
 ## skull, wherever the head is posed. A hit that recorded no point is not.
 func is_head_hit(point: Vector3) -> bool:

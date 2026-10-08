@@ -278,6 +278,12 @@ func collapse(level: Node) -> Node3D:
 	return _drop_mask(level)
 
 
+## A spike stuck in the chair hangs from its seat, which is what sinks and tilts as it
+## collapses.
+func stick_point(_point: Vector3, _part: Node) -> Node3D:
+	return %Body as Node3D
+
+
 func is_collapsed() -> bool:
 	return _collapse >= 0.0
 

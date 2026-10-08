@@ -118,6 +118,8 @@ func _shatter() -> void:
 ## Stops dead a little way into `body` and stays there. Stuck in a moving thing it is
 ## carried along as its child; it no longer collides with that thing, so a bandit is not
 ## shoved about by the spike in his own side, but anything else still finds it to pull out.
+## In a character it hangs from the limb it went into (the body's stick_point), standing
+## or fallen, so it goes down with that limb when this hit, or a later one, kills.
 func _stick(body: Node, direction: Vector3) -> void:
 	stuck_in = body
 	# Not switched off in the middle of the contact callback that got us here.
@@ -127,7 +129,30 @@ func _stick(body: Node, direction: Vector3) -> void:
 	angular_velocity = Vector3.ZERO
 	global_position += direction * 0.05
 	set_deferred(&"freeze", true)
+	var actor := HumanBody.actor_of(body)
+	var holder := _stick_point_in(actor, body)
+	if holder:
+		# Clear of the whole character, capsule and limbs alike, so a falling body is
+		# neither propped up nor flung by the spike in it.
+		for collider in HumanBody.colliders_of(actor):
+			add_collision_exception_with(collider)
+		reparent.call_deferred(holder, true)
+		return
 	if body is PhysicsBody3D:
 		add_collision_exception_with(body)
 	if body is Node3D and not body is StaticBody3D and not (body is RigidBody3D and body.freeze):
 		reparent.call_deferred(body, true)
+
+
+## What a spike that struck `part` of `actor` hangs from: whatever the body `actor`
+## wears (an NpcBody, a walking chair) names for that spot, or null when nothing in it
+## has a say.
+func _stick_point_in(actor: Node, part: Node) -> Node3D:
+	if actor == null or not is_instance_valid(actor):
+		return null
+	for node in actor.find_children("*", "Node3D", true, false):
+		if node.has_method(&"stick_point"):
+			var holder: Node3D = node.stick_point(global_position, part)
+			if holder:
+				return holder
+	return null
