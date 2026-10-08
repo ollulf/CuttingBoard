@@ -1113,7 +1113,16 @@ func _make_tile(data: ItemData, rotated: bool = false) -> Control:
 		content = label
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.add_child(content)
-	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
+	if rotated and data.icon and cells.x != cells.y:
+		# Turn the icon with the item: lay it out over the unrotated footprint and spin it
+		# a quarter turn about its centre, so it fills the swapped tile at the same size.
+		var inner := Vector2(footprint.y, footprint.x) - Vector2(8, 8)
+		content.size = inner
+		content.pivot_offset = inner / 2.0
+		content.position = (footprint - inner) / 2.0
+		content.rotation = PI / 2.0
+	else:
+		content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
 	return tile
 
 

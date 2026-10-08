@@ -76,8 +76,29 @@ func _run() -> void:
 	_check("key 2 draws the linked rock into the left hand",
 		_panel._hands[0].get_item_data() == ROCK)
 
+	_check_rotated_icon()
+
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+## A rotated long item turns its icon a quarter and keeps it at the unrotated size.
+func _check_rotated_icon() -> void:
+	var long_item := ROCK.duplicate() as ItemData
+	long_item.grid_size = Vector2i(3, 1)
+	long_item.icon = PlaceholderTexture2D.new()
+	var flat := _panel._make_tile(long_item, false)
+	var tile := _panel._make_tile(long_item, true)
+	var icon := tile.get_child(0) as Control
+	var flat_icon_size: Vector2 = flat.size - Vector2(8, 8)
+	var turned := Rect2(icon.position + icon.pivot_offset - Vector2(icon.size.y, icon.size.x) / 2.0,
+		Vector2(icon.size.y, icon.size.x))
+	_check("rotated tile turns its icon a quarter", is_equal_approx(icon.rotation, PI / 2.0))
+	_check("rotated icon keeps the unrotated size", icon.size.is_equal_approx(flat_icon_size))
+	_check("rotated icon bounds fill the tile",
+		turned.is_equal_approx(Rect2(Vector2(4, 4), tile.size - Vector2(8, 8))))
+	flat.free()
+	tile.free()
 
 
 func _drags(window_size: Vector2i, pack: Inventory, hotbar: Hotbar, rock: InventoryEntry) -> void:
