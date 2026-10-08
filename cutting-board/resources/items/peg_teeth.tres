@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/peg_teeth.png" id="1_qdvsl"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_5ftt3"]
+diffuse_texture = ExtResource("1_qdvsl")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Peg Teeth"
+icon = SubResource("CanvasTexture_5ftt3")
+description = "Puppet junk. A row of wooden pegs that once made a grin. They still clack."
+weight = 0.04
+durability = 20
+world_scene_path = "res://scenes/items/peg_teeth.tscn"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/lacquer_flakes.png" id="1_g4ggk"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_nan5u"]
+diffuse_texture = ExtResource("1_g4ggk")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Lacquer Flakes"
+icon = SubResource("CanvasTexture_nan5u")
+description = "Puppet junk. Painted skin, peeled off in curls. The colour has not faded."
+weight = 0.02
+durability = 20
+world_scene_path = "res://scenes/items/lacquer_flakes.tscn"

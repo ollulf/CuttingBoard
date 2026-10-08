@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/sawdust_pouch.png" id="1_2q3bu"]
+[ext_resource type="Script" uid="uid://cy6req1fjjxuo" path="res://scripts/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_5g3pd"]
+diffuse_texture = ExtResource("1_2q3bu")
+texture_filter = 1
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Sawdust Pouch"
+icon = SubResource("CanvasTexture_5g3pd")
+description = "Puppet junk. What a puppet is stuffed with where the wood ran out. Smells of pine."
+weight = 0.15
+durability = 20
+world_scene_path = "res://scenes/items/sawdust_pouch.tscn"

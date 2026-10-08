@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/meshes/props/weapon_concept_back_scratcher_rake.res" id="1_mesh"]
+[ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
+[ext_resource type="Script" path="res://scripts/components/destructible.gd" id="3_destructible"]
+[ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="4_impact"]
+[ext_resource type="Resource" path="res://resources/items/back_scratcher_rake.tres" id="5_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_back_scratcher_rake"]
+size = Vector3(0.106, 0.745, 0.095)
+
+[node name="BackScratcherRake" type="RigidBody3D"]
+mass = 0.9
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = ExtResource("1_mesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.212, -0.034)
+shape = SubResource("BoxShape3D_back_scratcher_rake")
+
+[node name="Carryable" type="Node" parent="."]
+script = ExtResource("2_carryable")
+item_data = ExtResource("5_item")
+impact_damage = 11
+
+[node name="Destructible" type="Node" parent="."]
+script = ExtResource("3_destructible")
+durability = 70
+
+[node name="ImpactDamage" type="Node" parent="."]
+script = ExtResource("4_impact")

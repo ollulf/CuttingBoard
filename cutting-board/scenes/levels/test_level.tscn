@@ -29,6 +29,7 @@
 [ext_resource type="PackedScene" uid="uid://k3do0oioqbn5" path="res://scenes/environment/decoration/debris_1.tscn" id="26_debris"]
 [ext_resource type="PackedScene" uid="uid://bsf86vjc8cwc4" path="res://scenes/environment/decoration/2_box.tscn" id="27_boxes"]
 [ext_resource type="PackedScene" path="res://scenes/environment/carver_grove/carver_grove.tscn" id="28_carver"]
+[ext_resource type="PackedScene" path="res://scenes/items/chair_leg_club.tscn" id="29_chair_leg_club"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_box"]
 size = Vector3(2, 1, 2)
@@ -222,6 +223,12 @@ transform = Transform3D(-0.5, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.5, -6, 0,
 
 [node name="WalkingChair3" parent="ChairYard" groups=["terrain_snap"] instance=ExtResource("21_chair")]
 transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, 3, 0, -10)
+
+[node name="ClubSpot" type="Node3D" parent="ChairYard" groups=["terrain_snap"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0, -4.2)
+
+[node name="ChairLegClub" parent="ChairYard/ClubSpot" instance=ExtResource("29_chair_leg_club")]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0, 1, 0, 0, 0.36, 0)
 
 [node name="CarverGrove" parent="." groups=["terrain_snap"] instance=ExtResource("28_carver")]
 transform = Transform3D(0.64278764, 0, -0.76604444, 0, 1, 0, 0.76604444, 0, 0.64278764, -72, 0, 42)
