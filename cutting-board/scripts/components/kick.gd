@@ -1,9 +1,11 @@
 class_name Kick
 extends Node
 
-## The "kick" action: one press kicks exactly one thing, whatever is under the crosshair
-## within leg reach — a prop, a destructible, an NPC — or swings at the air. Sits next to
-## the Interactor under the camera; see docs/concepts/kick-shove.md (round 3).
+## The "kick" action: one kick hits exactly one thing, whatever is under the crosshair
+## within leg reach — a prop with a Kickable child, an NPC — or swings at the air. Hold
+## the key to charge (target taken at the press), let go to kick: a tap is the weakest
+## kick, a full charge sends a barrel flying. Sits next to the Interactor under the
+## camera; see docs/concepts/kick-shove.md.
 
 ## Emitted when what a press would kick changes, null when nothing is in reach; the HUD
 ## shows its boot mark while there is a target.
@@ -20,10 +22,23 @@ signal kicked(target: Node3D)
 @export var collision_mask := 1
 ## Seconds from the press to the strike frame.
 @export var windup := 0.15
-## Same push for every kick; mass decides how far it goes.
+## Push of a tap; mass decides how far it goes.
 @export var impulse := 25.0
-## Fastest a kick sends anything, so a cup does not leave at 25 m/s.
+## Fastest a tap sends anything, so a cup does not leave at 25 m/s.
 @export var max_speed := 9.0
+@export_group("Charge")
+## Seconds of holding for a full charge.
+@export var charge_time := 0.7
+## Push and speed cap of a fully charged kick; a charge in between is a blend.
+@export var charged_impulse := 320.0
+@export var charged_max_speed := 13.0
+## Damage, stamina cost and NPC knockback of a full charge, as multiples of a tap's.
+@export var charged_damage_scale := 2.5
+@export var charged_cost_scale := 2.0
+@export var charged_knockback_scale := 2.0
+## Extra upward tilt of a full charge, so a hard kick lifts the prop off the ground.
+@export var charged_lift_degrees := 12.0
+@export_group("")
 ## Upward tilt of a prop's push, so a kick on flat ground travels instead of digging in.
 @export var lift_degrees := 10.0
 ## How far down the sight line the crosshair point is looked for.
@@ -60,6 +75,11 @@ var _cooldown := 0.0
 var _windup := -1.0
 var _pending: Node3D = null
 var _pending_full := true
+## Charge of the kick under way, 0 (tap) to 1 (full).
+var _pending_charge := 0.0
+## Seconds the key has been held; below zero while not charging.
+var _held := -1.0
+var _charge_target: Node3D = null
 
 
 func _ready() -> void:
@@ -77,13 +97,17 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_cooldown -= delta
+	if _held >= 0.0:
+		_held += delta
 	if _windup >= 0.0:
 		_windup -= delta
 		if _windup < 0.0:
 			_strike()
 	if not is_instance_valid(_target):
 		_target = null
-	var target := pick_target()
+	# While charging the target stays the one taken at the press.
+	var target := _charge_target if is_charging() and is_instance_valid(_charge_target) \
+			else pick_target()
 	if target == _target:
 		return
 	_unpaint(_target)
@@ -97,29 +121,63 @@ func get_target() -> Node3D:
 
 
 func is_ready() -> bool:
-	return _cooldown <= 0.0 and _windup < 0.0
+	return _cooldown <= 0.0 and _windup < 0.0 and not is_charging()
 
 
-## One press: takes the target now, lands on the strike frame `windup` later. A press at
-## nothing still swings the leg and costs a little.
+func is_charging() -> bool:
+	return _held >= 0.0
+
+
+## How far the kick being held is charged, 0 to 1; 0 while not charging.
+func get_charge() -> float:
+	return clampf(_held / maxf(charge_time, 0.01), 0.0, 1.0) if is_charging() else 0.0
+
+
+## A tap: kicks at once, at the weakest strength.
 func press() -> void:
+	start_charge()
+	release()
+
+
+## The key goes down: takes the target now and starts charging. A press at nothing
+## swings the leg at once and costs a little; there is nothing to charge against.
+func start_charge() -> void:
 	if not is_ready():
 		return
-	var stamina := _stamina()
 	var target := pick_target()
 	if target == null:
+		var stamina := _stamina()
 		if stamina:
 			stamina.drain(whiff_cost)
 		_cooldown = whiff_cooldown
-	else:
-		# An empty pool still kicks, at half strength and without hurting.
-		_pending_full = stamina == null or stamina.try_spend(cost)
-		if not _pending_full and stamina:
-			stamina.drain(cost)
-		_cooldown = cooldown
-	_pending = target
+		_pending = null
+		_windup = windup
+		Sfx.play(swing_sound)
+		return
+	_charge_target = target
+	_held = 0.0
+
+
+## The key comes up: the kick lands on the strike frame `windup` later, as strong as the
+## charge reached.
+func release() -> void:
+	if not is_charging():
+		return
+	var charge := get_charge()
+	_held = -1.0
+	var stamina := _stamina()
+	var price := cost * lerpf(1.0, charged_cost_scale, charge)
+	# An empty pool still kicks, at half strength and without hurting.
+	_pending_full = stamina == null or stamina.try_spend(price)
+	if not _pending_full and stamina:
+		stamina.drain(price)
+	_cooldown = cooldown
+	_pending = _charge_target
+	_pending_charge = charge
+	_charge_target = null
 	_windup = windup
-	Sfx.play(swing_sound)
+	# A charged kick whooshes louder and deeper.
+	Sfx.play(swing_sound, linear_to_db(lerpf(0.8, 1.0, charge)), lerpf(1.0, 0.8, charge))
 
 
 ## The one kickable thing under the crosshair within reach: the ray's direct hit wins;
@@ -184,12 +242,18 @@ func _strike() -> void:
 		_kick_npc(target as Npc, strength)
 	var destructible := target.get_node_or_null("Destructible") as Destructible
 	if destructible and _pending_full and not (target is Npc):
-		destructible.damage(damage)
-	Sfx.play_at(hit_sound, target.global_position, -6.0)
+		destructible.damage(_damage())
+	Sfx.play_at(hit_sound, target.global_position, linear_to_db(lerpf(0.5, 1.0, _pending_charge)))
 	kicked.emit(target)
 
 
+## Damage of the kick under way: grows with its charge, none from an empty pool.
+func _damage() -> int:
+	return roundi(damage * lerpf(1.0, charged_damage_scale, _pending_charge)) if _pending_full else 0
+
+
 func _kick_prop(body: RigidBody3D, point: Vector3, strength: float) -> void:
+	var charge := _pending_charge
 	var direction := point - body.global_position
 	if direction.length() < 0.2:
 		direction = -_camera.global_transform.basis.z
@@ -197,20 +261,26 @@ func _kick_prop(body: RigidBody3D, point: Vector3, strength: float) -> void:
 	# Tilt up by the lift, measured from the horizontal so flat kicks travel.
 	var flat := Vector3(direction.x, 0.0, direction.z)
 	if not flat.is_zero_approx():
-		var pitch := maxf(asin(clampf(direction.y, -1.0, 1.0)), 0.0) + deg_to_rad(lift_degrees)
+		var lift := lift_degrees + charged_lift_degrees * charge
+		var pitch := maxf(asin(clampf(direction.y, -1.0, 1.0)), 0.0) + deg_to_rad(lift)
 		direction = flat.normalized() * cos(pitch) + Vector3.UP * sin(pitch)
-	var speed := minf(impulse * strength / maxf(body.mass, 0.01), max_speed)
+	var kickable := Kickable.find_in(body)
+	var push := lerpf(impulse, charged_impulse, charge) * strength
+	if kickable:
+		push *= kickable.force_multiplier
+	var cap := lerpf(max_speed, charged_max_speed, charge)
+	var speed := minf(push / maxf(body.mass, 0.01), cap)
 	body.apply_central_impulse(direction * speed * body.mass)
 	var impact := body.get_node_or_null("ImpactDamage") as ImpactDamage
 	if impact:
-		impact.arm(owner as Node3D, 1.5, damage if _pending_full else 0)
+		impact.arm(owner as Node3D, lerpf(1.5, 2.5, charge), _damage())
 
 
 func _kick_npc(npc: Npc, strength: float) -> void:
 	var forward := -_camera.global_transform.basis.z
 	var flat := Vector3(forward.x, 0.0, forward.z).normalized()
 	var point := _crosshair_point_on(npc)
-	var amount := damage if _pending_full else 0
+	var amount := _damage()
 	var human := npc.body as HumanBody
 	if human and human.is_head_hit(point):
 		amount = roundi(amount * head_multiplier)
@@ -218,7 +288,7 @@ func _kick_npc(npc: Npc, strength: float) -> void:
 	var info := DamageInfo.new(amount, owner)
 	info.position = point
 	info.direction = flat
-	info.knockback = npc_knockback * strength
+	info.knockback = npc_knockback * strength * lerpf(1.0, charged_knockback_scale, _pending_charge)
 	npc.kicked(info, trip_time if legs else push_time, trip_grip if legs else push_grip)
 
 
@@ -255,11 +325,12 @@ func _kickable(collider: Variant) -> Node3D:
 		return null
 	if node is Npc:
 		return node if (node as Npc).health.is_alive() else null
-	if node is RigidBody3D and not (node as RigidBody3D).freeze:
-		return node
-	if node.get_node_or_null("Destructible"):
-		return node
-	return null
+	# Props only when marked Kickable; a frozen body (held, shelved) stays put.
+	if Kickable.find_in(node) == null:
+		return null
+	if node is RigidBody3D and (node as RigidBody3D).freeze:
+		return null
+	return node
 
 
 func _excluded() -> Array[RID]:

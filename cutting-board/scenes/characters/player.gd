@@ -240,6 +240,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_released("grab_right"):
 		interactor.release_hand(hand_right)
 		return
+	if event.is_action_released("kick"):
+		kick_leg.release()
+		return
 
 	if not MouseGrab.is_captured():
 		# Click back into the window to regain mouse look.
@@ -252,7 +255,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("interact"):
 		interactor.interact(inventory)
 	elif event.is_action_pressed("kick"):
-		kick_leg.press()
+		kick_leg.start_charge()
 	elif event.is_action_pressed("stow_equipment"):
 		hotbar.stow_hands()
 	elif event.is_action_pressed("grab_left"):

@@ -1,5 +1,15 @@
 # Kick
 
+**Round 5, built:** **charged kick.** Hold the kick key to charge (0.7 s to full), let go
+to kick; the target is still taken at the press, a tap is the old kick. A full charge
+pushes 320 N s (cap 13 m/s, +12° lift; a 40 kg barrel goes ~5 m), costs 2x stamina, deals
+2.5x damage (also via `ImpactDamage.arm`) and 2x NPC knockback. A thin bar under the
+"kick" tag fills while charging. New component `scripts/components/kickable.gd`
+(`Kickable`, `force_multiplier`): props are only kicked when they carry one; for now the
+barrel, `box_large` and `box_small` in `scenes/items/` (the `barrel_1` decoration is a bare
+mesh, so not kickable). NPCs need none. A static Destructible without a Kickable is no
+longer a target.
+
 **Round 4, built:** the round 3 slice is in the game: `kick` action (Q / mouse thumb /
 pad R3), `scripts/components/kick.gd` on the player camera, orange target tint + a
 "kick" tag by the crosshair, `ImpactDamage.arm(by, seconds, kick_damage)`,

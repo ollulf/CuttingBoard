@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" uid="uid://di2yos6lnw6kr" path="res://scenes/environment/decoration/barrel_1.tscn" id="1_mesh"]
 [ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
 [ext_resource type="Script" path="res://scripts/components/destructible.gd" id="3_destructible"]
 [ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="4_impact"]
 [ext_resource type="Resource" path="res://resources/items/barrel.tres" id="5_item"]
+[ext_resource type="Script" path="res://scripts/components/kickable.gd" id="6_kickable"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_barrel"]
 height = 0.9
@@ -30,3 +31,6 @@ durability = 160
 
 [node name="ImpactDamage" type="Node" parent="."]
 script = ExtResource("4_impact")
+
+[node name="Kickable" type="Node" parent="."]
+script = ExtResource("6_kickable")

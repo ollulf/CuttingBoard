@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" uid="uid://bsf86vjc8cwc4" path="res://scenes/environment/decoration/2_box.tscn" id="1_mesh"]
 [ext_resource type="Script" path="res://scripts/components/carryable.gd" id="2_carryable"]
 [ext_resource type="Script" path="res://scripts/components/destructible.gd" id="3_destructible"]
 [ext_resource type="Script" path="res://scripts/components/impact_damage.gd" id="4_impact"]
 [ext_resource type="Resource" path="res://resources/items/box_small.tres" id="5_item"]
+[ext_resource type="Script" path="res://scripts/components/kickable.gd" id="6_kickable"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_box"]
 size = Vector3(0.6, 0.6, 0.6)
@@ -29,3 +30,6 @@ durability = 60
 
 [node name="ImpactDamage" type="Node" parent="."]
 script = ExtResource("4_impact")
+
+[node name="Kickable" type="Node" parent="."]
+script = ExtResource("6_kickable")

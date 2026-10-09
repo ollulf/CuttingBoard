@@ -43,6 +43,9 @@ var _refused_tween: Tween
 
 ## Small mark beside the crosshair while something is within kicking reach.
 var _kick_mark: Label
+## Thin bar under the mark showing how far a held kick is charged.
+var _kick_charge_bar: ColorRect
+const KICK_CHARGE_WIDTH := 24.0
 
 
 func _ready() -> void:
@@ -83,6 +86,8 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if Dialogue.find_dialogue_in(_interactor.get_hovered()):
 		_update_interact_prompt()
+	if _kick:
+		_update_kick_charge()
 
 
 func refresh() -> void:
@@ -194,3 +199,24 @@ func _build_kick_mark() -> void:
 	_kick.target_changed.connect(
 		func(target: Node3D) -> void: _kick_mark.visible = target != null
 	)
+	# Fills under the tag while the kick is held, full width at a full charge.
+	_kick_charge_bar = ColorRect.new()
+	_kick_charge_bar.name = "KickCharge"
+	_kick_charge_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_kick_charge_bar.color = Color(1.0, 0.55, 0.2)
+	_kick_charge_bar.set_anchors_preset(Control.PRESET_CENTER)
+	_kick_charge_bar.offset_left = 12.0
+	_kick_charge_bar.offset_top = 26.0
+	_kick_charge_bar.offset_bottom = 28.0
+	_kick_charge_bar.visible = false
+	add_child(_kick_charge_bar)
+
+
+func _update_kick_charge() -> void:
+	var charging := _kick.is_charging()
+	_kick_charge_bar.visible = charging
+	if charging:
+		var charge := _kick.get_charge()
+		_kick_charge_bar.offset_right = _kick_charge_bar.offset_left + KICK_CHARGE_WIDTH * charge
+		# Brightens to yellow at a full charge.
+		_kick_charge_bar.color = Color(1.0, 0.55, 0.2).lerp(Color(1.0, 0.9, 0.3), charge)
