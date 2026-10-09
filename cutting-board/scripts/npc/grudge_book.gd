@@ -28,6 +28,11 @@ func get_held(memory: Memory) -> Array[Node3D]:
 	return held
 
 
+## Lets the grudge against `actor` go before it runs out.
+func drop(actor: Node3D) -> void:
+	_until.erase(actor)
+
+
 ## The clock grudges run on, in seconds.
 static func now() -> float:
 	return Time.get_ticks_msec() / 1000.0

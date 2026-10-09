@@ -17,7 +17,7 @@ enum State { UNAWARE, WATCHING, SEARCHING, CALLING }
 
 ## Seconds of being seen before the NPC calls for help. 0 turns watching off: an enemy
 ## is fought (or fled) the moment it is seen, as before.
-@export var watch_time := 5.0
+@export var watch_time := 7.0
 ## An enemy this close ends the watch at once with a short call.
 @export var close_range := 3.0
 ## The meter fills twice as fast for an enemy closer than this.
