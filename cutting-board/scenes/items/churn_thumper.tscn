@@ -28,4 +28,4 @@ unique_name_in_owner = true
 held_verb = "Fire"
 
 [node name="Destructible" parent="." index="4"]
-durability = 240
+durability = 72
