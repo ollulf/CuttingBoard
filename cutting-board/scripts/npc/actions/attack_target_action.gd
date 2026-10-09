@@ -3,7 +3,8 @@ extends NpcAction
 
 ## Goes after the enemy the NPC picks to fight (Npc.get_attack_target) and hits it. While the enemy is in sight it
 ## chases the enemy itself; once out of sight it heads for where the enemy was last
-## seen, and gives up when memory lets the enemy go.
+## seen, and gives up when memory lets the enemy go — or, chased too long or too far from
+## home, gives up on it itself (Npc.give_up_on) and goes back.
 
 ## How keen it is to fight any enemy it knows of. 0 never fights.
 @export_range(0.0, 1.0) var aggression := 0.8
@@ -23,6 +24,11 @@ extends NpcAction
 @export var windup := 0.4
 ## Seen this recently counts as in sight, and is chased at its true position.
 @export var in_sight_window := 0.5
+## Seconds of chasing an enemy without once getting within attack_range before giving up
+## on it. 0 chases for as long as it is remembered.
+@export var give_up_after := 20.0
+## Metres from home past which a chase is given up. 0 chases anywhere.
+@export var leash_distance := 30.0
 
 ## A step back that opens the gap by less than this, once the wall behind is taken into
 ## account, is not worth taking.
@@ -30,6 +36,8 @@ const MIN_STEP_BACK := 0.15
 
 var _target: Node3D
 var _until_blow := 0.0
+## Seconds chased since the target was last within attack_range.
+var _chasing_for := 0.0
 
 
 func score(npc: Npc) -> float:
@@ -39,6 +47,7 @@ func score(npc: Npc) -> float:
 func enter(npc: Npc) -> void:
 	_target = npc.get_attack_target()
 	_until_blow = windup
+	_chasing_for = 0.0
 
 
 func exit(npc: Npc) -> void:
@@ -50,7 +59,10 @@ func exit(npc: Npc) -> void:
 func tick(npc: Npc, delta: float) -> void:
 	# Re-picked every frame, so a closer enemy — or the player turning up — is not
 	# ignored in favour of whoever the fight started with.
-	_target = npc.get_attack_target()
+	var target := npc.get_attack_target()
+	if target != _target:
+		_chasing_for = 0.0
+	_target = target
 	if _target == null:
 		npc.locomotion.stop()
 		return
@@ -60,6 +72,7 @@ func tick(npc: Npc, delta: float) -> void:
 
 	var distance := npc.flat_distance_to(goal)
 	if in_sight and distance <= attack_range:
+		_chasing_for = 0.0
 		npc.locomotion.face(goal)
 		if distance < min_distance:
 			_step_back(npc, goal)
@@ -71,6 +84,14 @@ func tick(npc: Npc, delta: float) -> void:
 			_until_blow = cooldown
 		return
 
+	_chasing_for += delta
+	if ((give_up_after > 0.0 and _chasing_for > give_up_after)
+			or (leash_distance > 0.0 and npc.flat_distance_to(npc.home) > leash_distance)):
+		npc.give_up_on(_target)
+		_target = null
+		_chasing_for = 0.0
+		npc.locomotion.stop()
+		return
 	npc.locomotion.clear_facing()
 	npc.locomotion.move_to(goal, true)
 	# Stepping out of range and back resets the wind-up rather than landing a free hit.

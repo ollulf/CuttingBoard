@@ -43,8 +43,15 @@ func tick(npc: Npc, delta: float) -> void:
 
 
 func _pick_spot(npc: Npc) -> void:
+	_pause = randf_range(pause_min, pause_max)
+	_walking_for = 0.0
+	# Far from home — back from a chase it gave up — it walks straight home first, and
+	# is given the time the longer walk takes.
+	var away := npc.flat_distance_to(npc.home)
+	if away > radius:
+		npc.locomotion.move_to(npc.home)
+		_walking_for = -away / npc.locomotion.walk_speed
+		return
 	var angle := randf() * TAU
 	var distance := randf_range(radius * 0.3, radius)
 	npc.locomotion.move_to(npc.home + Vector3(cos(angle), 0.0, sin(angle)) * distance)
-	_pause = randf_range(pause_min, pause_max)
-	_walking_for = 0.0

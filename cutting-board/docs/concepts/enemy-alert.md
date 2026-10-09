@@ -4,6 +4,12 @@ Result page with mock-ups: https://claude.ai/artifact/J4kY2xij3Qw9AaovcGGJui (bo
 
 **Goal:** when a hostile NPC notices the player, it watches the player and grumbles for 5 s (the player can still slip away), then calls for help with its voice; allies in range answer with their voices and come.
 
+## Tuning (task `tmv1khb5w`)
+- Watch lasts **7 s** (`Alertness.watch_time`); close range and hits still call at once.
+- Barks +6 dB each (`VoiceBark.PATTERNS`): call +14 dB, answer +10, hey +9, hm +6, mutter 0.
+- Allies that hear a call learn where the player **really is** (`Npc.hear_of` → `Memory.remember`), not the caller's last seen spot.
+- Chase limit (`AttackTargetAction`): gives up after `give_up_after` 20 s without getting within attack range, or past `leash_distance` 30 m from `home`; `Npc.give_up_on` forgets the target, drops the grudge and ignores it for `give_up_cooldown` 15 s (a hit or a call ends that early); `WanderAction` walks straight home when farther than its radius.
+
 ## Built (round 3)
 - `Alertness` (`scripts/npc/alertness.gd`) + `WatchAction` + `AlertMark` (a depth-tested `Label3D` `?`/`!`, not the carved sprite yet) on every NPC in `npc_base.tscn`; villagers set `watch_time = 0` (they still flee/fight at once).
 - `Npc.call_for_help` / `answer_call` / `allies_within` (shared with `_rally_allies`); "same mask" = same `Faction.data`, which follows the worn mask.
