@@ -40,7 +40,7 @@ func _run() -> void:
 		print("%s: %d durability, %d per hit, breaks on hit %d" % [
 			data.display_name, data.durability, data.wear_per_hit, hits
 		])
-		_check("%s lasts 30-60 landed hits (%d)" % [data.display_name, hits], hits >= 30 and hits <= 60)
+		_check("%s lasts 9-18 landed hits (%d)" % [data.display_name, hits], hits >= 9 and hits <= 18)
 
 	# A landed blow costs wear_per_hit; a whiff costs nothing.
 	var hammer := _hold(HAMMER, hand)

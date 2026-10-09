@@ -28,7 +28,7 @@ impact_damage = 14
 
 [node name="Destructible" type="Node" parent="."]
 script = ExtResource("3_destructible")
-durability = 150
+durability = 45
 
 [node name="ImpactDamage" type="Node" parent="."]
 script = ExtResource("4_impact")
