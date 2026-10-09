@@ -3,9 +3,9 @@ extends CharacterBody3D
 ## Simple first-person controller: WASD to walk, mouse to look, space to jump, C to
 ## toggle crouch.
 
-@export var walk_speed := 4.5
-@export var sprint_speed := 7.2
-@export var crouch_speed := 2.2
+@export var walk_speed := 3.6
+@export var sprint_speed := 5.76
+@export var crouch_speed := 1.76
 ## How quickly W has to be tapped twice to break into a sprint, in seconds.
 @export var double_tap_window := 0.3
 @export var jump_velocity := 4.5
