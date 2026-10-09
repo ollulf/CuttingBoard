@@ -553,17 +553,36 @@ func _on_damaged(info: DamageInfo) -> void:
 	# Before the body can fall: a mask the killing blow breaks does not come off whole.
 	body.hit_mask(info)
 	if health.is_alive():
-		# A beat after the blow rather than on top of it: the grunt is a reaction, and
-		# it keeps the two from stacking into one loud thump.
-		get_tree().create_timer(hurt_sound_delay).timeout.connect(
-			func() -> void:
-				if is_instance_valid(eyes) and health.is_alive():
-					Sfx.play_at(hurt_sound, eyes.global_position)
-		)
-		body.flinch(info)
-		# A blow staggers: a swing still winding up is knocked out of it.
-		cancel_strike()
-		locomotion.push(body.get_knockback(info))
+		_react_to_blow(info)
+
+
+## Takes a kick from the player's Kick: hurts like any blow when it carries damage (a
+## kick from an empty stamina pool does not, but still shoves), then staggers for as
+## long as the kicked part decides — a trip at the legs, a push back at the body.
+func kicked(info: DamageInfo, stagger_seconds: float, grip: float) -> void:
+	if not health.is_alive():
+		return
+	if info.amount > 0:
+		health.apply_damage(info)
+	else:
+		_react_to_blow(info)
+	if health.is_alive():
+		locomotion.stagger_for(stagger_seconds, grip)
+
+
+## Flinch, grunt and stagger: how a living NPC takes a blow, hurt or not.
+func _react_to_blow(info: DamageInfo) -> void:
+	# A beat after the blow rather than on top of it: the grunt is a reaction, and
+	# it keeps the two from stacking into one loud thump.
+	get_tree().create_timer(hurt_sound_delay).timeout.connect(
+		func() -> void:
+			if is_instance_valid(eyes) and health.is_alive():
+				Sfx.play_at(hurt_sound, eyes.global_position)
+	)
+	body.flinch(info)
+	# A blow staggers: a swing still winding up is knocked out of it.
+	cancel_strike()
+	locomotion.push(body.get_knockback(info))
 
 
 ## Dead is for good: the NPC stops thinking, seeing and moving, lets go of what it held

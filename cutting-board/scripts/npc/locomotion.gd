@@ -37,6 +37,8 @@ var _running := false
 var _facing := Vector3.ZERO
 var _has_facing := false
 var _stagger := 0.0
+## Footing kept while staggering: stagger_control after a blow, less after a trip.
+var _stagger_grip := 0.1
 ## The agent's path as last walked, and the index of the waypoint being walked to.
 var _path := PackedVector3Array()
 var _path_index := 0
@@ -93,6 +95,18 @@ func push(velocity: Vector3) -> void:
 		return
 	_body.velocity += velocity
 	_stagger = stagger_time
+	_stagger_grip = stagger_control
+
+
+## Keeps the body staggering for at least `seconds` with only `grip` of its footing: a
+## kick to the legs trips it for longer, and with less control, than a plain blow.
+func stagger_for(seconds: float, grip := stagger_control) -> void:
+	_stagger = maxf(_stagger, seconds)
+	_stagger_grip = grip
+
+
+func get_stagger() -> float:
+	return maxf(_stagger, 0.0)
 
 
 func _physics_process(delta: float) -> void:
@@ -111,7 +125,7 @@ func _physics_process(delta: float) -> void:
 	var accel := acceleration
 	if _stagger > 0.0:
 		_stagger -= delta
-		accel *= stagger_control
+		accel *= _stagger_grip
 	_body.velocity.x = move_toward(_body.velocity.x, desired.x, accel * speed * delta)
 	_body.velocity.z = move_toward(_body.velocity.z, desired.z, accel * speed * delta)
 	_body.move_and_slide()

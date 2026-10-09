@@ -1,5 +1,14 @@
 # Kick
 
+**Round 4, built:** the round 3 slice is in the game: `kick` action (Q / mouse thumb /
+pad R3), `scripts/components/kick.gd` on the player camera, orange target tint + a
+"kick" tag by the crosshair, `ImpactDamage.arm(by, seconds, kick_damage)`,
+`Npc.kicked` (legs below 0.85 m trip 0.9 s, body push 0.6 s), test
+`tests/kick_check.tscn`. Deviation: a kicked prop hurts on any hit above 1 m/s (fixed 6
+damage), since 25 N s moves a 40 kg barrel at only ~0.6 m/s, far below the 6.5 m/s throw
+threshold. Not yet: leg mesh/animation, player recoil on heavy props, line-of-sight
+recheck at the strike frame (distance only).
+
 Round 3, 2026-10-09: simplified to **one action**. A single press of the kick key kicks
 exactly one thing: whatever is under the crosshair. No hold, no charge, no separate
 shove, no area push. Concept only, no game code. Builds on idea 4 (kick / shove) and

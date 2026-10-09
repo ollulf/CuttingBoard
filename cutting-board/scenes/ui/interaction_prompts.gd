@@ -38,10 +38,17 @@ var _refused_tween: Tween
 @onready var _hotbar: Hotbar = %Hotbar
 @onready var _equipment: Equipment = %Equipment
 @onready var _health: Health = %Health
+## Not every owner of the HUD can kick.
+@onready var _kick: Kick = get_node_or_null("%Kick")
+
+## Small mark beside the crosshair while something is within kicking reach.
+var _kick_mark: Label
 
 
 func _ready() -> void:
 	add_to_group(GROUP)
+	if _kick:
+		_build_kick_mark()
 	_inventory_panel.bind(_inventory)
 	_cheat_menu.bind(_inventory)
 	_inventory_panel.drop_requested.connect(_on_drop_requested)
@@ -168,3 +175,22 @@ func _hovering_carryable() -> bool:
 	if target == null or not is_instance_valid(target):
 		return false
 	return target.has_node("Carryable")
+
+
+## Placeholder for a boot icon: an orange "kick" tag at the crosshair's lower right,
+## shown while the Kick has a target.
+func _build_kick_mark() -> void:
+	_kick_mark = Label.new()
+	_kick_mark.name = "KickMark"
+	_kick_mark.text = "kick"
+	_kick_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_kick_mark.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
+	_kick_mark.add_theme_font_size_override("font_size", 12)
+	_kick_mark.set_anchors_preset(Control.PRESET_CENTER)
+	_kick_mark.offset_left = 12.0
+	_kick_mark.offset_top = 8.0
+	_kick_mark.visible = false
+	add_child(_kick_mark)
+	_kick.target_changed.connect(
+		func(target: Node3D) -> void: _kick_mark.visible = target != null
+	)

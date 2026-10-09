@@ -14,6 +14,9 @@ extends Node
 ## Impact speed at which a hit deals the full Carryable.impact_damage; slower hits scale
 ## down to nothing at the threshold, which is what makes a charged throw worth charging.
 @export var full_damage_speed := 12.0
+## Slowest closing speed at which a kicked object still hurts what it rolls into: a kick
+## sends a heavy prop far slower than a throw.
+@export var kick_min_speed := 1.0
 
 @export_group("Sounds")
 ## The object knocking into the ground or another object. Unlike damage, this is heard
@@ -43,6 +46,10 @@ var _impact_velocity := Vector3.ZERO
 ## Set when the object is released and cleared by the first victim it finds. One throw
 ## therefore lands one hit, however many contact points the collision reports.
 var _armed := false
+## When an arm() with a time limit runs out, in seconds of Time.get_ticks_msec.
+var _armed_until := INF
+## Set while armed by a kick: the fixed damage its first living victim takes.
+var _kick_damage := 0
 ## Counts down to the next impact this object may be heard making.
 var _sound_wait := SETTLE_TIME
 
@@ -52,7 +59,7 @@ func _ready() -> void:
 	_body.max_contacts_reported = 4
 	_body.body_entered.connect(_on_body_entered)
 	if _carryable:
-		_carryable.released.connect(_arm)
+		_carryable.released.connect(_on_released)
 
 
 func _physics_process(delta: float) -> void:
@@ -66,14 +73,34 @@ func get_impact_velocity() -> Vector3:
 	return _impact_velocity
 
 
-## Re-arms the object to deal damage on its next landing.
-func _arm() -> void:
+## Arms the object to deal damage on its next landing, credited to `by` (the thrower or
+## kicker) through the same marks HandSlot leaves on what it lets go of. `seconds` > 0
+## disarms it again after that long. `kick_damage` > 0 is a kick: too slow to clear the
+## throw threshold, so it hurts whatever living thing it reaches above kick_min_speed,
+## by that fixed amount.
+func arm(by: Node3D = null, seconds := 1.5, kick_damage := 0) -> void:
 	_armed = true
+	_kick_damage = kick_damage
+	_armed_until = Time.get_ticks_msec() / 1000.0 + seconds if seconds > 0.0 else INF
+	if by:
+		_body.set_meta(HandSlot.RELEASED_BY_META, by)
+		_body.set_meta(HandSlot.RELEASED_AT_META, Time.get_ticks_msec() / 1000.0)
+
+
+## A throw stays armed until it lands, however long it flies.
+func _on_released() -> void:
+	arm(null, 0.0)
 
 
 func _on_body_entered(body: Node) -> void:
 	var speed := _relative_speed(body)
 	_play_impact(body, speed)
+	if _armed and Time.get_ticks_msec() / 1000.0 > _armed_until:
+		_armed = false
+		_kick_damage = 0
+	if _kick_damage > 0:
+		_deal_kick_damage_to(body, speed)
+		return
 	if speed < speed_threshold:
 		return
 	var excess := speed - speed_threshold
@@ -108,6 +135,21 @@ func _relative_speed(body: Node) -> float:
 	if other_impact:
 		other_velocity = other_impact.get_impact_velocity()
 	return (_impact_velocity - other_velocity).length()
+
+
+func _deal_kick_damage_to(body: Node, speed: float) -> void:
+	if speed < kick_min_speed:
+		return
+	var health := Health.find_in(body)
+	if health == null or not health.is_alive():
+		return
+	var info := DamageInfo.new(_kick_damage, _body)
+	_armed = false
+	_kick_damage = 0
+	info.position = _body.global_position
+	info.direction = _impact_velocity.normalized()
+	info.knockback = _body.mass * _impact_velocity.length()
+	health.apply_damage(info)
 
 
 func _deal_damage_to(body: Node, excess: float) -> void:

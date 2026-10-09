@@ -77,9 +77,9 @@ func _physics_process(_delta: float) -> void:
 		target = null
 	if target == _hovered:
 		return
-	_set_overlay(_hovered, null)
+	set_overlay(_hovered, null)
 	_hovered = target
-	_set_overlay(_hovered, highlight_material)
+	set_overlay(_hovered, highlight_material)
 	hover_changed.emit(_hovered)
 
 
@@ -350,7 +350,7 @@ func _get_component(node: Node3D, component_name: String) -> Node:
 	return node.get_node_or_null(component_name)
 
 
-func _set_overlay(node: Node3D, material: Material) -> void:
+static func set_overlay(node: Node3D, material: Material) -> void:
 	if node == null or not is_instance_valid(node):
 		return
 	for mesh in node.find_children("*", "MeshInstance3D", true, false):

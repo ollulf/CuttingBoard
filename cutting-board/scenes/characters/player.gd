@@ -116,6 +116,7 @@ extends CharacterBody3D
 @onready var arms: ArmAnimator = %Arms
 @onready var melee: MeleeAttack = %MeleeAttack
 @onready var interactor: Interactor = %Interactor
+@onready var kick_leg: Kick = %Kick
 @onready var hand_left: HandSlot = %HandSlotLeft
 @onready var hand_right: HandSlot = %HandSlotRight
 @onready var inventory: Inventory = %Inventory
@@ -250,6 +251,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_crouching = not _crouching
 	elif event.is_action_pressed("interact"):
 		interactor.interact(inventory)
+	elif event.is_action_pressed("kick"):
+		kick_leg.press()
 	elif event.is_action_pressed("stow_equipment"):
 		hotbar.stow_hands()
 	elif event.is_action_pressed("grab_left"):
