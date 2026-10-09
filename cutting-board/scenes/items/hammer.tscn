@@ -30,7 +30,7 @@ script = ExtResource("3_usable")
 
 [node name="Destructible" type="Node" parent="." unique_id=856521825]
 script = ExtResource("4_destructible")
-durability = 220
+durability = 66
 
 [node name="ImpactDamage" type="Node" parent="." unique_id=1082808082]
 script = ExtResource("5_impact")

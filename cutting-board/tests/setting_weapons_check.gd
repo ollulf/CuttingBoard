@@ -38,7 +38,7 @@ func _run() -> void:
 		_check("%s is a weapon on the weapon arm set" % data.display_name,
 			data.is_weapon() and data.animation_set == &"weapon")
 		var hits := ceili(float(data.durability) / maxi(data.wear_per_hit, 1))
-		_check("%s lasts 30-60 landed hits (%d)" % [data.display_name, hits], hits >= 30 and hits <= 60)
+		_check("%s lasts 9-18 landed hits (%d)" % [data.display_name, hits], hits >= 9 and hits <= 18)
 		var item := data.spawn()
 		if not _check("%s spawns its world scene" % data.display_name, item is RigidBody3D):
 			continue
