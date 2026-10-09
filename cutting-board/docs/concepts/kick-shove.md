@@ -3,7 +3,7 @@
 Round 1, 2026-10-09. Concept only, no game code. How the player (and later NPCs) kick and
 shove things, and with which controls. Builds on idea 4 (kick / shove) and idea 5
 (momentum damage) of `physics-combat.md` (branch `task/physics-combat-ideas`) and does not
-repeat them. Result page: see the task card.
+repeat them. Result page: https://claude.ai/artifact/BJfuQQ1cX1oXpBvSUbsdV9
 
 ## What the code gives us today
 
