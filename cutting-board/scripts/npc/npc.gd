@@ -8,6 +8,11 @@ extends CharacterBody3D
 ## Friendly and hostile are not two kinds of NPC. A villager and a bandit are this same
 ## scene with a different faction and differently tuned actions.
 
+## Called for help about `target`; `answers` is how many allies answer out loud.
+signal called_for_help(target: Node3D, answers: int)
+## Heard `caller`'s call about `target` and will answer it.
+signal answering(caller: Npc, target: Node3D)
+
 ## What the NPC starts with in each hand and in its pockets. Built into real objects on
 ## spawn, the same way the player's hotbar draws an item into a hand.
 @export var right_hand_item: ItemData
@@ -51,6 +56,17 @@ extends CharacterBody3D
 @export var hears_allies := false
 @export_group("")
 
+@export_group("Call For Help")
+## Metres an alarm call carries to allies of this NPC's faction — the one its worn mask
+## says. Each wall between them halves it.
+@export var call_for_help_radius := 14.0
+## How many of the allies that hear a call answer it out loud, nearest first. The rest
+## come without a word.
+@export var max_answers := 3
+## Seconds before this NPC can call for help again.
+@export var call_cooldown := 12.0
+@export_group("")
+
 @export_group("Sounds")
 ## Grunts from behind the mask when hit, and the last one when killed.
 @export var hurt_sound: SoundBank = preload("res://resources/audio/npc_hurt.tres")
@@ -82,6 +98,11 @@ extends CharacterBody3D
 @onready var holster: Holster = get_node_or_null(^"%Holster")
 ## Poses the swing's arm motion. Optional: a body without one still strikes on time.
 @onready var body_animator: BodyAnimator = get_node_or_null(^"%BodyAnimator")
+## Watches an enemy before calling for help. Optional: without one, enemies are fought
+## the moment they are seen.
+@onready var alertness: Alertness = get_node_or_null(^"%Alertness")
+@onready var alert_mark: AlertMark = get_node_or_null(^"%AlertMark")
+@onready var dialogue: Dialogue = Dialogue.find_dialogue_in(self)
 
 ## Where the NPC was placed, which is what it wanders around.
 var home := Vector3.ZERO
@@ -91,13 +112,15 @@ var _grudges := GrudgeBook.new()
 ## The blow being swung: who at, and seconds left until it lands. Negative when none is.
 var _strike_target: Node3D
 var _strike_left := -1.0
+## Engine time (seconds) from which this NPC may call for help again.
+var _call_ready_at := 0.0
 
 
 func _ready() -> void:
 	home = global_position
 	if not name_pool.is_empty():
 		inventory.display_name = name_pool.pick_random()
-	sight.spotted.connect(memory.remember)
+	sight.spotted.connect(_on_spotted)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
 	brain.setup(self)
@@ -409,16 +432,103 @@ func _rally_allies(attacker: Node3D) -> void:
 	var theirs := Faction.find_in(attacker)
 	if theirs and theirs.data == faction.data:
 		return
-	for node in get_tree().get_nodes_in_group(Faction.GROUP):
-		var ally := node as Npc
-		if (ally == null or ally == self or ally == attacker or not ally.health.is_alive()
-				or ally.faction.data != faction.data):
-			continue
-		if global_position.distance_to(ally.global_position) > defend_allies_radius:
+	for ally in allies_within(defend_allies_radius):
+		if ally == attacker:
 			continue
 		if not ally.hears_allies and ally.memory.seconds_since_seen(self) > defend_sight_window:
 			continue
 		ally.hold_grudge(attacker)
+
+
+## Every living NPC of this one's side — the side its worn mask says — within `radius`
+## metres, nearest first. Shared by the grudge rally and the call for help.
+func allies_within(radius: float) -> Array[Npc]:
+	var allies: Array[Npc] = []
+	if faction.data == null or radius <= 0.0:
+		return allies
+	for node in get_tree().get_nodes_in_group(Faction.GROUP):
+		var ally := node as Npc
+		if (ally == null or ally == self or not ally.health.is_alive()
+				or ally.faction.data != faction.data):
+			continue
+		if global_position.distance_to(ally.global_position) <= radius:
+			allies.append(ally)
+	allies.sort_custom(func(a: Npc, b: Npc) -> bool:
+		return global_position.distance_squared_to(a.global_position) \
+				< global_position.distance_squared_to(b.global_position))
+	return allies
+
+
+## Shouts for help about `target`, last seen at `spot`. Allies of this NPC's side within
+## call_for_help_radius hear it — half as far through a wall — and learn where the enemy
+## is; the nearest max_answers answer out loud one after another, the rest come without a
+## word. Hearing is one hop: those who hear do not call on in turn. Returns whether anyone
+## answered, which the caller waits on before it attacks. Does nothing on cooldown.
+func call_for_help(target: Node3D, spot: Vector3) -> bool:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now < _call_ready_at or not health.is_alive():
+		return false
+	_call_ready_at = now + call_cooldown
+	bark(&"call")
+	var answers := 0
+	for ally in allies_within(call_for_help_radius):
+		var reach := call_for_help_radius * (0.5 if _wall_between(ally) else 1.0)
+		if global_position.distance_to(ally.global_position) > reach:
+			continue
+		if ally.alertness:
+			ally.alertness.calm()
+		# Already fighting it: only the spot is news.
+		if ally.memory.knows(target) or answers >= max_answers:
+			ally.memory.remember_at(target, spot)
+			continue
+		var delay := 0.5 + 0.4 * answers + randf() * 0.15
+		answers += 1
+		ally.answer_call(self, target, spot, delay)
+	called_for_help.emit(target, answers)
+	return answers > 0
+
+
+## Answers `caller`'s call: heads for `spot`, where the caller last saw `target`, at
+## once — so it does not start a watch of its own — and shouts back `delay` seconds from
+## now, so several answers come one after another rather than as one chord.
+func answer_call(caller: Npc, target: Node3D, spot: Vector3, delay: float) -> void:
+	memory.remember_at(target, spot)
+	answering.emit(caller, target)
+	get_tree().create_timer(delay, true, true).timeout.connect(
+		func() -> void:
+			if not health.is_alive():
+				return
+			bark(&"answer")
+			if alert_mark:
+				alert_mark.flash()
+	)
+
+
+## Plays one of VoiceBark's noises in this NPC's own voice.
+func bark(noise: StringName) -> void:
+	if dialogue and health.is_alive():
+		VoiceBark.play(eyes, dialogue.voice, noise, dialogue.voice_pitch)
+
+
+## Whether a wall stands between this NPC and `other`, which muffles a call.
+func _wall_between(other: Npc) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(
+			eyes.global_position, other.eyes.global_position, sight.collision_mask)
+	var exclude: Array[RID] = []
+	for collider in HumanBody.colliders_of(self):
+		exclude.append(collider.get_rid())
+	query.exclude = exclude
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return not hit.is_empty() and HumanBody.actor_of(hit.get("collider")) != other
+
+
+## Hostile actors it has not yet noticed are watched first (Alertness); everyone else is
+## noted in Memory at once.
+func _on_spotted(actor: Node3D) -> void:
+	if alertness and alertness.wants_to_watch(actor):
+		alertness.see(actor)
+	else:
+		memory.remember(actor)
 
 
 ## Being hit by someone is as good as seeing them: an NPC struck from behind turns to
@@ -435,6 +545,9 @@ func _on_damaged(info: DamageInfo) -> void:
 		memory.remember(attacker)
 		if health.is_alive():
 			hold_grudge(attacker)
+			# Struck while still making up its mind: no more watching, a short call.
+			if alertness and alertness.state == Alertness.State.WATCHING:
+				alertness.raise_alarm(attacker, true)
 		# A killing blow too: allies who watch one of their own die step in all the more.
 		_rally_allies(attacker)
 	# Before the body can fall: a mask the killing blow breaks does not come off whole.
@@ -464,6 +577,10 @@ func _on_died(info: DamageInfo) -> void:
 	locomotion.stop()
 	locomotion.set_physics_process(false)
 	sight.set_physics_process(false)
+	# Killed while watching: the call never comes.
+	if alertness:
+		alertness.calm()
+		alertness.set_physics_process(false)
 	# Out of the actor group, so nobody keeps fighting or fleeing a corpse.
 	remove_from_group(Faction.GROUP)
 	drop_held()

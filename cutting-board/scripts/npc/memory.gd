@@ -23,6 +23,15 @@ func remember(actor: Node3D) -> void:
 	_entries[actor] = {"position": actor.global_position, "time": _now()}
 
 
+## Notes that `actor` was at `position` just now, without having seen it there itself:
+## told by an ally's call for help. The NPC goes there and searches like for any actor
+## it lost sight of.
+func remember_at(actor: Node3D, position: Vector3) -> void:
+	if actor == null or not is_instance_valid(actor):
+		return
+	_entries[actor] = {"position": position, "time": _now()}
+
+
 func forget(actor: Node3D) -> void:
 	_entries.erase(actor)
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/npc.gd" id="1_npc"]
 [ext_resource type="Script" path="res://scripts/components/health_regen.gd" id="99_regen"]
@@ -18,6 +18,9 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/human_body.tscn" id="14_human"]
 [ext_resource type="Script" path="res://scripts/npc/body_animator.gd" id="16_body_animator"]
 [ext_resource type="Script" path="res://scripts/npc/holster.gd" id="17_holster"]
+[ext_resource type="Script" path="res://scripts/npc/alertness.gd" id="18_alertness"]
+[ext_resource type="Script" path="res://scripts/npc/actions/watch_action.gd" id="19_watch"]
+[ext_resource type="Script" path="res://scripts/vfx/alert_mark.gd" id="20_alert_mark"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
 radius = 0.3
@@ -135,3 +138,24 @@ script = ExtResource("16_body_animator")
 [node name="Holster" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("17_holster")
+
+[node name="Watch" type="Node" parent="Brain"]
+script = ExtResource("19_watch")
+
+[node name="Alertness" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("18_alertness")
+
+[node name="AlertMark" type="Label3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, 0)
+visible = false
+pixel_size = 0.004
+billboard = 1
+texture_filter = 0
+modulate = Color(0.95, 0.9, 0.75, 1)
+outline_modulate = Color(0.12, 0.07, 0.03, 1)
+text = "?"
+font_size = 64
+outline_size = 14
+script = ExtResource("20_alert_mark")
