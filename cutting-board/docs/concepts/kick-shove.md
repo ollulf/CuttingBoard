@@ -1,98 +1,118 @@
-# Kick and shove
+# Kick
 
-Round 2, 2026-10-09: reworked around a **targeted kick** (the player picks what to kick
-and where it goes). Round 1 (tap shove / charged kick on Q) is kept below where it still
-fits. Concept only, no game code. Builds on idea 4 (kick / shove) and idea 5 (momentum
-damage) of `physics-combat.md` (branch `task/physics-combat-ideas`).
+Round 3, 2026-10-09: simplified to **one action**. A single press of the kick key kicks
+exactly one thing: whatever is under the crosshair. No hold, no charge, no separate
+shove, no area push. Concept only, no game code. Builds on idea 4 (kick / shove) and
+idea 5 (momentum damage) of `physics-combat.md` (branch `task/physics-combat-ideas`).
 Result page: https://claude.ai/artifact/BJfuQQ1cX1oXpBvSUbsdV9
+Earlier rounds are kept below as history.
 
-## Round 2: the targeted kick
+## Round 3: one press, one object
 
-### Choosing the target
-- **Crosshair ray**, the same one `Interactor._get_target` casts from the camera, but
-  1.8 m long (leg reach plus a step) instead of the interactor's 3 m.
-- **Soft aim assist:** if the ray misses, a sphere shape-cast (radius 0.3 m) along the
-  same line picks the kickable nearest the crosshair. Only the target choice snaps,
-  never the camera. The round-1 pitch clamp goes: you look at what you kick.
-- **Kickable:** a `RigidBody3D` under ~80 kg (props, carryables, barrels), a
-  `Destructible`, a door (later), or an NPC (`HumanBody` / any `NpcBody`). Static world
-  and heavier bodies are not targets: no highlight, and a hold kicks forward untargeted.
-- **Highlight:** the Interactor already lays `highlight_material` over the hovered
-  object's meshes (`_set_overlay`). The kick reuses that mechanism with its own warm
-  orange tint, shown **only while Q is held**, so normal looking stays clean and the two
-  highlights never fight. In 1.8-3 m it shows dimmed: "step closer".
-- **Lock on press:** the target is chosen when the hold starts and kept while charging,
-  so turning the camera aims the kick instead of switching the target. The lock drops if
-  the target leaves 2.2 m or the line of sight.
+### Controls
+**Q** (pad R3, mouse thumb button 4 as an alternative). One press = one kick. A single
+press needs no hold or release, so nothing argues for another key: Q is free, sits next
+to WASD/E/F (kick while strafing), and R3 is the usual melee button on pads. No cancel
+(the F-cancel goes): the kick is too short to need one.
 
-### Choosing the direction
-- **Props: kick at the crosshair point.** While charging, a ray from the camera finds the
-  point under the crosshair (up to 20 m), and the prop is launched toward it, the way
-  `Interactor._throw_direction` converges a throw on the sight line. So: lock a barrel,
-  turn to the bandit, release. The barrel goes where the crosshair is.
-- **Charge = power:** the hold (0.25-0.8 s) sets the impulse, 10-20 N s, as in round 1,
-  plus a small upward lift (10-25 deg by charge) so a kick on flat ground travels instead
-  of digging in. Speed cap ~9 m/s keeps a cup sane.
-- **Trajectory line (props only):** a short dotted arc simulated from the prop's mass,
-  the charge and plain gravity (no bounces), ending in a small ring. It grows with the
-  charge; a full barrel shows a short arc that stops early, honest about how far it goes.
-  Hidden for NPCs.
-- **NPCs: kick along the view yaw** (flat); the body part decides the effect (below).
+### Which object
+- **Crosshair ray** from the camera, as `Interactor._get_target` casts, but **1.8 m** (leg
+  reach plus a step).
+- **Small assist:** if the ray misses, a sphere shape-cast (radius **0.3 m**) along the same
+  line. Only the choice snaps, never the camera.
+- **Ties:** the ray's direct hit always wins. Among assist candidates: smallest angle to
+  the crosshair line first, then the nearer one. Never more than one object.
+- **Kickable:** a `RigidBody3D` (props, carryables, barrels), a `Destructible`, an NPC
+  (`HumanBody` / any `NpcBody`), later hinged doors. Static world is not a target.
+- **Hover feedback:** while a kickable is within 1.8 m, a small boot mark appears beside
+  the crosshair and the object gets a warm orange overlay through the Interactor's
+  `_set_overlay`. If the same object is already the Interactor's highlighted target, the
+  orange tint replaces the interact tint (the E prompt stays), so one object never shows
+  two overlays.
+- **Press = commit:** the target is taken at the press; the hit lands on the strike frame
+  0.15 s later. If it has left 2.2 m or the line of sight by then, the kick whiffs.
 
-### Kicking an NPC: body parts
-The body code already knows where a hit landed: `HumanBody._nearest_bone(point, ...)`
-finds the struck bone, `is_head_hit(point)` the head, and `flinch(info)` pushes that bone
-with the hit's impulse while the hips stay animated. So aiming at a part needs no new
-body plumbing, only a choice of effect by bone:
+### Nothing in range: whiff
+The leg still swings (same animation, `swing.tres` whoosh), costs **4 stamina**, and the
+key is locked for the short **0.4 s** cooldown. No impulse, no hit: the key never feels
+dead, but kicking the air is not free.
+
+### Strength and direction
+- **Fixed impulse, ~25 N s** for every kick; mass does the rest. The launch speed is
+  capped at **9 m/s** (a 1 kg cup would get 25 m/s otherwise); a 5 kg stool leaves at
+  5 m/s, a 10 kg crate rolls at 2.5 m/s, a 25 kg full barrel budges at 1 m/s, an 80 kg log
+  barely rocks (dull thud + a small `player.recoil()` push back on the kicker).
+- **Direction = the crosshair point:** a ray from the camera (up to 20 m) finds the point
+  under the crosshair and the prop is pushed toward it, the way
+  `Interactor._throw_direction` converges a throw. Props get a fixed **10 deg lift** so a
+  kick on flat ground travels instead of digging in. No aim arc: one press needs none.
+- **NPCs:** pushed along the view yaw (flat, `HumanBody.get_knockback`); the body part
+  decides the effect (below).
+
+### Kicking an NPC: body parts (kept from round 2)
+The point under the crosshair picks the bone (`HumanBody._nearest_bone`, `is_head_hit`),
+and `flinch(info)` pushes that bone. Fixed numbers now that there is no charge:
 
 | Aimed at | Effect | Fits today? |
 |---|---|---|
-| Legs (below hips) | **Trip:** 0.9 s stagger, `stagger_control` ~0, strike cancelled; full charge on a winded NPC = knockdown | Stagger yes; a real fall-and-get-up needs the knockdown of physics-combat idea 3 (`go_limp` is death only) |
-| Torso / hips | **Push back:** big flat knockback via `get_knockback`, 0.6 s stagger, flinch at the spine | Yes, round 1's kick |
-| Head (crouched / fallen NPC) | Damage x1.5, wears the mask via `hit_mask` | Yes, head hits already wear masks |
+| Legs (below hips) | **Trip:** 0.9 s stagger, `stagger_control` ~0, strike cancelled | Stagger yes; a real fall needs the knockdown of physics-combat idea 3 |
+| Torso / hips | **Push back:** flat knockback, 0.6 s stagger, flinch at the spine | Yes |
+| Head (crouched / fallen NPC) | Damage x1.5, wears the mask via `hit_mask` | Yes |
 
-Ledges stay the payoff: a torso kick sends a bandit over the lookout edge, a leg kick
-drops him where he stands. Until the knockdown exists, the leg kick is "long stagger,
-can't step"; no fake temporary ragdoll.
+Damage **6** (a crate breaks in ~3 kicks). Ledges stay the payoff: a torso kick sends a
+bandit over the lookout edge.
 
-### Shove: stays untargeted
-A **tap** on Q stays the round-1 shove: cone, up to 3 things, no damage, no aiming. It is
-the panic button (bandits crowding a doorway) and must work without lining anything up.
-Only the **hold** becomes the targeted kick. Tap vs hold splits at 0.2 s, which is also
-when the highlight appears.
+### Impact damage (kept)
+A kicked prop is **armed** with a public `ImpactDamage.arm(by, seconds := 1.5)` that also
+remembers the kicker, so a barrel kicked into a bandit hurts him and credits the player
+(grudges, combat tracker). `Carryable.released` uses the same call for throws.
 
-### Controls
-**Q stays** (pad R3, mouse thumb button 4). Targeting needs no extra button: the camera
-is the aim, the hold is the charge, release fires.
-- The hands' charge-and-release throw is the same gesture, already learned.
-- RMB would take a hand away; middle mouse is awkward to hold while turning.
-- Q is reachable while strafing with WASD, which is how you line up a kick.
-- Cancel a held kick with **F** (stow, unused while charging) or by looking away until the
-  lock drops; no stamina spent.
+### Numbers at a glance
 
-## First build slice (round 2): "kick the barrel at the bandit"
+| | Kick (hit) | Whiff |
+|---|---|---|
+| Wind-up | 0.15 s to the strike frame | same |
+| Impulse | 25 N s, speed cap 9 m/s, props +10 deg lift | none |
+| Damage | 6 (x1.5 head) | none |
+| Stamina | 10 (empty pool: half impulse, no damage) | 4 |
+| Cooldown | 0.6 s | 0.4 s |
+| Targets | exactly one | none |
+
+## First build slice (round 3): "kick the barrel at the bandit"
 
 - `project.godot`: action `kick` (Q, mouse thumb button, joypad R3).
 - `scripts/components/kick.gd` (new `Kick` node next to the `Interactor`): target pick
-  (ray + sphere assist, kickable filter, lock on press), aim point under the crosshair,
-  launch with charge + lift + speed cap, body-part effect on NPCs, `shove()` for taps.
-- `scripts/components/interactor.gd`: make the overlay helper usable from `Kick`, so the
-  target gets the second (orange) tint through the same mechanism.
-- `scripts/components/impact_damage.gd`: public `arm(by, seconds)` with attacker credit,
-  so the kicked barrel hurts the bandit and credits the player.
-- `scripts/npc/npc.gd`: zero-damage shove/trip path (stagger, cancel strike) beside
-  `_on_damaged`.
-- `scenes/ui/kick_aim.gd` (new): dotted arc + landing ring, only while charging at a prop.
-- `tests/kick_shove_check.tscn`: a kicked barrel lands near the crosshair point and
-  damages a dummy, credited to the player; a leg kick staggers longer than a torso kick;
-  a tap shoves without damage.
+  (ray + sphere assist, tie rule, kickable filter), hover state for the boot mark and
+  tint, press -> 0.15 s strike -> recheck target -> impulse toward the crosshair point
+  with lift and speed cap, or whiff; stamina and cooldown.
+- `scripts/components/interactor.gd`: make the overlay helper usable from `Kick` (orange
+  tint replaces the interact tint on the same object).
+- `scripts/components/impact_damage.gd`: public `arm(by, seconds)` with attacker credit.
+- `scripts/npc/npc.gd`: body-part reaction (trip / push back / head) beside `_on_damaged`.
+- HUD: boot mark beside the crosshair while a kick target is in range.
+- `tests/kick_check.tscn`: one press kicks only the barrel under the crosshair (a second
+  barrel beside it stays still); the barrel heads for the crosshair point and damages a
+  dummy, credited to the player; a 1 kg prop leaves faster than a 25 kg one; a leg kick
+  staggers longer than a torso kick; a press at nothing costs 4 stamina and moves nothing.
 
 Later: leg mesh + hitstop, knockdown for real trips, NPCs kicking barrels at you (idea 6),
 fall damage, hinged doors.
 
 ---
 
-# Round 1 (kept for reference)
+# Round 2 (history): targeted charged kick
+
+Superseded by round 3. Hold Q locked the target under the crosshair (same ray + assist,
+orange tint only while held); turning aimed; release kicked it toward the crosshair point
+with charge power (0.25-0.8 s, 10-20 N s) and a dotted landing arc; a tap stayed the
+untargeted cone shove (up to 3 things); F cancelled a charge. The body-part table and the
+ImpactDamage tie-in carried over into round 3.
+
+---
+
+# Round 1 (history): tap shove / hold kick
+
+Superseded. Kept for the code survey and the control schemes considered.
 
 ## What the code gives us today
 
