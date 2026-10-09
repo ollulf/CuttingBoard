@@ -51,6 +51,9 @@ aggression = 0.0
 [node name="ThrowAtTarget" parent="Brain" index="3"]
 eagerness = 0.0
 
+[node name="Alertness" parent="."]
+watch_time = 0.0
+
 [node name="Dialogue" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("9_dialogue")

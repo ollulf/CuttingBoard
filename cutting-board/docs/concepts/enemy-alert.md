@@ -4,6 +4,13 @@ Result page with mock-ups: https://claude.ai/artifact/J4kY2xij3Qw9AaovcGGJui (bo
 
 **Goal:** when a hostile NPC notices the player, it watches the player and grumbles for 5 s (the player can still slip away), then calls for help with its voice; allies in range answer with their voices and come.
 
+## Built (round 3)
+- `Alertness` (`scripts/npc/alertness.gd`) + `WatchAction` + `AlertMark` (a depth-tested `Label3D` `?`/`!`, not the carved sprite yet) on every NPC in `npc_base.tscn`; villagers set `watch_time = 0` (they still flee/fight at once).
+- `Npc.call_for_help` / `answer_call` / `allies_within` (shared with `_rally_allies`); "same mask" = same `Faction.data`, which follows the worn mask.
+- `Memory.remember_at`, `VoiceBark` (blip patterns from the NPC's own voice bank).
+- Simplified vs the spec: no x2 for running/drawn weapon and no x0.5 crouch (only x2 under 5 m); answerers head for the spot at once and shout after their delay; the 12 s cooldown runs on the wall clock.
+- Test: `tests/npc_call_for_help_check.tscn`.
+
 ## What exists today
 - `Sight` (`scripts/npc/sight.gd`) looks every 0.2 s and emits `spotted(actor)` for every visible actor (view cone 140°, 15 m, plus a 2 m all-round `awareness_radius`). `Npc._ready` wires it straight into `Memory.remember`: noticing is instant and silent.
 - `Memory` stores position and time per actor, forgets after 8 s. The attack action walks to `memory.last_seen_position` while the target is out of sight, so **an NPC that is told a position goes there and searches**.
