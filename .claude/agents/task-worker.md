@@ -15,7 +15,7 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 ## Workflow
 0. **Start from the latest local `main`.** Worktrees are created from the remote's `main`, which can be many commits behind the local `main` the manager merges into. Before anything else, run `git merge --ff-only main` in your worktree (for a brand-new branch). If that fails, stop and report it.
    **Name your branch.** Your worktree starts on an auto-generated branch (`worktree-agent-…`). If the manager gave you a branch name (`task/<slug>`), rename it first with `git branch -m <name>` inside your worktree, and use that name everywhere afterwards (commits, result page, final block). Skip this when continuing an existing branch for a change request.
-1. Read the relevant code before changing anything. If the task is ambiguous, make the most sensible choice and note it in the result page.
+1. Read the relevant code before changing anything. If the task is ambiguous, make the most sensible choice and note it in the result page, unless the choice is a real design decision the user should make: then ask (see Questions).
 2. Implement the task in your worktree.
 3. Verify what you can. Godot is at `F:\Fork\pvkk\engine\godot.exe`:
    - **Warm the import cache before your first Godot run:** a fresh worktree has no `.godot/` folder, and a cold import of every asset takes minutes. Copy the main checkout's cache: `robocopy "F:\Fork\CuttingBoard\cutting-board\.godot" "<your worktree>\cutting-board\.godot" /E /NFL /NDL /NJH /NJS /R:0 /W:0` (run it with the PowerShell tool, not Bash: Git Bash rewrites the `/E`-style switches into paths and robocopy rejects them; exit codes below 8 mean success; if refused, import cold), then delete the copied `cutting-board/.godot/global_script_class_cache.cfg` and `cutting-board/.godot/uid_cache.bin` (they can be stale) and run `godot.exe --headless --path cutting-board --import`. If a test or load check then reports "Could not find type" or hangs on parse errors, rebuild the class cache with `godot.exe --headless --path cutting-board --editor --quit` (plain `--import` may not rebuild it).
@@ -36,6 +36,13 @@ Your prompt gives a `Time limit: <N> min` (15 if missing). Note the time when yo
 - **Plan first.** After reading the code, if the task clearly can't be done well within the limit, stop right away and report `needs-time` (below) instead of starting.
 - **At the limit, stop**, even mid-task: commit your work in progress on your branch (message starting with `WIP:`), skip the result page, and report `needs-time`. Don't rush a sloppy finish to beat the clock. Also stop when the manager sends you "Time limit reached".
 - `needs-time` report: `OUTCOME: needs-time`, plus `TIME_REQUEST: <extra minutes>` and `TIME_REASON: <short bullets: what's done, what's left, why it needs that long>`. The user decides; a new agent continues from your branch if they approve.
+
+## Questions
+When the work hinges on a design decision or something unclear that you shouldn't guess (two reasonable directions that lead to different work, a missing number that changes the result), ask the user instead of guessing:
+- Commit any work in progress on your branch first (message starting with `WIP:`), so nothing is lost while you wait.
+- End your turn with the final block, `OUTCOME: question` and `QUESTION: <short bullets: what you need decided, the options with a recommendation>`. Fill in BRANCH/WORKTREE/COMMIT; REPORT fields can be `none`.
+- The manager shows the question on the task card and, once the user answers, sends the answer to you as a message ("Answer from the user: …"). You then continue in the same worktree from where you stopped, with your context intact. Your time limit restarts then.
+- Ask as early as possible (right after reading the code) and bundle everything into one question round. Don't ask about things you can reasonably decide yourself.
 
 ## Result page (only when asked for)
 Keep it **short**: something the user can take in within a minute. Lead with the **visual evidence**: one or two key screenshots, a before/after, and a **GIF or video when the change moves** (animation, physics, AI, UI transitions). Then a few lines of text. No diff excerpts, no per-file walkthrough, no long verification write-up; those belong in the commit message and your final message.
@@ -73,8 +80,9 @@ REPORT_URL: <artifact URL, or none>
 BRANCH: <branch name>
 WORKTREE: <absolute worktree path>
 COMMIT: <short hash of your last commit>
-OUTCOME: done | partial | blocked | needs-time
+OUTCOME: done | partial | blocked | needs-time | question
 TIME_REQUEST: <extra minutes, only for needs-time>
 TIME_REASON: <short bullets, only for needs-time>
+QUESTION: <short bullets, only for question>
 SUMMARY: <short bullet points only, no prose (each starting with "• ", one fact per bullet, at most ~5): what changed, how it was checked. If the user must do something (pick, check, decide), the first bullet starts with "You:" and says what. Without a result page this is all the user sees, so make it self-sufficient.>
 ```
