@@ -67,6 +67,12 @@ signal answering(caller: Npc, target: Node3D)
 @export var call_cooldown := 12.0
 @export_group("")
 
+@export_group("Giving Up")
+## Seconds an enemy it gave up chasing (give_up_on) is left alone: not seen, not watched,
+## so the NPC walks home instead of turning straight back. A blow from it ends this early.
+@export var give_up_cooldown := 15.0
+@export_group("")
+
 @export_group("Sounds")
 ## Grunts from behind the mask when hit, and the last one when killed.
 @export var hurt_sound: SoundBank = preload("res://resources/audio/npc_hurt.tres")
@@ -114,6 +120,8 @@ var _strike_target: Node3D
 var _strike_left := -1.0
 ## Engine time (seconds) from which this NPC may call for help again.
 var _call_ready_at := 0.0
+## Enemies it gave up chasing -> engine time (seconds) until which they are left alone.
+var _given_up := {}
 
 
 func _ready() -> void:
@@ -203,6 +211,36 @@ func is_in_combat() -> bool:
 	if action is AttackTargetAction or action is ThrowAtTargetAction or action is FleeAction:
 		return true
 	return not get_grudges().is_empty()
+
+
+## Stops chasing `actor`: forgets it, drops any grudge against it and leaves it alone for
+## give_up_cooldown seconds, so with nothing left to fight the NPC wanders back home.
+func give_up_on(actor: Node3D) -> void:
+	if actor == null:
+		return
+	memory.forget(actor)
+	_grudges.drop(actor)
+	_given_up[actor] = Time.get_ticks_msec() / 1000.0 + give_up_cooldown
+
+
+## Whether this NPC gave up chasing `actor` a short while ago and leaves it alone.
+func has_given_up_on(actor: Node3D) -> bool:
+	if not _given_up.has(actor):
+		return false
+	if Time.get_ticks_msec() / 1000.0 < float(_given_up[actor]):
+		return true
+	_given_up.erase(actor)
+	return false
+
+
+## Told of `target` by an ally's call: knows where it really is, as if it had just seen it
+## — or `spot`, where the caller last saw it, for a target no longer in the world.
+func hear_of(target: Node3D, spot: Vector3) -> void:
+	_given_up.erase(target)
+	if is_instance_valid(target) and target.is_inside_tree():
+		memory.remember(target)
+	else:
+		memory.remember_at(target, spot)
 
 
 func has_grudge_against(actor: Node3D) -> bool:
@@ -461,7 +499,7 @@ func allies_within(radius: float) -> Array[Npc]:
 
 ## Shouts for help about `target`, last seen at `spot`. Allies of this NPC's side within
 ## call_for_help_radius hear it — half as far through a wall — and learn where the enemy
-## is; the nearest max_answers answer out loud one after another, the rest come without a
+## really is, as if they had seen it themselves; the nearest max_answers answer out loud one after another, the rest come without a
 ## word. Hearing is one hop: those who hear do not call on in turn. Returns whether anyone
 ## answered, which the caller waits on before it attacks. Does nothing on cooldown.
 func call_for_help(target: Node3D, spot: Vector3) -> bool:
@@ -477,9 +515,9 @@ func call_for_help(target: Node3D, spot: Vector3) -> bool:
 			continue
 		if ally.alertness:
 			ally.alertness.calm()
-		# Already fighting it: only the spot is news.
+		# Already fighting it: only where it is now is news.
 		if ally.memory.knows(target) or answers >= max_answers:
-			ally.memory.remember_at(target, spot)
+			ally.hear_of(target, spot)
 			continue
 		var delay := 0.5 + 0.4 * answers + randf() * 0.15
 		answers += 1
@@ -488,11 +526,11 @@ func call_for_help(target: Node3D, spot: Vector3) -> bool:
 	return answers > 0
 
 
-## Answers `caller`'s call: heads for `spot`, where the caller last saw `target`, at
+## Answers `caller`'s call: learns where `target` is (hear_of) and goes after it at
 ## once — so it does not start a watch of its own — and shouts back `delay` seconds from
 ## now, so several answers come one after another rather than as one chord.
 func answer_call(caller: Npc, target: Node3D, spot: Vector3, delay: float) -> void:
-	memory.remember_at(target, spot)
+	hear_of(target, spot)
 	answering.emit(caller, target)
 	get_tree().create_timer(delay, true, true).timeout.connect(
 		func() -> void:
@@ -525,6 +563,8 @@ func _wall_between(other: Npc) -> bool:
 ## Hostile actors it has not yet noticed are watched first (Alertness); everyone else is
 ## noted in Memory at once.
 func _on_spotted(actor: Node3D) -> void:
+	if has_given_up_on(actor):
+		return
 	if alertness and alertness.wants_to_watch(actor):
 		alertness.see(actor)
 	else:
@@ -542,6 +582,7 @@ func _on_spotted(actor: Node3D) -> void:
 func _on_damaged(info: DamageInfo) -> void:
 	var attacker := info.get_attacker()
 	if attacker and attacker != self and Faction.find_in(attacker):
+		_given_up.erase(attacker)
 		memory.remember(attacker)
 		if health.is_alive():
 			hold_grudge(attacker)
