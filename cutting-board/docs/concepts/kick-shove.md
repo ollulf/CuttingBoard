@@ -1,5 +1,11 @@
 # Kick
 
+**Round 6, built:** **no charging.** One press kicks at once (after the 0.15 s windup)
+with the old full-charge strength: 320 N s, cap 13 m/s, 22° lift (a barrel still flies a
+few metres), 15 damage, 80 NPC knockback, 15 stamina (between the old tap 10 and full
+charge 20). No hold/release, no charge bar. Kickable, cooldowns, whiff cost and NPC
+reactions unchanged.
+
 **Round 5, built:** **charged kick.** Hold the kick key to charge (0.7 s to full), let go
 to kick; the target is still taken at the press, a tap is the old kick. A full charge
 pushes 320 N s (cap 13 m/s, +12° lift; a 40 kg barrel goes ~5 m), costs 2x stamina, deals
