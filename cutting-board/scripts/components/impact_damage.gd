@@ -17,6 +17,10 @@ extends Node
 ## Slowest closing speed at which a kicked object still hurts what it rolls into: a kick
 ## sends a heavy prop far slower than a throw.
 @export var kick_min_speed := 1.0
+## Durability a kicked object loses when it slams into a living victim. While a kick has
+## it armed, its other knocks (landing, rolling) cost nothing, so this alone decides how
+## many enemies one prop can be kicked into: a barrel survives two and breaks on the third.
+@export var kick_hit_wear := 0
 
 @export_group("Sounds")
 ## The object knocking into the ground or another object. Unlike damage, this is heard
@@ -50,6 +54,8 @@ var _armed := false
 var _armed_until := INF
 ## Set while armed by a kick: the fixed damage its first living victim takes.
 var _kick_damage := 0
+## Until when a kick spares the object its own impact wear, like _armed_until.
+var _kicked_until := -INF
 ## Counts down to the next impact this object may be heard making.
 var _sound_wait := SETTLE_TIME
 
@@ -82,6 +88,7 @@ func arm(by: Node3D = null, seconds := 1.5, kick_damage := 0) -> void:
 	_armed = true
 	_kick_damage = kick_damage
 	_armed_until = Time.get_ticks_msec() / 1000.0 + seconds if seconds > 0.0 else INF
+	_kicked_until = _armed_until if kick_damage > 0 else -INF
 	if by:
 		_body.set_meta(HandSlot.RELEASED_BY_META, by)
 		_body.set_meta(HandSlot.RELEASED_AT_META, Time.get_ticks_msec() / 1000.0)
@@ -101,7 +108,9 @@ func _on_body_entered(body: Node) -> void:
 	if _kick_damage > 0:
 		_deal_kick_damage_to(body, speed)
 		return
-	if speed < speed_threshold:
+	# A kicked object's own landing and rolling cost nothing for as long as the kick
+	# lasts, even after it found its victim: only kick_hit_wear wears it.
+	if speed < speed_threshold or Time.get_ticks_msec() / 1000.0 < _kicked_until:
 		return
 	var excess := speed - speed_threshold
 	if _destructible:
@@ -150,6 +159,9 @@ func _deal_kick_damage_to(body: Node, speed: float) -> void:
 	info.direction = _impact_velocity.normalized()
 	info.knockback = _body.mass * _impact_velocity.length()
 	health.apply_damage(info)
+	# Last: the wear can break the object, which frees it at the end of the frame.
+	if _destructible:
+		_destructible.damage(kick_hit_wear)
 
 
 func _deal_damage_to(body: Node, excess: float) -> void:

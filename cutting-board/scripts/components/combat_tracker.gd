@@ -182,7 +182,8 @@ func _attacker_of(info: DamageInfo) -> Node3D:
 		var entry: Array = _thrown[source]
 		if _now() - entry[1] <= thrown_memory and is_instance_valid(entry[0]):
 			return entry[0] as Node3D
-	return source as Node3D
+	# A kicked prop leaves no hand; the kick marks it with its kicker instead.
+	return info.get_attacker(thrown_memory)
 
 
 ## A blow traded with `enemy`: the fight goes on, and it is the one to watch.
