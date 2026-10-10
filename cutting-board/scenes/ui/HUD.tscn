@@ -82,6 +82,11 @@ alignment = 2
 layout_mode = 2
 size_flags_horizontal = 8
 
+[node name="KickPrompt" parent="Corner/Prompts" instance=ExtResource("3_4ed8p")]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+
 [node name="InteractPrompt" parent="Corner/Prompts" instance=ExtResource("3_4ed8p")]
 layout_mode = 2
 size_flags_horizontal = 8
