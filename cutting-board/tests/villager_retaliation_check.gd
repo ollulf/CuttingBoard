@@ -256,7 +256,7 @@ func _allies() -> void:
 
 	near.memory.remember(victim)
 	victim.health.apply_damage(DamageInfo.new(5, far))
-	_check("own side: the victim holds a grudge against the villager", victim.has_grudge_against(far))
+	_check("own side: the victim takes no grudge against the villager", not victim.has_grudge_against(far))
 	_check("own side: nobody else takes it up", not near.has_grudge_against(far))
 	for npc in [victim, near, far]:
 		npc.queue_free()

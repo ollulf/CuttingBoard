@@ -574,14 +574,15 @@ func _on_spotted(actor: Node3D) -> void:
 ## Being hit by someone is as good as seeing them: an NPC struck from behind turns to
 ## deal with whoever did it — and holds a grudge against them, so it fights back even
 ## against someone its faction has no quarrel with. A thrown item is credited to whoever
-## threw it.
+## threw it. A blow from a teammate (another NPC of its faction) is an accident: it still
+## hurts and flinches, but brings no grudge and no rally.
 ##
 ## A hit that does not kill also lands physically: the body flinches from the force at
 ## the part that was struck, and the whole NPC is shoved back a little. The killing hit
 ## is left to _on_died, which drops the body instead.
 func _on_damaged(info: DamageInfo) -> void:
 	var attacker := info.get_attacker()
-	if attacker and attacker != self and Faction.find_in(attacker):
+	if attacker and attacker != self and Faction.find_in(attacker) and not _is_teammate(attacker):
 		_given_up.erase(attacker)
 		memory.remember(attacker)
 		if health.is_alive():
@@ -595,6 +596,17 @@ func _on_damaged(info: DamageInfo) -> void:
 	body.hit_mask(info)
 	if health.is_alive():
 		_react_to_blow(info)
+
+
+## Whether `actor` is another NPC of this NPC's own faction: its blows (a stray swing,
+## a thrown or kicked prop credited to it) are accidents, taken without a grudge or a
+## rally. The player is never a teammate, even wearing this faction's mask: a disguise
+## does not make the player's hits harmless.
+func _is_teammate(actor: Node3D) -> bool:
+	if not actor is Npc or faction.data == null:
+		return false
+	var theirs := Faction.find_in(actor)
+	return theirs != null and theirs.data == faction.data
 
 
 ## Takes a kick from the player's Kick: hurts like any blow when it carries damage (a
