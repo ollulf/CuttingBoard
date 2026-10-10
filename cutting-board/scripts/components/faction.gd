@@ -19,6 +19,8 @@ func _ready() -> void:
 
 
 func is_hostile_to(other: Node) -> bool:
+	if Cheats.hides_from_enemies(other):
+		return false
 	var theirs := find_in(other)
 	return data != null and theirs != null and data.is_hostile_to(theirs.data)
 

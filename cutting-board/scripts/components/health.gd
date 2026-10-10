@@ -30,7 +30,8 @@ func get_ratio() -> float:
 
 
 func apply_damage(info: DamageInfo) -> void:
-	if info == null or info.amount <= 0 or invulnerable or not is_alive():
+	if info == null or info.amount <= 0 or invulnerable or not is_alive() \
+			or Cheats.shields_from_damage(get_parent()):
 		return
 	_current = maxi(_current - info.amount, 0)
 	changed.emit(_current, max_health)
