@@ -1,12 +1,5 @@
 extends Node
 
-## Opens the inventory on the test level, takes the player's mask off into the pack so
-## the world fades to grain behind the inventory, then puts it back on. Meant for Movie
-## Maker (about 7 s at 30 fps); `--shots=<dir>` also saves a still with the grain in.
-##
-##   godot --path cutting-board --write-movie out.avi --fixed-fps 30 --quit-after 210
-##       res://tests/visual/mask_off_vision_capture.tscn -- [--shots=<dir>]
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 

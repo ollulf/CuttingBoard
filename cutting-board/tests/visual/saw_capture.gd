@@ -1,13 +1,5 @@
 extends Node3D
 
-## The hand saw, photographed: held in the player's right hand at rest and mid-swing,
-## from the side, and lying where it is placed in the village of the test level.
-##
-##   godot --path cutting-board res://tests/visual/saw_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro
-## screen off, for reading shapes rather than the look.
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const SAW := preload("res://scenes/items/saw.tscn")
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
@@ -55,11 +47,9 @@ func _tour() -> void:
 	_look(Vector3(1.0, 1.9, 0.6), Vector3(0.3, 1.3, -0.8))
 	await _shot("05_behind_holding")
 
-	# The saw on its own, close up, against the plain stage.
 	saw = (_player.get_node("%HandSlotRight") as HandSlot).release()
 	saw.reparent(_stage)
 	_player.queue_free()
-	# Turned so the blade lies square to the camera, undoing the tilt it is held at.
 	var upright := (saw.get_node("Mesh") as Node3D).basis.inverse()
 	saw.global_transform = Transform3D(Basis(Vector3.UP, -PI * 0.5) * upright, Vector3(0.0, 1.0, 0.0))
 	_look(Vector3(0.0, 1.1, 0.9), Vector3(0.0, 1.0, 0.0))
@@ -67,7 +57,6 @@ func _tour() -> void:
 	_look(Vector3(0.5, 1.35, 0.6), Vector3(0.0, 1.0, 0.0))
 	await _shot("07_close_angle")
 
-	# Where it lies in the village: let the level settle, then look at it.
 	_stage.queue_free()
 	var level := LEVEL.instantiate()
 	add_child(level)
@@ -91,7 +80,6 @@ func _look(from: Vector3, at: Vector3) -> void:
 	_camera.look_at(at, Vector3.UP)
 
 
-## Freezes an arm animation at `time`, photographs it, and returns the arm to rest.
 func _pose(animation: String, time: float, shot_name: String) -> void:
 	var player: AnimationPlayer = _player.get_node("%RightPlayer")
 	player.play(animation)

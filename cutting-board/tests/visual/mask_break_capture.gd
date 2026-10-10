@@ -1,13 +1,5 @@
 extends Node3D
 
-## A villager and a bandit standing side by side, each with its mask lying on the floor
-## in front of it. Half a second in the loose masks are broken like crates; then both
-## standing masks are struck in the face three times, cracking after the second blow and
-## breaking off after the third.
-##
-##   godot --path cutting-board --write-movie <dir>/f.png --fixed-fps 30 --quit-after 90
-##       res://tests/visual/mask_break_capture.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const ITEMS := [
@@ -50,7 +42,6 @@ func _ready() -> void:
 		npc.global_position = Vector3(-0.9 + i * 1.8, 0.0, 0.0)
 		npc.rotation.y = PI
 		npcs.append(npc)
-		# Lying face up in front of its owner.
 		var item: RigidBody3D = ITEMS[i].instantiate()
 		item.freeze = true
 		add_child(item)
@@ -73,8 +64,6 @@ func _ready() -> void:
 			var body := npc.body
 			var head := body.skeleton.find_bone("Head")
 			var frame := body.skeleton.global_transform * body.skeleton.get_bone_global_pose(head)
-			# A third of the mask's durability a blow, from the front. Healed after each,
-			# so the bandit's sturdier mask breaks before its wearer does.
 			var info := DamageInfo.new(ceili(body.mask.durability / 3.0) if body.mask else 10)
 			info.position = frame * Vector3(0, 0.12, -0.15)
 			info.direction = Vector3(0, 0, -1)

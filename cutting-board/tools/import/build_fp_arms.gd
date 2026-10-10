@@ -1,23 +1,5 @@
 extends SceneTree
 
-## Builds the player's first-person arms — the forearm and hand of each side, with a bit
-## of upper arm behind them — out of the same human_base.obj every human body is made of,
-## so the hands the player sees are the hands their character actually has.
-##
-## Each arm is skinned to three bones, UpperArm > Forearm > Hand, which the
-## ArmLeftSkeleton / ArmRightSkeleton nodes in player.tscn carry at the rest positions
-## printed here: the upper arm from the cut end, the forearm from the elbow, the hand
-## from the wrist. Weights blend over ELBOW_BLEND / WRIST_BLEND either side of each
-## joint, so a bent elbow or wrist folds the skin instead of tearing it.
-##
-## Each arm is cut out of the model's own arm piece and laid down the way ArmLeft /
-## ArmRight in player.tscn expect: the forearm pointing forward along -Z, the back of the
-## hand up, and the palm at HAND_SLOT, where HandSlotLeft / HandSlotRight sit. The node's
-## origin stays where the middle of the old box arm was, which is about at the elbow.
-##
-## Run it again whenever the model or the tables below change:
-##   godot --headless --path cutting-board -s res://tools/import/build_fp_arms.gd
-
 const Body := preload("res://tools/import/build_human_body.gd")
 
 const OUT_MESHES := {
@@ -25,25 +7,14 @@ const OUT_MESHES := {
 	"Left": "res://assets/meshes/characters/fp_arm_left.res",
 }
 
-## Where the palm ends up in the arm node's space — the hand slots' position.
 const HAND_SLOT := Vector3(0.0, 0.0, -0.3)
-## How far up from the fingertips the middle of the palm is, in metres.
 const PALM_FROM_FINGERTIPS := 0.11
-## How much of the upper arm is kept above the elbow, in metres. The shoulder above it
-## is left off: it would only show as a ball floating behind a punch. Long enough that
-## the cut end stays below the view while the punch reaches the middle of the screen.
 const UPPER_ARM_KEPT := 0.3
-## First-person arms are drawn a little larger than life, so they read at the edges of
-## a low-resolution screen.
 const VIEW_SCALE := 1.15
-## How far up from the fingertips the wrist is, in metres: where the Hand bone starts.
 const WRIST_FROM_FINGERTIPS := 0.19
-## Half the stretch of arm, in the arm node's metres, over which each joint's weights
-## blend from one bone to the next.
 const ELBOW_BLEND := 0.05
 const WRIST_BLEND := 0.03
 
-## The skin's bones by index, in the order the Skeleton3D in player.tscn lists them.
 enum Bone { UPPER_ARM, FOREARM, HAND }
 
 var _parent := PackedInt32Array()
@@ -75,7 +46,6 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 	var elbow := Body.ELBOW * mirror
 	var fingertips := Body.FINGERTIPS * mirror
 
-	# Body space, as build_human_body.gd lays the model out: scaled, facing -Z.
 	var turn := Basis(Vector3.UP, PI)
 	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
@@ -84,8 +54,6 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 		vertices[i] = turn * vertices[i] * Body.MODEL_SCALE
 		normals[i] = turn * normals[i]
 
-	# The forearm's direction becomes -Z, the body's front (the back of a hanging hand
-	# faces outward, its thumb forward) becomes +Y.
 	var down := (fingertips - elbow).normalized()
 	var front := (Vector3.FORWARD - down * Vector3.FORWARD.dot(down)).normalized()
 	var to_view := Basis(down.cross(front), front, -down).inverse()
@@ -93,8 +61,6 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 	var to_arm := Transform3D(Basis.from_scale(Vector3.ONE * VIEW_SCALE), HAND_SLOT) \
 			* Transform3D(to_view, Vector3.ZERO) * Transform3D(Basis(), -palm)
 
-	# The joints in the arm node's space. The upper arm bone starts at the cut end, so
-	# turning it swings the whole arm from the shoulder side.
 	var elbow_at := to_arm * elbow
 	var wrist_at := to_arm * (fingertips - down * WRIST_FROM_FINGERTIPS)
 	var shoulder_at := to_arm * (elbow - down * UPPER_ARM_KEPT)
@@ -105,9 +71,6 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 		push_error("No %s arm piece found in %s" % [side.to_lower(), Body.SOURCE_MESH])
 		return null
 
-	# The upper arm is sliced through square to the forearm, UPPER_ARM_KEPT above the
-	# elbow: each triangle is clipped to the kept side, and every edge the slice opens
-	# is remembered for the cap.
 	var tool := SurfaceTool.new()
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var rim: Array[PackedVector3Array] = []
@@ -134,7 +97,6 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 		if points.size() < 3:
 			continue
 		if cut_from >= 0:
-			# Leaving the kept side, then coming back: the edge between is the slice.
 			rim.append(PackedVector3Array([points[cut_from], points[(cut_from + 1) % points.size()]]))
 		for k in range(1, points.size() - 1):
 			for index in [0, k, k + 1]:
@@ -143,15 +105,12 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 				tool.set_normal((to_view * point_normals[index]).normalized())
 				tool.add_vertex(at)
 
-	# A fan of flat triangles closes the slice, so a punch that carries the arm forward
-	# shows a solid end rather than a hollow sleeve.
 	var centre := Vector3.ZERO
 	for edge in rim:
 		centre += edge[0]
 	centre /= maxf(rim.size(), 1.0)
 	var cap_normal := (to_view * -down).normalized()
 	for edge in rim:
-		# Wound against the edge's own triangle, so the cap faces out of the arm.
 		for point in [edge[1], edge[0], centre]:
 			var at: Vector3 = to_arm * point
 			_set_skin(tool, at, elbow_at, wrist_at)
@@ -161,8 +120,6 @@ func _build_arm(source: ArrayMesh, side: String) -> ArrayMesh:
 	return tool.commit()
 
 
-## Weights a vertex by how far along the arm it is: all upper arm behind the elbow, all
-## hand past the wrist, and shared smoothly across each joint.
 func _set_skin(tool: SurfaceTool, at: Vector3, elbow_at: Vector3, wrist_at: Vector3) -> void:
 	var past_elbow := smoothstep(elbow_at.z + ELBOW_BLEND, elbow_at.z - ELBOW_BLEND, at.z)
 	var past_wrist := smoothstep(wrist_at.z + WRIST_BLEND, wrist_at.z - WRIST_BLEND, at.z)
@@ -171,13 +128,10 @@ func _set_skin(tool: SurfaceTool, at: Vector3, elbow_at: Vector3, wrist_at: Vect
 		1.0 - past_elbow, past_elbow * (1.0 - past_wrist), past_elbow * past_wrist, 0.0]))
 
 
-## How far a body-space point is on the kept side of the slice; negative is cut away.
 func _kept_depth(point: Vector3, elbow: Vector3, down: Vector3) -> float:
 	return (point - elbow).dot(down) + UPPER_ARM_KEPT
 
 
-## The union-find root of the model's arm piece on this side, the same piece
-## build_human_body.gd skins to the arm bones, or -1 if there is none.
 func _arm_piece(vertices: PackedVector3Array, indices: PackedInt32Array, side: String) -> int:
 	_parent.resize(vertices.size())
 	for i in vertices.size():

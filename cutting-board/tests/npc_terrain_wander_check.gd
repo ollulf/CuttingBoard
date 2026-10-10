@@ -1,26 +1,9 @@
 extends Node3D
 
-## Headless check that NPCs in the real level walk across the terrain without dithering
-## on one spot. Loads the test level, switches every NPC's brain off so no fight or
-## flight gets in the way, and keeps sending each one on strolls about where it stands,
-## as its wander would. Per NPC it counts the seconds spent walking on open ground while
-## covering almost no ground, and the times its facing swung back and forth. Prints a
-## line per NPC, PASS/FAIL, and quits with the number of failures as the exit code.
-##
-## On terrain the navigation mesh floats about half a metre above the ground, and the
-## path's waypoints with it; a body that passes waypoints by 3D distance hardly ever
-## reaches one and circles it instead. This check catches that.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/npc_terrain_wander_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
-## Seconds of strolling watched.
 const WATCH_TIME := 30.0
-## How far from where it started a stroll can take an NPC, in metres.
 const STROLL_RADIUS := 8.0
-## A stroll that has not arrived after this many seconds is given up, as the wander does.
 const GIVE_UP_AFTER := 10.0
-## A walking NPC that covers less than this flat distance in a second is dithering.
 const STUCK_DISTANCE := 0.3
 
 var _failures := 0
@@ -84,8 +67,6 @@ func _run() -> void:
 				if last_turn[npc] != 0.0 and signf(turn) != signf(last_turn[npc]):
 					flips[npc] += 1
 				last_turn[npc] = turn
-			# Walking on open ground: pressed against something — a loose crate the
-			# navigation mesh does not know about — is a different matter.
 			if npc.is_on_wall() or trail.size() <= 60:
 				continue
 			var moved := Vector2(trail[-1].x - trail[-61].x, trail[-1].z - trail[-61].z).length()

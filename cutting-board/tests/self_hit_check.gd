@@ -1,19 +1,10 @@
 extends Node3D
 
-## Headless checks that an attacker never hurts itself: a bandit swinging point-blank
-## must hit its target and not its own limbs, a rock thrown back through its own body
-## must not land on it, and a bandit left to fight the player must keep a stand-off
-## rather than closing into the player's body. Prints PASS/FAIL per check and quits with
-## the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/self_hit_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 
-## Seconds of free fighting between the bandit and the player.
 @export var fight_seconds := 20.0
 
 var _failures := 0
@@ -32,8 +23,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## The bandit stands still and swings at a villager placed all around it, from inside
-## its capsule out to the edge of its reach.
 func _point_blank_swings() -> void:
 	var bandit: Npc = BANDIT.instantiate()
 	var villager: Npc = VILLAGER.instantiate()
@@ -59,8 +48,6 @@ func _point_blank_swings() -> void:
 			villager.velocity = Vector3.ZERO
 			bandit.locomotion.face(offset)
 			await _physics_frames(2)
-			# Swing again as soon as each blow has landed, so a blow lands while the
-			# last one's flinch is still playing out on both bodies.
 			for i in 3:
 				bandit.strike_at(villager)
 				swings += 1
@@ -79,8 +66,6 @@ func _point_blank_swings() -> void:
 	await _frames(2)
 
 
-## A rock thrown straight back through the thrower's own torso — the worst case for a
-## throw that leaves a hand at the body's side.
 func _throw_through_own_body() -> void:
 	var bandit: Npc = BANDIT.instantiate()
 	add_child(bandit)
@@ -103,8 +88,6 @@ func _throw_through_own_body() -> void:
 	await _frames(2)
 
 
-## The bandit's own brain against the player, who stands still: it should land blows,
-## never hurt itself, and not end up standing inside the player.
 func _free_fight() -> void:
 	var player := PLAYER.instantiate()
 	var bandit: Npc = BANDIT.instantiate()
@@ -127,10 +110,8 @@ func _free_fight() -> void:
 		await get_tree().physics_frame
 		var delta := get_physics_process_delta_time()
 		elapsed += delta
-		# Something else could wander the player off; keep them where they stand.
 		player.global_position = Vector3.ZERO
 		var distance := bandit.flat_distance_to(player.global_position)
-		# The approach is not the stand-off: only count from the first blow on.
 		if player_hits[0] > 0:
 			closest = minf(closest, distance)
 			if distance < 0.85:
@@ -148,8 +129,6 @@ func _free_fight() -> void:
 	bandit.queue_free()
 
 
-## Counts hits on `health`, from `source` or from anything when it is null. The count is
-## boxed in an array so the lambda can write to it.
 func _count_hits(health: Health, source: Node) -> Array[int]:
 	var count: Array[int] = [0]
 	health.damaged.connect(
@@ -160,7 +139,6 @@ func _count_hits(health: Health, source: Node) -> Array[int]:
 	return count
 
 
-## Enough health that nothing in the test can kill it.
 func _tough(health: Health) -> void:
 	health.max_health = 100000
 	health.reset()

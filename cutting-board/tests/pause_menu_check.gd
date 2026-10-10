@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for the mask pause menu: Esc takes the mask off and pauses the tree,
-## arrows and Tab reach every carved word, Resume puts it back on and unpauses, Quit needs
-## two carves, and Esc leaves pause alone while the inventory or cheat menu is open.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/pause_menu_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 
 var _failures := 0
@@ -72,7 +65,6 @@ func _run() -> void:
 	await _wait(0.8)
 	_check("Esc also puts it back on", not menu.is_open() and not get_tree().paused)
 
-	# The grain backdrop behind the mask: off with the mask on, full once it is off.
 	var vision: MaskOffVision = player.find_child("MaskOffVision", true, false)
 	_check("the menu knows the player's bare-face view", menu.vision == vision)
 	_check("no backdrop while playing", menu.backdrop_amount() == 0.0)
@@ -89,7 +81,6 @@ func _run() -> void:
 	await _wait(0.9)
 	_check("backdrop is gone after Resume", menu.backdrop_amount() == 0.0 and not get_tree().paused)
 
-	# Bare face: the grain is already on, and stays full through pause and resume.
 	var equipment: Equipment = player.find_child("Equipment", true, false)
 	equipment.unequip(Equipment.Slot.MASK)
 	await _wait(0.8)
@@ -144,7 +135,6 @@ func _press_esc() -> void:
 
 
 func _wait(seconds: float) -> void:
-	# Process frames still tick while the tree is paused.
 	for i in int(seconds * 60.0):
 		await get_tree().process_frame
 

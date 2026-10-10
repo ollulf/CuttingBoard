@@ -1,13 +1,5 @@
 extends Node3D
 
-## First-person clip of the Churn Thumper in the test level: the player holds it armed in
-## the right hand with spikes in the bag, fires at the training dummy (recoil, spike
-## sticking in it), then clicks again to rearm (rearm_thumper_both).
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <out>.avi \
-##       --fixed-fps 30 --resolution 960x540 --quit-after 150 \
-##       res://tests/visual/thumper_capture.tscn [-- --shots=<dir>]
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const THUMPER := preload("res://resources/items/churn_thumper.tres")
 const SPIKE := preload("res://resources/items/railroad_spike.tres")
@@ -21,12 +13,9 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
-	# The test level stands the player at the origin facing the training dummy 6 m
-	# down -Z, with its own sky and ground, so the clip needs no stage of its own.
 	var level := LEVEL.instantiate()
 	add_child(level)
 	_player = level.get_node("Player")
-	# No mask is worn here: drop the mask-off view (the striped void) and the HUD.
 	_player.get_node("MaskOffVision").queue_free()
 	for node in _player.find_children("*", "CanvasLayer", true, false):
 		if node.name.to_lower().contains("hud"):

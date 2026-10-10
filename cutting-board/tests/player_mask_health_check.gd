@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks that the player's worn mask is their health: health mirrors the
-## mask's durability both ways, a blow anywhere wears the mask, a mask worn through breaks
-## off (a Shattered Mask drops, the slot empties) and the player stands on with the bare
-## face's small pool, dying only once that is gone; swapping masks swaps health, and glue
-## mends the mask. Prints PASS/FAIL per check and quits with the number of failures as
-## the exit code.
-##
-##   godot --headless --path cutting-board res://tests/player_mask_health_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
 const VILLAGER_MASK := preload("res://resources/items/villager_mask.tres")
@@ -35,7 +26,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Bare-faced from the start (the intro): the small bare pool.
 func _bare_player() -> void:
 	var player = PLAYER.instantiate()
 	add_child(player)
@@ -43,11 +33,9 @@ func _bare_player() -> void:
 	var health: Health = player.health
 	_check("a bare-faced player has the bare pool", health.max_health == player.bare_health
 			and health.get_current() == player.bare_health)
-	# Putting a mask on makes health the mask.
 	player.equipment.equip(MASK, PLAYER_MASK, 70)
 	_check("a mask put on becomes health", health.max_health == PLAYER_MASK.durability
 			and health.get_current() == 70)
-	# Taking it off goes back to the bare face, which was not refilled meanwhile.
 	player.equipment.unequip(MASK)
 	_check("taking it off goes back to the bare pool", health.get_current() == player.bare_health
 			and health.max_health == player.bare_health)
@@ -55,26 +43,22 @@ func _bare_player() -> void:
 	await _frames(2)
 
 
-## Health and the Mask slot's durability are one number.
 func _mask_is_health() -> void:
 	var player = await _masked_player(Vector3(0, 0, 0))
 	var health: Health = player.health
 	var equipment: Equipment = player.equipment
 	_check("full mask, full health", health.max_health == PLAYER_MASK.durability
 			and health.get_current() == PLAYER_MASK.durability)
-	# A body blow (not just the face) wears the mask now.
 	_hit(player, player.global_position + Vector3(0, 1.0, -0.4), 25)
 	_check("damage lowers the mask's durability", equipment.get_durability(MASK) == PLAYER_MASK.durability - 25)
 	_check("health follows", health.get_current() == PLAYER_MASK.durability - 25)
 	_check("the hidden body's mask shows the same wear", player.body.mask_durability == PLAYER_MASK.durability - 25)
-	# Wear written to the slot from elsewhere is health too.
 	equipment.set_durability(MASK, 40)
 	_check("the slot's durability sets health", health.get_current() == 40)
 	player.queue_free()
 	await _frames(2)
 
 
-## A different mask brings its own durability as health; the old one keeps its wear.
 func _swap_masks() -> void:
 	var player = await _masked_player(Vector3(3, 0, 0))
 	var health: Health = player.health
@@ -96,7 +80,6 @@ func _swap_masks() -> void:
 	await _frames(2)
 
 
-## Glue heals, and what it heals is the mask.
 func _glue_mends_the_mask() -> void:
 	var player = await _masked_player(Vector3(6, 0, 0))
 	var equipment: Equipment = player.equipment
@@ -113,8 +96,6 @@ func _glue_mends_the_mask() -> void:
 	await _frames(2)
 
 
-## Worn through, the mask breaks and the player lives on bare-faced; then the bare face
-## runs out and that is death.
 func _break_then_bare_death() -> void:
 	var player = await _masked_player(Vector3(-3, 0, 0))
 	var health: Health = player.health

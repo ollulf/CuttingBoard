@@ -1,19 +1,7 @@
 extends Node
 
-## Puts the health bar through its states for screenshots and clips: loads the test
-## level, then hurts the player on a fixed timeline — full, a hit with the damage trail
-## draining, a second hit, a hit down to critical (the frame beats), and a heal.
-##
-##   godot --path cutting-board res://tests/visual/health_bar_capture.tscn -- --shots=<dir>
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 \
-##       res://tests/visual/health_bar_capture.tscn
-##
-## Needs a real window to save shots; under --headless it only runs the timeline. Quits
-## when the timeline is over, so a movie recording stops by itself.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
-## Seconds to wait, then what to do: an int hurts (negative heals), a String saves a shot.
 const TIMELINE := [
 	[1.5, "01_full"],
 	[0.3, 30],

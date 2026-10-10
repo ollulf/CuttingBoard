@@ -1,20 +1,7 @@
 class_name Holster
 extends Node
 
-## Puts an NPC's weapon away at its hip once it has been out of a fight for a while, and
-## draws it back into the same hand when a fight starts. Only a weapon is put away: a
-## lamp or anything else carried stays in the hand, and a bare-handed NPC has nothing to
-## do here.
-##
-## The hips are HandSlots like the hands, so the item is the same live object the whole
-## time — it keeps its wear, stays out of world physics (nothing bumps into it or picks
-## it off the belt) and is let go of like a held item when the NPC dies. They ride on
-## the body's Hips bone, so a holstered weapon sways with the walk.
-
-## Seconds out of combat before the weapon goes back on the hip.
 @export var sheathe_delay := 3.0
-## Seconds from a fight starting to the weapon being back in hand. A blow thrown before
-## then draws it at once, so the first swing is never bare-handed.
 @export var draw_time := 0.25
 
 @onready var _npc: Npc = owner
@@ -25,7 +12,6 @@ extends Node
 @onready var _hip_left: HandSlot = %HipSlotLeft
 
 var _calm := 0.0
-## Seconds left on a draw under way, below 0 when none is.
 var _draw_left := -1.0
 
 
@@ -53,12 +39,10 @@ func _physics_process(delta: float) -> void:
 		sheathe()
 
 
-## Whether a weapon hangs at either hip.
 func is_holstered() -> bool:
 	return not _hip_right.is_free() or not _hip_left.is_free()
 
 
-## Moves each hand's weapon to the hip on its side. Anything that is not a weapon stays.
 func sheathe() -> void:
 	for pair in _pairs():
 		var hand: HandSlot = pair[0]
@@ -70,7 +54,6 @@ func sheathe() -> void:
 			_hang(item)
 
 
-## Takes each holstered weapon back into the hand on its side, if that hand is free.
 func draw_now() -> void:
 	_draw_left = -1.0
 	for pair in _pairs():
@@ -80,15 +63,10 @@ func draw_now() -> void:
 			hand.hold(hip.release())
 
 
-## The hip slots, for whoever has to empty them — dropping everything on death.
 func get_slots() -> Array[HandSlot]:
 	return [_hip_right, _hip_left]
 
 
-## Turns `item` on the hip so its longest side hangs along the slot's +Y, the way the
-## hip slots are angled (down and a little back). Items are not modelled the same way
-## round — a hammer's handle runs up its Y, a saw's blade forward along -Z — so the
-## direction is read off the item's own shape, from its grip towards the far end.
 func _hang(item: Node3D) -> void:
 	var to_item := item.global_transform.affine_inverse()
 	var bounds := AABB()
@@ -110,8 +88,6 @@ func _pairs() -> Array:
 	return [[_hand_right, _hip_right], [_hand_left, _hip_left]]
 
 
-## Moves the hip slots onto the body's Hips bone, keeping where they were placed in the
-## scene. A body without one (or without a skeleton) leaves them where they are.
 func _attach_to_hips() -> void:
 	var skeleton := _body.get("skeleton") as Skeleton3D
 	if skeleton == null or skeleton.find_bone("Hips") < 0:
@@ -120,7 +96,6 @@ func _attach_to_hips() -> void:
 	attachment.name = "HipAttachment"
 	attachment.bone_name = "Hips"
 	skeleton.add_child(attachment)
-	# Measured against the bone at rest: the attachment has not followed it yet.
 	var bone := skeleton.global_transform * skeleton.get_bone_global_rest(skeleton.find_bone("Hips"))
 	for hip in get_slots():
 		var offset := bone.affine_inverse() * hip.global_transform

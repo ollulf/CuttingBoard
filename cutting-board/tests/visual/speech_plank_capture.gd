@@ -1,5 +1,4 @@
 extends Node
-## Shows the speech plank with a long welcome line for a Movie Maker screenshot.
 
 func _ready() -> void:
 	var plank := SpeechPlank.new()

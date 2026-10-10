@@ -1,10 +1,5 @@
 extends Node3D
 
-## Headless checks for CombatTracker and the HUD bars it drives. Prints PASS/FAIL per
-## check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/combat_tracker_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const DUMMY := preload("res://scenes/characters/training_dummy.tscn")
@@ -45,7 +40,6 @@ func _run() -> void:
 	_check("player bar hidden at full health out of combat", health_bar.modulate.a < 0.01)
 	_check("target bar hidden out of combat", target_bar.modulate.a < 0.01)
 
-	# The player's blow on the dummy.
 	Health.find_in(dummy).apply_damage(DamageInfo.new(10, player))
 	await _wait(0.1)
 	_check("hitting something starts a fight", tracker.is_in_combat())
@@ -54,7 +48,6 @@ func _run() -> void:
 	_check("player bar pinned on screen in combat at full health", health_bar.modulate.a > 0.99)
 	_check("dummy named from its node", CombatTracker.name_of(dummy) == "Training Dummy")
 
-	# A rock let go of by the player's hand and landing on the villager is the player's.
 	var rock := ROCK.instantiate()
 	add_child(rock)
 	var hand: HandSlot = player.get_node("%HandSlotRight")
@@ -64,12 +57,10 @@ func _run() -> void:
 	_check("a thrown item's hit counts as the thrower's", tracker.get_target() == villager)
 	_check("villager named from its own name", villager.name_pool.has(CombatTracker.name_of(villager)))
 
-	# Someone else's fight is not the player's.
 	Health.find_in(dummy).apply_damage(DamageInfo.new(5, villager))
 	await _wait(0.05)
 	_check("hits between others do not change the target", tracker.get_target() == villager)
 
-	# Killing the target: the bar stays a moment, then goes.
 	Health.find_in(villager).apply_damage(DamageInfo.new(999, player))
 	await _wait(0.1)
 	_check("dead target held briefly", tracker.get_target() == villager)
@@ -82,7 +73,6 @@ func _run() -> void:
 	_check("combat ends after linger", not tracker.is_in_combat())
 	_check("player bar released after combat", health_bar.modulate.a < 0.01)
 
-	# The dummy "dies" and stands back up: its empty bar stays and fills back up.
 	tracker.linger = 3.0
 	dummy.reset_delay = 0.8
 	var dummy_health := Health.find_in(dummy)

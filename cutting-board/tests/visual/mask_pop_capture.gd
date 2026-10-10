@@ -1,13 +1,5 @@
 extends Node3D
 
-## A villager and a bandit standing side by side on a flat floor, struck down together
-## half a second in with their masks set to always come off, so the masks can be watched
-## flying off and settling on the ground as items. The camera then swings low over the
-## fallen masks.
-##
-##   godot --path cutting-board --write-movie <dir>/f.png --fixed-fps 30 --quit-after 120
-##       res://tests/visual/mask_pop_capture.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 
@@ -57,15 +49,12 @@ func _ready() -> void:
 		npc.body.mask_pop_chance = 1.0
 	await get_tree().create_timer(0.5).timeout
 	for npc in npcs:
-		# Struck from in front, so the body falls back and the mask flies towards the
-		# camera.
 		var info := DamageInfo.new(9999)
 		info.position = npc.global_position + Vector3(0, 1.5, 0.2)
 		info.direction = Vector3(0, 0.2, -1)
 		info.knockback = 8.0
 		npc.health.apply_damage(info)
 	await get_tree().create_timer(2.2).timeout
-	# From above, so a mask that slid under a body is still seen.
 	_camera.look_at_from_position(Vector3(0, 3.2, 1.6), Vector3(0, 0.0, 0.0))
 	for carryable in find_children("Carryable", "Carryable", true, false):
 		var item := carryable.get_parent() as Node3D

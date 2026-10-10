@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks of weapon wear: a melee blow that lands costs the held weapon its
-## ItemData.wear_per_hit, a whiff costs nothing, and the last blow breaks the weapon out
-## of the hand and off its hotbar square, leaving a bare fist. An NPC's weapon wears the
-## same way. Prints PASS/FAIL per check and quits with the number of failures as the exit
-## code.
-##
-##   godot --headless --path cutting-board res://tests/weapon_wear_check.tscn
-
 const HAMMER := preload("res://resources/items/hammer.tres")
 const SAW := preload("res://resources/items/saw.tres")
 const PLANK := preload("res://resources/items/plank.tres")
@@ -34,7 +26,6 @@ func _run() -> void:
 	add_child(hand)
 	await _physics_frames(2)
 
-	# The numbers: every weapon wears, and lasts a sensible number of landed hits.
 	for data: ItemData in [HAMMER, SAW, PLANK]:
 		var hits := ceili(float(data.durability) / data.wear_per_hit)
 		print("%s: %d durability, %d per hit, breaks on hit %d" % [
@@ -42,7 +33,6 @@ func _run() -> void:
 		])
 		_check("%s lasts 9-18 landed hits (%d)" % [data.display_name, hits], hits >= 9 and hits <= 18)
 
-	# A landed blow costs wear_per_hit; a whiff costs nothing.
 	var hammer := _hold(HAMMER, hand)
 	await _physics_frames(1)
 	melee.strike(hand)
@@ -53,7 +43,6 @@ func _run() -> void:
 	_check("a whiff costs nothing", hand.get_durability() == HAMMER.durability - HAMMER.wear_per_hit)
 	aim.rotation_degrees.y = 0
 
-	# Hotbar link to the held hammer, so its square has to let go on the break.
 	var hotbar := Hotbar.new()
 	add_child(hotbar)
 	var inventory := Inventory.new()
@@ -62,7 +51,6 @@ func _run() -> void:
 	hotbar.setup(inventory, hands, null)
 	_check("the hammer is linked to a hotbar square", hotbar.assign_held(0, hand))
 
-	# Counted from fresh: the hammer breaks on exactly its last landed hit.
 	Destructible.write(hammer, HAMMER.durability)
 	var expected := ceili(float(HAMMER.durability) / HAMMER.wear_per_hit)
 	var landed := 0
@@ -74,11 +62,9 @@ func _run() -> void:
 	_check("the broken hammer is gone", not is_instance_valid(hammer))
 	_check("the hand is empty", hand.is_free())
 	_check("its hotbar square let go of it", hotbar.get_slot(0).is_empty())
-	# Bare-handed now: swinging again must not trip over the freed hammer.
 	melee.strike(hand)
 	_check("a bare fist swings after the break", hand.is_free())
 
-	# An item that is not a weapon does not wear when swung.
 	var glue_data := load("res://resources/items/wood_glue.tres") as ItemData
 	_hold(glue_data, hand)
 	await _physics_frames(1)
@@ -87,7 +73,6 @@ func _run() -> void:
 	_check("a non-weapon item is not worn by a blow", hand.get_durability() == glue_before)
 	hand.release().queue_free()
 
-	# NPCs: the same strike, the same wear.
 	var bandit := await _spawn(BANDIT, Vector3(10, 0, 0))
 	var villager := await _spawn(VILLAGER, Vector3(10, 0, -1.1))
 	for npc_hand in bandit.hands:
@@ -101,7 +86,6 @@ func _run() -> void:
 	await _physics_frames(roundi(bandit.swing_contact_time() * Engine.physics_ticks_per_second) + 10)
 	_check("an NPC's landed blow wears its plank (%d -> %d)" % [before, bandit.hand_right.get_durability()],
 		bandit.hand_right.get_durability() == before - PLANK.wear_per_hit)
-	# Its last blow breaks it out of the hand, and the NPC carries on bare-handed.
 	Destructible.write(bandit.hand_right.get_held(), PLANK.wear_per_hit)
 	await _physics_frames(30)
 	bandit.strike_at(villager)
@@ -136,7 +120,6 @@ func _spawn(scene: PackedScene, at: Vector3) -> Npc:
 	return npc
 
 
-## A wall that never breaks, for blows to land on.
 func _add_target(at: Vector3) -> void:
 	var body := StaticBody3D.new()
 	var shape := CollisionShape3D.new()

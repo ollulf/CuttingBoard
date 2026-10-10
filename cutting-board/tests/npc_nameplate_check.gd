@@ -1,10 +1,5 @@
 extends Node3D
 
-## Headless checks for the target bar naming the NPC the player stands close to and
-## looks at. Prints PASS/FAIL per check and quits with the number of failures.
-##
-##   godot --headless --path cutting-board res://tests/npc_nameplate_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const MASK_MONGER := preload("res://scenes/characters/mask_monger.tscn")
@@ -35,7 +30,6 @@ func _run() -> void:
 	add_child(dummy)
 	dummy.position = Vector3(-30, 0, 0)
 	await _frames(3)
-	# Keep them where they are put.
 	for npc: Npc in [villager, monger]:
 		npc.brain.process_mode = Node.PROCESS_MODE_DISABLED
 		npc.set_physics_process(false)
@@ -76,7 +70,6 @@ func _run() -> void:
 	await _wait(0.3)
 	_check("Mask-Monger named", bar.get_target_name() == "Mask-Monger" and bar.modulate.a > 0.99)
 
-	# The training dummy is no NPC, but looking at it names it, neutral gray.
 	monger.global_position = player.global_position + forward.cross(Vector3.UP) * -30.0
 	dummy.global_position = player.global_position + forward * 2.5
 	await _wait(0.3)
@@ -87,7 +80,6 @@ func _run() -> void:
 	monger.global_position = player.global_position + forward * 3.0
 	await _wait(0.3)
 
-	# A blow on the dummy makes it the combat target; the Mask-Monger in view gives way.
 	Health.find_in(dummy).apply_damage(DamageInfo.new(10, player))
 	await _wait(0.3)
 	_check("combat target wins over the nearby NPC",

@@ -1,15 +1,5 @@
 extends Node3D
 
-## The player's first-person arms, posed and photographed: at rest, at the moment each
-## punch lands, holding a hammer and a rock, and the rig seen from the side.
-##
-##   godot --path cutting-board res://tests/visual/fp_arms_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro
-## screen off, for reading shapes rather than the look. --clip throws a few punches
-## instead, to record with --write-movie; --walk walks with a hammer and a rock in hand;
-## --swing chops with a hammer and a saw.
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const HAMMER := preload("res://scenes/items/hammer.tscn")
 const ROCK := preload("res://scenes/items/rock.tscn")
@@ -85,7 +75,6 @@ func _tour() -> void:
 	get_tree().quit()
 
 
-## Throws a left, a right and a left again from the first-person camera, then quits.
 func _clip() -> void:
 	(_player.get_node("%Camera3D") as Camera3D).make_current()
 	await _wait(0.4)
@@ -96,7 +85,6 @@ func _clip() -> void:
 	get_tree().quit()
 
 
-## Chops with a hammer in the right hand and a saw in the left, then quits.
 func _swing_clip() -> void:
 	(_player.get_node("%Camera3D") as Camera3D).make_current()
 	_hold(HAMMER, "%HandSlotRight")
@@ -109,12 +97,7 @@ func _swing_clip() -> void:
 	get_tree().quit()
 
 
-## Walks forward with a hammer and a rock in hand, throwing a punch with each mid-stride,
-## then quits: the held items sway and turn with the arms, and the punching arm lets go
-## of the sway.
 func _walk_clip() -> void:
-	# The player stays paused like the rest of this scene; the walk is driven straight
-	# through pose_arms at the player's own walking pace, the camera carried forward.
 	(_player.get_node("%Camera3D") as Camera3D).make_current()
 	_hold(HAMMER, "%HandSlotRight")
 	_hold(ROCK, "%HandSlotLeft")
@@ -154,7 +137,6 @@ func _hold(scene: PackedScene, hand_path: String) -> void:
 	(_player.get_node(hand_path) as HandSlot).hold(item)
 
 
-## Freezes an arm animation at `time`, photographs it, and returns the arm to rest.
 func _pose(animation: String, time: float, shot_name: String) -> void:
 	var player: AnimationPlayer = _player.get_node(
 		"%RightPlayer" if animation.ends_with("right") else "%LeftPlayer"

@@ -1,23 +1,14 @@
 extends SceneTree
 
-## One-off tool: splits the single "Lantern" mesh of lantern.glb into the fixed bracket arm
-## and the hanging lamp body, so only the lamp swings (LampSwing on lantern_post.tscn).
-## Triangles are assigned by their centroid (in the glb scene root's space); see BODY_MAX_*.
-## Pass "-- --dump" to print the vertex layout instead of writing.
-##
-##   godot --headless --path cutting-board -s res://tools/import/split_lantern_mesh.gd
-
 const SOURCE := "res://assets/meshes/props/lantern.glb"
 const ARM_OUT := "res://assets/meshes/props/lantern_arm.res"
 const BODY_OUT := "res://assets/meshes/props/lantern_body.res"
-## Lamp body: everything hanging below the arm tip (z < BODY_MAX_Z) and under the hook (y < BODY_MAX_Y).
 const BODY_MAX_Z := -0.75
 const BODY_MAX_Y := -0.1
 
 
 func _init() -> void:
 	var scene := (load(SOURCE) as PackedScene).instantiate() as Node3D
-	# The glb imports as a single MeshInstance3D root (lantern.tscn overrides its materials).
 	var mi := scene as MeshInstance3D
 	if mi == null:
 		mi = scene.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D

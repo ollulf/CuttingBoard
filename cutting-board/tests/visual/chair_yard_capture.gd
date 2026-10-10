@@ -1,13 +1,8 @@
 extends Node
-## Captures the chair yard, west of the village in the test level, from a few viewpoints.
-## Run with Movie Maker off-screen:
-##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi
-##     res://tests/visual/chair_yard_capture.tscn -- --shots=<dir>
 
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const YARD := Vector3(-58, 0, -30)
 
-## name -> [camera position, look-at target], relative to the yard origin.
 const SHOTS := {
 	"overview": [Vector3(11, 8, 9), Vector3(-1, 0, -1)],
 	"map": [Vector3(30, 95, 0.1), Vector3(30, 0, -12)],
@@ -36,7 +31,6 @@ func _ready() -> void:
 func _run() -> void:
 	for i in 30:
 		await get_tree().process_frame
-	# No mask is worn here, so drop the mask-off view and the HUD for a clear world view.
 	var player := get_child(0).get_node("Player")
 	player.get_node("MaskOffVision").queue_free()
 	for node in player.find_children("*", "CanvasLayer", true, false):

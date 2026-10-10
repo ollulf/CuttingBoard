@@ -1,21 +1,9 @@
 extends Node3D
 
-## A rough animatic of the Mask-Monger's burn ritual (concept only, see
-## docs/concepts/monger-burn-ritual.md): a mask is handed over, tossed up, set alight by the
-## lantern, its soul spirals down into a vial and the bottle is set on the ground.
-## Everything is keyframed by time in _process; no gameplay code is involved.
-##
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540
-##       res://tests/visual/monger_burn_ritual_capture.tscn [-- --wide]
-##
-## The camera stands where the player would (eye height, 2.6 m in front); --wide pulls back
-## to a three-quarter view instead. The scene quits itself when the ritual is over.
-
 const MONGER := preload("res://scenes/characters/mask_monger_model.tscn")
 const MASK := preload("res://scenes/characters/masks/villager_mask.tscn")
 const BOTTLE := preload("res://scenes/items/soul_bottle.tscn")
 
-## Beat boundaries, in seconds: hand-off, toss, ignite, soul spiral, bottling, set down.
 const HAND_OFF := 0.0
 const TOSS := 0.8
 const IGNITE := 1.5
@@ -24,7 +12,6 @@ const BOTTLE_UP := 3.7
 const SET_DOWN := 4.6
 const END := 5.8
 
-## Where the mask hangs at the top of the toss, in world space.
 const APEX := Vector3(0.0, 2.5, -0.6)
 
 var _time := 0.0
@@ -180,17 +167,13 @@ func _process(delta: float) -> void:
 	var t := _time
 	var hand := _hand.global_position
 
-	# Puppet arm: reach out for the mask, fling it up, sag, then raise the vial.
 	var reach := _bump(t, HAND_OFF, TOSS) * 0.6 + _bump(t, TOSS, IGNITE) * 1.3 \
 			+ _bump(t, BOTTLE_UP - 0.2, SET_DOWN + 0.5) * 1.0
 	_puppet_arm.basis = _arm_rest * Basis(Vector3.RIGHT, reach)
-	# Lantern arm swings up under the mask to light it.
 	var lift := _bump(t, TOSS + 0.2, SPIRAL + 0.3) * 1.4
 	_lantern_arm.basis = _lantern_rest * Basis(Vector3.RIGHT, lift)
-	# Head follows the mask up and the soul back down.
 	var look := _bump(t, TOSS, SPIRAL + 0.8) * 0.5
 	_head.basis = _head_rest * Basis(Vector3.RIGHT, look)
-	# Puppet jaw: a gasp at the flare (held open), then fast chatter as the soul falls.
 	var jaw := 0.0
 	if t > IGNITE and t < IGNITE + 0.6:
 		jaw = 0.6
@@ -200,7 +183,6 @@ func _process(delta: float) -> void:
 		jaw = 0.2 + 0.2 * sin(t * 25.0)
 	_jaw.basis = _jaw_rest * Basis(Vector3.RIGHT, jaw)
 
-	# Mask: from the player's hand to the puppet, up to the apex, burns away.
 	if t < TOSS:
 		var k := smoothstep(HAND_OFF, TOSS, t)
 		_mask.global_position = _mask_start.lerp(hand + Vector3(0, 0.15, -0.1), k)
@@ -223,7 +205,6 @@ func _process(delta: float) -> void:
 	_shavings.emitting = t > IGNITE and t < IGNITE + 0.3
 	_smoke.emitting = t > IGNITE + 0.4 and t < SPIRAL + 0.6
 
-	# Soul: spirals down from the apex into the vial's mouth.
 	var vial_mouth := hand + Vector3(0, 0.35, -0.05)
 	_soul.visible = t > SPIRAL - 0.2 and t < BOTTLE_UP + 0.5
 	if _soul.visible:
@@ -235,7 +216,6 @@ func _process(delta: float) -> void:
 		_soul.scale = Vector3.ONE * (1.0 - k * 0.6) * (1.0 + 0.15 * sin(t * 20.0))
 		_soul_light.light_energy = 1.5
 
-	# Bottle: pops up into the puppet's hand, a cork-pop squash, then is set on the ground.
 	_bottle.visible = t > BOTTLE_UP
 	if t > BOTTLE_UP and t < SET_DOWN:
 		_bottle.global_position = hand + Vector3(0, 0.2, -0.05)
@@ -256,7 +236,6 @@ func _process(delta: float) -> void:
 		get_tree().quit()
 
 
-## 0 before start, rises to 1 at the middle third, back to 0 at end.
 func _bump(t: float, start: float, end: float) -> float:
 	if t <= start or t >= end:
 		return 0.0

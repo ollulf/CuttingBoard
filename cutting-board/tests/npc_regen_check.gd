@@ -1,16 +1,8 @@
 extends Node3D
 
-## Headless checks for HealthRegen: health comes back after the delay, not while
-## fighting nor right after a hit, stops at the maximum, never on a dead body, and a real
-## villager carries it. Prints PASS/FAIL per check and quits with the number of failures
-## as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/npc_regen_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 
 
-## A stand-in owner whose combat state the test sets directly.
 class Fighter extends Node3D:
 	var fighting := false
 

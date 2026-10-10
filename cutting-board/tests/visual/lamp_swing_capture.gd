@@ -1,11 +1,5 @@
 extends Node3D
 
-## Three lantern posts at night: a slow wide pan, then a close-up of one lamp
-## so the swing and the moving light on the ground can be watched.
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <out>.avi --fixed-fps 30 \
-##       --resolution 960x540 --quit-after 300 res://tests/visual/lamp_swing_capture.tscn
-
 const LANTERN_POST := preload("res://scenes/environment/decoration/lantern_post.tscn")
 const WIDE_SECONDS := 5.0
 

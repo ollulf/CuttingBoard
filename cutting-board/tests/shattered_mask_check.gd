@@ -1,16 +1,5 @@
 extends Node3D
 
-## Headless checks for what becomes of an NPC's mask and what the Mask-Monger does with
-## it: the death roll (seeded) shatters the mask or leaves it its own kind but damaged; a
-## Shattered Mask cannot be worn and is never offered for repair; a damaged mask keeps
-## its kind and faction; a walking chair's Chair Mask wears per hit, splits off when worn
-## through and is rolled for on death the same way; the Monger burns a Shattered Mask into a Soul in a Bottle; a
-## repair costs one soul and restores the mask to full; and without a soul nothing is
-## mended or taken. Prints PASS/FAIL per check and quits with the number of failures as
-## the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/shattered_mask_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -38,9 +27,7 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Two villagers die with the same roll seeded two ways: one mask shatters, one stays.
 func _death_roll() -> void:
-	# Seeds whose first roll lands on each side of the 75% chance.
 	var shatter_seed := _seed_where(func(r: float) -> bool: return r < 0.75)
 	var keep_seed := _seed_where(func(r: float) -> bool: return r >= 0.75)
 
@@ -61,7 +48,6 @@ func _death_roll() -> void:
 				and damaged.durability <= roundi(VILLAGER_MASK.durability * 0.25))
 		_check("a damaged mask keeps its faction", (damaged.data as MaskData).faction == VILLAGER_MASK.faction)
 
-	# The same seed gives the same outcome.
 	var again: Npc = await _spawn_villager(Vector3(0, 0, -6), shatter_seed)
 	again.health.apply_damage(DamageInfo.new(9999))
 	await _physics_frames(30)
@@ -75,8 +61,6 @@ func _death_roll() -> void:
 	await _frames(2)
 
 
-## A walking chair's Chair Mask wears from every hit (twice as fast at the head), splits
-## off into a Shattered Mask when worn through, and on death is rolled for like a villager's.
 func _chair_mask() -> void:
 	var shatter_seed := _seed_where(func(r: float) -> bool: return r < 0.75)
 	var keep_seed := _seed_where(func(r: float) -> bool: return r >= 0.75)
@@ -97,7 +81,6 @@ func _chair_mask() -> void:
 			chair.mask_durability == full - 15)
 	var broke := [false]
 	chair.mask_broken.connect(func() -> void: broke[0] = true)
-	# Another head hit wears through what is left without killing the chair.
 	var heavy := DamageInfo.new(ceili((full - 15) / 2.0))
 	heavy.position = head_hit.position
 	worn.health.apply_damage(heavy)
@@ -139,7 +122,6 @@ func _spawn_chair(at: Vector3, roll_seed: int) -> CharacterBody3D:
 	return creature
 
 
-## The loose items lying in the check with `scene` as their world scene.
 func _loose(scene: String) -> Array:
 	return get_children().filter(func(n: Node) -> bool:
 		return n is RigidBody3D and n.scene_file_path == scene and not n.is_queued_for_deletion())
@@ -161,17 +143,14 @@ func _monger_trades() -> void:
 	_check("a Shattered Mask does not go in the Mask slot",
 			not equipment.accepts(Equipment.Slot.MASK, SHATTERED))
 
-	# A whole mask is neither burnt nor mended.
 	interactor.spawn_into_hand(VILLAGER_MASK, -1, hand)
 	_check("a whole mask is offered nothing", ritual.get_prompt(player) == "" and not ritual.use(player))
 	hand.release().queue_free()
 
-	# A damaged mask, but no soul to pay with: nothing happens.
 	interactor.spawn_into_hand(VILLAGER_MASK, 20, hand)
 	_check("without a soul, no repair is offered", ritual.get_prompt(player) == "")
 	_check("and none is done", not ritual.use(player) and hand.get_durability() == 20)
 
-	# One soul: the repair costs it and restores the mask.
 	inventory.add(BOTTLE)
 	inventory.add(BOTTLE)
 	_check("with a soul, repair is offered", ritual.get_prompt(player) == "Repair mask (1 soul)")
@@ -182,7 +161,6 @@ func _monger_trades() -> void:
 	_check("a mended mask is offered nothing more", ritual.get_prompt(player) == "")
 	hand.release().queue_free()
 
-	# A Shattered Mask is never mended, even with a soul to pay: it is burnt.
 	interactor.spawn_into_hand(SHATTERED, -1, hand)
 	_check("a Shattered Mask is offered for burning, not repair",
 			ritual.get_prompt(player) == "Give shattered mask")
@@ -202,7 +180,6 @@ func _monger_trades() -> void:
 	await _frames(2)
 
 
-## The first seed whose first randf() satisfies `test`.
 func _seed_where(test: Callable) -> int:
 	var rng := RandomNumberGenerator.new()
 	for s in range(1, 1000):
@@ -218,7 +195,6 @@ func _spawn_villager(at: Vector3, roll_seed: int) -> Npc:
 	villager.global_position = at
 	await _physics_frames(5)
 	villager.brain.shut_down()
-	# Left on the face, so the outcome is read off the body's inventory.
 	villager.body.mask_pop_chance = 0.0
 	villager.body.mask_rng.seed = roll_seed
 	return villager

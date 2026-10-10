@@ -1,31 +1,14 @@
 class_name Locomotion
 extends Node
 
-## Moves an NPC's body: walks it to a point along the navigation mesh, turns it to face
-## where it is going or what it is dealing with, and keeps gravity on it. Actions only
-## ever say where to go; how the body gets there lives here.
-##
-## When there is no usable path — the navigation mesh has not finished baking, or the
-## target is off it — the body heads straight for the target instead of standing still,
-## and stops where something solid is in the way.
-
 @export var walk_speed := 2.0
 @export var run_speed := 4.5
 @export var acceleration := 10.0
-## How quickly the body turns toward its heading, higher is snappier.
 @export var turn_speed := 8.0
-## Standing still, a heading within this many degrees of the way the body faces is left
-## alone, so small sways of what it faces do not set it twitching.
 @export var hold_angle := 3.0
-## How close to the target, measured flat, counts as having arrived.
 @export var arrive_distance := 0.6
-## A new target nearer than this to the current one keeps the current path, so chasing
-## a moving actor does not ask for a fresh path every frame.
 @export var repath_distance := 0.5
-## Seconds a push leaves the body staggering, its footing weakened so the shove carries
-## it back instead of being walked straight out of.
 @export var stagger_time := 0.35
-## How much grip on its own movement a staggering body keeps, 0..1 of acceleration.
 @export_range(0.0, 1.0) var stagger_control := 0.1
 
 @onready var _body: CharacterBody3D = owner
@@ -37,14 +20,11 @@ var _running := false
 var _facing := Vector3.ZERO
 var _has_facing := false
 var _stagger := 0.0
-## Footing kept while staggering: stagger_control after a blow, less after a trip.
 var _stagger_grip := 0.1
-## The agent's path as last walked, and the index of the waypoint being walked to.
 var _path := PackedVector3Array()
 var _path_index := 0
 
 
-## Sets off toward `position`, at a run when `run` is true.
 func move_to(position: Vector3, run: bool = false) -> void:
 	_running = run
 	if _moving and _target.distance_to(position) < repath_distance:
@@ -58,9 +38,6 @@ func stop() -> void:
 	_moving = false
 
 
-## Where a walk from here toward `position` really ends: the end of the path to it, which
-## stops short where a wall or the edge of the navigation mesh is in the way. Without a
-## path — no baked mesh yet — `position` itself.
 func walkable_point(position: Vector3) -> Vector3:
 	var map := _agent.get_navigation_map()
 	if not map.is_valid() or NavigationServer3D.map_get_regions(map).is_empty():
@@ -73,7 +50,6 @@ func is_moving() -> bool:
 	return _moving
 
 
-## Turns toward `position` and keeps facing it, even while moving, until clear_facing().
 func face(position: Vector3) -> void:
 	_facing = position
 	_has_facing = true
@@ -83,13 +59,10 @@ func clear_facing() -> void:
 	_has_facing = false
 
 
-## Whether the body is being kept facing something, which is the sign it is dealing with
-## it — an enemy, a throw's target — rather than idling.
 func has_facing() -> bool:
 	return _has_facing
 
 
-## Shoves the body by `velocity` — a hit knocking it back — and leaves it staggering.
 func push(velocity: Vector3) -> void:
 	if velocity.is_zero_approx():
 		return
@@ -98,8 +71,6 @@ func push(velocity: Vector3) -> void:
 	_stagger_grip = stagger_control
 
 
-## Keeps the body staggering for at least `seconds` with only `grip` of its footing: a
-## kick to the legs trips it for longer, and with less control, than a plain blow.
 func stagger_for(seconds: float, grip := stagger_control) -> void:
 	_stagger = maxf(_stagger, seconds)
 	_stagger_grip = grip
@@ -134,21 +105,13 @@ func _physics_process(delta: float) -> void:
 
 
 func _next_waypoint() -> Vector3:
-	# Asking for the next position keeps the agent's path up to date.
 	_agent.get_next_path_position()
 	var path := _agent.get_current_navigation_path()
 	if path != _path:
 		_path = path
 		_path_index = 0
-	# With no path, or once at its end — the target is off the mesh — the rest of the way
-	# is walked straight. Steering for the path's end until right on it and only then for
-	# the target would flip the body back and forth over that point every few frames.
 	if _path_walked():
 		return _target
-	# Waypoints are passed by flat distance. The agent measures in 3D, and on terrain the
-	# navigation mesh floats a good half metre above the ground under the feet, so it
-	# hardly ever counted a waypoint as reached: the body circled it, turning back and
-	# forth on one spot, until it happened to step close enough.
 	_path_index = maxi(_path_index, _agent.get_current_navigation_path_index())
 	while _path_index < _path.size() \
 			and _flat_distance(_body.global_position, _path[_path_index]) < _agent.path_desired_distance:
@@ -158,14 +121,10 @@ func _next_waypoint() -> Vector3:
 	return _path[_path_index]
 
 
-## Whether there is no path to follow, or the body has walked all of it.
 func _path_walked() -> bool:
 	return _path.is_empty() or _path_index >= _path.size() or _agent.is_navigation_finished()
 
 
-## Whether the body has walked the whole path and is now pressed against something on
-## the straight stretch to a target off the mesh — inside a building, behind a fence.
-## That is as close as it gets, so it counts as having arrived.
 func _blocked_short() -> bool:
 	if not _path_walked() or not _body.is_on_wall():
 		return false
@@ -178,16 +137,12 @@ func _turn(delta: float) -> void:
 	if _has_facing:
 		heading = _flat(_facing - _body.global_position)
 	elif _stagger > 0.0:
-		# Being shoved is not walking: a body knocked back does not turn to face the way
-		# it is sliding.
 		return
 	else:
 		heading = _flat(_body.velocity)
 	if heading.length_squared() < 0.01:
 		return
 	var yaw := atan2(-heading.x, -heading.z)
-	# Standing and already about facing it: what it faces swaying a few centimetres — a
-	# target rocked by a blow — is not worth twitching the whole body for.
 	if not _moving and absf(angle_difference(_body.rotation.y, yaw)) < deg_to_rad(hold_angle):
 		return
 	_body.rotation.y = lerp_angle(_body.rotation.y, yaw, clampf(turn_speed * delta, 0.0, 1.0))

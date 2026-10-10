@@ -1,23 +1,9 @@
 extends "res://tools/import/mesh_builder.gd"
 
-## Builds the soul in a bottle's mesh (the spirit of a mask, caught by the Mask-Monger):
-## a corked glass vial, round-bellied, a dab of red wax sealing the cork. The soul itself
-## is not part of the mesh: it is the swirl sphere in scenes/items/soul_bottle.tscn,
-## floating in the vial's hollow round the origin.
-##
-## Built the same way as the wood glue (tools/import/build_wood_glue.gd): lathed
-## profiles, flat shaded, laid out the way a HandSlot holds things.
-##
-##   godot --headless --path cutting-board -s res://tools/import/build_soul_bottle.gd
-
 const WOOD := preload("res://assets/materials/environment/wooden_planks.tres")
 
-## The glass's faint inner glow.
 const SOUL := Color(0.62, 1.0, 0.82)
 
-## Profiles are (radius, height) pairs in metres, from the bottom up the outside and back
-## down the inside, as on the wood glue. The vial is lowered by BELLY so the middle of
-## its hollow, where the soul floats, is at the origin.
 const BELLY := 0.05
 
 const VIAL_SIDES := 9
@@ -34,9 +20,7 @@ const VIAL_SEAL: Array[Vector2] = [
 	Vector2(0.0, 0.112), Vector2(0.02, 0.112), Vector2(0.021, 0.118), Vector2(0.0, 0.119),
 ]
 
-## Texture repeats per metre, as on the wood glue.
 const UV_SCALE := 4.0
-## Scaled up like the wood glue, to sit in the larger-than-life hands at the same size.
 const SIZE := 1.6
 
 
@@ -46,7 +30,6 @@ func _init() -> void:
 	quit(0 if _save(_build_vial(), "soul_bottle.res") else 1)
 
 
-## A corked glass vial, a dab of wax over the cork.
 func _build_vial() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var down := Transform3D(Basis.IDENTITY, Vector3(0.0, -BELLY, 0.0))

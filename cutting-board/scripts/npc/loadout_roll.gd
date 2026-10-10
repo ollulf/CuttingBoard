@@ -1,14 +1,7 @@
 class_name LoadoutRoll
 extends RefCounted
 
-## The dice behind an NPC's random kit at spawn: one weighted draw for the weapon, and a
-## roll per entry for the extra pocket items. Plain functions of the lists Npc exports,
-## so the odds can be read, and checked, apart from the NPC that uses them.
 
-
-## One draw from `pool` by `weights`, matched by position, or null for nothing at all,
-## which comes up with `none_weight`. A missing weight counts as 1, a negative one as 0,
-## and a null pool entry is never drawn.
 static func pick_weighted(pool: Array[ItemData], weights: Array[float], none_weight: float) -> ItemData:
 	var total := maxf(none_weight, 0.0)
 	for i in pool.size():
@@ -23,8 +16,6 @@ static func pick_weighted(pool: Array[ItemData], weights: Array[float], none_wei
 	return null
 
 
-## One roll per entry of `items` against its chance (0-1) in `chances`, matched by
-## position; returns the ones that came up. A missing chance counts as 0.
 static func pick_by_chance(items: Array[ItemData], chances: Array[float]) -> Array[ItemData]:
 	var picked: Array[ItemData] = []
 	for i in items.size():

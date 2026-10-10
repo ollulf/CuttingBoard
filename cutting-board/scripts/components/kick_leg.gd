@@ -1,53 +1,27 @@
 class_name KickLeg
 extends Node3D
 
-## The first-person leg of the kick: a side kick (docs/concepts/kick-animation.md, option
-## C). The knee comes up across from the lower right, the leg shoots out with the boot
-## turned edge-on and the view rolls with the hips, then everything settles back. Sits
-## under the camera next to the arms; the leg is only drawn while a kick plays.
-##
-## Like the arms, the motion is an Animation on an AnimationPlayer, with a method track
-## at the strike frame. It is built here from the KEYS table rather than kept in a .tres,
-## so the pose numbers sit next to the rig they move. play_kick() stretches it so the
-## strike frame lands on the Kick's own strike frame, `windup` after the press.
-##
-## The roll is purely visual: the player adds view_roll to the camera's z rotation, and a
-## roll about the camera's own sight line leaves the crosshair direction, and with it the
-## kick's aim, exactly as it was.
-
-## Fired from the animation's method track on the strike frame.
 signal struck
 
-## Seconds into the animation the boot lands; KEYS are timed for this.
 const STRIKE_TIME := 0.15
-## Keyframes: [time, hip pitch, hip yaw, hip roll, knee bend, boot twist, roll weight].
-## Angles in degrees in the camera's space (-Z ahead, the leg hanging down -Y at rest);
-## the roll weight scales view_roll_degrees.
 const KEYS := [
 	[0.00, 0, 0, 0, 0, 0, 0.0],
-	[0.10, 95, -30, 10, -120, 40, 0.6],      # chamber: knee up across from the lower right
-	[0.15, 118, 9, 0, -4, 80, 1.0],          # strike: leg out, boot edge-on, view rolled
-	[0.24, 114, 8, 0, -8, 80, 0.8],          # hold on the target
-	[0.40, 60, -25, 5, -90, 40, 0.2],        # rechamber; the roll is nearly back
+	[0.10, 95, -30, 10, -120, 40, 0.6],
+	[0.15, 118, 9, 0, -4, 80, 1.0],
+	[0.24, 114, 8, 0, -8, 80, 0.8],
+	[0.40, 60, -25, 5, -90, 40, 0.2],
 	[0.58, 0, 0, 0, 0, 0, 0.0],
 ]
 const ANIMATION := &"kick_side"
 
-## How far the view rolls at the strike, in degrees. Round 1's prototype used 14; 10 keeps
-## the hip turn readable without tipping the horizon too far.
 @export var view_roll_degrees := 10.0
-## Where the hip sits relative to the camera: low, a little right and behind the eye.
 @export var hip_offset := Vector3(0.2, -0.7, 0.05)
 @export var thigh_length := 0.46
 @export var shin_length := 0.44
-## The leg's cloth; the player gives it the arms' body material.
 @export var material: Material
 @export var boot_material: Material
 
-## Radians of camera roll the animation asks for right now; the player adds it to the
-## camera's z rotation.
 var view_roll := 0.0
-## Weight of the roll curve, animated by the kick and turned into view_roll.
 var roll_weight := 0.0:
 	set(value):
 		roll_weight = value
@@ -65,7 +39,6 @@ func _ready() -> void:
 	_player.name = "LegPlayer"
 	add_child(_player)
 	_player.root_node = NodePath("..")
-	# Stepped with physics, like the Kick's own windup, so the strike frames agree.
 	_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	var library := AnimationLibrary.new()
 	library.add_animation(ANIMATION, _build_animation())
@@ -74,7 +47,6 @@ func _ready() -> void:
 	visible = false
 
 
-## Plays the side kick so its strike frame lands `windup` seconds from now.
 func play_kick(windup: float) -> void:
 	_player.speed_scale = STRIKE_TIME / maxf(windup, 0.01)
 	_player.stop()
@@ -86,7 +58,6 @@ func is_playing() -> bool:
 	return _player.is_playing()
 
 
-## Called from the animation's method track on the strike frame.
 func emit_strike() -> void:
 	struck.emit()
 

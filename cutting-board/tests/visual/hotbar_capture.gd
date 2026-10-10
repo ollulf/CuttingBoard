@@ -1,23 +1,11 @@
 extends Node
 
-## Screenshots of the hotbar for checking its look: loads the test level, then
-## photographs the bar empty, with items linked and one of them in hand, and again with
-## the inventory screen open over it. Each shot is also saved as a 3x close-up of the
-## bar, scaled with nearest filtering so single pixels stay visible.
-##
-##   godot --path cutting-board res://tests/visual/hotbar_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. With --cycle instead of
-## --shots it draws and puts away items on the number keys' behalf for a few seconds,
-## for recording the held outline coming and going with --write-movie.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 const HAMMER := preload("res://resources/items/hammer.tres")
 const SMALL_BOX := preload("res://resources/items/box_small.tres")
 const BARREL := preload("res://resources/items/barrel.tres")
 
-## The part of a 1280x720 window the close-ups are cut from, around the bar.
 const ZOOM_RECT := Rect2i(420, 570, 440, 140)
 const ZOOM := 3
 

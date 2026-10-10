@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks that masks break: a mask lying in the world breaks like a crate, both
-## when it is struck and when it is thrown down hard; blows to an NPC's head wear its mask
-## down twice as hard as blows to the body, crack it and finally break it off, leaving a
-## Shattered Mask behind; the wear goes with a mask that comes off whole; and the
-## player's own mask breaks the same way, emptying the Mask slot. Prints PASS/FAIL per
-## check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/mask_break_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const VILLAGER_MASK_ITEM := preload("res://scenes/items/villager_mask.tscn")
@@ -36,7 +27,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Struck like a crate: a hammer's worth at a time until it gives.
 func _mask_item_struck() -> void:
 	var item := VILLAGER_MASK_ITEM.instantiate() as RigidBody3D
 	add_child(item)
@@ -57,7 +47,6 @@ func _mask_item_struck() -> void:
 	_check("it breaks with a burst", _bursts().size() > 0)
 
 
-## Thrown down hard enough, it breaks against the floor.
 func _mask_item_thrown() -> void:
 	var item := VILLAGER_MASK_ITEM.instantiate() as RigidBody3D
 	add_child(item)
@@ -68,12 +57,9 @@ func _mask_item_thrown() -> void:
 	_check("a mask thrown down hard breaks", not is_instance_valid(item))
 
 
-## Blows to the body leave the mask alone; blows to the head wear it, crack it, and
-## break it off.
 func _worn_mask_breaks() -> void:
 	var villager: Npc = await _spawn_villager(Vector3(0, 0, -3))
 	var body: HumanBody = villager.body
-	# A mask outlasts its wearer's health; toughen the wearer so it can wear through.
 	_toughen(villager)
 	_check("the villager wears a mask", body.mask == VILLAGER_MASK and _face_of(body) != null)
 	_check("it starts at full", body.mask_durability == VILLAGER_MASK.durability)
@@ -89,7 +75,6 @@ func _worn_mask_breaks() -> void:
 	_check("a lightly worn mask shows no crack", _crack_of(body) == 0.0)
 	_hit(villager, _head_point(body), 15)
 	_check("a mask half gone shows a crack", _crack_of(body) > 0.0)
-	# Every hit on a creature sprays splinters; the break adds a burst of its own.
 	var bursts_before := _bursts().size()
 	_hit(villager, _head_point(body), 30)
 	await _frames(2)
@@ -100,7 +85,6 @@ func _worn_mask_breaks() -> void:
 	_check("no whole mask is left to pick up", _loose_masks().size() == loose_before)
 	_check("a Shattered Mask is", _loose_shattered().size() == shattered_before + 1)
 
-	# Dying bare-faced drops no mask either.
 	villager.health.apply_damage(DamageInfo.new(9999))
 	await _physics_frames(30)
 	_check("a bare-faced body drops no mask", _loose_masks().size() == loose_before)
@@ -108,11 +92,9 @@ func _worn_mask_breaks() -> void:
 	villager.queue_free()
 
 
-## A battered mask knocked off a dead face is just as battered on the ground.
 func _wear_goes_with_the_mask() -> void:
 	var villager: Npc = await _spawn_villager(Vector3(4, 0, -3))
 	villager.body.mask_pop_chance = 1.0
-	# Survives the death roll as its own kind, with at most what it had left.
 	villager.body.mask_shatter_chance = 0.0
 	villager.body.damaged_mask_left = Vector2.ONE
 	_hit(villager, _head_point(villager.body), 12)
@@ -139,7 +121,6 @@ func _player_mask_breaks() -> void:
 	var body: HumanBody = player.body
 	_check("the player's body wears their mask", body.mask == PLAYER_MASK)
 	_check("at the slot's wear", body.mask_durability == equipment.get_durability(MASK))
-	# The player's mask is their health (player_mask_health_check), so every blow wears it.
 	_hit(player, player.global_position + Vector3(0, 1.0, -0.4), 10)
 	_check("a body blow wears the player's mask", equipment.get_durability(MASK) == PLAYER_MASK.durability - 10)
 	_hit(player, _head_point(body), 10)
@@ -152,7 +133,6 @@ func _player_mask_breaks() -> void:
 	_check("the player is still alive", player.health.is_alive())
 	_check("nothing of it is left in the inventory", _entry_of(player.inventory, PLAYER_MASK) == null)
 
-	# A fresh mask put back on starts whole: the broken one's wear does not linger.
 	equipment.equip(MASK, PLAYER_MASK)
 	_check("a new mask goes on whole", body.mask == PLAYER_MASK and body.mask_durability == PLAYER_MASK.durability)
 	player.queue_free()
@@ -168,8 +148,6 @@ func _spawn_villager(at: Vector3) -> Npc:
 	return villager
 
 
-## Hits `actor` for `amount` at `at`, from the front.
-## Gives an actor enough health to take every blow a mask can.
 func _toughen(actor: Node) -> void:
 	var health := Health.find_in(actor)
 	health.max_health = 1000
@@ -183,7 +161,6 @@ func _hit(actor: Node, at: Vector3, amount: int) -> void:
 	Health.find_in(actor).apply_damage(info)
 
 
-## A point on the face: in front of the head, a little above the base of the skull.
 func _head_point(body: HumanBody) -> Vector3:
 	var head := body.skeleton.find_bone("Head")
 	var frame := body.skeleton.global_transform * body.skeleton.get_bone_global_pose(head)
@@ -201,7 +178,6 @@ func _crack_of(body: HumanBody) -> float:
 	return 0.0
 
 
-## The face hung on a body's head, or null.
 func _face_of(body: HumanBody) -> Node3D:
 	var attachment := body.skeleton.get_node_or_null("HeadAttachment")
 	if attachment == null:
@@ -212,12 +188,10 @@ func _face_of(body: HumanBody) -> Node3D:
 	return null
 
 
-## Break bursts and hit splinters alike: both are BreakBursts.
 func _bursts() -> Array[Node]:
 	return get_children().filter(func(child: Node) -> bool: return child is BreakBurst)
 
 
-## Every mask lying loose in the level.
 func _loose_masks() -> Array[Carryable]:
 	var masks: Array[Carryable] = []
 	for node in find_children("Carryable", "Carryable", true, false):

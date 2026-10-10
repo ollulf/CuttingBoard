@@ -1,17 +1,6 @@
 class_name HealthBar
 extends Control
 
-## The player's health bar in the bottom-left corner, Oblivion style: a heart, a thin
-## blood-red bar and the number. When a hit lands the bar drops at once, but the chunk
-## that was lost stays behind in flame colour for a moment and then drains away, so a
-## big hit reads as big even after it is over. Below a quarter the bar's frame beats.
-##
-## It is laid out in the pixels of the retro render (640x360, see PsxScreen) and blown
-## up by the same whole number as the world, so it lines up with the game's own pixels.
-## It only follows the Health it is bound to — the changed signal drives it, nothing
-## is polled. Left unbound it finds the Health of whoever the HUD is instanced into.
-
-## Fill and trail of the bar, from the HUD concept's Tallow Fair palette.
 const BLOOD := Color("#b23a2e")
 const BLOOD_HI := Color("#e6594d")
 const FLAME := Color("#f0a838")
@@ -30,38 +19,25 @@ const HEART: Array[String] = [
 	"...#...",
 ]
 
-## Height of the render the bar is laid out for; the window is divided by the whole
-## number closest to it, the same way PsxScreen sizes its render.
 @export var design_height := 360
-## Where the row sits, in render pixels: from the left edge and up from the bottom.
 @export var margin := Vector2i(10, 25)
 @export var bar_size := Vector2i(86, 5)
 @export var font_size := 8
-## Below this fraction of the maximum the bar counts as critical and its frame beats.
 @export_range(0.0, 1.0) var critical_ratio := 0.25
-## The concept keeps health on screen the whole time; on, the bar fades out at full
-## health and comes back whenever it drops or show_for() asks for it.
 @export var hide_when_full := false
-## Follows the Health of whoever the HUD is instanced into, and stays on screen for as
-## long as their CombatTracker says they are fighting. Off for a bar that is pointed at
-## someone else with bind(), like the enemy's.
 @export var follow_owner := true
 @export_group("Timing")
-## The fill snaps to a new value in `fill_steps` jumps over `fill_time` seconds.
 @export var fill_time := 0.5
 @export var fill_steps := 12
-## How long the lost chunk lingers before it drains, and how long the draining takes.
 @export var trail_delay := 0.5
 @export var trail_time := 1.2
 @export var trail_steps := 16
-## One full beat of the frame at critical health.
 @export var beat_period := 1.0
 @export var fade_time := 0.4
 
 var _health: Health
 var _current := 0
 var _maximum := 1
-## Shown widths as fractions of the bar, each easing from a start value to a target.
 var _fill := 1.0
 var _fill_from := 1.0
 var _fill_to := 1.0
@@ -74,7 +50,6 @@ var _beat_t := 0.0
 var _forced_visible := false
 var _show_left := 0.0
 var _fade: Tween
-## Render pixels to window pixels.
 var _px := 1
 
 
@@ -94,7 +69,6 @@ func _ready() -> void:
 	_update_visibility(true)
 
 
-## Points the bar at a Health and keeps it in step with it from then on.
 func bind(health: Health) -> void:
 	if _health == health:
 		return
@@ -104,23 +78,17 @@ func bind(health: Health) -> void:
 	if _health == null:
 		return
 	_health.changed.connect(_on_changed)
-	# The HUD sits above Health in the player scene, so it can be ready first, before
-	# Health has filled itself up.
 	if not _health.is_node_ready():
 		await _health.ready
 	_jump_to(_health.get_current(), _health.max_health)
 
 
-## Keeps the bar on screen for a while even when hide_when_full would hide it, e.g.
-## when a fight starts.
 func show_for(seconds: float) -> void:
 	_show_left = maxf(_show_left, seconds)
 	_update_visibility()
 	set_process(true)
 
 
-## Pins the bar on screen (true) until released again (false), e.g. for the length
-## of a fight.
 func set_forced_visible(forced: bool) -> void:
 	_forced_visible = forced
 	_update_visibility()
@@ -132,8 +100,6 @@ func is_critical() -> bool:
 
 func _on_changed(current: int, maximum: int) -> void:
 	var ratio := _ratio_of(current, maximum)
-	# Losing health leaves the lost chunk behind as the trail; gaining it puts the trail
-	# straight at the new value, so the flame shows what is being filled in.
 	_trail_from = _trail if ratio < _trail else ratio
 	_trail_to = ratio
 	_trail_t = 0.0
@@ -182,7 +148,6 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## CSS steps(): jumps from `from` to `to` in `steps` even jumps as `t` goes 0..1.
 func _stepped(from: float, to: float, t: float, steps: int) -> float:
 	var k := floorf(clampf(t, 0.0, 1.0) * steps) / maxf(steps, 1)
 	return lerpf(from, to, k)
@@ -211,8 +176,6 @@ func _fit_to_window() -> void:
 	queue_redraw()
 
 
-## The first Health found going up from this node: the player's, when the HUD is
-## instanced into the player scene.
 func _find_owner_health() -> Health:
 	var node := get_parent()
 	while node:
@@ -230,7 +193,6 @@ func _draw() -> void:
 	var mid := top + row_h * 0.5
 	var x := float(margin.x)
 
-	# Heart.
 	var heart_top := floorf(mid - HEART.size() * 0.5)
 	for r in HEART.size():
 		for c in HEART[r].length():
@@ -238,7 +200,6 @@ func _draw() -> void:
 				_rect(x + c, heart_top + r, 1, 1, BLOOD_HI)
 	x += 7 + 4
 
-	# Bar: a gold ring round a dark outline round a dark backing, then trail and fill.
 	var bar := Rect2(x, floorf(mid - bar_size.y * 0.5), bar_size.x, bar_size.y)
 	var ring := RING_BEAT if is_critical() and _beat_t >= beat_period * 0.5 else RING
 	_frame(bar.grow(2), ring)
@@ -252,7 +213,6 @@ func _draw() -> void:
 		_rect(bar.position.x, bar.position.y, fill_w, 1, BLOOD_HI)
 	x += bar_size.x + 4
 
-	# Number, sized for the window so it stays sharp rather than blown up.
 	var font := get_theme_default_font()
 	var fs := font_size * _px
 	var baseline := mid * px + (font.get_ascent(fs) - font.get_descent(fs)) * 0.5
@@ -260,14 +220,12 @@ func _draw() -> void:
 		HORIZONTAL_ALIGNMENT_LEFT, -1, fs, STAT)
 
 
-## A rectangle in render pixels.
 func _rect(x: float, y: float, w: float, h: float, color: Color) -> void:
 	if w <= 0 or h <= 0:
 		return
 	draw_rect(Rect2(x * _px, y * _px, w * _px, h * _px), color)
 
 
-## A one-pixel border just inside `r`, without overdrawing its middle.
 func _frame(r: Rect2, color: Color) -> void:
 	var p := r.position
 	var s := r.size

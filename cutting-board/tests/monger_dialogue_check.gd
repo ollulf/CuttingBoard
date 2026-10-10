@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks for the Mask-Monger's first talk (scripts/components/dialogue.gd): a
-## bare-faced player looking at her is offered "E Talk"; E starts the talk and each
-## further E goes on a line (eaten by the speech plank, so it does not start another
-## talk); after the last line the player wears the first mask; a second talk says
-## something else and gives nothing; and a mask in hand still offers "Give shattered mask" first.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/monger_dialogue_check.tscn
-
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const MASK := preload("res://resources/items/shattered_mask.tres")
@@ -28,10 +19,8 @@ func _run() -> void:
 	add_child(player)
 	monger.global_position = Vector3(0, 0.05, 0)
 	player.global_position = Vector3(0, 0.05, -2.0)
-	# Looking down +Z, at the Monger.
 	player.rotation.y = PI
 	await _physics_frames(10)
-	# He is invincible: a beating well past his 120 health leaves him talking.
 	for i in 15:
 		monger.health.apply_damage(DamageInfo.new(20))
 	await _physics_frames(10)
@@ -55,7 +44,6 @@ func _run() -> void:
 	_check("the prompt reads E Talk", interact_prompt.visible
 			and interact_prompt._action_label.text == "Talk")
 
-	# E: the interactor falls back from the ritual (no mask on offer) to talking.
 	var shown: Array[String] = []
 	dialogue.line_shown.connect(func(text: String) -> void: shown.append(text))
 	interactor.interact(inventory)
@@ -65,7 +53,6 @@ func _run() -> void:
 	var first_count := dialogue.first_lines.size()
 	_check("the first talk has 3 to 5 lines (%d)" % first_count,
 			first_count >= 3 and first_count <= 5)
-	# Each line: one E finishes the typing, the next goes on.
 	for i in first_count:
 		await _physics_frames(2)
 		_press_interact()
@@ -81,7 +68,6 @@ func _run() -> void:
 	var worn := equipment.get_item(Equipment.Slot.MASK)
 	_check("the player wears the gift", worn != null and worn == dialogue.gift)
 
-	# A second talk: other words, no gift.
 	var items_before := inventory.get_entries().size()
 	shown.clear()
 	_check("Talk is offered again", dialogue.get_prompt(player) == "Talk")
@@ -92,13 +78,11 @@ func _run() -> void:
 	_check("nothing more is given", inventory.get_entries().size() == items_before
 			and equipment.get_item(Equipment.Slot.MASK) == worn)
 
-	# A mask only in the inventory: still just Talk.
 	inventory.add(MASK)
 	prompts.refresh()
 	_check("a mask only in the inventory still offers Talk",
 			interact_prompt._action_label.text == "Talk")
 
-	# A mask in hand: the ritual comes first.
 	var hand := player.get_node("%HandSlotRight") as HandSlot
 	interactor.spawn_into_hand(MASK, -1, hand)
 	prompts.refresh()

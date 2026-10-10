@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks for NPCs putting their weapon away: out of combat the weapon goes from
-## the hand to the hip on the same side, out of world physics; a fight draws it back,
-## and a blow thrown first draws it at once; it keeps its wear all the way; a lamp in
-## the other hand stays put; and a dead NPC drops a holstered weapon into the world.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/npc_holster_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const HAMMER := preload("res://resources/items/hammer.tres")
 const LAMP := preload("res://resources/items/oil_lamp.tres")

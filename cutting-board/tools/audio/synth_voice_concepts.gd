@@ -1,33 +1,13 @@
 extends "res://tools/audio/synth_base.gd"
 
-## Renders the five Mask-Monger voice concepts (docs/concepts/monger-voice.md) as WAVs in
-## assets/audio/voice_concepts/: per concept a short greeting of babble blips and a
-## slower, falling "wise" line. Concept sketches only, not wired into any SoundBank:
-##
-##   godot --headless --path cutting-board -s res://tools/audio/synth_voice_concepts.gd
-##
-## Pass `-- godly` to render only the round 3 "godly" voices into voice_concepts/godly/;
-## each also gets a fast "dialogue" sample to test how the reverb holds up at speed.
-##
-## Pass `-- monger` to render the chosen voice (C, Breath of the Grove) into
-## assets/audio/voices/mask_monger/: its three phrases plus single syllable blips for a
-## dialogue system (bank: resources/audio/monger_voice.tres).
-##
-## Every concept speaks the same two phrases (same syllable pitches, lengths and vowels),
-## so the files compare the voice itself, not the melody. Same lo-fi format and filter
-## approach as synth_sfx.gd; prints peak and RMS level of each file.
-
 const ROOT := "res://assets/audio/voice_concepts/"
 
-## Female vowel formants (F1, F2, F3 in Hz), roughly from Peterson & Barney.
 const A := [850.0, 1220.0, 2810.0]
 const E := [560.0, 2300.0, 2950.0]
 const I := [330.0, 2700.0, 3300.0]
 const O := [560.0, 1000.0, 2800.0]
 const U := [370.0, 950.0, 2700.0]
 
-## A syllable: [semitones at start, semitones at end, length s, pause after s, vowel].
-## The greeting lifts and then settles; the wise line is slow, pauses once, and falls.
 var greeting := [
 	[0, 2, 0.13, 0.03, E], [4, 3, 0.11, 0.03, A], [5, 5, 0.10, 0.03, O], [7, 4, 0.22, 0.14, A],
 	[3, 2, 0.11, 0.03, I], [2, 0, 0.12, 0.03, E], [0, -2, 0.13, 0.04, O], [-3, -5, 0.40, 0.0, U],
@@ -38,7 +18,6 @@ var wise := [
 ]
 
 
-## Fast dialogue babble for round 3: two quick runs of short syllables, as typed-out text.
 var dialogue := [
 	[0, 1, 0.07, 0.02, E], [2, 2, 0.06, 0.02, A], [3, 2, 0.07, 0.02, O], [1, 1, 0.06, 0.02, I],
 	[2, 3, 0.07, 0.02, A], [4, 4, 0.06, 0.02, E], [3, 2, 0.07, 0.02, U], [2, 1, 0.06, 0.02, O],
@@ -74,7 +53,6 @@ func _init() -> void:
 	quit()
 
 
-## Lays the syllables of `phrase` end to end, each rendered by `syl`.
 func _phrase(phrase: Array, base: float, syl: Callable, stretch: float) -> PackedFloat32Array:
 	var total := 0.5
 	for s in phrase:
@@ -89,11 +67,6 @@ func _phrase(phrase: Array, base: float, syl: Callable, stretch: float) -> Packe
 	return out
 
 
-# --- The five voices ----------------------------------------------------------------------
-
-
-## 1. Heartwood Alto: a breathy, soft glottal source with a slow vibrato through female
-## vowel formants, plus a hollow 450 Hz ring for the wooden mask cavity.
 func _syl_alto(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var source := _glottal(length + 0.12, f0a, f0b, 5.0, 0.015, 0.003)
 	source = _lowpass(source, 2600.0, 0.7)
@@ -105,8 +78,6 @@ func _syl_alto(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFlo
 	return _shape(voiced, 0.025, length * 0.9)
 
 
-## 2. Hollow Reed: an ocarina breath, a near-sine at the pitch with a chiff of air on the
-## onset; a faint vowel filter lets it "say" things.
 func _syl_reed(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var n := _seconds(length + 0.1)
 	var out := _silence_samples(n)
@@ -128,9 +99,6 @@ func _syl_reed(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFlo
 	return out
 
 
-## 3. Hinge Mezzo: a bowed-wood stick-slip source (each period a little louder or softer,
-## a little early or late) that starts in a creaky fry, through fixed wooden body modes
-## and lighter vowel formants.
 func _syl_hinge(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var n := _seconds(length + 0.1)
 	var source := _silence_samples(n)
@@ -155,8 +123,6 @@ func _syl_hinge(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFl
 	return _shape(body, 0.02, length * 0.85)
 
 
-## 4. Whisper & Hum: a closed-mouth hum carries the pitch while a formant-filtered whisper
-## speaks the vowel just ahead of it, like two voices sharing one mouth.
 func _syl_whisper_hum(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var n := _seconds(length + 0.15)
 	var hum := _silence_samples(n)
@@ -174,8 +140,6 @@ func _syl_whisper_hum(length: float, f0a: float, f0b: float, vowel: Array) -> Pa
 	return out
 
 
-## 5. Kalimba Oracle: each syllable a plucked wooden tine (inharmonic partials, bent
-## along the contour) whose ring is swept from the vowel's F1 up to F2, a little "wah".
 func _syl_kalimba(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var ring := maxf(length * 1.6, 0.3)
 	var n := _seconds(ring)
@@ -195,11 +159,6 @@ func _syl_kalimba(length: float, f0a: float, f0b: float, vowel: Array) -> Packed
 	return _shape(out, 0.002, ring)
 
 
-# --- Round 3: the godly voices --------------------------------------------------------------
-
-
-## Each godly voice: [base pitch Hz, syllable, reverb feedback (tail length), wet gain, wind].
-## Same greeting, wise line and dialogue phrase for all three.
 func _render_godly() -> void:
 	var voices := {
 		"a_choir_of_rings": [233.0, _syl_choir, 0.9, 2.6, 0.0],
@@ -218,9 +177,6 @@ func _render_godly() -> void:
 const MONGER := "res://assets/audio/voices/mask_monger/"
 
 
-## The chosen Mask-Monger voice: C's three phrases (same as the godly render), then 8 blips
-## (four vowels at two pitches, short and nearly dry: a small 0.6-feedback room instead of
-## the hall), meant to be played one per syllable with the bank's pitch jitter.
 func _render_monger() -> void:
 	var v := [196.0, _syl_grove, 0.87, 2.2, 0.05]
 	rng.seed = hash("c_breath_of_the_grove")
@@ -239,10 +195,6 @@ func _render_monger() -> void:
 			_save(MONGER + "blip_%s_%s" % [vowel_name, "low" if semis == 0 else "high"], blip, 0.7)
 
 
-## Like _phrase, but through a long hall reverb that stays out of the way while she talks:
-## the send is only 7 % during the syllables and opens fully on the last one, and the wet
-## signal is ducked under the dry voice, so fast blips stay crisp and the big tail
-## blooms only when the line ends.
 func _godly_phrase(phrase: Array, v: Array, stretch: float) -> PackedFloat32Array:
 	var base: float = v[0]
 	var syl: Callable = v[1]
@@ -262,7 +214,6 @@ func _godly_phrase(phrase: Array, v: Array, stretch: float) -> PackedFloat32Arra
 		_mix(send, sound, at, 1.0 if k == phrase.size() - 1 else 0.07)
 		at += _seconds((s[2] + s[3]) * stretch)
 	var wet := _hall(send, v[2])
-	# Duck the wet signal under the dry voice (fast attack, 120 ms release).
 	var env := 0.0
 	var release := exp(-1.0 / (0.12 * sample_rate))
 	var top := 0.001
@@ -277,9 +228,6 @@ func _godly_phrase(phrase: Array, v: Array, stretch: float) -> PackedFloat32Arra
 	return dry
 
 
-## A. Choir of Rings: four female voices in one mouth (unison detuned a few cents, plus a
-## soft fifth above), each with its own vibrato, through the vowel formants, with a faint
-## high shimmer partial.
 func _syl_choir(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var parts := [[0.0, 1.0, 4.7], [9.0, 0.8, 5.2], [-11.0, 0.8, 5.5], [702.0, 0.3, 4.9]]
 	var source := _silence(length + 0.15)
@@ -298,9 +246,6 @@ func _syl_choir(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFl
 	return _shape(out, 0.03, length * 0.95)
 
 
-## B. Elder Bell-Voice: one sung vowel with a wide, slow vibrato, and a singing-bowl of
-## inharmonic partials an octave above blooming underneath it. The bowl rings a little past
-## the syllable (longer on long syllables).
 func _syl_bell_voice(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var ring := clampf(length * 2.5, 0.2, 1.1)
 	var voice := _glottal(length + 0.1, f0a, f0b, 4.8, 0.018, 0.002)
@@ -325,8 +270,6 @@ func _syl_bell_voice(length: float, f0a: float, f0b: float, vowel: Array) -> Pac
 	return out
 
 
-## C. Breath of the Grove: a large whispered vowel resonating in a hollow trunk (fixed
-## low wood resonances), carried by a soft hum with a sub-octave for warmth.
 func _syl_grove(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var n := _seconds(length + 0.2)
 	var whisper := _formants(_noise(length + 0.2), vowel, [1.0, 0.75, 0.4], 11.0)
@@ -346,8 +289,6 @@ func _syl_grove(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFl
 	return source
 
 
-## Freeverb-style hall: 30 ms pre-delay, six damped combs, two allpasses. `feedback`
-## sets the tail (0.9 is about three seconds).
 func _hall(x: PackedFloat32Array, feedback: float) -> PackedFloat32Array:
 	var pre := _seconds(0.03)
 	var input := _silence_samples(x.size())
@@ -375,7 +316,6 @@ func _hall(x: PackedFloat32Array, feedback: float) -> PackedFloat32Array:
 	return out
 
 
-## Soft wind: low-passed noise swelling slowly, for the grove's air.
 func _wind(length: float) -> PackedFloat32Array:
 	var out := _bandpass(_noise(length), 500.0, 0.8)
 	for i in out.size():
@@ -383,11 +323,6 @@ func _wind(length: float) -> PackedFloat32Array:
 	return out
 
 
-# --- Building blocks ----------------------------------------------------------------------
-
-
-## A soft glottal pulse train: a sawtooth with a rounded edge, pitch gliding `f0a` to `f0b`
-## with vibrato (`vib_rate` Hz, `vib_depth` fraction) and a slow random drift.
 func _glottal(length: float, f0a: float, f0b: float, vib_rate: float, vib_depth: float, drift_step: float) -> PackedFloat32Array:
 	var n := _seconds(length)
 	var out := _silence_samples(n)
@@ -402,8 +337,6 @@ func _glottal(length: float, f0a: float, f0b: float, vib_rate: float, vib_depth:
 	return out
 
 
-## Attack ramp of `attack` s, then an exponential-ish fall over `decay` s. Overrides the
-## exponential envelope of synth_base.gd: these voices fade out to silence by `decay`.
 func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32Array:
 	var out := x.duplicate()
 	var a := maxi(_seconds(attack), 1)
@@ -416,10 +349,6 @@ func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32
 	return out
 
 
-# --- Output -------------------------------------------------------------------------------
-
-
-## Normalises to `peak`, fades the last 10 ms, writes 16-bit mono PCM and prints the level.
 func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
 	var out := _normalized(x, peak)
 	var fade := mini(_seconds(0.01), out.size())

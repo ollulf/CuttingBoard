@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for Stamina and the player's use of it: spending and the regen delay,
-## a sprint draining it and dropping to a walk when empty (and staying there until some
-## is back), and jumps and blows refused without enough. Prints PASS/FAIL per check and
-## quits with the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/stamina_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const HAMMER := preload("res://resources/items/hammer.tres")
 

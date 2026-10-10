@@ -1,23 +1,5 @@
 extends "res://tools/import/mesh_builder.gd"
 
-## Builds the walking chair, a monster made from a reference sculpture: a pale Windsor
-## chair (curved top rail, six spindles, a dished round seat) whose four wooden legs turn,
-## halfway down, into long gray clay limbs that walk on big bony hands. Under the front of
-## the seat hangs a round head of the same clay. In this world a face is a mask and a mask
-## is a faction, so the head wears a real mask (MaskData), put on by walking_chair.gd on
-## the %Head pivot, the same way a human body wears one.
-##
-## The parts are saved as meshes under assets/meshes/characters/ (one thigh, shin and hand
-## shared by all four limbs) and put together in scenes/characters/walking_chair.tscn as a
-## chain of pivots per limb: Hip > Knee > Wrist, named per corner (HipFL, KneeFL, WristFL,
-## ... F/B front/back, L/R left/right). The pivots, Body and Neck are scene-unique names so
-## an animator can turn them as %KneeFL and so on. The chair faces -Z like the game's other
-## characters. It is posed in the reference's stance: three hands on the ground, the front
-## right arm reaching forward, bent at the elbow, its hand clawing.
-##
-## Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://tools/import/build_walking_chair.gd
-
 const MESH_DIR := "res://assets/meshes/characters/"
 const SCENE_PATH := "res://scenes/characters/walking_chair.tscn"
 const WOOD := preload("res://assets/materials/environment/wooden_planks.tres")
@@ -27,29 +9,21 @@ const MASK := preload("res://resources/items/chair_mask.tres")
 
 const FLESH_COLOR := Color("8a8480")
 
-## The seat's radius, metres.
 const SEAT_RADIUS := 0.26
-## Upper limb: wood down to WOOD_END, then the gray sleeve over the knee.
 const THIGH := 0.46
 const WOOD_END := 0.3
 const SHIN := 0.62
-## Where the hands' pivots sit above the ground when the fingertips rest on it.
 const WRIST_HEIGHT := 0.075
 
-## (corner, hip position under the seat, hip pitch, hip roll, knee pitch, knee roll).
-## Positive pitch swings the limb forward (-Z), positive roll swings it to +X (right).
 const LIMBS := [
 	["FL", Vector3(-0.17, 0.0, -0.15), 0.32, -0.3, -0.25, 0.18],
 	["FR", Vector3(0.17, 0.0, -0.15), 0.15, 0.12, 1.35, -0.05],
 	["BL", Vector3(-0.17, 0.0, 0.15), -0.32, -0.3, 0.25, 0.18],
 	["BR", Vector3(0.17, 0.0, 0.15), -0.32, 0.3, 0.25, -0.18],
 ]
-## The round head's radius, metres: as big as the skull in the reference.
 const HEAD_RADIUS := 0.15
-## The limb that reaches instead of standing.
 const REACHING := "FR"
 
-## One step of the test walk (both diagonal pairs swing once), seconds, and its keys.
 const WALK_TIME := 1.1
 const WALK_KEYS := 8
 
@@ -91,11 +65,6 @@ func _save_to(mesh: ArrayMesh, path: String) -> bool:
 	return true
 
 
-# --- meshes ------------------------------------------------------------------------------
-
-
-## The dished seat, six spindles and the curved top rail. The seat's top is at y 0.05
-## above the hips' plane.
 func _seat_mesh() -> ArrayMesh:
 	var tool := _begin()
 	var seat: Array[Vector2] = [
@@ -103,13 +72,11 @@ func _seat_mesh() -> ArrayMesh:
 		Vector2(SEAT_RADIUS, 0.045), Vector2(SEAT_RADIUS - 0.03, 0.055), Vector2(0.0, 0.035),
 	]
 	_lathe(tool, seat, 12, Transform3D(Basis.from_scale(Vector3(1.05, 1.0, 0.92)), Vector3.ZERO))
-	# Spindles fan up from the back of the seat to the rail, leaning back a little.
 	for i in 6:
 		var x := lerpf(-0.16, 0.16, i / 5.0)
 		var bottom := Vector3(x * 0.9, 0.04, 0.17 + absf(x) * -0.15)
 		var top := Vector3(x * 1.15, 0.6, 0.24 + absf(x) * -0.25)
 		_tube(tool, bottom, top, 0.012, 0.01, 5)
-	# The top rail: a bent board, wider than the spindles, in short flat pieces.
 	var pieces := 6
 	for i in pieces:
 		var x0 := lerpf(-0.24, 0.24, float(i) / pieces)
@@ -122,8 +89,6 @@ func _seat_mesh() -> ArrayMesh:
 	return mesh
 
 
-## The upper limb, hanging down from the hip: a turned wooden leg that ends in a lump of
-## gray clay wrapped over the knee.
 func _thigh_mesh() -> ArrayMesh:
 	var wood := _begin()
 	var leg: Array[Vector2] = [
@@ -144,7 +109,6 @@ func _thigh_mesh() -> ArrayMesh:
 	return mesh
 
 
-## The long thin forearm from the knee to the wrist, a little knobbly.
 func _shin_mesh() -> ArrayMesh:
 	var tool := _begin()
 	var shin: Array[Vector2] = [
@@ -157,8 +121,6 @@ func _shin_mesh() -> ArrayMesh:
 	return mesh
 
 
-## A big bony hand lying flat from the wrist toward -Z: a palm, four long jointed fingers
-## that arch up and claw down to the ground, and a thumb to the inside (-X).
 func _hand_mesh() -> ArrayMesh:
 	var tool := _begin()
 	_slab(tool, Vector3(0, -0.035, 0.0), Vector3(0, -0.035, -0.12), 0.09, 0.035)
@@ -182,8 +144,6 @@ func _hand_mesh() -> ArrayMesh:
 	return mesh
 
 
-## The head: a plain ball of the limbs' gray clay, centred on its pivot, with a short
-## stalk up to the neck. It has no face of its own; it wears a mask.
 func _head_mesh() -> ArrayMesh:
 	var tool := _begin()
 	_lathe(tool, _ball_profile(HEAD_RADIUS, 8), 12, Transform3D.IDENTITY)
@@ -193,7 +153,6 @@ func _head_mesh() -> ArrayMesh:
 	return mesh
 
 
-## A round tube from `a` to `b`, `ra` and `rb` thick at its ends, capped both ends.
 func _tube(tool: SurfaceTool, a: Vector3, b: Vector3, ra: float, rb: float, sides: int) -> void:
 	var dir := b - a
 	var profile: Array[Vector2] = [
@@ -203,7 +162,6 @@ func _tube(tool: SurfaceTool, a: Vector3, b: Vector3, ra: float, rb: float, side
 	_lathe(tool, profile, sides, Transform3D(basis, a))
 
 
-## A flat board of `width` (across, level) and `thickness` (up) running from `a` to `b`.
 func _slab(tool: SurfaceTool, a: Vector3, b: Vector3, width: float, thickness: float) -> void:
 	var along := b - a
 	var side := along.cross(Vector3.UP).normalized() * width * 0.5
@@ -212,7 +170,6 @@ func _slab(tool: SurfaceTool, a: Vector3, b: Vector3, width: float, thickness: f
 	var up := side.cross(along).normalized() * thickness * 0.5
 	if up.dot(Vector3.UP) < 0.0 and absf(up.y) > 0.001:
 		up = -up
-	# For a mostly level slab "up" is its thickness; for a standing one it is its depth.
 	var c := [
 		a - side - up, a + side - up, b + side - up, b - side - up,
 		a - side + up, a + side + up, b + side + up, b - side + up,
@@ -227,16 +184,12 @@ func _slab(tool: SurfaceTool, a: Vector3, b: Vector3, width: float, thickness: f
 		_face(tool, corners, centre - middle)
 
 
-## A sphere's half outline from its bottom pole to its top pole.
 func _ball_profile(r: float, rings: int) -> Array[Vector2]:
 	var profile: Array[Vector2] = []
 	for i in rings + 1:
 		var t := PI * i / rings
 		profile.append(Vector2(sin(t) * r, -cos(t) * r))
 	return profile
-
-
-# --- scene -------------------------------------------------------------------------------
 
 
 func _build_scene() -> Error:
@@ -261,7 +214,6 @@ func _build_scene() -> Error:
 		_part(knee, "Shin", "shin")
 		var wrist := _pivot(knee, "Wrist" + corner, Vector3(0, -SHIN, 0), true)
 		_part(wrist, "Hand", "hand")
-		# Lay the hand flat facing forward and a little outward; the reaching one claws down.
 		var heading := Basis(Vector3.UP, -0.25 * signf(hip.position.x))
 		if corner == REACHING:
 			heading = Basis(Vector3.RIGHT, -0.6)
@@ -281,10 +233,6 @@ func _build_scene() -> Error:
 	return error
 
 
-## A test walk on all four hands, in place: diagonal pairs (FL with BR, FR with BL) swing
-## together, each lifting its knee on the way forward, while the seat bobs and rocks. The
-## reaching arm walks too, from the front left limb's stance mirrored. The wrists are keyed
-## so the hands stay flat to the ground, worked out the same way as the still pose.
 func _add_walk(root: Node3D, body: Node3D) -> void:
 	var anim := Animation.new()
 	anim.length = WALK_TIME
@@ -321,14 +269,12 @@ func _add_walk(root: Node3D, body: Node3D) -> void:
 			var knee: Node3D = nodes[corner][1]
 			var wrist: Node3D = nodes[corner][2]
 			hip.rotation = Vector3(stance[2] + 0.3 * sin(swing), 0.0, absf(stance[3]) * side)
-			# The knee folds only while the limb swings forward (the first half of its turn).
 			var lift := maxf(0.0, cos(swing)) * 0.5
 			knee.rotation = Vector3(stance[4] - lift * signf(float(limb[1].z) + 0.001), 0.0, -absf(stance[5]) * side)
 			wrist.basis = _global(knee).basis.inverse() * Basis(Vector3.UP, -0.25 * side)
 			anim.track_insert_key(tracks["Hip" + corner], t, hip.rotation)
 			anim.track_insert_key(tracks["Knee" + corner], t, knee.rotation)
 			anim.track_insert_key(tracks["Wrist" + corner], t, wrist.rotation)
-	# Put the still pose back: the scene opens in the reference's stance.
 	body.position.y = rest_y
 	body.rotation = Vector3.ZERO
 	for limb in LIMBS:
@@ -343,7 +289,6 @@ func _add_walk(root: Node3D, body: Node3D) -> void:
 	player.add_animation_library("", library)
 	root.add_child(player)
 	_unique.append(player)
-	# The wrists' still pose is re-derived from the restored hips and knees.
 	for limb in LIMBS:
 		var knee: Node3D = nodes[limb[0]][1]
 		var wrist: Node3D = nodes[limb[0]][2]
@@ -371,7 +316,6 @@ func _part(p: Node3D, node_name: String, mesh_key: String) -> MeshInstance3D:
 	return m
 
 
-## `n`'s transform relative to the scene root, worked out without a tree.
 func _global(n: Node3D) -> Transform3D:
 	var t := n.transform
 	var p := n.get_parent() as Node3D

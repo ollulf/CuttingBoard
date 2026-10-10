@@ -1,12 +1,5 @@
 extends Node
 
-## Headless checks for swapping a worn item with one from the inventory: the new item
-## goes on, the old one lands in the grid with its wear, a full grid refuses the swap,
-## and nothing is duplicated or lost. Prints PASS/FAIL per check and quits with the
-## number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/equipment_swap_check.tscn
-
 const BANDIT_MASK := preload("res://resources/items/bandit_mask.tres")
 const VILLAGER_MASK := preload("res://resources/items/villager_mask.tres")
 
@@ -36,12 +29,10 @@ func _ready() -> void:
 	_check("old mask keeps its wear", entries[0].durability == 37)
 	_check("old mask in the freed spot", entries[0].origin == Vector2i(2, 0))
 
-	# A full bag still takes a same-size swap: the worn mask goes in the freed spot.
 	bag.store_at(BANDIT_MASK, Vector2i(0, 0), 5)
 	var back := bag.get_entry_at(Vector2i(2, 0))
 	_check("same-size swap back fits", equipment.can_swap_from(Equipment.Slot.MASK, bag, back))
 
-	# A full grid with a small dragged item: the worn 2x2 mask cannot fit anywhere.
 	var tiny := ItemData.new()
 	tiny.item_type = BANDIT_MASK.item_type
 	tiny.grid_size = Vector2i(1, 1)

@@ -1,11 +1,5 @@
 extends Node
 
-## Headless checks for the Hollowstump bandit camp in the test level: the camp loads,
-## its five bandits spawn on the bandit side with their roles, a player in the bandit
-## mask is left alone, and the navmesh leads from the gate into the den.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/bandit_camp_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const BANDIT_MASK := preload("res://resources/items/bandit_mask.tres")
 
@@ -39,7 +33,6 @@ func _run() -> void:
 	_check("sleeper hears allies", camp.get_node("Bandits/Sleeper").hears_allies)
 	_check("cook flees when hurt", camp.get_node("Bandits/Cook/Brain/Flee").flee_below_health > 0.0)
 
-	# A masked player at the gate.
 	var player: Node3D = level.get_node("Player")
 	player.global_position = camp.global_position + Vector3(-8.0, 0.1, 0.0)
 	var equipment: Equipment = player.get_node("%Equipment")
@@ -50,7 +43,6 @@ func _run() -> void:
 	_check("masked player: guard leaves them be", guard.get_attack_target() != player)
 	_check("masked player: not hostile", not guard.faction.is_hostile_to(player))
 
-	# The den is reachable from outside the gate.
 	var map := region.get_navigation_map()
 	var from := NavigationServer3D.map_get_closest_point(map, camp.global_position + Vector3(-12, 0, 0))
 	var to := camp.global_position + Vector3(0.8, 0, -0.6)

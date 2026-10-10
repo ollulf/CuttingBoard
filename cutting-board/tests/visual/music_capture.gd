@@ -1,13 +1,5 @@
 extends Node3D
 
-## A recording of the Music autoload switching cues: Outside plays, the player hits a
-## villager, the villager goes for the player and Combat fades in; the villager is killed
-## and, after Music.combat_grace, Outside fades back. A label shows the cue and the mix.
-## Meant for Movie Maker, which records the music with the picture:
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <out>.avi
-##       --fixed-fps 30 --resolution 960x540 --quit-after 690 res://tests/visual/music_capture.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 

@@ -1,19 +1,8 @@
 extends Node3D
 
-## The Carver concept on a plain lit floor, with a human body beside the stump for scale:
-## from the front, three-quarters, close on his mask, from the side (the hunch) and down in the yard. With --clip it
-## holds one view on the working arms instead, for recording the idle with Movie Maker
-## (--clip=mask: close on his face mask, for its drift and twitches).
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi
-##     res://tests/visual/carver_capture.tscn -- --shots=<dir> [--clip]
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro screen off.
-
 const CARVER := preload("res://scenes/characters/carver.tscn")
 const BODY := preload("res://scenes/characters/human_body.tscn")
 
-## (name, camera position, looked-at point).
 const VIEWS := [
 	["front", Vector3(0.0, 4.3, -13.0), Vector3(0.0, 3.9, 0.0)],
 	["three_quarter", Vector3(8.0, 4.4, -9.6), Vector3(0.0, 3.8, 0.0)],

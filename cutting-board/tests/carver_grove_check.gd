@@ -1,12 +1,5 @@
 extends Node
 
-## Headless checks for the Carver's grove: he is placed in the level on the ground, well
-## away from the village, the roads, the intro landing, the chair yard and the bandit camp,
-## faces back towards the valley, his stump stops the player and is cut out of the navmesh,
-## and his lights fade with distance.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/carver_grove_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 var _failures := 0
@@ -58,7 +51,6 @@ func _run() -> void:
 	var to_valley := (Vector3.ZERO - at).normalized()
 	_check("he faces back towards the valley", forward.dot(to_valley) > 0.7)
 
-	# Walk the player at the stump from in front: the stump stops him.
 	var player: CharacterBody3D = level.get_node("Player")
 	var centre := stump.global_position
 	var start := centre + forward * 4.0
@@ -70,7 +62,6 @@ func _run() -> void:
 	_check("the stump blocks the player", hit != null)
 
 	var map := region.get_navigation_map()
-	# An NPC walking from in front of the stump to behind it goes round, never through.
 	var behind := centre - forward * 4.0
 	var path := NavigationServer3D.map_get_path(map, start, behind, true)
 	var closest := INF
@@ -83,7 +74,6 @@ func _run() -> void:
 	_check("all %d lights fade with distance, no shadows" % lights.size(),
 			lights.size() > 0 and fading.size() == lights.size())
 
-	# He talks: a Dialogue voiced by his own blip bank, reached by looking at him.
 	var dialogue := grove.get_node_or_null("%Dialogue") as Dialogue
 	_check("the Carver has a Dialogue", dialogue != null)
 	if dialogue == null:
@@ -117,8 +107,6 @@ func _run() -> void:
 	_finish()
 
 
-## Distance in metres from a point to the nearest road; the last path is the Carver's own
-## footpath and does not count.
 func _road_distance(terrain: Terrain, at: Vector3) -> float:
 	var point := Vector2(at.x, at.z)
 	var nearest := INF

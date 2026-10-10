@@ -1,25 +1,12 @@
 extends Node3D
 
-## The walking chair monster in its reference pose on a plain lit floor next to the
-## villager body for scale, from the front, the side, three-quarters and behind.
-##
-##   godot --path cutting-board res://tests/visual/walking_chair_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro screen off.
-## --walk instead walks the chair round a loop, now and then stopping to idle, with the
-## camera following, and never quits: record it with --write-movie and --quit-after.
-
 const CHAIR := preload("res://scenes/characters/walking_chair.tscn")
-## The --walk loop's radius (metres) and walking speed (metres a second).
 const LOOP_RADIUS := 1.6
 const WALK_SPEED := 0.7
-## Seconds walking, then seconds standing, round and round.
 const WALK_SPELL := 5.0
 const STAND_SPELL := 3.0
 const BODY := preload("res://scenes/characters/human_body.tscn")
 
-## (name, camera direction from the pair, looking at their middle), facing -Z means the
-## front is seen from -Z.
 const VIEWS := [
 	["front", Vector3(0.0, 0.25, -1.0)],
 	["side", Vector3(1.0, 0.2, 0.0)],
@@ -62,7 +49,6 @@ func _ready() -> void:
 	add_child(floor_mesh)
 
 	_chair = CHAIR.instantiate()
-	# The model sheet shows the built reference pose; --walk shows the gait.
 	_chair.animate = _walk
 	add_child(_chair)
 	var body: Node3D = BODY.instantiate()
@@ -99,7 +85,6 @@ func _process(delta: float) -> void:
 	var speed := WALK_SPEED * clampf(cycle * 2.0, 0.0, 1.0) * clampf((WALK_SPELL - cycle) * 2.0, 0.0, 1.0)
 	_angle += speed * delta / LOOP_RADIUS
 	_chair.position = Vector3(cos(_angle), 0.0, -sin(_angle)) * LOOP_RADIUS
-	# Walking anticlockwise seen from above, facing along the loop (-Z is forward).
 	_chair.rotation.y = _angle
 	var at := _chair.position + Vector3(0.0, 0.6, 0.0)
 	_camera.look_at_from_position(at + Vector3(0.9, 0.5, -0.9).normalized() * 3.4, at)

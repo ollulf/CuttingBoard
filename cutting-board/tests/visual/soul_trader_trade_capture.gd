@@ -1,12 +1,5 @@
 extends Node
 
-## Screenshots of the Soul Trader in the village: where it stands in the market, a look
-## at it from the player's eyes with the "Trade" prompt, and the trade screen open on its
-## stock with a few soul flasks in the pack.
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi
-##     res://tests/visual/soul_trader_trade_capture.tscn -- --shots=<dir>
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const FLASK := preload("res://resources/items/soul_bottle.tres")
 
@@ -30,7 +23,6 @@ func _run() -> void:
 	var panel := find_child("InventoryPanel", true, false) as InventoryPanel
 	var forward := -trader.global_transform.basis.z
 
-	# Overview from above the market: the trader, the Mask-Monger and the paths.
 	var overview := Camera3D.new()
 	add_child(overview)
 	overview.look_at_from_position(trader.global_position + Vector3(4.5, 7.0, 7.5),
@@ -39,7 +31,6 @@ func _run() -> void:
 	await _frames(10)
 	_shot("village")
 
-	# The player walks up to the cart and looks at the trader.
 	camera.make_current()
 	player.global_position = trader.global_position + forward * 2.6
 	player.look_at(trader.global_position, Vector3.UP)

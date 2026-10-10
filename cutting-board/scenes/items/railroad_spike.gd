@@ -1,35 +1,16 @@
 extends RigidBody3D
 
-## A railroad spike: the Churn Thumper's ammunition, and an ordinary item the rest of the
-## time. Fired (launch), it flies point first under gravity, and the first thing it hits
-## takes a piercing blow and keeps the spike: it stops dead and stays stuck there, in a
-## fence post, the ground or a bandit, until someone pulls it out again with E or a grab,
-## which is all picking it up is. Stuck in something that moves, it rides along with it.
-##
-## The mesh is assets/meshes/props/nail_ammo_railroad_spike.res, built by
-## tools/import/build_nail_guns.gd, its point toward -Z.
-
-## Damage of a hit at full muzzle speed; slower hits (the end of a long arc) do less, down
-## to half of it.
 @export var damage := 45
-## The speed it counts as full speed, in metres per second.
 @export var full_speed := 30.0
-## The thunk of it going in.
 @export var impact_sound: SoundBank = preload("res://resources/audio/impact_wood.tres")
 @export var body_hit_sound: SoundBank = preload("res://resources/audio/hit_body.tres")
-## Chance that a hit breaks the spike apart instead of leaving it stuck (the damage lands
-## either way).
 @export_range(0.0, 1.0) var shatter_chance := 0.5
-## Heard and seen when it shatters.
 @export var shatter_sound: SoundBank = preload("res://resources/audio/break_wood.tres")
 @export var shatter_effect: PackedScene = preload("res://scenes/vfx/break_burst.tscn")
 
-## Rolls the shatter chance; tests seed it.
 var rng := RandomNumberGenerator.new()
 
-## Whether it is in the air from a shot and will stick into what it meets.
 var flying := false
-## What it is stuck in, if it hit something; null in flight, lying loose or in a hand.
 var stuck_in: Node = null
 var _shooter: Node = null
 var _speed := 0.0
@@ -39,8 +20,6 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 
-## Sends it off from where it is at `velocity`, point first. `shooter` is never hit by
-## its own shot, and gets the credit for whatever the spike does hit.
 func launch(launch_velocity: Vector3, shooter: Node = null) -> void:
 	_shooter = shooter
 	flying = true
@@ -61,7 +40,6 @@ func _physics_process(_delta: float) -> void:
 	if not flying:
 		return
 	_speed = linear_velocity.length()
-	# Point first all the way down the arc, rather than tumbling.
 	_face(linear_velocity)
 	angular_velocity = Vector3.ZERO
 
@@ -98,12 +76,10 @@ func _on_body_entered(body: Node) -> void:
 		_stick(body, direction)
 
 
-## Breaks apart on the hit: a puff of splinters and it is gone, nothing left to pull out.
 func _shatter() -> void:
 	Sfx.play_at(shatter_sound, global_position)
 	if shatter_effect and is_inside_tree():
 		var effect := shatter_effect.instantiate() as Node3D
-		# Top level, so the position set below is a world position.
 		effect.top_level = true
 		if effect is BreakBurst:
 			effect.setup(self)
@@ -115,14 +91,8 @@ func _shatter() -> void:
 	queue_free()
 
 
-## Stops dead a little way into `body` and stays there. Stuck in a moving thing it is
-## carried along as its child; it no longer collides with that thing, so a bandit is not
-## shoved about by the spike in his own side, but anything else still finds it to pull out.
-## In a character it hangs from the limb it went into (the body's stick_point), standing
-## or fallen, so it goes down with that limb when this hit, or a later one, kills.
 func _stick(body: Node, direction: Vector3) -> void:
 	stuck_in = body
-	# Not switched off in the middle of the contact callback that got us here.
 	set_deferred(&"contact_monitor", false)
 	continuous_cd = false
 	linear_velocity = Vector3.ZERO
@@ -132,8 +102,6 @@ func _stick(body: Node, direction: Vector3) -> void:
 	var actor := HumanBody.actor_of(body)
 	var holder := _stick_point_in(actor, body)
 	if holder:
-		# Clear of the whole character, capsule and limbs alike, so a falling body is
-		# neither propped up nor flung by the spike in it.
 		for collider in HumanBody.colliders_of(actor):
 			add_collision_exception_with(collider)
 		reparent.call_deferred(holder, true)
@@ -144,9 +112,6 @@ func _stick(body: Node, direction: Vector3) -> void:
 		reparent.call_deferred(body, true)
 
 
-## What a spike that struck `part` of `actor` hangs from: whatever the body `actor`
-## wears (an NpcBody, a walking chair) names for that spot, or null when nothing in it
-## has a say.
 func _stick_point_in(actor: Node, part: Node) -> Node3D:
 	if actor == null or not is_instance_valid(actor):
 		return null

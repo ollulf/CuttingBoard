@@ -1,17 +1,9 @@
 class_name MendOverlay
 extends ColorRect
 
-## A faint warm glow round the screen's edges while the player is being mended — glue
-## taking — the same vignette the HurtOverlay draws in red, in the amber of fresh glue
-## and kept well below a hit's strength. Each bit of health regained tops the glow up, so
-## a heal spread over a moment glows for that moment and then fades.
-
-## How strong the glow gets: the share of max health regained, times this, on top of the
-## smallest glow any heal gets, and never past max_glow.
 @export var glow_per_heal := 1.5
 @export_range(0.0, 1.0) var min_glow := 0.2
 @export_range(0.0, 1.0) var max_glow := 0.45
-## Seconds for the glow to fade to about a third.
 @export var glow_fade := 0.5
 
 var _health: Health
@@ -46,7 +38,6 @@ func _apply() -> void:
 	if not visible:
 		return
 	material.set_shader_parameter("amount", _glow)
-	# Dithered in blocks of the retro screen's pixels while it is on, as the red is.
 	var retro := PsxScreen.enabled
 	var blocks := 1.0
 	if retro:
@@ -56,7 +47,6 @@ func _apply() -> void:
 	material.set_shader_parameter("dither", retro)
 
 
-## Only a rise glows, and dying clears it.
 func _on_changed(current: int, maximum: int) -> void:
 	var gained := current - _last_current
 	_last_current = current

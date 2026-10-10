@@ -1,26 +1,12 @@
 class_name TargetBar
 extends HealthBar
 
-## The enemy's health at the top centre while fighting, Gothic style: its name over a
-## thin blood bar. It is the player's HealthBar pointed at someone else, so a blow lands
-## the same way on both — the bar drops, the lost chunk lingers in flame and drains.
-##
-## Which enemy, and when, is the player's CombatTracker's call; this only shows it. When
-## the tracker lets the target go the bar fades out still showing its last state, so a
-## kill reads as the bar running out before it disappears.
-##
-## Out of combat the same bar names the NPC the player walks up to and looks at, tinted
-## by its attitude: blood for a hostile one, neutral gray for a friendly one. A combat target
-## always wins over it.
-
 const NAME_FONT := preload("res://assets/fonts/Cubix_Mystical.ttf")
 const NAME_COLOR := Color("#d9c9a0")
 const FRIEND := Color("#8a8580")
 const FRIEND_HI := Color("#b4aea6")
 
-## Distance of the name from the top edge, in render pixels.
 @export var top := 12
-## Gap between the name and the bar.
 @export var name_gap := 3
 
 var _target_name := ""
@@ -38,7 +24,6 @@ func _ready() -> void:
 		_refresh()
 
 
-## Shows the combat target, or else the NPC close by, or fades out with neither.
 func _refresh() -> void:
 	var target := _tracker.get_target()
 	if target:
@@ -47,8 +32,6 @@ func _refresh() -> void:
 		show_target(_tracker.get_nearby(), true)
 
 
-## Puts `target`'s name and health up, or fades the bar out for null. `by_attitude`
-## tints the bar gray when `target` is no enemy of the player.
 func show_target(target: Node3D, by_attitude := false) -> void:
 	_has_target = target != null
 	if _has_target:
@@ -67,7 +50,6 @@ func get_target_name() -> String:
 	return _target_name if _has_target else ""
 
 
-## Whether `target` is out for the player: an enemy side, or a grudge against it.
 func _is_hostile(target: Node3D) -> bool:
 	var player := _tracker.get_parent()
 	var faction := Faction.find_in(target)
@@ -93,7 +75,6 @@ func _draw() -> void:
 	var fs := font_size * _px
 	var bar_x := floorf((size.x / px - bar_size.x) * 0.5)
 
-	# Name, centred over the bar, with a one-pixel shadow so it reads over a bright sky.
 	var name_h := font_size + 1
 	var baseline := (top + name_h * 0.5) * px + (font.get_ascent(fs) - font.get_descent(fs)) * 0.5
 	var origin := Vector2(0.0, roundf(baseline))
@@ -101,7 +82,6 @@ func _draw() -> void:
 		size.x, fs, OUTLINE)
 	draw_string(font, origin, _target_name, HORIZONTAL_ALIGNMENT_CENTER, size.x, fs, NAME_COLOR)
 
-	# Bar: the same frame, trail and fill as the player's, wider and thinner.
 	var bar := Rect2(bar_x, top + name_h + name_gap, bar_size.x, bar_size.y)
 	_frame(bar.grow(2), RING)
 	_frame(bar.grow(1), OUTLINE)

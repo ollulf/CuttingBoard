@@ -1,26 +1,9 @@
 extends Node
 
-## Headless checks that the hotbar takes drags from the inventory screen through real
-## input: the screen is opened in the test level, the squares' on-screen rectangles are
-## read off the HotbarPanel, and mouse presses, motion and releases are fed in through
-## Input at those points, so they are routed to whichever control is really under the
-## cursor rather than handed to the panel's own functions. Covers linking a grid item to
-## a square, moving a link along the bar and clearing one with a right-click, at the
-## usual 1280x720 and in a short window where the screen runs down over the bar — the
-## size the game gets when it runs embedded in the editor with a bottom panel open —
-## and that a number key still draws the linked item once the screen is shut. Prints
-## PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/inventory_hotbar_check.tscn
-##
-## -- --size=<w>x<h> runs the drags at that window size only; -- --shots=<dir> saves a
-## still at the end of each drag (needs a real window).
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 const BOX_SMALL := preload("res://resources/items/box_small.tres")
 
-## Headless, the window comes up at 64x64, so every run sets its own size.
 var _sizes: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1200, 450)]
 var _shots_dir := ""
 var _shot_count := 0
@@ -62,7 +45,6 @@ func _run() -> void:
 		_panel.close()
 		await _frames(2)
 
-	# The last run leaves the rock linked to square 2, a left-hand key.
 	await _drag_link_back(hotbar, rock)
 	var key := InputEventAction.new()
 	key.action = "hotbar_2"
@@ -83,7 +65,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## A rotated long item turns its icon a quarter and keeps it at the unrotated size.
 func _check_rotated_icon() -> void:
 	var long_item := ROCK.duplicate() as ItemData
 	long_item.grid_size = Vector2i(3, 1)
@@ -102,8 +83,6 @@ func _check_rotated_icon() -> void:
 	tile.free()
 
 
-## Tiles are filled by item type, a weapon shows its damage in the corner and on the
-## tooltip, and a worn item's wear line is as long as the share it has left.
 func _check_type_and_wear() -> void:
 	var club := load("res://resources/items/chair_leg_club.tres") as ItemData
 	var mask := load("res://resources/items/bandit_mask.tres") as ItemData
@@ -157,15 +136,12 @@ func _drags(window_size: Vector2i, pack: Inventory, hotbar: Hotbar, rock: Invent
 		pack.get_entry_at(Vector2i(0, 2)) != null)
 
 
-## Makes sure the rock is on square 2 for the key check, whatever the drags above did.
 func _drag_link_back(hotbar: Hotbar, rock: InventoryEntry) -> void:
 	if hotbar.get_slot(1).entry != rock:
 		hotbar.assign(1, rock)
 	await _frames(1)
 
 
-## Press at one screen point, move across to another and release there, as the mouse
-## would, through the engine's own input routing.
 func _drag(from: Vector2, to: Vector2, button: MouseButton) -> void:
 	await _move(from)
 	_button(from, button, true)
@@ -208,12 +184,10 @@ func _button(at: Vector2, button: MouseButton, pressed: bool) -> void:
 	Input.parse_input_event(event)
 
 
-## A hotbar square's centre on screen, as the bar itself reports it.
 func _slot_center(index: int) -> Vector2:
 	return _bar.slot_rect(index).get_center()
 
 
-## A pack square's centre on screen.
 func _cell_center(cell: Vector2i) -> Vector2:
 	var half := _panel.cell_size * 0.5
 	return _panel._grid_for(InventoryPanel.Side.PLAYER).global_position + Vector2(

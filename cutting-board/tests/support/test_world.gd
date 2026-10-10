@@ -1,33 +1,21 @@
 class_name TestWorld
 extends RefCounted
 
-## Shared set-up for the headless checks that need ground to stand on and a navmesh to
-## walk it: solid slabs, a navigation region baked from them, the waits that let the
-## navigation map catch up with a bake, and a player who starts masked. Every check used
-## to carry its own copy of these.
-
-## The group the slabs join, and that the region bakes its navmesh from.
 const NAV_SOURCE := &"navigation_source"
-## The mask the player owns, worn from the start by masked_player.
 const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
 
 
-## An instance of the player scene that starts with their own mask on: the player starts
-## bare-faced since the opening, and most mask checks begin masked. Not added to the tree.
 static func masked_player(scene: PackedScene) -> Node:
 	var player := scene.instantiate()
 	(player.get_node("%Equipment") as Equipment).starting_items = [PLAYER_MASK]
 	return player
 
 
-## Waits `count` physics frames of the tree `node` is in.
 static func physics_frames(node: Node, count: int) -> void:
 	for i in count:
 		await node.get_tree().physics_frame
 
 
-## A solid box of `size` centred on `center`, added under `parent` and taken into the
-## navmesh bake.
 static func add_slab(parent: Node, size: Vector3, center: Vector3) -> StaticBody3D:
 	var slab := StaticBody3D.new()
 	slab.add_to_group(NAV_SOURCE)
@@ -41,12 +29,10 @@ static func add_slab(parent: Node, size: Vector3, center: Vector3) -> StaticBody
 	return slab
 
 
-## A flat floor `extent` metres square whose top is at y = 0.
 static func add_floor(parent: Node, extent: float) -> StaticBody3D:
 	return add_slab(parent, Vector3(extent, 1, extent), Vector3(0, -0.5, 0))
 
 
-## A navigation region, sized for the NPCs, that bakes from every slab. Not baked yet.
 static func add_nav_region(parent: Node) -> NavigationRegion3D:
 	var nav_mesh := NavigationMesh.new()
 	nav_mesh.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
@@ -59,8 +45,6 @@ static func add_nav_region(parent: Node) -> NavigationRegion3D:
 	return region
 
 
-## Bakes `region` on the spot and waits until the navigation map has moved on from it,
-## or 120 physics frames.
 static func bake(region: NavigationRegion3D) -> void:
 	region.bake_navigation_mesh(false)
 	var map := region.get_world_3d().navigation_map
@@ -71,10 +55,6 @@ static func bake(region: NavigationRegion3D) -> void:
 			break
 
 
-## Waits until the navigation map has really picked up the freshly baked region: the
-## bake is done, the region is on the map, `probe` snaps onto its navmesh, and the map
-## has synced twice more after that. Under CPU load (parallel test runs) the map sync
-## lags behind the physics frames, so this polls real conditions with a wall-time limit.
 static func nav_synced(region: NavigationRegion3D, probe: Vector3) -> void:
 	var tree := region.get_tree()
 	var map := region.get_world_3d().navigation_map

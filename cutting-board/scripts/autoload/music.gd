@@ -1,42 +1,23 @@
 extends Node
 
-## Plays the game's music, autoloaded as Music: the Outside cue by default, crossfading to
-## the Combat cue while an NPC is going for the player.
-##
-## Like DamageNumbers, nothing has to opt in: every CombatTracker is hooked as it enters
-## the tree, and its targeted_changed says when some NPC — villager, bandit, a rock
-## thrower — is chasing or throwing at its owner. Once no NPC has done so for
-## `combat_grace` seconds the music fades back to Outside, so a fight that pauses for a
-## breath does not flap between the two. A dead NPC or one whose grudge has run out no
-## longer goes for anyone, so it drops out on its own.
-##
-## Both cues are seamless loops (loop=true in their .import) on the Music bus, which
-## carries no effects: the cues are mixed with their own hall and should not be dulled.
-
 enum Cue { OUTSIDE, COMBAT }
 
 const OUTSIDE := preload("res://assets/audio/music/outside.ogg")
 const COMBAT := preload("res://assets/audio/music/combat.ogg")
 
-## Seconds a crossfade between the cues takes.
 @export var fade_time := 1.5
-## Seconds after the last NPC stopped going for the player before Combat fades out.
 @export var combat_grace := 5.0
-## Level of both cues on the Music bus.
 @export var volume_db := 0.0
 
 var _outside: AudioStreamPlayer
 var _combat: AudioStreamPlayer
-## 0 is all Outside, 1 is all Combat; eased towards the current cue every frame.
 var _mix := 0.0
 var _cue := Cue.OUTSIDE
-## Seconds since no tracker reported an NPC going for its owner, while in Combat.
 var _calm_for := 0.0
 var _trackers: Array[CombatTracker] = []
 
 
 func _ready() -> void:
-	# The music goes on while the game is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_outside = _make_player(OUTSIDE)
 	_combat = _make_player(COMBAT)
@@ -50,7 +31,6 @@ func get_cue() -> Cue:
 	return _cue
 
 
-## How far the crossfade has got: 0 all Outside, 1 all Combat.
 func get_mix() -> float:
 	return _mix
 
@@ -74,8 +54,6 @@ func _make_player(stream: AudioStream) -> AudioStreamPlayer:
 	return player
 
 
-## Equal-power crossfade; a cue faded right out is paused, so Outside picks up where it
-## left off after a fight.
 func _apply_mix() -> void:
 	var outside_gain := cos(_mix * PI * 0.5)
 	var combat_gain := sin(_mix * PI * 0.5)
@@ -90,7 +68,6 @@ func _set_cue(cue: Cue) -> void:
 	if cue == _cue:
 		return
 	_cue = cue
-	# Every fight starts at the top of the Combat loop, on its lean first section.
 	if cue == Cue.COMBAT:
 		_combat.stream_paused = false
 		_combat.play()

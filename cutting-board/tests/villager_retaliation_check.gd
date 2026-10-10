@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks for NPC grudges and villagers' random weapons: a villager hit by the
-## player turns on the player and hurts back, the grudge runs out, a thrown rock is
-## credited to its thrower, a badly hurt villager still runs, being hit by a bandit makes
-## a villager fight rather than flee, allies standing by step in, and the weapons drawn
-## at spawn follow their weights. Prints PASS/FAIL per check and quits with the number
-## of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/villager_retaliation_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -46,8 +37,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## The weighted pool: many draws match the weights, and fifty real spawns each end up
-## with one of the pool's loadouts.
 func _weapon_weights() -> void:
 	var villager := _spawn(VILLAGER, Vector3(20, 0.05, 20))
 	await _physics_frames(3)
@@ -75,7 +64,6 @@ func _weapon_weights() -> void:
 	_check("draws follow the weights (within 0.025)", worst < 0.025)
 	villager.queue_free()
 
-	# Real spawns: the hand holds the pick, a rock pick goes in the pockets.
 	var spawned: Array[Npc] = []
 	for i in 50:
 		spawned.append(_spawn(VILLAGER, Vector3(-25 + (i % 10) * 5, 0.05, 15 + (i / 10) * 2.5)))
@@ -108,15 +96,12 @@ func _weapon_weights() -> void:
 	await _physics_frames(2)
 
 
-## The player hits a villager: it holds a grudge, goes after the player and lands blows.
 func _fights_back() -> void:
 	var villager := _spawn(VILLAGER, Vector3(0, 0.05, -3))
 	await _physics_frames(5)
-	# A known weapon, so the blows are the same every run.
 	if not villager.hand_right.is_free():
 		villager.hand_right.release().queue_free()
 	villager.equip(load("res://resources/items/hammer.tres"), villager.hand_right)
-	# Pockets emptied, so the player is hurt by a hammer blow rather than a thrown rock.
 	for entry in villager.inventory.get_entries():
 		villager.inventory.remove(entry)
 	_pin_player()
@@ -144,8 +129,6 @@ func _fights_back() -> void:
 	await _physics_frames(2)
 
 
-## A short grudge runs out while the player is still in plain sight, and the villager
-## goes back to leaving the player be.
 func _grudge_expires() -> void:
 	var villager := _spawn(VILLAGER, Vector3(0, 0.05, -3))
 	villager.grudge_duration = 1.5
@@ -153,8 +136,6 @@ func _grudge_expires() -> void:
 	villager.health.apply_damage(DamageInfo.new(5, _player))
 	await _wait(0.6)
 	_check("grudge: fighting while it lasts", _is_fighting(villager))
-	# Grudges expire on the wall clock, but under --fixed-fps physics
-	# runs faster than real time, so wait out both clocks.
 	var waited := 0.0
 	var wall_start := Time.get_ticks_msec()
 	while waited < 3.0 or Time.get_ticks_msec() - wall_start < 3000:
@@ -166,7 +147,6 @@ func _grudge_expires() -> void:
 	_check("grudge: stopped fighting", not _is_fighting(villager))
 	_check("grudge: player still remembered, just not fought", villager.memory.knows(_player))
 
-	# Ending with the attacker's death.
 	var bandit := _spawn(BANDIT, Vector3(4, 0.05, -3))
 	await _physics_frames(3)
 	bandit.brain.shut_down()
@@ -180,8 +160,6 @@ func _grudge_expires() -> void:
 	await _physics_frames(2)
 
 
-## A rock let go of by the player's hand and landing on a villager is the player's hit;
-## one thrown long ago is nobody's.
 func _thrown_rock() -> void:
 	var villager := _spawn(VILLAGER, Vector3(0, 0.05, -6))
 	await _physics_frames(5)
@@ -207,7 +185,6 @@ func _thrown_rock() -> void:
 	await _physics_frames(2)
 
 
-## Badly hurt, a villager runs from whoever it holds a grudge against.
 func _wounded_flees() -> void:
 	var villager := _spawn(VILLAGER, Vector3(0, 0.05, -3))
 	await _physics_frames(5)
@@ -220,7 +197,6 @@ func _wounded_flees() -> void:
 	await _physics_frames(2)
 
 
-## A bandit nearby scares a villager off; a bandit that hits it gets fought.
 func _bandit_hit() -> void:
 	_player.global_position = Vector3(25, 0.05, -25)
 	var villager := _spawn(VILLAGER, Vector3(0, 0.05, -3))
@@ -239,8 +215,6 @@ func _bandit_hit() -> void:
 	await _physics_frames(2)
 
 
-## A villager next to one that is hit, and watching it, takes up the grudge; one far
-## off does not, and a villager hitting a villager rallies nobody.
 func _allies() -> void:
 	var victim := _spawn(VILLAGER, Vector3(0, 0.05, -3))
 	var near := _spawn(VILLAGER, Vector3(2, 0.05, -3))
@@ -263,9 +237,6 @@ func _allies() -> void:
 	await _physics_frames(2)
 
 
-# --- Helpers ----------------------------------------------------------------------------
-
-
 func _spawn(scene: PackedScene, at: Vector3) -> Npc:
 	var npc := scene.instantiate() as Npc
 	npc.position = at
@@ -278,7 +249,6 @@ func _is_fighting(npc: Npc) -> bool:
 	return action is AttackTargetAction or action is ThrowAtTargetAction
 
 
-## Keeps the player standing where it was put, facing nobody in particular.
 func _pin_player() -> void:
 	_player.global_position = Vector3(0, _player.global_position.y, 0)
 

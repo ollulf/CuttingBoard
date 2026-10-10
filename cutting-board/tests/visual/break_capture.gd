@@ -1,11 +1,5 @@
 extends Node3D
 
-## A small box, a barrel and a rock side by side on a flat floor, broken together half
-## a second in so their break bursts can be recorded.
-##
-##   godot --path cutting-board --write-movie <dir>/f.png --fixed-fps 30 --quit-after 75
-##       res://tests/visual/break_capture.tscn
-
 const ITEMS := [
 	preload("res://scenes/items/box_small.tscn"),
 	preload("res://scenes/items/barrel.tscn"),
@@ -37,7 +31,6 @@ func _ready() -> void:
 		item.freeze = true
 		add_child(item)
 		item.global_position = Vector3((i - 1) * 1.6, 0.0, 0.0)
-		# Sit the item on the floor by its mesh bounds.
 		var low := INF
 		for mi in item.find_children("*", "MeshInstance3D", true, false):
 			low = minf(low, (mi.global_transform * mi.get_aabb()).position.y)

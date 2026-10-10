@@ -1,12 +1,6 @@
 class_name VoiceBark
 extends RefCounted
 
-## Short noises made from an NPC's own voice blips: a rising "hm?", a quiet mutter, a sharp
-## "hey!", a loud call for help and a short answer to one. No recordings of their own yet,
-## only patterns of the blips the voice bank already has, so every faction grumbles in
-## its own voice and every NPC at its own pitch.
-
-## name -> [blips, first pitch, last pitch, seconds between blips, volume_db]
 const PATTERNS := {
 	&"hm": [2, 0.85, 1.05, 0.16, 6.0],
 	&"mutter": [4, 0.8, 0.75, 0.13, 0.0],
@@ -16,8 +10,6 @@ const PATTERNS := {
 }
 
 
-## Plays the pattern `name` from `bank` where `source` is, following it as it moves.
-## Each blip is its own take from the bank, so the noise does not repeat one sound.
 static func play(source: Node3D, bank: SoundBank, name: StringName, pitch := 1.0) -> void:
 	if bank == null or not PATTERNS.has(name) or not source.is_inside_tree():
 		return

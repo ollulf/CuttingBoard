@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless check that the valley holds the scattered wood glue pots and that each one
-## comes to rest on the ground once physics settles: ground just below it, nothing
-## overhead (not buried in a wall or roof), not still moving, and no two stacked.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/wood_glue_placement_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const GLUE_SCENE := "res://scenes/items/wood_glue.tscn"
 const MIN_POTS := 8

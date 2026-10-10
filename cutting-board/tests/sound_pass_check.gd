@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks that the sounds of the second sound pass are set off: an item going
-## into the bag plays the pickup bank that fits it (masks and heavy things have their
-## own), and a walking chair's hands play its step bank as they come down. Only that the
-## right bank plays is checked, never what it sounds like. Prints PASS/FAIL per check and
-## quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/sound_pass_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const CHAIR := preload("res://scenes/characters/walking_chair.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
@@ -44,7 +36,6 @@ func _pickups(player) -> void:
 		_check("stowing %s plays its pickup bank" % data.display_name, _playing(bank))
 
 
-## The chair is slid along by hand, as its creature body would move it; its gait follows.
 func _walking_chair() -> void:
 	_stop_all()
 	var chair: Node3D = CHAIR.instantiate()

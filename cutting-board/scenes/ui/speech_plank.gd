@@ -1,14 +1,6 @@
 class_name SpeechPlank
 extends CanvasLayer
 
-## The carved speech plank across the bottom of the screen (docs/concepts/dialogue-system.md,
-## "Look"): the speaker's name burnt into its top edge, the line typing out with a voice
-## blip every few letters, and an "E ▸" notch once it is all there. E or a click finishes
-## the typing first, then goes on to the next line. Built in code by Dialogue, which owns
-## it for the length of a talk; it eats those presses so the player does not also use or
-## swing.
-
-## Letters per second while a line types out, and letters per voice blip.
 const TYPE_SPEED := 45.0
 const BLIP_EVERY := 3
 
@@ -68,7 +60,6 @@ func _ready() -> void:
 	column.add_child(_hint)
 
 
-## `voice_pitch` scales the voice bank's pitch, for a speaker's own voice.
 func show_line(speaker: String, text: String, voice: SoundBank, voice_pitch := 1.0) -> void:
 	_name_label.text = speaker
 	_name_label.visible = not speaker.is_empty()

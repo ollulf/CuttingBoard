@@ -1,17 +1,10 @@
 class_name MouseGrab
-## The one place the game captures or frees the mouse.
-##
-## Automated runs — Movie Maker recordings, headless runs, or anything started with
-## `-- --no-mouse-capture` — must never take the OS cursor away from whoever is using
-## the desktop. In that mode the capture is only pretended: the state is tracked here
-## so the player still counts as "in control" and scripted input keeps driving it.
 
 
 static var _disabled := -1
 static var _virtual_captured := false
 
 
-## True when the real cursor must be left alone.
 static func is_disabled() -> bool:
 	if _disabled < 0:
 		_disabled = 1 if (

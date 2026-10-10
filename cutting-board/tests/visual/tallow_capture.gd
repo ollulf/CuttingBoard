@@ -1,21 +1,9 @@
 extends Node
 
-## Screenshot tour of the test level for checking the look: loads the level, hides the
-## HUD, and photographs it from a fixed set of cameras, including close-ups of a masked
-## villager and bandit posed under a lantern.
-##
-##   godot --path cutting-board res://tests/visual/tallow_capture.tscn -- --shots=<dir>
-##
-## Without --shots it only tours the cameras, which is still a quick check for script
-## and shader errors. Needs a real window; under --headless nothing is saved.
-## Optional: --render-height=<px> overrides PsxScreen.render_height for comparing pixel
-## sizes, and --only=<name>,<name> limits the tour to shots whose names contain those.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 
-## name, camera position, point looked at, retro screen on, HUD shown.
 const SHOTS := [
 	["02_village_square", Vector3(1, 4.5, -36), Vector3(0, 1.5, -58), true, false],
 	["03_main_street", Vector3(0.5, 1.8, -20), Vector3(-1, 1.6, -60), true, false],
@@ -52,13 +40,10 @@ func _ready() -> void:
 	_camera = Camera3D.new()
 	level.add_child(_camera)
 	_camera.make_current()
-	# The level's UI layers (the HUD), shown or hidden per shot. PsxScreen is a canvas
-	# layer too, but an autoload outside the level, so it is not among them.
 	_ui_layers = level.find_children("*", "CanvasLayer", true, false)
 	_tour.call_deferred()
 
 
-## Stands an NPC at `at`, facing `facing`, with its brain off so it holds still.
 func _pose(npc: Node3D, level: Node, at: Vector3, facing: Vector3) -> void:
 	level.add_child(npc)
 	npc.global_position = at

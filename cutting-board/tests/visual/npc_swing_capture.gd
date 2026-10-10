@@ -1,11 +1,5 @@
 extends Node3D
 
-## A bandit swinging at a villager, seen side on: two chops with a hammer, then two
-## bare-handed jabs. Saves a still at the top of the wind-up and at the contact frame.
-##
-##   godot --path cutting-board --write-movie <tmp>/out.avi --fixed-fps 30 --quit-after 150 \
-##       res://tests/visual/npc_swing_capture.tscn -- --shots=<dir>
-
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const HAMMER := preload("res://resources/items/hammer.tres")
@@ -62,7 +56,6 @@ func _process(_delta: float) -> void:
 	_frame += 1
 	if _bandit == null or _villager == null:
 		return
-	# A blow every 33 frames: two chops, then the hammer is put away for two jabs.
 	if _frame in [20, 53, 95, 128]:
 		_bandit.strike_at(_villager)
 	if _frame == 80:

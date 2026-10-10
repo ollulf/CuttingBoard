@@ -1,13 +1,6 @@
 class_name PaperDoll
 extends Control
 
-## The figure in the middle of the inventory's equipment column: a plain silhouette with
-## whatever is worn drawn over it, so the four slots around it read as places on a body.
-## It is drawn rather than a texture so it stays a few flat Tallow Fair shapes, crisp at
-## any whole-number scale. It takes no input.
-##
-## The shapes are laid out on a 60 x 132 grid and stretched to the control's size.
-
 const GRID := Vector2(60, 132)
 const BODY_TOP := Color("#4a2c4a")
 const BODY_BOTTOM := Color("#1a1020")
@@ -25,7 +18,6 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-## Draws what this loadout is wearing, and keeps up with it.
 func bind(equipment: Equipment) -> void:
 	if _equipment and _equipment.changed.is_connected(queue_redraw):
 		_equipment.changed.disconnect(queue_redraw)
@@ -46,7 +38,6 @@ func _draw() -> void:
 	if _equipment == null:
 		return
 	if not _equipment.is_free(Equipment.Slot.PACK):
-		# The strap and the edge of the pack showing past the shoulder.
 		_box(Rect2(44, 36, 5, 22), AMBER)
 	if not _equipment.is_free(Equipment.Slot.BODY):
 		_shape(
@@ -64,18 +55,14 @@ func _draw() -> void:
 		_box(Rect2(28, 20, 4, 1), INK)
 
 
-## How much one grid unit is on screen.
 func _scale() -> Vector2:
 	return size / GRID
 
 
-## The silhouette's colour at a height on the grid: lit at the head, dark at the feet.
 func _shade(y: float) -> Color:
 	return BODY_TOP.lerp(BODY_BOTTOM, clampf(y / GRID.y, 0.0, 1.0))
 
 
-## A filled polygon given in grid units. Left without a colour it takes the body's
-## top-to-bottom shading, one colour per corner.
 func _shape(points: Array, color := Color(0, 0, 0, 0)) -> void:
 	var scaled := PackedVector2Array()
 	var colors := PackedColorArray()

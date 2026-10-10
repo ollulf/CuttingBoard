@@ -1,23 +1,5 @@
 extends Node
 
-## Screenshot and clip tour of the inventory screen: loads the test level, fills the
-## player's pack, hands and loadout, and photographs the screen in its main states —
-## empty, full, with a chest open, and mid-drag over an equipment slot that will and
-## one that will not take the item.
-##
-##   godot --path cutting-board res://tests/visual/inventory_capture.tscn -- --shots=<dir>
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 \
-##       res://tests/visual/inventory_capture.tscn -- --movie
-##
-## --only=<name>,<name> limits the stills to shots whose names contain those. --movie
-## plays a scripted drag into the equipment slots instead of taking stills, with a drawn
-## cursor since the OS one is not in the frame. Both need a real window. --check runs
-## every kind of drag through the panel and prints PASS / FAIL, and works headless.
-##
-## The worn items here are placeholders built in code: there are no head, body or pack
-## items in the game yet. The masks are real now (resources/items/*_mask.tres), but the
-## placeholder one is kept so the shots stay comparable with earlier ones.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 const HAMMER := preload("res://resources/items/hammer.tres")
@@ -55,8 +37,6 @@ func _ready() -> void:
 	_player.global_position = Vector3(1, _player.global_position.y, -38)
 	_player.rotation.y = atan2(1.0, 20.0)
 	_panel = _level.find_child("InventoryPanel", true, false) as InventoryPanel
-	# The player starts with their own mask on; the tour starts from an empty loadout, so
-	# that the placeholder mask has a free slot to go into.
 	var equipment := _player.get_node_or_null("Equipment") as Equipment
 	if equipment:
 		equipment.unequip(Equipment.Slot.MASK)
@@ -77,8 +57,6 @@ func _ready() -> void:
 		_tour.call_deferred()
 
 
-## A worn item for the tour, typed by name so this scene still loads on a build without
-## those types — which is what lets it photograph the screen before the change too.
 func _placeholder(title: String, type_name: String, size: Vector2i, text: String) -> ItemData:
 	var data := ItemData.new()
 	data.display_name = title + " (placeholder)"
@@ -112,7 +90,6 @@ func _tour() -> void:
 	_panel.close()
 	_panel.open()
 	await _settle()
-	# Pick the mask up out of the pack and hold it over the Mask slot, then the rock.
 	var slots := _wear_slot_rects()
 	if not slots.is_empty():
 		_drag_from_pack(Vector2i(2, 0), slots["MASK"].get_center())
@@ -126,8 +103,6 @@ func _tour() -> void:
 	get_tree().quit()
 
 
-## The scripted clip: the mask goes from the pack onto the face, a rock is offered to the
-## Head slot and refused, and the coat comes off the body back into the pack.
 func _play_movie() -> void:
 	_fill_pack()
 	_hold_hammer()
@@ -152,9 +127,6 @@ func _play_movie() -> void:
 	get_tree().quit()
 
 
-## Drives every kind of drag the screen supports through the panel's own mouse handlers
-## and prints PASS or FAIL for each, so the rework can be checked for regressions in
-## the paths it did not mean to change as well as the new ones. Runs headless.
 func _run_checks() -> void:
 	await _wait(0.8)
 	var pack: Inventory = _panel._inventory
@@ -238,7 +210,6 @@ func _check(what: String, ok: bool) -> void:
 	print("%s  %s" % ["PASS" if ok else "FAIL", what])
 
 
-## Prints where everything ended up, so a run can be checked without watching it.
 func _report() -> void:
 	var equipment := _player.get_node("Equipment") as Equipment
 	for slot in Equipment.Slot.values():
@@ -269,7 +240,6 @@ func _hold_hammer() -> void:
 	_panel._interactor.spawn_into_hand(HAMMER, -1, hand)
 
 
-## Puts items straight onto the player's loadout, where there is one.
 func _wear(items: Array) -> void:
 	var equipment := _player.get_node_or_null("Equipment")
 	if equipment == null:
@@ -278,7 +248,6 @@ func _wear(items: Array) -> void:
 		equipment.equip(equipment.slot_for(data), data)
 
 
-## The on-screen box of each worn slot by slot name, or empty on a build without them.
 func _wear_slot_rects() -> Dictionary:
 	var rects := {}
 	var boxes = _panel.get("_wear_boxes")
@@ -305,7 +274,6 @@ func _drag_from_pack(cell: Vector2i, to: Vector2) -> void:
 	_cursor.show()
 
 
-## Presses at `from`, carries the item to `to` over `seconds`, and lets go there.
 func _drag(from: Vector2, to: Vector2, seconds: float) -> void:
 	_cursor.position = from
 	_panel._begin_drag(from)
@@ -329,7 +297,6 @@ func _glide(to: Vector2, seconds: float) -> void:
 		_cursor.position = from.lerp(to, smoothstep(0.0, 1.0, minf(time / seconds, 1.0)))
 
 
-## A plain arrow drawn over everything, standing in for the mouse pointer.
 func _make_cursor() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 100
@@ -351,7 +318,6 @@ func _make_cursor() -> void:
 	layer.add_child(_cursor)
 
 
-## Knocks some health off, so the header's bar has something to show.
 func _hurt(amount: int) -> void:
 	var health := _player.get_node("Health") as Health
 	health.apply_damage(DamageInfo.new(amount))

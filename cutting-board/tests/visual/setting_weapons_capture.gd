@@ -1,20 +1,11 @@
 extends Node3D
 
-## The five setting weapons that made it into the game, photographed: each held in the
-## player's right hand at rest and mid-swing, then where it lies in the test level.
-##
-##   godot --path cutting-board res://tests/visual/setting_weapons_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --skip-level leaves out the
-## shots of the level.
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const WEAPONS := [
 	"pegged_rolling_pin", "chair_leg_club", "clothes_peg_knuckles", "back_scratcher_rake",
 	"rocker_sickle",
 ]
-## Node names they are placed under in the level.
 const PLACED := [
 	"PeggedRollingPin", "ChairLegClub", "ClothesPegKnuckles", "BackScratcherRake", "RockerSickle",
 ]
@@ -85,7 +76,6 @@ func _look(from: Vector3, at: Vector3) -> void:
 	_camera.look_at(at, Vector3.UP)
 
 
-## Freezes an arm animation at `time`, photographs it, and returns the arm to rest.
 func _pose(animation: String, time: float, shot_name: String) -> void:
 	var player: AnimationPlayer = _player.get_node("%RightPlayer")
 	player.play(animation)

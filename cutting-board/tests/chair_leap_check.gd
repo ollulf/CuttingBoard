@@ -1,23 +1,11 @@
 extends Node3D
 
-## Headless checks for the walking chair as an enemy (scenes/characters/chair_creature.tscn):
-## it goes for the player once it sees them and the player's CombatTracker takes it as
-## a fight; its launch attack hurts only on the contact frame, a hit on its wind-up does
-## not stop it, a player who steps aside during the leap takes nothing, and it waits out
-## its cooldown between leaps. It launches from about 6 m, a wall stops the leap, a leap
-## toward a drop is cut short at the edge, and once dead its body holds loot the player's
-## interactor can open and take. Prints PASS/FAIL per check and quits with the number of
-## failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/chair_leap_check.tscn
-
 const CREATURE := preload("res://scenes/characters/chair_creature.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const STEP := 1.0 / 60.0
 
 var _failures := 0
 var _slams: Array = []
-## The player's health on every physics frame, and the frame each slam came on.
 var _frame := 0
 
 
@@ -51,7 +39,6 @@ func _run() -> void:
 	_check("the player's tracker counts it as a fight",
 		tracker.is_targeted() and tracker.is_in_combat())
 
-	# First leap: the player stands still and takes it, on the slam and not before.
 	var start_health := player_health.get_current()
 	var hurt_before_slam := false
 	var frames := 0
@@ -75,7 +62,6 @@ func _run() -> void:
 	_check("damage lands on the contact frame (%d -> %d)" % [start_health, first.health],
 		start_health - first.health == creature.slam_damage)
 
-	# The cooldown: no new wind-up until recovery and cooldown have passed.
 	var waited := 0.0
 	while creature.get_state() != creature.State.WIND_UP and waited < 10.0:
 		await get_tree().physics_frame
@@ -85,12 +71,10 @@ func _run() -> void:
 	_check("waits out the cooldown before the next leap (%.2f s, at least %.2f)" % [waited, least],
 		waited >= least - 0.05 and waited < 10.0)
 
-	# A blow during the wind-up does not stop it.
 	Health.find_in(creature).apply_damage(DamageInfo.new(5, player))
 	await _until(func() -> bool: return creature.is_leaping(), 1.0)
 	_check("a hit during the wind-up does not cancel the leap", creature.is_leaping())
 
-	# The player steps aside as it leaps: the slam finds nobody.
 	player.global_position += creature.global_basis.x * 3.0
 	var before := player_health.get_current()
 	await _until(func() -> bool: return _slams.size() >= 2, 2.0)
@@ -105,8 +89,6 @@ func _run() -> void:
 	_finish()
 
 
-## A wall between it and the target, put up after the bake so the navmesh still runs
-## through: the leap stops against it.
 func _check_wall(player: Node3D) -> void:
 	player.global_position = Vector3(15, 0.1, -6)
 	var wall := StaticBody3D.new()
@@ -134,7 +116,6 @@ func _check_wall(player: Node3D) -> void:
 	wall.queue_free()
 
 
-## Near the floor's edge, a leap out over the drop is cut short where the navmesh ends.
 func _check_edge() -> void:
 	var creature: CharacterBody3D = CREATURE.instantiate()
 	add_child(creature)
@@ -146,8 +127,6 @@ func _check_edge() -> void:
 	creature.queue_free()
 
 
-## Killed, it keeps its pockets: the body holds what it rolled, the player's interactor
-## sees it as a container, and the items go across into the player's pack.
 func _check_loot(player: Node3D) -> void:
 	player.global_position = Vector3(-15, 0.1, -15)
 	var creature: CharacterBody3D = CREATURE.instantiate()

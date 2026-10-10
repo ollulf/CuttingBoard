@@ -1,15 +1,5 @@
 extends Node3D
 
-## Frame captures of villagers' random weapons and of a villager fighting back: a row of
-## villagers each holding one weapon from the pool, then a villager struck by a bandit
-## that stands still, turning on it and swinging its weapon.
-##
-##   godot --path cutting-board res://tests/visual/villager_fight_capture.tscn -- --shots=<dir>
-##
-## --only=<name>,<name> runs just the stages whose names contain those. --weapon=<item>
-## picks the fighter's weapon (hammer, saw, plank; default hammer). Needs a real window;
-## under --headless it only runs the stages, which still catches errors.
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 
@@ -42,16 +32,12 @@ func _run() -> void:
 	get_tree().quit()
 
 
-## One villager per weapon, side by side, so each held weapon can be judged. The plank
-## is shown though it is not in the villager's pool: held, it stands as a pole taller
-## than the villager, which is why it is left out.
 func _loadouts() -> void:
 	var items := ["hammer", "saw", "plank", "rock", ""]
 	for i in items.size():
 		var npc := _spawn(Vector3(-3.0 + i * 1.5, 0, 0), Vector3(0, 0, 1))
 		npc.brain.shut_down()
 		npc.sight.set_physics_process(false)
-	# The NPCs draw their random loadout a frame after they enter the tree.
 	await _wait(0.1)
 	for i in items.size():
 		_arm(_npcs[i], items[i])
@@ -66,9 +52,7 @@ func _loadouts() -> void:
 	_clear()
 
 
-## A bandit, its brain off, hits a villager: the villager turns on it and fights back.
 func _fight() -> void:
-	# Facing away and not looking, so it does not run from the bandit before the blow.
 	var villager := _spawn(Vector3(0, 0, 0), Vector3(1, 0, 0))
 	villager.sight.set_physics_process(false)
 	var bandit := _spawn(Vector3(-2.5, 0, 0), Vector3(1, 0, 0), BANDIT)
@@ -94,11 +78,6 @@ func _fight() -> void:
 	_clear()
 
 
-# --- Helpers ----------------------------------------------------------------------------
-
-
-## Puts the item named `item` in the villager's right hand in place of whatever it drew,
-## and empties its pockets so it fights with that. A rock goes in the pockets instead.
 func _arm(npc: Npc, item: String) -> void:
 	if not npc.hand_right.is_free():
 		npc.hand_right.release().queue_free()
@@ -130,7 +109,6 @@ func _build_stage() -> void:
 	sun.shadow_enabled = true
 	add_child(sun)
 
-	# Half-metre chequers.
 	var image := Image.create(2, 2, false, Image.FORMAT_RGB8)
 	image.set_pixel(0, 0, Color(0.42, 0.4, 0.36))
 	image.set_pixel(1, 1, Color(0.42, 0.4, 0.36))

@@ -1,24 +1,5 @@
 extends "res://tools/import/mesh_builder.gd"
 
-## Builds the ten concept meshes for puppet junk: the bits of wooden body a dead villager,
-## bandit or chair leaves behind to loot (see docs/concepts/puppet-junk.md):
-##
-##   finger_joint   two knuckles of a finger, the pin through them, the tip snapped off;
-##   string_knot    a snarl of puppet string, three loops round each other;
-##   hinge_pin      a knee's iron hinge pin with a leaf of the hinge still on it;
-##   sawdust_pouch  a leather pouch of stuffing sawdust, tied, a heap spilled beside it;
-##   lacquer_flake  three curls of painted face lacquer, red and white;
-##   dowel          a splintered dowel of bone wood, one end clean, one end torn;
-##   screw_eye      the screw-eye the strings were tied to, threads and all;
-##   eye_bead       a carved eye bead, white with a dark pupil and an ember ring;
-##   ember_knot     the heartwood knot, still warm, an ember in its middle;
-##   peg_teeth      a strip of jaw with a row of peg teeth in it.
-##
-## Concept only: nothing in the game uses them yet. Each is a few dozen to a couple of
-## hundred flat-shaded triangles, lying on the ground with its bottom at y = 0.
-##
-##   godot --headless --path cutting-board -s res://tools/import/build_puppet_junk.gd
-
 const WOOD := preload("res://assets/materials/environment/wooden_planks.tres")
 const DARK := preload("res://assets/materials/environment/dark_planks.tres")
 const METAL := preload("res://assets/materials/environment/metal.tres")
@@ -27,7 +8,6 @@ const TWINE := preload("res://assets/materials/props/waxed_paper.tres")
 const EMBER := preload("res://assets/materials/characters/carver_ember.tres")
 
 const UV_SCALE := 4.0
-## Laid out at life size, scaled up to the game's larger-than-life hands like the glue.
 const SIZE := 1.6
 
 var _lacquer_red := _paint(Color(0.62, 0.16, 0.1))
@@ -52,8 +32,6 @@ func _init() -> void:
 	quit(0 if ok else 1)
 
 
-## Two knuckles lying along X with the pin through the joint; the tip has snapped off at an
-## angle and the second knuckle is cracked down its back.
 func _finger_joint() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var along := Basis(Vector3.FORWARD, deg_to_rad(-90.0))
@@ -82,7 +60,6 @@ func _finger_joint() -> ArrayMesh:
 	return mesh
 
 
-## Three loops of string through one another, lying flat-ish, two loose ends trailing.
 func _string_knot() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var twine := _begin()
@@ -99,8 +76,6 @@ func _string_knot() -> ArrayMesh:
 	return mesh
 
 
-## The knee's iron hinge pin, its head and a bent leaf of the hinge still round it, two
-## screw heads in the leaf, lying on its side.
 func _hinge_pin() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var lying := Basis(Vector3.FORWARD, deg_to_rad(90.0))
@@ -123,8 +98,6 @@ func _hinge_pin() -> ArrayMesh:
 	return mesh
 
 
-## A leather pouch of the sawdust a puppet is stuffed with, tied at the neck with string,
-## and a little heap of it spilled out beside it.
 func _sawdust_pouch() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var leather := _begin()
@@ -149,8 +122,6 @@ func _sawdust_pouch() -> ArrayMesh:
 	return mesh
 
 
-## Three curled flakes of face lacquer, red paint over a white ground, peeled off a mask
-## or a painted cheek; each a strip of bent slats.
 func _lacquer_flake() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var red := _begin()
@@ -164,7 +135,6 @@ func _lacquer_flake() -> ArrayMesh:
 		var turn := Basis(Vector3.UP, flake[1])
 		var length: float = flake[2]
 		var width: float = flake[3]
-		# The curl: four slats, each tipped up further than the last.
 		var segments := 4
 		var point := Vector3(-length * 0.5, 0.002, 0.0)
 		for k in segments:
@@ -180,8 +150,6 @@ func _lacquer_flake() -> ArrayMesh:
 	return mesh
 
 
-## A dowel of the pale bone wood limbs are pegged with, lying down: one end sawn clean,
-## the other torn into long splinters.
 func _dowel() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var lying := Basis(Vector3.FORWARD, deg_to_rad(90.0)) * Basis(Vector3.UP, 0.3)
@@ -191,7 +159,6 @@ func _dowel() -> ArrayMesh:
 		Vector2(0.0, 0.0), Vector2(0.009, 0.0), Vector2(0.009, 0.075), Vector2(0.0, 0.075),
 	]
 	_lathe(wood, shaft, 7, Transform3D(lying, at))
-	# The torn end: splinters around the rim, each a long thin wedge, longer on one side.
 	for k in 6:
 		var angle := TAU * k / 6.0
 		var length := 0.012 + 0.018 * absf(sin(angle * 0.5 + 0.4))
@@ -202,15 +169,12 @@ func _dowel() -> ArrayMesh:
 	return mesh
 
 
-## The screw-eye a puppet's string was tied off on: a ring of iron on a threaded shank,
-## lying on its side with a frayed end of string still knotted through the eye.
 func _screw_eye() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var lying := Basis(Vector3.FORWARD, deg_to_rad(90.0))
 	var at := Vector3(0.0, 0.009, 0.0)
 	var metal := _begin()
 	var shank: Array[Vector2] = [Vector2(0.0, -0.045), Vector2(0.0025, -0.04)]
-	# The thread: the radius steps in and out up the shank.
 	for k in 7:
 		var y := -0.04 + k * 0.005
 		shank.append(Vector2(0.0045, y + 0.0025))
@@ -228,8 +192,6 @@ func _screw_eye() -> ArrayMesh:
 	return mesh
 
 
-## A carved eye bead: a turned ball of wood, its front painted white, a dark pupil in an
-## ember ring, the stub of the peg it sat on behind it. Lies looking up and a little towards +Z.
 func _eye_bead() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var look := Basis(Vector3.RIGHT, deg_to_rad(60.0))
@@ -253,8 +215,6 @@ func _eye_bead() -> ArrayMesh:
 	return mesh
 
 
-## The heartwood knot from a puppet's chest: a gnarled lump of dark wood, split open on
-## top, the ember that kept it walking still glowing in the crack.
 func _ember_knot() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var dark := _begin()
@@ -264,7 +224,6 @@ func _ember_knot() -> ArrayMesh:
 	]
 	var squash := Basis.from_scale(Vector3(1.0, 1.0, 0.8)) * Basis(Vector3.UP, 0.3)
 	_lathe(dark, lump, 7, Transform3D(squash, Vector3.ZERO))
-	# Burls bulging out of its sides.
 	for k in 3:
 		var angle := TAU * k / 3.0 + 0.5
 		var burl: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.009, 0.003), Vector2(0.007, 0.01), Vector2(0.0, 0.012)]
@@ -278,8 +237,6 @@ func _ember_knot() -> ArrayMesh:
 	return mesh
 
 
-## A broken strip of jaw with a row of whittled peg teeth still in it, one tooth missing,
-## one knocked crooked.
 func _peg_teeth() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var bend := 0.5
@@ -303,8 +260,6 @@ func _peg_teeth() -> ArrayMesh:
 	return mesh
 
 
-## The profile of a ring of `radius` round the axis, its cross-section a circle of `thick`
-## in `steps` sides, wound bottom, up the outside, back down the inside like the others.
 func _ring(radius: float, thick: float, steps: int) -> Array[Vector2]:
 	var profile: Array[Vector2] = []
 	for k in steps + 1:
@@ -313,7 +268,6 @@ func _ring(radius: float, thick: float, steps: int) -> Array[Vector2]:
 	return profile
 
 
-## An axis-aligned box of `size` centred on `centre`, optionally turned by `basis`.
 func _box(tool: SurfaceTool, centre: Vector3, size: Vector3, basis := Basis.IDENTITY) -> void:
 	var half := size * 0.5
 	for axis in 3:
@@ -331,7 +285,6 @@ func _box(tool: SurfaceTool, centre: Vector3, size: Vector3, basis := Basis.IDEN
 			_face(tool, corners, basis * normal)
 
 
-## A flat painted lacquer, embedded in the meshes that use it.
 func _paint(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color

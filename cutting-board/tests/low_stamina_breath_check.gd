@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for the player's low-stamina breath: it starts below the start line,
-## keeps going between the two lines (no flicker), stops above the recovery line, pauses
-## with the game and stops on death. Prints PASS/FAIL per check and quits with the number
-## of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/low_stamina_breath_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 
 var _failures := 0
@@ -23,7 +16,6 @@ func _run() -> void:
 	var stamina: Stamina = player.get_node("%Stamina")
 	var health: Health = player.get_node("%Health")
 	var breath: LowStaminaBreath = player.get_node("%LowStaminaBreath")
-	# Keep the pool where the check puts it.
 	stamina.regen_rate = 0.0
 
 	_check("silent at full stamina", not breath.is_breathing())

@@ -1,36 +1,18 @@
 class_name Kick
 extends Node
 
-## The "kick" action: one kick hits exactly one thing, whatever is under the crosshair
-## within leg reach — a prop with a Kickable child, an NPC — or swings at the air. One
-## press, one strong kick: a barrel flies a few metres. Sits next to the Interactor under the
-## camera; see docs/concepts/kick-shove.md.
-
-## Emitted when what a press would kick changes, null when nothing is in reach; the HUD
-## shows its boot mark while there is a target.
 signal target_changed(target: Node3D)
-## Emitted on the strike frame: the kicked node, or null for a whiff.
 signal kicked(target: Node3D)
-## Emitted on a press that starts a kick, with the target taken then (null for a whiff);
-## the strike follows `windup` seconds later, so the leg animation starts from here.
 signal kick_started(target: Node3D)
 
-## Leg reach plus a step, in metres.
 @export var reach := 1.8
-## How far a target taken at the press may have moved off by the strike frame.
 @export var strike_reach := 2.2
-## Radius of the sphere cast that picks a target the crosshair ray just missed.
 @export var assist_radius := 0.3
 @export var collision_mask := 1
-## Seconds from the press to the strike frame.
 @export var windup := 0.15
-## Push of a kick; mass decides how far it goes.
 @export var impulse := 400.0
-## Fastest a kick sends anything, so a cup does not leave at 300 m/s.
 @export var max_speed := 16.0
-## Upward tilt of a prop's push, so a kick lifts it off the ground and travels.
 @export var lift_degrees := 22.0
-## How far down the sight line the crosshair point is looked for.
 @export var aim_distance := 20.0
 @export var damage := 15
 @export var head_multiplier := 1.5
@@ -38,21 +20,16 @@ signal kick_started(target: Node3D)
 @export var whiff_cost := 6.0
 @export var cooldown := 0.6
 @export var whiff_cooldown := 0.4
-## Push given to an NPC, in metres per second, before its own mass is counted.
 @export var npc_knockback := 80.0
 @export_group("Reactions")
-## A kick landing below this height above an NPC's feet is at the legs: about the hips.
 @export var leg_height := 0.85
-## Legs: a trip, long and with no footing. Body: a push back.
 @export var trip_time := 0.9
 @export var trip_grip := 0.0
 @export var push_time := 0.6
 @export var push_grip := 0.1
 @export_group("")
-## Overlay on the kick target; replaces the Interactor's tint on the same object.
 @export var highlight_material: Material
 @export var swing_sound: SoundBank = preload("res://resources/audio/swing.tres")
-## The boot landing on anything with Health; hit_object_sound on anything else, as a punch.
 @export var hit_sound: SoundBank = preload("res://resources/audio/hit_body.tres")
 @export var hit_object_sound: SoundBank = preload("res://resources/audio/impact_wood.tres")
 
@@ -60,9 +37,7 @@ signal kick_started(target: Node3D)
 @onready var _interactor: Interactor = get_parent().get_node_or_null("Interactor")
 
 var _target: Node3D = null
-## Counts down to the next press that does anything.
 var _cooldown := 0.0
-## Counts down from the press to the strike frame; below zero when no kick is under way.
 var _windup := -1.0
 var _pending: Node3D = null
 var _pending_full := true
@@ -76,8 +51,6 @@ func _ready() -> void:
 		tint.albedo_color = Color(1.0, 0.5, 0.15, 0.3)
 		highlight_material = tint
 	if _interactor:
-		# The Interactor tints what it newly hovers; the orange kick tint wins on the
-		# same object, so one object never shows two overlays.
 		_interactor.hover_changed.connect(func(_t: Node3D) -> void: _paint(_target))
 
 
@@ -106,8 +79,6 @@ func is_ready() -> bool:
 	return _cooldown <= 0.0 and _windup < 0.0
 
 
-## Kicks whatever is under the crosshair (target taken now); the kick lands on the
-## strike frame `windup` later. A press at nothing swings the leg and costs a little.
 func press() -> void:
 	if not is_ready():
 		return
@@ -122,7 +93,6 @@ func press() -> void:
 		_cooldown = whiff_cooldown
 		_pending = null
 		return
-	# An empty pool still kicks, at half strength and without hurting.
 	_pending_full = stamina == null or stamina.try_spend(cost)
 	if not _pending_full and stamina:
 		stamina.drain(cost)
@@ -130,9 +100,6 @@ func press() -> void:
 	_pending = target
 
 
-## The one kickable thing under the crosshair within reach: the ray's direct hit wins;
-## else among the sphere-cast candidates the one closest to the crosshair line, then the
-## nearer one.
 func pick_target() -> Node3D:
 	var space := _camera.get_world_3d().direct_space_state
 	var origin := _camera.global_position
@@ -154,8 +121,6 @@ func pick_target() -> Node3D:
 	var best: Node3D = null
 	var best_angle := INF
 	var best_distance := INF
-	# The cast sweeps the whole reach, so every body it touches along the way is a
-	# candidate; intersect_shape at the far end alone would miss the near ones.
 	var steps := 6
 	var seen := {}
 	for i in steps + 1:
@@ -193,8 +158,6 @@ func _strike() -> void:
 		_kick_prop(target as RigidBody3D, point, strength)
 	elif health:
 		_kick_health(health, target)
-	# The boot wears a prop down only when its Kickable says so: a barrel meant to be
-	# kicked about takes its wear from what it slams into instead (ImpactDamage).
 	var kickable := Kickable.find_in(target)
 	var destructible := target.get_node_or_null("Destructible") as Destructible
 	if destructible and _pending_full and not (target is Npc) \
@@ -204,7 +167,6 @@ func _strike() -> void:
 	kicked.emit(target)
 
 
-## Damage of the kick under way: none from an empty pool.
 func _damage() -> int:
 	return damage if _pending_full else 0
 
@@ -214,7 +176,6 @@ func _kick_prop(body: RigidBody3D, point: Vector3, strength: float) -> void:
 	if direction.length() < 0.2:
 		direction = -_camera.global_transform.basis.z
 	direction = direction.normalized()
-	# Tilt up by the lift, measured from the horizontal so flat kicks travel.
 	var flat := Vector3(direction.x, 0.0, direction.z)
 	if not flat.is_zero_approx():
 		var pitch := maxf(asin(clampf(direction.y, -1.0, 1.0)), 0.0) + deg_to_rad(lift_degrees)
@@ -246,8 +207,6 @@ func _kick_npc(npc: Npc, strength: float) -> void:
 	npc.kicked(info, trip_time if legs else push_time, trip_grip if legs else push_grip)
 
 
-## Kicks something with Health that is no NPC, like the training dummy: a blow just as a
-## punch lands one, credited to the kicker.
 func _kick_health(health: Health, target: Node3D) -> void:
 	var amount := _damage()
 	if amount <= 0:
@@ -260,7 +219,6 @@ func _kick_health(health: Health, target: Node3D) -> void:
 	health.apply_damage(info)
 
 
-## Where the crosshair line meets `node`, or its centre when the line passes beside it.
 func _crosshair_point_on(node: Node3D) -> Vector3:
 	var origin := _camera.global_position
 	var forward := -_camera.global_transform.basis.z
@@ -272,7 +230,6 @@ func _crosshair_point_on(node: Node3D) -> Vector3:
 	return node.global_position
 
 
-## The point under the crosshair beyond `target`, which a kicked prop heads for.
 func _aim_point(target: Node3D) -> Vector3:
 	var origin := _camera.global_position
 	var forward := -_camera.global_transform.basis.z
@@ -293,12 +250,9 @@ func _kickable(collider: Variant) -> Node3D:
 		return null
 	if node is Npc:
 		return node if (node as Npc).health.is_alive() else null
-	# Anything else standing that can be hurt (the training dummy) is kicked as it is
-	# punched; a rigid prop still needs its Kickable.
 	var health := Health.find_in(node)
 	if health and not (node is RigidBody3D):
 		return node if health.is_alive() else null
-	# Props only when marked Kickable; a frozen body (held, shelved) stays put.
 	if Kickable.find_in(node) == null:
 		return null
 	if node is RigidBody3D and (node as RigidBody3D).freeze:
@@ -323,7 +277,6 @@ func _paint(node: Node3D) -> void:
 		Interactor.set_overlay(node, highlight_material)
 
 
-## Gives the object back the Interactor's tint when it is still the hovered one.
 func _unpaint(node: Node3D) -> void:
 	if not is_instance_valid(node):
 		return

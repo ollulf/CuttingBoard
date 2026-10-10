@@ -1,20 +1,10 @@
 extends Node3D
 
-## Headless checks for the walking chair creature (scenes/characters/chair_creature.tscn):
-## it walks along the navigation mesh one limb at a time (two at most when it scuttles),
-## its hands stay put while they carry weight, it scuttles at a run on the chairs' side,
-## and killed it collapses and drops its mask. Prints PASS/FAIL per check
-## and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/walking_chair_check.tscn
-
 const CREATURE := preload("res://scenes/characters/chair_creature.tscn")
-## How far a planted hand may drift between two frames, metres.
 const SLIDE_TOLERANCE := 0.01
 
 var _failures := 0
 
-## Emitted every frame after every other node's _process.
 signal _posed
 
 
@@ -35,14 +25,12 @@ func _run() -> void:
 	var creature: CharacterBody3D = CREATURE.instantiate()
 	add_child(creature)
 	creature.global_position = Vector3(0, 0.05, 0)
-	# Its own roaming off: the check steers it.
 	creature.set_process(false)
 	await _physics_frames(10)
 	var chair: Node3D = creature.get_node("%Chair")
 	var health: Health = creature.get_node("%Health")
 	var locomotion: Locomotion = creature.get_node("%Locomotion")
 
-	# Around the slab to the far side: the straight line runs into it.
 	var goal := Vector3(0, 0, 7)
 	locomotion.move_to(goal)
 	var walk: Dictionary = await _watch_gait(chair, locomotion)
@@ -62,7 +50,6 @@ func _run() -> void:
 		creature.get_node("%Faction").data == preload("res://resources/factions/chairs.tres")
 		and preload("res://resources/items/chair_mask.tres").faction.is_hostile_to(
 			preload("res://resources/factions/player.tres")))
-	# Chasing, it scuttles: the gait at a run, on along the way it was going.
 	locomotion.move_to(creature.global_position + Vector3(0, 0, 3), true)
 	await _physics_frames(5)
 	_check("scuttles off", locomotion.is_moving())
@@ -80,7 +67,6 @@ func _run() -> void:
 	_check("collapses", chair.is_collapsed())
 	var dropped := false
 	for child in get_children():
-		# Rolled for on death (shattered_mask_check): whole but damaged, or shattered.
 		if child is RigidBody3D and child.scene_file_path in ["res://scenes/items/chair_mask.tscn",
 				"res://scenes/items/shattered_mask.tscn"]:
 			dropped = true
@@ -88,16 +74,11 @@ func _run() -> void:
 	_finish()
 
 
-## Watches the chair's hands while it moves: the worst frame-to-frame drift of a planted
-## hand, how many frames that covers, how many steps it takes, and how many hands are up
-## at once.
 func _watch_gait(chair: Node3D, locomotion: Locomotion) -> Dictionary:
 	var stats := {"worst": 0.0, "planted": 0, "swings": 0, "most_up": 0, "two_up": 0}
 	var last := {}
 	var waited := 0.0
 	while locomotion.is_moving() and waited < 25.0:
-		# Sampled once the chair has posed itself this frame (process_frame comes before
-		# the nodes' own _process).
 		await _posed
 		waited += get_process_delta_time()
 		var up := 0

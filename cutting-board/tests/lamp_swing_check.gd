@@ -1,10 +1,5 @@
 extends Node3D
 
-## Headless check for LampSwing on the lantern post: the hanging pivot's rotation changes
-## over time and never passes the angle limit, while the post itself stays still.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/lamp_swing_check.tscn
-
 const LANTERN_POST := preload("res://scenes/environment/decoration/lantern_post.tscn")
 
 var _failures := 0

@@ -1,18 +1,5 @@
 extends Node3D
 
-## The wood glue at night in the test level. Two tours:
-##
-##   --tour=concepts  (default) the three concept meshes, a|b|c, each on the crate in the
-##                    wagon yard where the glue is placed and then in the player's hand in
-##                    first person, and all three side by side;
-##   --tour=heal      the level's own player, hurt, putting glue on with a click: the
-##                    health bar filling and the warm edge of the mend, HUD and all.
-##
-##   godot --path cutting-board res://tests/visual/wood_glue_capture.tscn -- --shots=<dir>
-##
-## Run the heal tour under Movie Maker to record it as a clip. Needs a real window; under
-## --headless nothing is saved. --plain turns the retro screen off.
-
 const GLUE := preload("res://scenes/items/wood_glue.tscn")
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const CONCEPTS := {
@@ -68,8 +55,6 @@ func _concepts(level: Node, placed: Node3D) -> void:
 	_look(at + Vector3(-1.2, 0.9, 1.4), at)
 	await _shot("village_wide")
 
-	# Each concept on open ground out in the yard, by the light of a lantern set down next
-	# to it, from two sides; then all three side by side.
 	var stage := at + Vector3(-2.5, 0.0, 2.0)
 	stage.y = _ground_below(stage)
 	var lantern := OmniLight3D.new()
@@ -108,7 +93,6 @@ func _concepts(level: Node, placed: Node3D) -> void:
 		each.queue_free()
 	lantern.queue_free()
 
-	# Held in the right hand, seen through the player's own camera, near a lantern.
 	player.global_position = at + Vector3(-1.5, -0.95, 1.5)
 	player.look_at(at + Vector3(0.0, -0.95, 0.0), Vector3.UP)
 	(player.get_node("%Camera3D") as Camera3D).make_current()
@@ -121,8 +105,6 @@ func _concepts(level: Node, placed: Node3D) -> void:
 		await _shot("%s_held" % key)
 
 
-## The level's own player, two steps from the crate, hurt and holding the glue; a click
-## puts it on. Record the whole tour under Movie Maker.
 func _heal(level: Node, placed: Node3D) -> void:
 	var player := level.find_child("Player", false, false)
 	var at := placed.global_position
@@ -145,7 +127,6 @@ func _heal(level: Node, placed: Node3D) -> void:
 	print("health after the glue: ", health.get_current())
 
 
-## How far the mesh's origin has to sit above the ground for its bottom to touch it.
 func _lift(mesh: Mesh) -> float:
 	return -mesh.get_aabb().position.y
 

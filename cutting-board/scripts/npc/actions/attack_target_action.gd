@@ -1,42 +1,20 @@
 class_name AttackTargetAction
 extends NpcAction
 
-## Goes after the enemy the NPC picks to fight (Npc.get_attack_target) and hits it. While the enemy is in sight it
-## chases the enemy itself; once out of sight it heads for where the enemy was last
-## seen, and gives up when memory lets the enemy go — or, chased too long or too far from
-## home, gives up on it itself (Npc.give_up_on) and goes back.
-
-## How keen it is to fight any enemy it knows of. 0 never fights.
 @export_range(0.0, 1.0) var aggression := 0.8
-## How keen it is to fight back against someone it holds a grudge against — whoever
-## hurt it. Used when keener than aggression, so a timid NPC still answers a blow.
-## Keep it plus the Brain's commitment bonus below FleeAction's wounded_score, or a
-## badly hurt NPC will not break off to run.
 @export_range(0.0, 1.0) var retaliation := 0.75
-## Flat distance from which it swings, in metres. Keep it inside MeleeAttack.reach.
 @export var attack_range := 1.3
-## Closer than this, flat, it steps back while it keeps swinging, so it does not end
-## up fighting from inside the enemy's body. Keep it below attack_range.
 @export var min_distance := 0.9
-## Seconds between blows.
 @export var cooldown := 1.2
-## Delay before the first blow once in range, so closing in is not an instant hit.
 @export var windup := 0.4
-## Seen this recently counts as in sight, and is chased at its true position.
 @export var in_sight_window := 0.5
-## Seconds of chasing an enemy without once getting within attack_range before giving up
-## on it. 0 chases for as long as it is remembered.
 @export var give_up_after := 20.0
-## Metres from home past which a chase is given up. 0 chases anywhere.
 @export var leash_distance := 30.0
 
-## A step back that opens the gap by less than this, once the wall behind is taken into
-## account, is not worth taking.
 const MIN_STEP_BACK := 0.15
 
 var _target: Node3D
 var _until_blow := 0.0
-## Seconds chased since the target was last within attack_range.
 var _chasing_for := 0.0
 
 
@@ -57,8 +35,6 @@ func exit(npc: Npc) -> void:
 
 
 func tick(npc: Npc, delta: float) -> void:
-	# Re-picked every frame, so a closer enemy — or the player turning up — is not
-	# ignored in favour of whoever the fight started with.
 	var target := npc.get_attack_target()
 	if target != _target:
 		_chasing_for = 0.0
@@ -94,14 +70,9 @@ func tick(npc: Npc, delta: float) -> void:
 		return
 	npc.locomotion.clear_facing()
 	npc.locomotion.move_to(goal, true)
-	# Stepping out of range and back resets the wind-up rather than landing a free hit.
 	_until_blow = maxf(_until_blow, windup)
 
 
-## Backs off from `goal` at a walk, still facing it. The point aimed for is a full
-## arrival distance behind the stand-off, so Locomotion does not count it reached
-## before the gap has really opened. With its back to a wall there is nowhere to go:
-## it holds its ground instead of shuffling into the wall and out again.
 func _step_back(npc: Npc, goal: Vector3) -> void:
 	var away := npc.global_position - goal
 	away.y = 0.0

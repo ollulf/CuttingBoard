@@ -1,17 +1,8 @@
 extends Node
 
-## Screenshots of the worn-mask square between the hands on the hotbar: the HUD with
-## the player's mask on, a worn-down mask with its wear bar, and a bare face. Each shot
-## is also saved as a 3x close-up of the bar.
-##
-##   godot --path cutting-board res://tests/visual/hud_mask_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const BANDIT_MASK := preload("res://resources/items/bandit_mask.tres")
 
-## The part of a 1280x720 window the close-ups are cut from, around the bar.
 const ZOOM_RECT := Rect2i(420, 570, 440, 140)
 const ZOOM := 3
 

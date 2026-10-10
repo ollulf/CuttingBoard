@@ -1,14 +1,5 @@
 extends Node3D
 
-## The "Inventory full" feedback in the test level: the player's inventory is packed
-## with rocks, a rock lies in front of them under the crosshair, and E is pressed twice
-## (the second press restarts the message while it fades).
-##
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540
-##         res://tests/visual/inventory_full_capture.tscn
-##
-## Needs a real window. Quits on its own after about 7 s.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 

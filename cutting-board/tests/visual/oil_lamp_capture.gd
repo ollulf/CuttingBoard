@@ -1,13 +1,5 @@
 extends Node3D
 
-## The oil lamp, photographed at night in the test level: where it is placed in the
-## wagon yard, lying on the ground, and held in the player's hand in first person.
-##
-##   godot --path cutting-board res://tests/visual/oil_lamp_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro
-## screen off, for reading shapes rather than the look.
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const LAMP := preload("res://scenes/items/oil_lamp.tscn")
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
@@ -45,7 +37,6 @@ func _tour() -> void:
 	_look(at + Vector3(-4.0, 1.7, 3.0), at + Vector3(0.0, 0.3, 0.0))
 	await _shot("02_village_wide")
 
-	# On the ground, a few steps out in the yard.
 	var ground_at := at + Vector3(-2.5, 0.0, 2.0)
 	ground_at.y = 0.3
 	placed.global_position = ground_at
@@ -53,7 +44,6 @@ func _tour() -> void:
 	_look(placed.global_position + Vector3(-2.5, 1.4, 2.5), placed.global_position)
 	await _shot("03_ground")
 
-	# Held in the right hand, seen through the player's own camera.
 	var player: Node3D = PLAYER.instantiate()
 	level.add_child(player)
 	player.global_position = placed.global_position + Vector3(0.0, 0.1, 3.0)

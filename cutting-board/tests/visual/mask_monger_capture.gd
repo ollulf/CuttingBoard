@@ -1,17 +1,8 @@
 extends Node3D
 
-## The Mask-Monger's model (no rig yet) on a plain lit floor next to the villager body for
-## scale, from the front, the side, three-quarters and behind.
-##
-##   godot --path cutting-board res://tests/visual/mask_monger_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro screen off.
-
 const MONGER := preload("res://scenes/characters/mask_monger_model.tscn")
 const BODY := preload("res://scenes/characters/human_body.tscn")
 
-## (name, camera direction from the pair, looking at their middle), facing -Z means the
-## front is seen from -Z.
 const VIEWS := [
 	["front", Vector3(0.0, 0.25, -1.0)],
 	["side", Vector3(1.0, 0.2, 0.0)],

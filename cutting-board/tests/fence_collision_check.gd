@@ -1,26 +1,16 @@
 extends Node3D
 
-## Headless checks for the fence colliders: a player-sized and an NPC-sized capsule walk
-## and sprint-jump into every fence piece from both sides, a rock is thrown at them, a
-## melee-style ray is cast through them, and the navmesh is baked around a fence and
-## around the village paddock. Prints PASS/FAIL per check and quits with the number of
-## failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/fence_collision_check.tscn
-
 const FENCE_1X1 := preload("res://scenes/environment/buildings/1x1_fence.tscn")
 const FENCE_1X2 := preload("res://scenes/environment/buildings/1x2_fence.tscn")
 const FENCE_CORNER := preload("res://scenes/environment/buildings/fence_1x1_corner.tscn")
 const VILLAGE := preload("res://scenes/levels/village.tscn")
 const ROCK := preload("res://scenes/items/rock.tscn")
 
-## The player controller's numbers (player.gd / player.tscn).
 const PLAYER_RADIUS := 0.4
 const PLAYER_HEIGHT := 1.8
 const WALK_SPEED := 5.0
 const SPRINT_SPEED := 8.0
 const JUMP_VELOCITY := 4.5
-## The NPC capsule (npc_base.tscn).
 const NPC_RADIUS := 0.3
 const NPC_HEIGHT := 1.7
 
@@ -35,7 +25,6 @@ func _run() -> void:
 	var ground := _make_ground(60.0)
 	add_child(ground)
 
-	# Each case: the scene, a point on the fence line, and the direction across it.
 	var cases := [
 		["1x1 middle", FENCE_1X1, Vector3(0.0, 0, 0), Vector3.BACK],
 		["1x1 left end", FENCE_1X1, Vector3(-1.1, 0, 0), Vector3.BACK],
@@ -49,7 +38,6 @@ func _run() -> void:
 	for case in cases:
 		var fence: Node3D = case[1].instantiate()
 		add_child(fence)
-		# The corner scene carries an offset on its root; place every piece at the origin.
 		fence.transform = Transform3D.IDENTITY
 		await _physics_frames(2)
 		var at: Vector3 = case[2]
@@ -74,8 +62,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Moves a capsule from 2 m before the fence line toward it for two seconds (jumping
-## just before it if asked) and reports whether it is still on its own side.
 func _push(at: Vector3, dir: Vector3, radius: float, height: float, speed: float,
 		jump: bool) -> bool:
 	var body := CharacterBody3D.new()
@@ -106,14 +92,11 @@ func _push(at: Vector3, dir: Vector3, radius: float, height: float, speed: float
 	return stayed
 
 
-## Throws a rock hard at the fence from 3 m away, chest high, and reports whether it
-## stays on the thrower's side.
 func _throw_rock(at: Vector3, dir: Vector3) -> bool:
 	var rock: RigidBody3D = ROCK.instantiate()
 	add_child(rock)
 	rock.global_position = at - dir * 3.0 + Vector3.UP * 0.8
 	rock.linear_velocity = dir * 14.0 + Vector3.UP * 1.0
-	# A rock breaks on a hard enough impact, so its last position before that counts.
 	var last := rock.global_position
 	for i in 60:
 		await get_tree().physics_frame
@@ -125,8 +108,6 @@ func _throw_rock(at: Vector3, dir: Vector3) -> bool:
 	return (last - at).dot(dir) < 0.0
 
 
-## Casts a ray on the default mask at knee and chest height, like MeleeAttack does, and
-## reports whether both hit the fence's body.
 func _ray_hits(fence: Node3D, at: Vector3, dir: Vector3) -> bool:
 	var space := get_world_3d().direct_space_state
 	for y: float in [0.4, 1.0]:
@@ -138,8 +119,6 @@ func _ray_hits(fence: Node3D, at: Vector3, dir: Vector3) -> bool:
 	return true
 
 
-## Bakes a navmesh like the levels' (fence parsed through its scene group) around one
-## long fence and checks that a path across it walks around an end instead of through.
 func _check_nav_around_fence() -> void:
 	var region := _make_region()
 	add_child(region)
@@ -158,8 +137,6 @@ func _check_nav_around_fence() -> void:
 	await _physics_frames(2)
 
 
-## Bakes the village with its paddock and checks a path from outside the paddock to its
-## middle enters by the east gate.
 func _check_paddock_nav() -> void:
 	var region := _make_region()
 	add_child(region)
@@ -182,7 +159,6 @@ func _check_paddock_nav() -> void:
 	region.queue_free()
 
 
-## The x where the path first crosses the line z = `z`, or INF if it never does.
 func _crossing_x(path: PackedVector3Array, z: float) -> float:
 	for i in range(1, path.size()):
 		var a := path[i - 1]
@@ -193,7 +169,6 @@ func _crossing_x(path: PackedVector3Array, z: float) -> float:
 
 
 func _make_region() -> NavigationRegion3D:
-	# Same settings as the level's NavigationMesh (test_level.tscn).
 	var nav_mesh := NavigationMesh.new()
 	nav_mesh.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
 	nav_mesh.geometry_source_group_name = &"navigation_source"
@@ -204,7 +179,6 @@ func _make_region() -> NavigationRegion3D:
 	return region
 
 
-## A flat ground slab, collidable and in the navigation source group, top at y = 0.
 func _make_ground(size: float) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.add_to_group(&"navigation_source")
@@ -228,7 +202,6 @@ func _check(what: String, ok: bool) -> void:
 		_failures += 1
 
 
-## Whether the path ends at `goal`, ignoring the navmesh's height above the ground.
 func _reaches(path: PackedVector3Array, goal: Vector3) -> bool:
 	if path.size() < 2:
 		return false

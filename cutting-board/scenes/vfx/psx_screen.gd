@@ -1,40 +1,17 @@
 extends CanvasLayer
 
-## The retro screen: renders the 3D world at a low internal resolution (about 640x360),
-## blows it up by a whole number with nearest filtering and runs it through the palette
-## and dither grade. UI is drawn on higher canvas layers of the main window, so it stays
-## sharp and undithered on top.
-##
-## How: a SubViewport here shares the main window's World3D and carries its own camera,
-## which copies whatever camera the game made current, every frame. The main window then
-## stops drawing 3D itself and only draws 2D: this layer's display rect, and the HUD.
-## Gameplay code keeps using its own camera as before; this only ever reads from it.
-##
-## Autoloaded as PsxScreen. Toggle with the toggle_retro_screen action (F8), or set
-## `enabled` from code or in the Inspector of scenes/vfx/psx_screen.tscn.
-
-## Off draws the world straight to the window at full resolution, ungraded, and turns the
-## PS1 vertex snap and affine texturing off with it.
 @export var enabled := true:
 	set(value):
 		enabled = value
 		if is_node_ready():
 			_apply_enabled()
-## Height of the internal render in pixels: the one knob for how chunky the pixels are.
-## The window is divided by the whole number that brings the render closest to this
-## height, so pixels are always square blocks; the default 1280x720 window gets a 640x360
-## render blown up 2x. The vertex snap grid and the dither follow the render size.
 @export var render_height := 360:
 	set(value):
 		render_height = value
 		if is_node_ready():
 			_fit_to_window()
-## Vertex snap grid as a multiple of the render size: 1 snaps to render pixels, lower
-## values jitter more coarsely.
 @export var snap_scale := 1.0
-## PS1 affine texture swim on shaders that support it, 0..1.
 @export_range(0.0, 1.0) var affine_amount := 0.6
-## The grade's dither/palette strength, 0..1; forwarded to the display material.
 @export_range(0.0, 1.0) var grade_strength := 1.0:
 	set(value):
 		grade_strength = value
@@ -49,7 +26,6 @@ var _scale := 1
 
 
 func _ready() -> void:
-	# Copy the game camera after everything else has moved it this frame.
 	process_priority = 1000
 	_display.texture = _render.get_texture()
 	_display.material.set_shader_parameter("strength", grade_strength)
@@ -84,22 +60,14 @@ func _process(_delta: float) -> void:
 	_camera.attributes = source.attributes
 
 
-## Size of the internal render in pixels.
 func get_render_size() -> Vector2i:
 	return _render.size
 
 
-## Where the blown-up render sits in the window, in window pixels. It can reach a few
-## pixels past the window's edges when the window is not a whole multiple of the render.
 func get_display_rect() -> Rect2:
 	return Rect2(_display.position, _display.size)
 
 
-## Sizes the render to the window: the window's size divided by the whole number that
-## brings the render closest to `render_height`, rounded up, with the blown-up image
-## centred so any leftover pixels crop evenly off the edges. Rounding to the nearest
-## scale rather than down keeps windows a little short of a multiple (say 1000x700)
-## pixelated instead of falling back to a full-resolution render.
 func _fit_to_window() -> void:
 	var window := Vector2i(get_tree().root.get_visible_rect().size)
 	_scale = maxi(1, roundi(float(window.y) / maxi(render_height, 1)))

@@ -1,23 +1,11 @@
 extends Node3D
 
-## Captures of tree trunk collision with collision shapes and navigation drawn: every
-## tree type with its trunk cylinder, a top-down view of the baked navmesh with a hole
-## around each trunk, and the player walking into a trunk and sliding round it.
-##
-##   godot --path cutting-board res://tests/visual/tree_collision_capture.tscn -- --shots=<dir>
-##
-## --clip=third or --clip=first skips the stills and plays only the walk into the trunk,
-## seen from the side or through the player's eyes, for recording with --write-movie.
-## Needs a real window; under --headless it only runs the stages, which still catches
-## errors.
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const TREES := [
 	"tree_1_large", "tree_1_slim", "tree_1_strange", "tree_2_large",
 	"tree_2_slim", "tree_3_large", "tree_3_slim", "tree_4_large",
 ]
 const SPACING := 24.0
-## The tree the player walks into in the clip.
 const CLIP_TREE := 3
 
 var _shots_dir := ""
@@ -35,7 +23,6 @@ func _ready() -> void:
 		elif arg.begins_with("--clip="):
 			_clip = arg.trim_prefix("--clip=")
 	PsxScreen.enabled = false
-	# Set before anything is built, as shapes only grow debug meshes when they enter.
 	get_tree().debug_collisions_hint = true
 	get_tree().debug_navigation_hint = _clip.is_empty()
 	_build_stage()
@@ -64,8 +51,6 @@ func _run() -> void:
 
 	_nav_region.bake_navigation_mesh(false)
 	await _wait(0.5)
-	# Straight down with the tree meshes culled, so the navmesh is not hidden under the
-	# canopy; the trunk shapes stay drawn.
 	_draw_navmesh()
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	for tree in _trees:
@@ -81,8 +66,6 @@ func _run() -> void:
 	get_tree().quit()
 
 
-## The player walks straight at the trunk, stops against it, then holds forward with a
-## sidestep and slides round the bark.
 func _walk_clip() -> void:
 	var trunk := _trunk_of(_trees[CLIP_TREE])
 	var player: CharacterBody3D = PLAYER.instantiate()
@@ -123,7 +106,6 @@ func _build_stage() -> void:
 	sun.shadow_enabled = true
 	add_child(sun)
 
-	# Half-metre chequers.
 	var image := Image.create(2, 2, false, Image.FORMAT_RGB8)
 	image.set_pixel(0, 0, Color(0.42, 0.4, 0.36))
 	image.set_pixel(1, 1, Color(0.42, 0.4, 0.36))
@@ -150,7 +132,6 @@ func _build_stage() -> void:
 	ground.add_child(floor_mesh)
 	add_child(ground)
 
-	# Baked from the same group as the levels' runtime bake.
 	var nav_mesh := NavigationMesh.new()
 	nav_mesh.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
 	nav_mesh.geometry_source_group_name = &"navigation_source"
@@ -174,8 +155,6 @@ func _build_stage() -> void:
 	_camera.make_current()
 
 
-## The debug wireframe sits inside the bark where it can hardly be seen, so each trunk
-## shape also gets a see-through copy drawn over everything.
 func _show_through_bark(tree: Node3D) -> void:
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -198,7 +177,6 @@ func _show_through_bark(tree: Node3D) -> void:
 		_overlays.append(overlay)
 
 
-## The baked walkable polygons as green fill with dark edges, just above the floor.
 func _draw_navmesh() -> void:
 	var nav_mesh := _nav_region.navigation_mesh
 	var vertices := nav_mesh.get_vertices()

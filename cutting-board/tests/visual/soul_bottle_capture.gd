@@ -1,14 +1,5 @@
 extends Node3D
 
-## The soul in a bottle at night in the test level: where it stands by the Mask-Monger in
-## the market, close up, two bottles side by side (each swirling at its own pace), and in
-## the player's hand in first person.
-##
-##   godot --path cutting-board res://tests/visual/soul_bottle_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro screen
-## off.
-
 const BOTTLE := preload("res://scenes/items/soul_bottle.tscn")
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
@@ -50,7 +41,6 @@ func _run() -> void:
 	_look(at + Vector3(0.3, 0.2, 0.4), at)
 	await _shot("world_close")
 
-	# A second bottle beside it: the two swirls should not be in step.
 	var twin := BOTTLE.instantiate() as RigidBody3D
 	twin.freeze = true
 	level.add_child(twin)
@@ -59,7 +49,6 @@ func _run() -> void:
 	await _shot("twins")
 	twin.queue_free()
 
-	# Held in the right hand, seen through the player's own camera.
 	player.global_position = at + Vector3(-1.5, -0.09, 1.5)
 	player.look_at(at + Vector3(0.0, -0.09, 0.0), Vector3.UP)
 	(player.get_node("%Camera3D") as Camera3D).make_current()

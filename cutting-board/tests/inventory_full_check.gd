@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks that taking an item into a full inventory is refused with feedback:
-## the inventory is packed with rocks, the player looks at a rock on the ground and
-## presses E, and the rock has to stay in the world while the interactor reports the
-## refusal and the HUD shows "Inventory full". Prints PASS/FAIL per check and quits with
-## the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/inventory_full_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 
@@ -49,7 +41,6 @@ func _run() -> void:
 	_check("the refusal is reported once", _refusals == 1)
 	_check("the HUD shows the message", label != null and label.modulate.a > 0.9)
 
-	# A second press restarts the message rather than stacking another.
 	interactor.interact(inventory)
 	await _frames(2)
 	_check("a second press reports again", _refusals == 2)

@@ -1,92 +1,47 @@
 class_name BodyAnimator
 extends Node
 
-## Moves an NPC's HumanBody so it looks alive: a walk or run cycle while it travels and,
-## while it stands, breathing, a slow shift of weight and now and then something to do —
-## looking around, glancing over a shoulder, studying the ground or a hand.
-##
-## All of it is posed procedurally on the body's twelve bones, every frame, from how the
-## character is really moving. The stride is worked out from the actual ground speed and
-## the length of the legs, so a walk, a run and a stagger backwards from a blow all step
-## at the pace the body is covering ground, and the hips drop to keep the lower foot on
-## the floor. An arm whose hand holds something reaches for the HandSlot instead of
-## swinging, so the item never floats beside an empty hand.
-##
-## This only writes the animated pose. HumanBody's flinch blends its physics over that
-## pose and eases back to it; once the body goes limp this stops for good and the
-## ragdoll has the bones. It is purely visual: nothing here feeds back into Sight, the
-## Brain or Locomotion.
-
 enum Gesture { LOOK_AROUND, GLANCE, LOOK_DOWN, LOOK_UP, STRETCH_NECK, SHIFT_WEIGHT, INSPECT_HAND }
 
 @export_group("Walk")
-## How far each thigh swings either side of straight down at walking pace, in degrees.
 @export_range(0.0, 60.0) var walk_swing := 24.0
-## The same at a full run.
 @export_range(0.0, 80.0) var run_swing := 38.0
-## How far the knee of the swinging leg folds at walking pace, in degrees.
 @export_range(0.0, 120.0) var walk_knee_lift := 40.0
-## The same at a full run.
 @export_range(0.0, 140.0) var run_knee_lift := 95.0
-## How much farther than its legs reach a running body travels per stride, 0..1: the
-## time spent in the air between steps.
 @export_range(0.0, 1.0) var run_flight := 0.45
-## How far the arms swing against the legs, in degrees, walking and running.
 @export_range(0.0, 60.0) var walk_arm_swing := 16.0
 @export_range(0.0, 80.0) var run_arm_swing := 40.0
-## How far the elbows are bent, in degrees, walking and running.
 @export_range(0.0, 120.0) var walk_elbow_bend := 12.0
 @export_range(0.0, 140.0) var run_elbow_bend := 80.0
-## Forward lean of the torso, in degrees, walking and running.
 @export_range(0.0, 30.0) var walk_lean := 3.0
 @export_range(0.0, 40.0) var run_lean := 12.0
-## How far the pelvis turns with each step, the shoulders turning the other way.
 @export_range(0.0, 20.0) var hip_twist := 6.0
-## Extra rise of the hips in the middle of each running stride, in metres.
 @export var run_bounce := 0.04
-## Below this ground speed, in metres per second, the body is standing still.
 @export var stand_speed := 0.15
-## How quickly the pose blends between standing and walking, higher is snappier.
 @export var gait_blend_speed := 6.0
-## Heard at the feet each time one comes down, a little louder at a run.
 @export var step_sound: SoundBank = preload("res://resources/audio/step_npc.tres")
 
 @export_group("Idle")
-## Breaths per second, and how far each lifts the chest, in degrees.
 @export var breath_rate := 0.23
 @export_range(0.0, 10.0) var breath_depth := 2.0
-## How far the hips drift sideways as the weight moves from foot to foot, in metres.
 @export var weight_shift := 0.025
-## Seconds between one idle gesture ending and the next starting, as a random range.
 @export var gesture_pause := Vector2(1.5, 5.5)
-## Furthest the head turns to either side when looking around, in degrees.
 @export_range(0.0, 90.0) var look_range := 60.0
-## How much of a head turn the chest goes along with, 0..1.
 @export_range(0.0, 1.0) var chest_follow := 0.3
 
 @export_group("Holding")
-## How far along the forearm, from the elbow, the palm sits: the point that is put on a
-## HandSlot to hold what is in it. The forearm runs to the fingertips.
 @export var grip_reach := 0.28
-## How quickly an arm reaches for or lets go of a held item, higher is snappier.
 @export var hold_blend_speed := 8.0
 
-## Seconds from the start of a weapon's chop, and of a bare fist's jab, to the blow
-## landing. Npc.strike_at times its damage to these.
 const CHOP_CONTACT := 0.3
 const JAB_CONTACT := 0.15
 
-## A swing as keys of [seconds, hand position, item pitch in degrees], the position in
-## the Visual's frame for the right hand (the left mirrors it), the pitch tilting the
-## held item's top back for positive values. The hand starts and ends at its rest.
-## The chop: up and back by the head, down onto the target, a short follow-through.
 const CHOP_KEYS := [
 	[0.24, Vector3(0.26, 1.72, 0.12), 55.0],
 	[CHOP_CONTACT, Vector3(0.18, 1.2, -0.5), -60.0],
 	[0.38, Vector3(0.22, 1.02, -0.42), -75.0],
 	[0.6, Vector3.INF, 0.0],
 ]
-## The jab: drawn back to the ribs, punched straight out.
 const JAB_KEYS := [
 	[0.09, Vector3(0.3, 1.12, 0.06), 0.0],
 	[JAB_CONTACT, Vector3(0.16, 1.36, -0.52), -10.0],
@@ -100,10 +55,8 @@ const JAB_KEYS := [
 @onready var _hand_right: HandSlot = %HandSlotRight
 @onready var _hand_left: HandSlot = %HandSlotLeft
 
-## Bone index by name, and each bone's rest offset from its parent.
 var _index := {}
 var _rest := {}
-## Each limb bone's vector from its head to its far end, at rest.
 var _tail := {}
 var _leg_length := 0.0
 var _sole_height := 0.0
@@ -113,15 +66,11 @@ var _gait := 0.0
 var _phase := 0.0
 var _hold := {&"Right": 0.0, &"Left": 0.0}
 
-## The swing playing: which hand, its keys, and seconds into it. The hand slots' rest
-## transforms are what a swing moves away from and back to.
 var _swing_hand: HandSlot
 var _swing_keys: Array = []
 var _swing_time := 0.0
 var _slot_rest := {}
 
-## Idle state. Every NPC starts its breathing and gestures at a random point so a crowd
-## never moves in step.
 var _rng := RandomNumberGenerator.new()
 var _time := 0.0
 var _breath_offset := 0.0
@@ -157,9 +106,6 @@ func _ready() -> void:
 	_slot_rest[_hand_left] = _hand_left.transform
 
 
-## Swings `hand`: a chop from above the head when `armed`, else a jab. The hand slot
-## itself is moved, so the held item goes with it and the arm's reach follows. Starts
-## over if a swing is already playing.
 func swing(hand: HandSlot, armed: bool) -> void:
 	if _swing_hand and _swing_hand != hand:
 		_swing_hand.transform = _slot_rest[_swing_hand]
@@ -168,7 +114,6 @@ func swing(hand: HandSlot, armed: bool) -> void:
 	_swing_time = 0.0
 
 
-## Seconds from the start of a swing to its contact, armed or bare-handed.
 func contact_time(armed: bool) -> float:
 	return CHOP_CONTACT if armed else JAB_CONTACT
 
@@ -177,9 +122,6 @@ func is_swinging() -> bool:
 	return _swing_hand != null
 
 
-## Starts an idle gesture straight away, cutting short whatever one was playing. Idle
-## gestures otherwise come by themselves; this is for a scene that wants a particular
-## one, and for capturing them.
 func play_gesture(gesture: Gesture) -> void:
 	_steps = _gesture(gesture)
 	_step_left = 0.0
@@ -191,8 +133,6 @@ func _process(delta: float) -> void:
 		return
 	_time += delta
 
-	# How the body is really moving over the ground, in its own frame: -Z ahead, +X to
-	# its right. Smoothed a little, so a frame of jitter at a wall does not twitch the legs.
 	var world := _actor.get_real_velocity()
 	world.y = 0.0
 	var local := _body.global_basis.inverse() * world
@@ -207,15 +147,10 @@ func _process(delta: float) -> void:
 	_pose(delta, speed)
 
 
-# --- Posing -----------------------------------------------------------------------------
-
-
 func _pose(delta: float, speed: float) -> void:
 	var walk := _gait
 	var stand := 1.0 - walk
-	# 0 at walking pace, 1 at a full run.
 	var run := clampf(inverse_lerp(_locomotion.walk_speed, _locomotion.run_speed, speed), 0.0, 1.0)
-	# A body only just setting off takes small steps, not a full stride in slow motion.
 	var pace := clampf(speed / maxf(_locomotion.walk_speed, 0.01), 0.35, 1.0)
 
 	var swing := deg_to_rad(lerpf(walk_swing, run_swing, run)) * pace
@@ -226,13 +161,10 @@ func _pose(delta: float, speed: float) -> void:
 	var s := sin(_phase)
 	var c := cos(_phase)
 
-	# The legs swing in the plane the body is moving in, so a side-step or a stagger
-	# backwards steps that way rather than marching on the spot.
 	var heading := _velocity.normalized() if speed > 0.01 else Vector3.FORWARD
 	var leg_axis := heading.cross(Vector3.UP).normalized()
 	var ahead := -heading.z
 
-	# Idle: breathing lifts the chest, the weight drifts from one foot to the other.
 	var breath := sin(_time * TAU * breath_rate + _breath_offset)
 	_lean_side = lerpf(_lean_side, _lean_side_target, _blend(0.8, delta))
 	var sway := (_lean_side * 0.8 + 0.2 * sin(_time * 0.37 + _breath_offset)) * weight_shift * stand
@@ -243,11 +175,8 @@ func _pose(delta: float, speed: float) -> void:
 	var hips_rot := Basis.from_euler(Vector3(0.0, twist, sway_roll + deg_to_rad(3.0) * c * walk))
 	var spine_rot := Basis.from_euler(Vector3(-lean * 0.5 + deg_to_rad(breath_depth) * 0.3 * breath * stand, -twist * 0.6 + _look.y * chest_follow * 0.4, -sway_roll * 0.6))
 	var chest_rot := Basis.from_euler(Vector3(-lean * 0.5 - deg_to_rad(breath_depth) * breath * stand, -twist * 0.9 + _look.y * chest_follow * 0.6, -sway_roll * 0.4))
-	# The head stays level and facing ahead whatever the torso does, then looks.
 	var head_rot := Basis.from_euler(Vector3(lean * 0.8 + _look.x, -_look.y * chest_follow + _look.y + twist * 0.5, _look.z))
 
-	# Legs. A thigh swings forward and back about the leg axis; the knee folds while the
-	# leg is swinging through and stays nearly straight under the body's weight.
 	var knee_lift := deg_to_rad(lerpf(walk_knee_lift, run_knee_lift, run)) * pace
 	var stance_bend := deg_to_rad(lerpf(4.0, 22.0, run)) * pace
 	var legs := {}
@@ -256,9 +185,6 @@ func _pose(delta: float, speed: float) -> void:
 		var leg_s := sin(_phase + leg_phase)
 		var leg_c := cos(_phase + leg_phase)
 		var thigh_swing := swing * leg_s * walk
-		# The thigh also leans against the hips' sideways drift, keeping the foot planted.
-		# Posed in the body's frame and then taken into the hips', so the pelvis can turn
-		# and tilt without dragging the feet round with it.
 		var plant := -asin(clampf(sway / _leg_length, -0.5, 0.5))
 		var thigh := Basis(leg_axis, thigh_swing) * Basis.from_euler(Vector3(0.0, 0.0, plant))
 		thigh = hips_rot.inverse() * thigh
@@ -267,7 +193,6 @@ func _pose(delta: float, speed: float) -> void:
 		var shin := Basis(Vector3.RIGHT, -bend)
 		legs[side] = [thigh, shin]
 
-	# Arms swing against the legs, more when running, and fold at the elbow.
 	var arm_swing := deg_to_rad(lerpf(walk_arm_swing, run_arm_swing, run)) * pace * walk * ahead
 	var elbow := deg_to_rad(lerpf(walk_elbow_bend, run_elbow_bend, run)) * walk + deg_to_rad(8.0) * stand
 	var arms := {}
@@ -276,14 +201,12 @@ func _pose(delta: float, speed: float) -> void:
 		var arm_s := -s if side == &"Right" else s
 		var upper := Basis.from_euler(Vector3(arm_swing * arm_s + deg_to_rad(1.0) * breath * stand, 0.0, sign_side * deg_to_rad(2.0) * run))
 		var fore := Basis.from_euler(Vector3(elbow, 0.0, 0.0))
-		# Idle gesture: raising a hand to look it over.
 		var inspect := _inspect * stand * (1.0 if sign_side == _inspect_side else 0.0)
 		if inspect > 0.0:
 			upper = upper.slerp(Basis.from_euler(Vector3(deg_to_rad(45.0), 0.0, -sign_side * deg_to_rad(8.0))), inspect)
 			fore = fore.slerp(Basis.from_euler(Vector3(deg_to_rad(65.0), 0.0, -sign_side * deg_to_rad(20.0))), inspect)
 		arms[side] = [upper, fore]
 
-	# The hips sink so the lower foot stays on the ground, and rise off it on a run.
 	var hips_offset := Vector3(sway, 0.0, 0.0)
 	var low_sole := INF
 	for side in [&"Right", &"Left"]:
@@ -291,7 +214,6 @@ func _pose(delta: float, speed: float) -> void:
 	hips_offset.y = _sole_height - low_sole
 	hips_offset.y += run_bounce * run * walk * absf(s) * 2.0 - run_bounce * run * walk
 
-	# Model-space poses of the torso, for reaching held items.
 	var hips_t := Transform3D(hips_rot, _model_rest(&"Hips") + hips_offset)
 	var spine_t := hips_t * Transform3D(spine_rot, _rest[&"Spine"])
 	var chest_t := spine_t * Transform3D(chest_rot, _rest[&"Chest"])
@@ -314,16 +236,9 @@ func _pose(delta: float, speed: float) -> void:
 		_pose_bone(StringName(side + "Forearm"), arms[side][1])
 
 
-## Height of a leg's sole above the ground, in model space, posed as given with the hips
-## at their rest height.
-## A footstep each time a heel strikes: when a thigh is furthest forward and its knee has
-## straightened, a quarter turn into the cycle for the right leg and three quarters for
-## the left. Only once the body is really walking, so shuffling round on the spot makes
-## no sound.
 func _update_steps(last_phase: float, run: float) -> void:
 	if _gait < 0.5:
 		return
-	# Measured from the right heel strike, so both strikes become crossings of 0 and PI.
 	var from := fposmod(last_phase - PI * 0.5, TAU)
 	var to := fposmod(_phase - PI * 0.5, TAU)
 	if to < from or (from < PI and to >= PI):
@@ -338,8 +253,6 @@ func _sole_y(side: StringName, hips: Basis, thigh: Basis, shin: Basis) -> float:
 	return (knee + hips * thigh * shin * _tail[shin_name]).y
 
 
-## Two-bone reach: the upper arm and forearm rotations that put the palm on the side's
-## HandSlot, the elbow bending down and back. Empty when there is no hand to reach.
 func _reach(side: StringName, chest: Transform3D) -> Array:
 	var hand := _hand_right if side == &"Right" else _hand_left
 	var upper_name := StringName(side + "UpperArm")
@@ -354,7 +267,6 @@ func _reach(side: StringName, chest: Transform3D) -> Array:
 	var to_target := target - shoulder
 	var d := clampf(to_target.length(), absf(a - b) + 0.01, a + b - 0.001)
 	var direction := to_target.normalized()
-	# The elbow hangs back and a little out from the body.
 	var pole := Vector3(0.4 if side == &"Right" else -0.4, -0.6, 1.0)
 	pole = (pole - direction * pole.dot(direction)).normalized()
 	var cos_shoulder := clampf((a * a + d * d - b * b) / (2.0 * a * d), -1.0, 1.0)
@@ -376,7 +288,6 @@ func _pose_bone(bone_name: StringName, rotation: Basis, offset := Vector3.ZERO) 
 	_skeleton.set_bone_pose_position(i, (_rest[bone_name] as Vector3) + offset)
 
 
-## Where a bone's head sits at rest, in model space.
 func _model_rest(bone_name: StringName) -> Vector3:
 	return _skeleton.get_bone_global_rest(_index[bone_name]).origin
 
@@ -384,7 +295,6 @@ func _model_rest(bone_name: StringName) -> Vector3:
 func _update_holding(delta: float) -> void:
 	for side in [&"Right", &"Left"]:
 		var hand := _hand_right if side == &"Right" else _hand_left
-		# A swinging fist reaches for its slot like a held item, and fully at once.
 		if hand == _swing_hand:
 			_hold[side] = 1.0
 			continue
@@ -392,8 +302,6 @@ func _update_holding(delta: float) -> void:
 		_hold[side] = lerpf(_hold[side], target, _blend(hold_blend_speed, delta))
 
 
-## Moves the swinging hand's slot along the swing's keys, from its rest and back.
-## Into the contact key the hand accelerates; every other leg eases in and out.
 func _update_swing(delta: float) -> void:
 	if _swing_hand == null:
 		return
@@ -421,12 +329,7 @@ func _update_swing(delta: float) -> void:
 	_swing_hand = null
 
 
-# --- Idle gestures ----------------------------------------------------------------------
-
-
 func _update_gestures(delta: float) -> void:
-	# Something it has turned to face — an enemy, a throw's target — has its full
-	# attention: no looking around, and whatever it was doing is dropped.
 	var busy := _locomotion.has_facing()
 	if busy:
 		_steps.clear()
@@ -450,7 +353,6 @@ func _update_gestures(delta: float) -> void:
 				_lean_side_target = step["lean"]
 			if _steps.is_empty():
 				_pause = _rng.randf_range(gesture_pause.x, gesture_pause.y) + _step_left
-	# On the move the head mostly watches the way ahead.
 	var target := _look_target * (1.0 - _gait * 0.6)
 	_look = _look.lerp(target, _blend(_look_speed, delta))
 	_inspect = lerpf(_inspect, _inspect_target * (1.0 - _gait), _blend(4.0, delta))
@@ -477,8 +379,6 @@ func _pick_gesture() -> Gesture:
 	return Gesture.GLANCE
 
 
-## A gesture as a list of steps, each holding the head at a look — pitch, yaw, roll in
-## radians, positive yaw to the body's left — for some seconds, reached at some speed.
 func _gesture(gesture: Gesture) -> Array[Dictionary]:
 	var side := 1.0 if _rng.randf() < 0.5 else -1.0
 	var range_rad := deg_to_rad(look_range)
@@ -505,7 +405,6 @@ func _gesture(gesture: Gesture) -> Array[Dictionary]:
 			steps.append({"look": Vector3(_deg(-3, 3), _deg(-12, 12), 0.0), "time": 1.6, "speed": 1.5, "lean": -_lean_side_target})
 			steps.append({"look": Vector3.ZERO, "time": 0.4, "speed": 2.0})
 		Gesture.INSPECT_HAND:
-			# Only a free hand: one holding something stays on its item.
 			var hand := _hand_right if side > 0.0 else _hand_left
 			if not hand.is_free():
 				side = -side
@@ -522,7 +421,5 @@ func _deg(low: float, high: float) -> float:
 	return deg_to_rad(_rng.randf_range(low, high))
 
 
-## The weight that eases a value toward its target at `speed` over `delta` seconds, the
-## same whatever the frame rate.
 func _blend(speed: float, delta: float) -> float:
 	return 1.0 - exp(-speed * delta)

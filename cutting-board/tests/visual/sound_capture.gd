@@ -1,17 +1,5 @@
 extends Node
 
-## A scripted walk through the test level that sets off most of the game's sounds, for
-## recording with Movie Maker (which writes the audio into the AVI alongside the video):
-##
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 \
-##       --resolution 960x540 res://tests/visual/sound_capture.tscn
-##
-## Walking, a jump and landing, a sprint and a crouch past the road lanterns, a villager
-## crossing in front, a fist fight with another villager to its death, a rock drawn from
-## the hotbar and thrown, the inventory opened with items dragged about in it, the hands
-## stowed, and a barrel punched to pieces. The bandits and the training dummy are cleared
-## away so nothing else joins in. It quits by itself at the end.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const BARREL := preload("res://scenes/items/barrel.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
@@ -42,7 +30,6 @@ func _ready() -> void:
 	_fighter = _level.get_node("Villager")
 	_walker = _level.get_node("Villager2")
 	_panel = _level.find_children("*", "InventoryPanel", true, false)[0]
-	# A rock under the first right-hand key, and a hammer and a crate in the bag to drag.
 	var inventory: Inventory = _player.inventory
 	inventory.add(HAMMER)
 	inventory.add(BOX)
@@ -60,21 +47,17 @@ func _process(delta: float) -> void:
 	_once(8.0, func() -> void: _player._crouching = true)
 	_once(10.0, func() -> void: _player._crouching = false)
 
-	# A villager crossing the road in front, footsteps and all.
 	_once(9.0, _send_walker)
-	# Another squares up to the player and is punched down in three blows.
 	_once(10.5, _place_fighter)
 	for blow in 3:
 		_once(11.0 + blow * 0.7, func() -> void: _player._punch(_player.hand_right))
 
-	# A rock out of the bag on the first right-hand key, wound up and thrown.
 	_once(13.6, _draw_rock)
 	_once(14.2, func() -> void: _player.hand_right.begin_charge())
 	_once(14.9, func() -> void: _player.interactor.release_hand(_player.hand_right))
 	if t > 13.8 and t < 15.0:
 		_player.camera_pivot.rotation.x = lerpf(_player.camera_pivot.rotation.x, deg_to_rad(8.0), 0.1)
 
-	# The inventory: open, move the hammer, try it on the crate, take it in hand, close.
 	_once(16.0, _panel.open)
 	_once(16.6, func() -> void: _drag_from_cell(Vector2i(0, 0)))
 	_once(17.0, func() -> void: _drag_to_cell(Vector2i(3, 4)))
@@ -83,7 +66,6 @@ func _process(delta: float) -> void:
 	_once(18.3, func() -> void: _drag_from_cell(Vector2i(3, 4)))
 	_once(18.7, func() -> void: _drag_to_hand(_player.hand_right))
 	_once(19.2, _panel.close)
-	# Hands put away with the stow key, then a barrel punched apart.
 	_once(19.6, func() -> void: _player.hotbar.stow_hands())
 	_once(20.0, _place_barrel)
 	for blow in 3:
@@ -126,9 +108,7 @@ func _place_fighter() -> void:
 	_fighter.locomotion.stop()
 	_fighter.global_position = _ahead(1.35)
 	_fighter.look_at(Vector3(_player.global_position.x, _fighter.global_position.y, _player.global_position.z))
-	# Three blows to the floor: a little over a third of its health each.
 	_player.melee.unarmed_damage = ceili(_fighter.health.max_health / 3.0)
-	# Each blow shoves it back a little; a longer reach keeps the third one landing.
 	_player.melee.reach = 2.5
 
 
@@ -145,7 +125,6 @@ func _place_barrel() -> void:
 	_level.add_child(barrel)
 	barrel.global_position = _ahead(1.1) + Vector3.UP * 0.6
 	_player.camera_pivot.rotation.x = deg_to_rad(-40.0)
-	# Three punches through its durability.
 	_player.melee.unarmed_damage = 60
 
 
@@ -154,9 +133,6 @@ func _face(point: Vector3) -> void:
 	_player.rotation.y = lerp_angle(_player.rotation.y, atan2(-to.x, -to.z), 0.2)
 	var pitch := atan2(to.y, Vector2(to.x, to.z).length())
 	_player.camera_pivot.rotation.x = lerpf(_player.camera_pivot.rotation.x, pitch, 0.2)
-
-
-# --- Inventory drags, driven through the panel's own handlers ---------------------------
 
 
 func _cell_point(cell: Vector2i) -> Vector2:

@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for the mask-off vision: with a mask on the world shows, taking it off
-## fades the grain in, putting one back on fades it out, and a mask broken off the face
-## fades it in too. Prints PASS/FAIL per check and quits with the number of failures as
-## the exit code.
-##
-##   godot --headless --path cutting-board res://tests/mask_off_vision_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
 const MASK := Equipment.Slot.MASK
@@ -68,7 +61,6 @@ func _frames(count: int) -> void:
 		await get_tree().process_frame
 
 
-## Waits in game time, frame by frame, so it holds under --fixed-fps too.
 func _seconds(duration: float) -> void:
 	var left := duration
 	while left > 0.0:

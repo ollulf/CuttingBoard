@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for friendly fire: a bandit hit by another bandit (a swing or a
-## thrown rock) takes no grudge, keeps its target and rallies nobody; a villager hit by
-## a bandit still fights back; the player wearing a bandit mask still counts as hostile.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/npc_friendly_fire_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -57,7 +50,6 @@ func _bandit_hits_bandit() -> void:
 	await _wait(0.6)
 	_check("bandit hit by bandit: keeps its target", b.get_attack_target() == target_before and b.get_attack_target() != a)
 
-	# A rock thrown by a teammate is credited to it, and still forgiven.
 	var rock := ROCK.instantiate() as Node3D
 	add_child(rock)
 	var hand: HandSlot = a.hand_left
@@ -93,7 +85,6 @@ func _villager_hit_by_bandit() -> void:
 func _disguised_player() -> void:
 	var bandit := _spawn(BANDIT, Vector3(30, 0.05, 27))
 	await _physics_frames(5)
-	# Disguise: the player's faction takes on the bandits' data, as a worn mask does.
 	var theirs := Faction.find_in(_player)
 	theirs.data = bandit.faction.data
 	bandit.health.apply_damage(DamageInfo.new(5, _player))

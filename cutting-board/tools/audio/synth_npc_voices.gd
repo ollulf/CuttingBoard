@@ -1,23 +1,7 @@
 extends "res://tools/audio/synth_base.gd"
 
-## Renders the voice blips of the everyday NPCs, one syllable per file, played one per
-## few letters while a line types out (SpeechPlank) through their SoundBanks:
-##
-##   godot --headless --path cutting-board -s res://tools/audio/synth_npc_voices.gd
-##
-## - assets/audio/voices/villager/ (resources/audio/villager_voice.tres): warm and
-##   friendly, a rounded mid-pitched hum through open vowels with a little breath and a
-##   slight upward lilt.
-## - assets/audio/voices/bandit/ (resources/audio/bandit_voice.tres): gruff and low, a
-##   creaky, uneven buzz (each period a little early or late, a little louder or softer)
-##   with rasping noise in it, driven into a soft clip and falling at the end.
-##
-## Each voice gets 8 blips: four vowels at two pitches. Same lo-fi format and filter
-## approach as synth_voice_concepts.gd; seeded per voice, so a run reproduces the files.
-
 const ROOT := "res://assets/audio/voices/"
 
-## Vowel formants (Hz), as in synth_voice_concepts.gd.
 const A := [850.0, 1220.0, 2810.0]
 const E := [560.0, 2300.0, 2950.0]
 const O := [560.0, 1000.0, 2800.0]
@@ -45,8 +29,6 @@ func _height(semis: int) -> String:
 	return "low" if semis == 0 else "high"
 
 
-## Villager: a soft rounded pulse with a gentle vibrato, warmed by a sub-octave sine and
-## a 2.4 kHz lowpass, through the vowel plus a little breath.
 func _villager(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var n := _seconds(length + 0.08)
 	var source := _silence_samples(n)
@@ -63,8 +45,6 @@ func _villager(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFlo
 	return _fade(voiced, 0.012, length + 0.06)
 
 
-## Bandit: a creaky buzz, its periods jittered in length and level, rough noise riding on
-## each pulse, through darker (lowered) vowel formants and a soft clip for grit.
 func _bandit(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat32Array:
 	var n := _seconds(length + 0.08)
 	var source := _silence_samples(n)
@@ -81,7 +61,6 @@ func _bandit(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat
 			jitter = 1.0 + rng.randf_range(-0.08, 0.08)
 			level = rng.randf_range(0.6, 1.0)
 		var pulse := (2.0 * phase - 1.0) * level
-		# Breathy rasp, loudest right after each glottal closure.
 		source[i] = pulse + rasp[i] * 0.55 * (1.0 - phase) * level
 	var dark := []
 	for f in vowel:
@@ -93,7 +72,6 @@ func _bandit(length: float, f0a: float, f0b: float, vowel: Array) -> PackedFloat
 	return _fade(voiced, 0.008, length + 0.05)
 
 
-## A linear rise over `attack` seconds, then a 1.5-power fall to silence by `total`.
 func _fade(x: PackedFloat32Array, attack: float, total: float) -> PackedFloat32Array:
 	var out := x.duplicate()
 	var a := maxi(_seconds(attack), 1)
@@ -106,7 +84,6 @@ func _fade(x: PackedFloat32Array, attack: float, total: float) -> PackedFloat32A
 	return out
 
 
-## Normalises to `peak` and writes 16-bit mono PCM under ROOT.
 func _save(file_name: String, x: PackedFloat32Array, peak: float) -> void:
 	_write_wav(ROOT + file_name + ".wav", _normalized(x, peak), false)
 	print("%s  %.2f s" % [file_name, float(x.size()) / sample_rate])

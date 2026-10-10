@@ -1,20 +1,8 @@
 class_name PauseMenu
 extends Node3D
-## The pause menu is the player's mask. Esc pulls it straight off the face toward the
-## camera with its inside already facing the player, and the options are carved into
-## that inside: Resume, Save, Load, Settings and Quit. Choosing one carves a groove
-## across the word with a spray of chips; Resume (or Esc) puts the mask back on.
-##
-## While the mask is off the world behind it turns to the bare-face look of
-## MaskOffVision (black with flowing grain), drawn on a sheet just behind the mask so the
-## mask itself still shows. Lives under the player's camera and keeps running while the
-## tree is paused.
 
-## Fixed carve order for Tab, and the index of each word in WORDS.
 enum Word { RESUME, SAVE, LOAD, SETTINGS, QUIT }
 
-## Mask 1 (knotted brow) from the concept, in its 256x320 canvas pixels:
-## [text, x, y, tilt in radians, size].
 const WORDS := [
 	["Resume", 128.0, 168.0, -0.10, 34.0],
 	["Save", 78.0, 214.0, -0.30, 24.0],
@@ -23,21 +11,17 @@ const WORDS := [
 	["Quit", 154.0, 58.0, -0.18, 22.0],
 ]
 const CANVAS := Vector2(256, 320)
-## Eye holes: centre x, y, radius x, y, tilt.
 const EYES := [[88.0, 112.0, 24.0, 13.0, 0.12], [170.0, 106.0, 22.0, 14.0, -0.08]]
 const KNOT := Vector2(66, 62)
 const CRACK := [Vector2(150, 30), Vector2(146, 80), Vector2(154, 140), Vector2(148, 200), Vector2(156, 260)]
 
-## Size of the mask in metres, and how deep its inside is cupped.
 const SIZE := Vector2(0.2, 0.25)
 const CUP := 2.4
-## Where the mask sits on the face, and where it is held up to read.
 const FACE_POS := Vector3(0, 0, -0.02)
 const HELD_POS := Vector3(0, -0.03, -0.28)
 const HELD_TILT := -0.08
 const LIFT_TIME := 0.6
 const CARVE_TIME := 0.4
-## How long the carved "not yet" note stays on the mask.
 const NOTE_TIME := 1.6
 
 const WOOD := Color(0.62, 0.43, 0.25)
@@ -45,27 +29,20 @@ const WOOD_DARK := Color(0.36, 0.22, 0.11)
 const GROOVE := Color(0.18, 0.09, 0.04)
 const LIP := Color(0.93, 0.8, 0.6)
 const CANDLE := Color(1.0, 0.68, 0.36)
-## How far in front of the camera the grain backdrop hangs: behind the held mask and its
-## shell, in front of the world.
 const BACKDROP_DEPTH := 0.34
 const BACKDROP_SHADER := preload("res://assets/shaders/post/mask_off_backdrop.gdshader")
 
 signal opened
 signal closed
 
-## The player's bare-face view. It hides while paused, so the backdrop takes over from
-## it: already full when the face was bare, and carrying on its grain's time.
 @export var vision: MaskOffVision
 
-## What the second Quit carve does. Swapped out by tests so they don't end the run.
 var quit_handler: Callable = func() -> void: get_tree().quit()
 
-## 0 while the mask is on the face, 1 while it is held up to read.
 var _lift := 0.0
 var _lift_dir := 0
 var _selected := Word.RESUME
 var _quit_carves := 0
-## The carve in flight: which word, and how far along (-1 when idle).
 var _carving := -1
 var _carve_t := -1.0
 var _note_t := 0.0
@@ -77,7 +54,6 @@ var _glow: OmniLight3D
 var _chips: CPUParticles3D
 var _note: Node3D
 var _backdrop: MeshInstance3D
-## Bare-face amount the backdrop starts from (1 when no mask was on), and the grain's time.
 var _backdrop_floor := 0.0
 var _grain_time := 0.0
 
@@ -88,7 +64,6 @@ func _ready() -> void:
 	_apply_lift()
 
 
-## True from the moment the mask starts coming off until it is back on the face.
 func is_open() -> bool:
 	return _lift > 0.0 or _lift_dir > 0
 
@@ -113,7 +88,6 @@ func open() -> void:
 	opened.emit()
 
 
-## Starts putting the mask back on; the game unpauses once it sits on the face again.
 func close() -> void:
 	if not is_open() or _lift_dir < 0:
 		return
@@ -124,8 +98,6 @@ func close() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_open():
-		# Panels that use Esc themselves handle it first and mark it handled, so this
-		# only fires when nothing else is open.
 		if event.is_action_pressed("pause") and not get_tree().paused:
 			open()
 			get_viewport().set_input_as_handled()
@@ -158,13 +130,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			activate()
 
 
-## Tab walks the fixed order Resume, Save, Load, Settings, Quit.
 func select_next() -> void:
 	if _carving < 0:
 		_select((_selected + 1) % WORDS.size())
 
 
-## Arrows jump to the nearest word that lies in that direction on the mask.
 func select_toward(dir: Vector2) -> void:
 	if _carving >= 0:
 		return
@@ -178,7 +148,6 @@ func select_toward(dir: Vector2) -> void:
 		var along := d.dot(dir)
 		if along <= 4.0:
 			continue
-		# Sideways distance counts double, so "down" prefers what is straight below.
 		var score := along + absf(d.cross(dir)) * 2.0
 		if score < best_score:
 			best_score = score
@@ -187,7 +156,6 @@ func select_toward(dir: Vector2) -> void:
 		_select(best)
 
 
-## Carves the selected word. The outcome follows once the groove is through.
 func activate() -> void:
 	if _carving >= 0 or _lift < 1.0:
 		return
@@ -226,7 +194,6 @@ func _process(delta: float) -> void:
 	if is_open():
 		_grain_time += delta
 		_apply_backdrop()
-	# The candle over the selected word never burns quite still.
 	_flicker_t += delta
 	_glow.light_energy = 0.55 + 0.12 * sin(_flicker_t * 13.0) + 0.08 * sin(_flicker_t * 31.0 + 1.3)
 
@@ -243,7 +210,6 @@ func _carved(word: int) -> void:
 				_show_note("again to quit", word)
 		_:
 			_show_note("not yet", word)
-			# Only Quit keeps its groove, as the count toward the second carve.
 			_grooves[word].hide()
 
 
@@ -278,9 +244,6 @@ func _show_note(text: String, word: int) -> void:
 	_note_t = NOTE_TIME
 
 
-# --- Pose --------------------------------------------------------------------------
-
-## Straight off the face along the view axis, a little down, settling a few degrees.
 func _apply_lift() -> void:
 	var t := _lift * _lift * (3.0 - 2.0 * _lift)
 	_mask.position = FACE_POS.lerp(HELD_POS, t)
@@ -288,8 +251,6 @@ func _apply_lift() -> void:
 	_mask.visible = _lift > 0.0
 
 
-## How far the world behind the mask has gone to black and grain: follows the mask off
-## and back on, never below what the bare face already showed.
 func backdrop_amount() -> float:
 	return maxf(_lift, _backdrop_floor) if _backdrop.visible else 0.0
 
@@ -302,8 +263,6 @@ func _apply_backdrop() -> void:
 	material.set_shader_parameter("time", _grain_time)
 
 
-# --- Picking -----------------------------------------------------------------------
-
 func _word_at(screen: Vector2) -> int:
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
@@ -314,7 +273,6 @@ func _word_at(screen: Vector2) -> int:
 		var a := camera.unproject_position(_word_start(i))
 		var b := camera.unproject_position(_word_end(i))
 		var d := Geometry2D.get_closest_point_to_segment(screen, a, b).distance_to(screen)
-		# Half the word height on screen, plus a little slack, counts as a hit.
 		var reach := a.distance_to(b) / float(String(WORDS[i][0]).length()) * 0.9 + 6.0
 		if d < reach and d < best_d:
 			best_d = d
@@ -340,8 +298,6 @@ func _word_end(word: int) -> Vector3:
 	return _mask.to_global(_surface(_canvas_pos(word) + dir * _word_half_width(word)))
 
 
-## Where a flat label or groove for a word goes: at `px`, raised to the highest point of
-## the cupped surface under the word, so the curve never swallows its ends.
 func _flat_over(word: int, px: Vector2) -> Vector3:
 	var dir := Vector2.from_angle(WORDS[word][3]) * _word_half_width(word)
 	var c := _canvas_pos(word)
@@ -350,14 +306,11 @@ func _flat_over(word: int, px: Vector2) -> Vector3:
 	return Vector3(p.x, p.y, top + 0.001)
 
 
-## A canvas pixel on the inside surface of the mask, in mask space.
 func _surface(px: Vector2) -> Vector3:
 	var x := (px.x / CANVAS.x - 0.5) * SIZE.x
 	var y := (0.5 - px.y / CANVAS.y) * SIZE.y
 	return Vector3(x, y, CUP * (x * x + y * y * 0.3))
 
-
-# --- Building ----------------------------------------------------------------------
 
 func _build() -> void:
 	_mask = Node3D.new()
@@ -366,10 +319,8 @@ func _build() -> void:
 	var outline := _outline()
 	var inside := _paint_inside(outline)
 	_mask.add_child(_cupped_plane(inside, Color.WHITE, 0.0, 1.0))
-	# The outer shell: the same cut, a shade darker and a hair bigger, just behind.
 	_mask.add_child(_cupped_plane(inside, Color(0.45, 0.32, 0.22), -0.004, 1.03))
 
-	# A warm candle key light below the mask so the carving reads.
 	var key := OmniLight3D.new()
 	key.light_color = CANDLE
 	key.light_energy = 0.8
@@ -395,7 +346,6 @@ func _build() -> void:
 		mat.albedo_color = GROOVE
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		bar.material = mat
-		# The pivot sits at the word's start, so scaling it in x draws the cut from left to right.
 		cut.position.x = bar.size.x * 0.5
 		cut.mesh = bar
 		groove.add_child(cut)
@@ -416,7 +366,6 @@ func _build() -> void:
 	_select(Word.RESUME)
 
 
-## Two labels for a two-tone carving: a pale lip offset down-right, the dark groove on top.
 func _carved_label(text: String, font_size: float) -> Node3D:
 	var root := Node3D.new()
 	for tone in [LIP, GROOVE]:
@@ -460,12 +409,10 @@ func _make_chips() -> CPUParticles3D:
 	return chips
 
 
-## A sheet across the whole view, depth-tested so the mask in front of it still draws.
 func _make_backdrop() -> MeshInstance3D:
 	var sheet := MeshInstance3D.new()
 	sheet.name = "GrainBackdrop"
 	var quad := QuadMesh.new()
-	# Far wider than any field of view at this depth; the shader works in screen pixels.
 	quad.size = Vector2(4.0, 4.0)
 	sheet.mesh = quad
 	sheet.position = Vector3(0, 0, -BACKDROP_DEPTH)
@@ -477,7 +424,6 @@ func _make_backdrop() -> MeshInstance3D:
 	return sheet
 
 
-## The concept's outline of mask 1 (knotted brow, chipped right cheek) as a polygon.
 func _outline() -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	var cur := Vector2(128, 18)
@@ -512,7 +458,6 @@ func _paint_inside(outline: PackedVector2Array) -> ImageTexture:
 			var p := Vector2(x * 2 + 1, y * 2 + 1)
 			if not Geometry2D.is_point_in_polygon(p, outline) or _in_eye(p):
 				continue
-			# Wavy grain lines that swirl around the knot on the brow.
 			var bulge := maxf(0.0, 22.0 - p.distance_to(KNOT)) * 0.7
 			var grain := sin((p.y + sin(p.x * 0.04 + p.y * 0.11) * 3.0 + bulge) * 0.4)
 			var c := WOOD.lerp(WOOD_DARK, 0.18 + 0.14 * grain)
@@ -542,7 +487,6 @@ func _crack_distance(p: Vector2) -> float:
 	return best
 
 
-## A low-poly grid bent into a cup, with the painted inside alpha-cut to the mask shape.
 func _cupped_plane(tex: Texture2D, tint: Color, z_off: float, grow: float) -> MeshInstance3D:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)

@@ -1,19 +1,8 @@
 extends Node3D
 
-## The Soul Trader concept (scenes/characters/soul_trader.tscn) on a plain lit floor, with
-## a human body beside the cart for scale: front, three-quarters, side, close on the head
-## and on the flasks. With --clip it slowly circles the trader instead, for a Movie Maker
-## turntable.
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi
-##     res://tests/visual/soul_trader_capture.tscn -- --shots=<dir> [--clip]
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro screen off.
-
 const TRADER := preload("res://scenes/characters/soul_trader.tscn")
 const BODY := preload("res://scenes/characters/human_body.tscn")
 
-## (name, camera position, looked-at point).
 const VIEWS := [
 	["front", Vector3(0.6, 1.7, -4.4), Vector3(0.0, 1.1, 0.0)],
 	["three_quarter", Vector3(3.2, 1.9, -3.0), Vector3(0.0, 1.1, 0.0)],

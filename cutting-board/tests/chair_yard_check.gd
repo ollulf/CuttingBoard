@@ -1,14 +1,6 @@
 extends Node
 
-## Headless checks for the chair yard, the abandoned spot west of the village where the
-## walking chairs live: each chair stands on the navmesh and can walk its roam circle, and
-## none of them can see the roads, the village, the intro landing or the Mask-Monger from
-## anywhere it roams on its own. The bandits leave them be, and the camp is far off.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/chair_yard_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
-## Spare metres on top of roam radius plus sight distance.
 const MARGIN := 3.0
 
 var _failures := 0
@@ -73,7 +65,6 @@ func _run() -> void:
 	_finish()
 
 
-## Distance in metres from a point to the nearest painted path on the terrain.
 func _road_distance(terrain: Terrain, at: Vector3) -> float:
 	var point := Vector2(at.x, at.z)
 	var nearest := INF

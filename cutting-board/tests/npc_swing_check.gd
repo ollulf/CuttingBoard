@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks of an NPC's swing timing: the blow lands only on the swing's contact
-## frame, after the wind-up, and a swing cut short — by the swinger dying, being hit, or
-## the target stepping out of reach — deals nothing. Prints PASS/FAIL per check and quits
-## with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/npc_swing_check.tscn
-
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const HAMMER := preload("res://resources/items/hammer.tres")
@@ -22,7 +15,6 @@ func _run() -> void:
 	_add_floor()
 	var bandit := await _spawn(BANDIT, Vector3.ZERO)
 	var villager := await _spawn(VILLAGER, Vector3(0, 0, -1.1))
-	# A known weapon in the right hand, whatever the loadout rolled.
 	for hand in bandit.hands:
 		if not hand.is_free():
 			bandit.stow(hand)
@@ -31,7 +23,6 @@ func _run() -> void:
 	await _physics_frames(10)
 	var hits := _count_hits(villager.health, bandit)
 
-	# Armed: a chop.
 	var contact := bandit.swing_contact_time()
 	_check("an armed swing lands about 0.3 s in (%.2f)" % contact, contact > 0.2 and contact < 0.4)
 	var frames := roundi(contact * Engine.physics_ticks_per_second)
@@ -46,14 +37,12 @@ func _run() -> void:
 	await _physics_frames(40)
 	_check("the hand is back at rest after the swing", bandit.hand_right.position.is_equal_approx(hand_rest))
 
-	# Interrupted by a blow: staggered out of the swing.
 	bandit.strike_at(villager)
 	await _physics_frames(5)
 	bandit.health.apply_damage(DamageInfo.new(1, villager))
 	await _physics_frames(frames + 10)
 	_check("a swing staggered by a blow deals nothing", hits[0] == 1)
 
-	# The target steps out of reach during the wind-up.
 	await _physics_frames(40)
 	bandit.strike_at(villager)
 	villager.global_position = Vector3(0, 0, -4)
@@ -62,7 +51,6 @@ func _run() -> void:
 	villager.global_position = Vector3(0, 0, -1.1)
 	await _physics_frames(10)
 
-	# Bare-handed: a quicker jab, the same way.
 	bandit.stow(bandit.hand_right)
 	var jab := bandit.swing_contact_time()
 	_check("a bare-handed jab is quicker than a chop (%.2f)" % jab, jab < contact)
@@ -72,7 +60,6 @@ func _run() -> void:
 	await _physics_frames(8)
 	_check("the jab lands on its contact frame", hits[0] == 2)
 
-	# Killed during the wind-up.
 	await _physics_frames(30)
 	bandit.equip(HAMMER, bandit.hand_right)
 	await _physics_frames(5)

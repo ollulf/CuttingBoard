@@ -1,28 +1,16 @@
 extends SceneTree
 
-## What the prop mesh builders share (build_wood_glue.gd, build_soul_bottle.gd and
-## build_saw.gd extend this): flat-shaded faces with box-projected UVs, a lathe that turns
-## a profile into a solid, and saving the finished ArrayMesh. Each builder sets the scale
-## and texture density it wants in its _init before building.
-
 const OUT_DIR := "res://assets/meshes/props/"
 
-## How many times a texture repeats per metre of surface.
 var uv_scale := 4.0
-## Every corner is multiplied by this as it is written, so a builder can lay its tables
-## out at life size and still sit right in the larger-than-life hands.
 var mesh_scale := 1.0
-## Triangles written since the last save, for the log line.
 var _triangles := 0
 
 
-## Turns `profile` round the Y axis in `sides` flat faces and places it with `at`.
-## A point on the axis closes that end with a fan instead of a ring of slivers.
 func _lathe(tool: SurfaceTool, profile: Array[Vector2], sides: int, at: Transform3D) -> void:
 	for k in profile.size() - 1:
 		var a := profile[k]
 		var b := profile[k + 1]
-		# The profile's tangent turned a quarter clockwise points out of the surface.
 		var out := Vector2(b.y - a.y, a.x - b.x)
 		for s in sides:
 			var t0 := TAU * s / sides
@@ -40,8 +28,6 @@ func _lathe(tool: SurfaceTool, profile: Array[Vector2], sides: int, at: Transfor
 			_face(tool, corners, at.basis.inverse().transposed() * facing)
 
 
-## One flat triangle or quad, turned to face `facing`, so a shape only needs its corners
-## listed in a consistent order rather than each face wound by hand.
 func _face(tool: SurfaceTool, corners: Array, facing: Vector3) -> void:
 	if corners.size() < 3:
 		return
@@ -52,7 +38,6 @@ func _face(tool: SurfaceTool, corners: Array, facing: Vector3) -> void:
 	if normal.dot(facing) < 0.0:
 		corners.reverse()
 		normal = -normal
-	# Godot draws clockwise triangles as front faces.
 	var order := [0, 2, 1] if corners.size() == 3 else [0, 2, 1, 0, 3, 2]
 	for index in order:
 		var corner: Vector3 = corners[index] * mesh_scale
@@ -62,7 +47,6 @@ func _face(tool: SurfaceTool, corners: Array, facing: Vector3) -> void:
 	_triangles += order.size() / 3
 
 
-## Projects the texture along whichever axis the face looks down most.
 func _uv(point: Vector3, normal: Vector3) -> Vector2:
 	var n := normal.abs()
 	if n.x >= n.y and n.x >= n.z:
@@ -84,7 +68,6 @@ func _commit(mesh: ArrayMesh, tool: SurfaceTool, material: Material) -> void:
 	mesh.surface_set_material(mesh.get_surface_count() - 1, material)
 
 
-## Saves `mesh` as OUT_DIR + `file` and logs its triangle count. False when it could not.
 func _save(mesh: ArrayMesh, file: String) -> bool:
 	var path := OUT_DIR + file
 	var error := ResourceSaver.save(mesh, path)

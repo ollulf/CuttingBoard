@@ -1,21 +1,9 @@
 extends Node3D
 
-## Headless checks on the first-person blows, the bare punch and the weapon swing: all
-## through each one the cut end of the arm (the UpperArm bone's origin, with a margin for
-## the arm's thickness) stays out of the camera's view at the game's 16:9 aspect, and at
-## the hit frame the fist lands near the middle of the screen. Prints PASS/FAIL per check
-## and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/fp_arm_view_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
-## The game's aspect, from the project's viewport size.
 const ASPECT := 1280.0 / 720.0
-## How far round the bone's origin the arm's skin reaches, in metres.
 const ARM_RADIUS := 0.12
-## At the hit, the fist must sit within this fraction of the half-width of centre.
 const CENTRE_SPAN := 0.35
-## The animation sets swept: the bare punch and the swing every weapon uses.
 const SETS := ["unarmed", "weapon"]
 
 var _failures := 0
@@ -58,9 +46,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Sweeps the walk swing (up to a run's stride) and the jump lift, at rest and all
-## through each blow thrown mid-stride (the striking arm letting go of the sway as the
-## player does), checking the cut ends stay hidden.
 func _check_walk(player: Node3D, camera: Camera3D) -> void:
 	var settle_time: float = player.arm_action_settle_time
 	for set_name in SETS:
@@ -86,8 +71,6 @@ func _check_walk(player: Node3D, camera: Camera3D) -> void:
 			_check(worst < 0.0, "%s %s keeps the cut end out of view through the walk swing and jump (margin %.3f)" % [side, animation_name, -worst])
 
 
-## The two-armed glue use, as held in the right hand and mirrored for the left: both
-## cut ends stay hidden all through it, and it ends with the view level again.
 func _check_two_armed(player: Node3D, camera: Camera3D) -> void:
 	var arms: ArmAnimator = player.get_node("%Arms")
 	var anim_player: AnimationPlayer = player.get_node("%LeftPlayer")
@@ -112,7 +95,6 @@ func _check_two_armed(player: Node3D, camera: Camera3D) -> void:
 	camera.rotation.x = 0.0
 
 
-## The Churn Thumper's recoil jerk, on either arm: the cut end stays hidden through it.
 func _check_fire(player: Node3D, camera: Camera3D) -> void:
 	for side in ["Left", "Right"]:
 		var anim_player: AnimationPlayer = player.get_node("%%%sPlayer" % side)
@@ -130,7 +112,6 @@ func _check_fire(player: Node3D, camera: Camera3D) -> void:
 		anim_player.stop()
 
 
-## When the animation's emit_hit key fires.
 func _hit_time(animation: Animation) -> float:
 	for track in animation.get_track_count():
 		if animation.track_get_type(track) == Animation.TYPE_METHOD:
@@ -138,8 +119,6 @@ func _hit_time(animation: Animation) -> float:
 	return 0.0
 
 
-## How far the UpperArm bone's origin, grown by ARM_RADIUS, reaches into the view
-## frustum: negative while it stays outside.
 func _view_overlap(camera: Camera3D, skeleton: Skeleton3D) -> float:
 	var bone := skeleton.find_bone("UpperArm")
 	var at := camera.global_transform.affine_inverse() \
@@ -149,7 +128,6 @@ func _view_overlap(camera: Camera3D, skeleton: Skeleton3D) -> float:
 		return -1.0
 	var half_height := tan(deg_to_rad(camera.fov * 0.5))
 	var half_width := half_height * ASPECT
-	# Distance outside each side plane, measured square to the plane.
 	var outside := maxf(
 			(absf(at.x) - half_width * depth) / sqrt(1.0 + half_width * half_width),
 			(absf(at.y) - half_height * depth) / sqrt(1.0 + half_height * half_height))

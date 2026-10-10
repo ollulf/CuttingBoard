@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks for masks as factions: the player takes the side of the mask in its
-## Mask slot. A bandit's face keeps bandits off and makes villagers take the player for
-## a bandit, a villager's face does the reverse, a bare face or the player's own mask is
-## the player's own side again, and a grudge is held whatever face is worn. Prints
-## PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/mask_faction_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -47,7 +39,6 @@ func _run() -> void:
 	var bandit := _spawn(BANDIT, Vector3(0, 0.05, -4))
 	var villager := _spawn(VILLAGER, Vector3(4, 0.05, 0))
 	await _physics_frames(5)
-	# Brains off: the checks ask who each would fight or run from, not where it walks.
 	bandit.brain.shut_down()
 	villager.brain.shut_down()
 	bandit.memory.remember(_player)
@@ -76,14 +67,12 @@ func _run() -> void:
 	_wear(PLAYER_MASK)
 	_check("own mask: player faction", _faction.data.id == &"player")
 
-	# A mask broken off the face leaves the player's own side.
 	_wear(BANDIT_MASK)
 	var body: HumanBody = _player.get_node("%Body")
 	body.mask_broken.emit()
 	_check("broken bandit mask: slot empty", _equipment.is_free(Equipment.Slot.MASK))
 	_check("broken bandit mask: player faction again", _faction.data.id == &"player")
 
-	# A grudge outlasts any disguise.
 	_wear(BANDIT_MASK)
 	bandit.health.apply_damage(DamageInfo.new(5, _player))
 	_check("grudge: bandit holds it", bandit.has_grudge_against(_player))
@@ -96,7 +85,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Swaps whatever is in the Mask slot for `mask`.
 func _wear(mask: MaskData) -> void:
 	_equipment.unequip(Equipment.Slot.MASK)
 	_equipment.equip(Equipment.Slot.MASK, mask)

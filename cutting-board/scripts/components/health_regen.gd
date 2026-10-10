@@ -1,19 +1,11 @@
 class_name HealthRegen
 extends Node
 
-## Slowly heals its owner's Health once the owner has been out of combat for a while.
-## Any hit restarts the wait. The owner tells it whether it is fighting by having an
-## `is_in_combat()` method (Npc does); without one, only hits count. Runs on game time,
-## and never touches a dead Health, so it can't bring anything back.
-
-## Seconds after the latest hit (and out of combat) before healing starts.
 @export var delay := 7.0
-## Hit points healed per second once healing has started.
 @export var rate := 2.5
 
 var _health: Health
 var _quiet := 0.0
-## Healing below one whole hit point carries over to the next frame.
 var _pending := 0.0
 
 
@@ -40,7 +32,6 @@ func _physics_process(delta: float) -> void:
 		_health.heal(whole)
 
 
-## Whether healing is running right now.
 func is_regenerating() -> bool:
 	return (_health != null and _health.is_alive() and _quiet >= delay
 			and _health.get_current() < _health.max_health and not _in_combat())

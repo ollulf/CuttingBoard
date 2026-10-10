@@ -1,23 +1,5 @@
 extends "res://tools/import/mesh_builder.gd"
 
-## Builds the three concept meshes for the wood glue, so the one picked can be swapped
-## into scenes/items/wood_glue.tscn by changing a single path:
-##
-##   a  an earthenware pot of hide glue, a brush left standing in it, glue run down the
-##      side from the rim;
-##   b  a squeezed leather glue skin, tied at the neck, with a wooden stopper in it and a
-##      dribble of glue under it;
-##   c  a whittled glue dipper, a gob of glue on its head running down the handle and a
-##      cord wound round the grip.
-##
-## Everything is turned on a lathe of a few sides and flat shaded, kept to a couple of
-## hundred triangles like the other props. Each is laid out the way a HandSlot holds
-## things: the middle of where the fist closes sits at the origin, the item stands up
-## along +Y, and forward is -Z.
-##
-## Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://tools/import/build_wood_glue.gd
-
 const GLUE := preload("res://assets/materials/props/glue.tres")
 const CLAY := preload("res://assets/materials/props/glue_pot_clay.tres")
 const LEATHER := preload("res://assets/materials/props/leather.tres")
@@ -25,11 +7,6 @@ const PAPER := preload("res://assets/materials/props/waxed_paper.tres")
 const WOOD := preload("res://assets/materials/environment/wooden_planks.tres")
 const METAL := preload("res://assets/materials/environment/metal.tres")
 
-## Profiles are (radius, height) pairs in metres, listed from the bottom up the outside
-## and, for anything hollow, back down the inside. That order is what turns each face
-## outward, so a profile never has to be wound by hand.
-
-## a: the pot, its glue, and the brush standing in it.
 const POT_SIDES := 8
 const POT_GRIP := 0.05
 const POT_WALL: Array[Vector2] = [
@@ -38,7 +15,6 @@ const POT_WALL: Array[Vector2] = [
 	Vector2(0.036, 0.092),
 ]
 const POT_GLUE: Array[Vector2] = [Vector2(0.036, 0.092), Vector2(0.0, 0.095)]
-## Runs of glue down the outside from the rim: (which face of the pot, length).
 const POT_RUNS: Array[Vector2] = [Vector2(0, 0.04), Vector2(2, 0.025), Vector2(5, 0.055)]
 const BRUSH_SIDES := 5
 const BRUSH_HANDLE: Array[Vector2] = [
@@ -48,7 +24,6 @@ const BRUSH_FERRULE: Array[Vector2] = [
 	Vector2(0.0, -0.01), Vector2(0.011, -0.01), Vector2(0.011, 0.02), Vector2(0.0, 0.02),
 ]
 
-## b: the glue skin, squeezed flat across X, its stopper and its tie.
 const SKIN_SIDES := 8
 const SKIN_GRIP := 0.06
 const SKIN_FLATTEN := 0.62
@@ -65,8 +40,6 @@ const STOPPER: Array[Vector2] = [
 	Vector2(0.013, 0.172), Vector2(0.0, 0.174),
 ]
 
-## c: the dipper's handle with a knob at its foot, the cord on its grip, the gob of glue
-## on its head with the wooden tip poking out of the top, and the run down the handle.
 const DIPPER_SIDES := 6
 const DIPPER_GOB_SIDES := 7
 const DIPPER_GRIP := 0.055
@@ -89,11 +62,7 @@ const DIPPER_DRIP: Array[Vector2] = [
 	Vector2(0.0, 0.106),
 ]
 
-## Texture repeats per metre, the same on every face, as on the saw.
 const UV_SCALE := 4.0
-## Every table above is in the size of a real pot of glue; the game's people and tools
-## are drawn larger than life (the hammer is most of a metre long), so everything is
-## scaled up by this much to sit in their hands at the same proportion.
 const SIZE := 1.6
 
 
@@ -108,8 +77,6 @@ func _init() -> void:
 	quit(0 if ok else 1)
 
 
-## a: an earthenware pot, glue to just under the rim, a brush leaning in it and three
-## runs of glue down the outside.
 func _build_pot() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var down := Transform3D(Basis.IDENTITY, Vector3(0.0, -POT_GRIP, 0.0))
@@ -123,7 +90,6 @@ func _build_pot() -> ArrayMesh:
 		_run(glue, int(run.x), run.y, down)
 	_commit(mesh, glue, GLUE)
 
-	# The brush stands in the glue leaning back over the rim, away from the fist.
 	var lean := Basis(Vector3.RIGHT, deg_to_rad(-18.0)) * Basis(Vector3.FORWARD, deg_to_rad(8.0))
 	var brush := Transform3D(lean, Vector3(0.008, 0.06 - POT_GRIP, 0.01))
 	var wood := _begin()
@@ -135,8 +101,6 @@ func _build_pot() -> ArrayMesh:
 	return mesh
 
 
-## b: a leather skin squeezed flat, tied at the neck, stoppered with a whittled plug, and
-## glue dribbled down the front from the neck.
 func _build_skin() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var squeeze := Transform3D(
@@ -156,7 +120,6 @@ func _build_skin() -> ArrayMesh:
 	_commit(mesh, wood, WOOD)
 
 	var glue := _begin()
-	# Down the front of the neck, then a longer run over the shoulder.
 	_box(glue, Vector3(0.0, 0.126 - SKIN_GRIP, -0.0125), Vector3(0.007, 0.022, 0.004))
 	var shoulder := Basis(Vector3.RIGHT, deg_to_rad(-30.0))
 	_box(glue, Vector3(0.0, 0.103 - SKIN_GRIP, -0.034), Vector3(0.008, 0.04, 0.004), shoulder)
@@ -165,8 +128,6 @@ func _build_skin() -> ArrayMesh:
 	return mesh
 
 
-## c: a whittled glue dipper, its head thick with a gob of glue that has begun to run down
-## the handle, and a cord wound round the grip.
 func _build_dipper() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	var down := Transform3D(Basis.IDENTITY, Vector3(0.0, -DIPPER_GRIP, 0.0))
@@ -179,16 +140,12 @@ func _build_dipper() -> ArrayMesh:
 	_commit(mesh, cord, LEATHER)
 	var glue := _begin()
 	_lathe(glue, DIPPER_GOB, DIPPER_GOB_SIDES, down)
-	# The run hangs off the gob down the front of the handle.
 	var drip := Transform3D(Basis.IDENTITY, down.origin + Vector3(0.0, 0.0, -0.007))
 	_lathe(glue, DIPPER_DRIP, DIPPER_SIDES - 1, drip)
 	_commit(mesh, glue, GLUE)
 	return mesh
 
 
-## A run of glue down the outside of the pot from the rim: a thin tongue lying on the
-## middle of one face of the wall, following its curve, wide at the lip and drawn to a
-## point at the bottom.
 func _run(tool: SurfaceTool, face: int, length: float, at: Transform3D) -> void:
 	var angle := TAU * (face + 0.5) / POT_SIDES
 	var radial := Vector3(cos(angle), 0.0, sin(angle))
@@ -200,7 +157,6 @@ func _run(tool: SurfaceTool, face: int, length: float, at: Transform3D) -> void:
 	var right: Array[Vector3] = []
 	for k in heights.size():
 		var y: float = heights[k]
-		# A flat face is nearer the axis than the profile's corners are.
 		var on_face := _pot_radius(y) * cos(PI / POT_SIDES) + 0.0015
 		var middle := radial * on_face + Vector3.UP * y
 		left.append(at * (middle + across * widths[k]))
@@ -212,7 +168,6 @@ func _run(tool: SurfaceTool, face: int, length: float, at: Transform3D) -> void:
 		_face(tool, corners, radial)
 
 
-## The radius of the pot's outside at height `y`, read off the rising part of its profile.
 func _pot_radius(y: float) -> float:
 	for k in range(1, 5):
 		var a := POT_WALL[k]
@@ -222,7 +177,6 @@ func _pot_radius(y: float) -> float:
 	return POT_WALL[5].x
 
 
-## An axis-aligned box of `size` centred on `centre`, optionally turned by `basis`.
 func _box(tool: SurfaceTool, centre: Vector3, size: Vector3, basis := Basis.IDENTITY) -> void:
 	var half := size * 0.5
 	for axis in 3:

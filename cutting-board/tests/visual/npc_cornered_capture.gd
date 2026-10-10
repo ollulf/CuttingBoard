@@ -1,11 +1,5 @@
 extends Node3D
 
-## A bandit backed against a block with the player crowding it, seen from the side, for
-## recording whether it holds its ground or shuffles into the wall and out again.
-##
-##   godot --path cutting-board --write-movie <dir>/out.avi --fixed-fps 30
-##       --resolution 960x540 --quit-after 180 res://tests/visual/npc_cornered_capture.tscn
-
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 

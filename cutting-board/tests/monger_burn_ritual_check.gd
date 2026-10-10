@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks for the Mask-Monger's burn ritual (scenes/characters/mask_burn_ritual.gd):
-## nothing is offered without a mask; a mask in hand is taken, burnt and comes back as
-## exactly one Soul in a Bottle pickup at the player's feet; a second offer mid-ritual is
-## refused; a mask only in the inventory is neither offered nor taken; and a Monger
-## holding a grudge refuses. Prints PASS/FAIL per check and quits with the number of
-## failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/monger_burn_ritual_check.tscn
-
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const MASK := preload("res://resources/items/shattered_mask.tres")
@@ -30,7 +21,6 @@ func _run() -> void:
 	monger.global_position = Vector3(0, 0.05, 0)
 	player.global_position = Vector3(0, 0.05, -2.0)
 	await _physics_frames(10)
-	# He is invincible: a beating well past his 120 health leaves the ritual working.
 	for i in 15:
 		monger.health.apply_damage(DamageInfo.new(20))
 	await _physics_frames(10)
@@ -49,7 +39,6 @@ func _run() -> void:
 	_check("nothing offered without a mask", ritual.get_prompt(player) == "")
 	_check("refused without a mask", not ritual.use(player))
 
-	# A mask in hand.
 	var cues: Array[float] = []
 	var cue_times: Array[float] = []
 	ritual.sound_cued.connect(func(_bank: SoundBank, at: float) -> void:
@@ -80,13 +69,11 @@ func _run() -> void:
 		print("  bottle %.2f m from the player, frozen %s" % [off, bottle.freeze])
 		_check("the bottle is a loose pickup near the player", not bottle.freeze and off < 1.5)
 
-	# A mask only in the inventory, hands empty: neither offered nor taken.
 	_check("no \"Give shattered mask\" for a mask only in the inventory",
 			ritual.get_prompt(player) == "")
 	_check("refuses a mask only in the inventory", not ritual.use(player)
 			and _masks_in(inventory) == 1)
 
-	# A grudge, mask in hand.
 	interactor.spawn_into_hand(MASK, -1, hand)
 	_check("a mask in hand is offered again", ritual.get_prompt(player) == "Give shattered mask")
 	monger.hold_grudge(player)

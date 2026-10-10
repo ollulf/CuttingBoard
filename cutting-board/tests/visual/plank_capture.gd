@@ -1,11 +1,5 @@
 extends Node3D
 
-## The wooden plank weapon: lying in the village's wagon yard, then held by the player.
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <dir>/x.avi
-##       res://tests/visual/plank_capture.tscn -- --shots=<dir>
-
-# The village has no ground of its own; the test level puts it on the valley terrain.
 const VILLAGE := preload("res://scenes/levels/test_level.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const PLANK := preload("res://scenes/items/plank.tscn")

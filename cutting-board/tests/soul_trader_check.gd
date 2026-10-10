@@ -1,13 +1,5 @@
 extends Node
 
-## Headless checks for the Soul Trader: pointed at, it offers "Trade" and E opens the
-## trade screen on its stock; buying takes the price in soul flasks out of the pack and
-## puts the item in; it refuses without enough flasks or without room (and then nothing
-## changes); and nothing can be sold to it, by double-click or by drag. Prints PASS/FAIL
-## per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/soul_trader_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const TRADER := preload("res://scenes/characters/soul_trader_npc.tscn")
 const FLASK := preload("res://resources/items/soul_bottle.tres")
@@ -35,7 +27,6 @@ func _run() -> void:
 	var interactor := get_tree().root.find_child("Interactor", true, false) as Interactor
 	var camera := interactor.get_parent() as Camera3D
 
-	# Stand the trader in front of the camera, facing it, and look at it.
 	var trader_body := TRADER.instantiate() as Node3D
 	add_child(trader_body)
 	var forward := -camera.global_transform.basis.z
@@ -75,7 +66,6 @@ func _run() -> void:
 	_check("buying takes the price in flasks", trader.count_currency(pack) == 1)
 	_check("bought item leaves the stock", not stock.get_entries().has(glue))
 
-	# No selling: neither the bought glue nor a flask goes across, and no flasks appear.
 	var count_before := stock.get_entries().size()
 	_double_click(InventoryPanel.Side.PLAYER, _find(pack, GLUE).origin)
 	_double_click(InventoryPanel.Side.PLAYER, _find(pack, FLASK).origin)
@@ -89,8 +79,6 @@ func _run() -> void:
 		and _find(pack, GLUE) != null and trader.count_currency(pack) == 1)
 	_check("no drag is left running", not _panel._is_dragging() and sold)
 
-	# Enough flasks but no room: a pack full of rocks and flasks (the sickle is 2 x 2, and
-	# paying 4 single flasks scattered around frees no 2 x 2 block).
 	for entry in pack.get_entries().duplicate():
 		pack.remove(entry)
 	for i in 4:
@@ -106,7 +94,6 @@ func _run() -> void:
 		and trader.count_currency(pack) == 4 and pack.get_entries().size() == size_before
 		and stock.get_entries().has(sickle))
 
-	# A drag from the stock into the pack is a purchase too.
 	for entry in pack.get_entries().duplicate():
 		pack.remove(entry)
 	for i in 4:
@@ -147,7 +134,6 @@ func _cell_pos(side: int, cell: Vector2i) -> Vector2:
 	)
 
 
-## Two left presses on a grid square, the second flagged as a double-click.
 func _double_click(side: int, cell: Vector2i) -> void:
 	var pos := _cell_pos(side, cell)
 	for second in [false, true]:
@@ -160,7 +146,6 @@ func _double_click(side: int, cell: Vector2i) -> void:
 			_panel._gui_input(event)
 
 
-## Press on one square, move to another, release; returns true once done.
 func _drag(from_side: int, from_cell: Vector2i, to_side: int, to_cell: Vector2i) -> bool:
 	var start := _cell_pos(from_side, from_cell)
 	var end := _cell_pos(to_side, to_cell)

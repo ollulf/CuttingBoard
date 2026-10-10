@@ -1,13 +1,5 @@
 extends Node3D
 
-## Records the Mask-Monger's burn ritual in the village from the player's own eyes: the
-## player stands before the Monger with a villager mask in the right hand, gives it, and
-## watches it burn and the Soul in a Bottle land at their feet. Meant for Movie Maker:
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <out>.avi
-##       --fixed-fps 30 --resolution 960x540 --quit-after 270
-##       res://tests/visual/monger_burn_ritual_play_capture.tscn
-
 const VILLAGE := preload("res://scenes/levels/village.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const MASK := preload("res://resources/items/villager_mask.tres")
@@ -17,8 +9,6 @@ func _ready() -> void:
 	var village := VILLAGE.instantiate()
 	add_child(village)
 	var monger := village.get_node("Market/MaskMonger") as Npc
-	# Out of the game's own level flow the village ground has no collision yet, and
-	# everyone would fall through it: a plain slab holds them up.
 	var slab := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
 	shape.shape = BoxShape3D.new()
@@ -38,7 +28,6 @@ func _ready() -> void:
 	for i in 60:
 		await get_tree().process_frame
 	(monger.get_node("%Usable") as MaskBurnRitual).use(player)
-	# Look down after the lob, to where the bottle lands.
 	await get_tree().create_timer(MaskBurnRitual.SET_DOWN).timeout
 	var pivot := player.get_node("%CameraPivot") as Node3D
 	create_tween().tween_property(pivot, "rotation:x", -1.0, 0.9) \

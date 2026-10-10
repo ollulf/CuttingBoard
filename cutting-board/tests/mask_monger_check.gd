@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks for the Mask-Monger NPC (scenes/characters/mask_monger.tscn): he
-## spawns with his own MaskMongerBody, is on the villagers' side and friendly to them
-## and to the player, walks a navigation path with his four-beat gait advancing as he
-## goes and settling once he stops, takes a blow without a ragdoll, and shrugs off any
-## beating (he is invincible: numbers pop, health snaps back to full). Prints PASS/FAIL per check and quits with the number of failures as the exit
-## code.
-##
-##   godot --headless --path cutting-board res://tests/mask_monger_check.tscn
-
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -56,7 +47,6 @@ func _run() -> void:
 	_finish()
 
 
-## Sends him, brain off, along a path around a block and follows the gait as he goes.
 func _walk(monger: Npc, body: MaskMongerBody) -> void:
 	monger.brain.shut_down()
 	var goal := Vector3(0, 0, 7)
@@ -88,7 +78,6 @@ func _walk(monger: Npc, body: MaskMongerBody) -> void:
 	_check("the gait settles once he stops", body._gait < 0.05)
 
 
-## A blow rocks him without a ragdoll; a killing blow slumps him for good.
 func _hit(monger: Npc, body: MaskMongerBody) -> void:
 	var info := DamageInfo.new(10)
 	info.direction = Vector3.RIGHT
@@ -99,7 +88,6 @@ func _hit(monger: Npc, body: MaskMongerBody) -> void:
 	_check("a hit rocks him and he stands", absf(body._jolt) > deg_to_rad(0.5) and not body.is_limp())
 	var limp := [false]
 	body.went_limp.connect(func() -> void: limp[0] = true)
-	# He is invincible: blows far past his 120 health still pop numbers, then he is whole.
 	var numbers_before := _damage_numbers()
 	for i in 15:
 		var blow := DamageInfo.new(20)
@@ -128,8 +116,6 @@ func _finish() -> void:
 	get_tree().quit(_failures)
 
 
-## A flat floor with a wall across the straight line to the goal, and a navigation region
-## baked from both, set up like test_level's.
 func _build_floor() -> NavigationRegion3D:
 	TestWorld.add_floor(self, 60)
 	TestWorld.add_slab(self, Vector3(3, 2, 1), Vector3(0, 1, 3.5))

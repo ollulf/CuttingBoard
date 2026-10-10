@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for the Mask-Monger showing through the mask-off grain: while the
-## player is bare-faced the beacon render runs, follows the game camera and the Monger
-## hums; with a mask on both are off. Prints PASS/FAIL per check and quits with the
-## number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/mask_beacon_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const MONGER := preload("res://scenes/characters/mask_monger.tscn")
 const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
@@ -22,7 +15,6 @@ func _ready() -> void:
 func _run() -> void:
 	var player = TestWorld.masked_player(PLAYER)
 	add_child(player)
-	# No floor here: hold the player still so the camera does not fall between frames.
 	player.set_physics_process(false)
 	var monger: Node3D = MONGER.instantiate()
 	add_child(monger)
@@ -45,7 +37,6 @@ func _run() -> void:
 
 	equipment.unequip(MASK)
 	await _seconds(0.8)
-	# Compare once this frame has processed, just before it is drawn.
 	var camera := get_viewport().get_camera_3d()
 	_check("bare face: the beacon render runs",
 			render.render_target_update_mode == SubViewport.UPDATE_ALWAYS and vision.visible)
@@ -82,7 +73,6 @@ func _frames(count: int) -> void:
 		await get_tree().process_frame
 
 
-## Waits in game time, frame by frame, so it holds under --fixed-fps too.
 func _seconds(duration: float) -> void:
 	var left := duration
 	while left > 0.0:

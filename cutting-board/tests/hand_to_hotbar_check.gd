@@ -1,14 +1,5 @@
 extends Node
 
-## Headless checks that an item in a hand can be dragged onto a hotbar square, through
-## real input like inventory_hotbar_check. The item stays in the hand and the square
-## follows it, as it does after a draw: its key then puts it away (wear intact) and draws
-## it back into the square's own hand. Also covers that a hand drop replaces a square's
-## link and that one item answers to one key. Prints PASS/FAIL per check and quits with
-## the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/hand_to_hotbar_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 const BOX_SMALL := preload("res://resources/items/box_small.tres")
@@ -68,7 +59,6 @@ func _run() -> void:
 	await _press("hotbar_1")
 	_check("key 1 again draws the rock into the left hand (square 1's hand)",
 		left.get_item_data() == ROCK)
-	# The box was in the left hand, so the draw banked it first; it stays linked to 5.
 	var box_slot := hotbar.get_slot(4)
 	_check("the box drawn over was banked with its wear",
 		box_slot.entry != null and box_slot.entry.durability == 37)
@@ -76,8 +66,6 @@ func _run() -> void:
 	_check("key 5 draws the box into the right hand with its wear",
 		right.get_item_data() == BOX_SMALL and right.get_durability() == 37)
 
-	# Replacing: the rock (left, square 1) onto square 2 moves its one key there; then
-	# the box (right, square 5) onto square 2 replaces the rock's link.
 	_panel.open()
 	await _frames(3)
 	await _drag(_hand_center(left), _slot_center(1))

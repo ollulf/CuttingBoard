@@ -1,11 +1,5 @@
 extends Node3D
 
-## Headless checks of the strike slow: a punch or kick leaves movement speed alone until
-## the strike frame, drops it to attack_slow_factor right then, and it is back to full
-## after attack_slow_time. Prints PASS/FAIL per check and quits with the failure count.
-##
-##   godot --headless --path cutting-board res://tests/attack_slow_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 
 var _failures := 0
@@ -64,7 +58,6 @@ func _check_slowed_then_recovers(what: String) -> void:
 	var m: float = _player.get_attack_slow_multiplier()
 	_check("%s: speed at %.2f of full right after the strike" % [what, m],
 			absf(m - _player.attack_slow_factor) < 0.05)
-	# A second strike refreshes the slow instead of stacking below the factor.
 	_player._start_attack_slow()
 	_check("%s: a second strike does not stack" % what,
 			_player.get_attack_slow_multiplier() >= _player.attack_slow_factor - 0.001)

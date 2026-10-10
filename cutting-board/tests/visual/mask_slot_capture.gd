@@ -1,11 +1,5 @@
 extends Node
 
-## Opens the inventory screen on the test level as the player starts, with a villager's
-## and a bandit's mask in the pack, to show the player's own mask in the Mask slot beside
-## the masks they can take off bodies. Needs a real window.
-##
-##   godot --path cutting-board res://tests/visual/mask_slot_capture.tscn -- --shots=<dir>
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 

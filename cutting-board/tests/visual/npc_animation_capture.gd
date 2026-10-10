@@ -1,21 +1,8 @@
 extends Node3D
 
-## Frame captures of NPC body animation: walk and run cycles seen from the side, idle
-## gestures, a crowd idling out of step, a bandit holding its hammer, and a flinch and a
-## death landing on a moving body. Each stage is saved as single frames plus a strip of
-## them side by side, on a chequered floor whose half-metre squares show whether feet
-## slide.
-##
-##   godot --path cutting-board res://tests/visual/npc_animation_capture.tscn -- --shots=<dir>
-##
-## --static switches every BodyAnimator off, which is how NPCs looked before they had
-## one. --only=<name>,<name> runs just the stages whose names contain those. Needs a
-## real window; under --headless it only runs the stages, which still catches errors.
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 
-## Width of the slice of each frame that goes into a strip, as a share of the frame.
 const STRIP_SLICE := 0.34
 const STRIP_HEIGHT := 360
 
@@ -71,10 +58,6 @@ func _run() -> void:
 	get_tree().quit()
 
 
-# --- Stages -----------------------------------------------------------------------------
-
-
-## Walks or runs a villager along +X and photographs one stride from the side.
 func _cycle(stage: String, run: bool) -> void:
 	var npc := _spawn(VILLAGER, Vector3(-20, 0, 0), Vector3(1, 0, 0))
 	npc.locomotion.move_to(Vector3(60, 0, 0), run)
@@ -88,7 +71,6 @@ func _cycle(stage: String, run: bool) -> void:
 	_clear()
 
 
-## Stands a villager facing the camera and plays one idle gesture.
 func _idle(stage: String, gesture: BodyAnimator.Gesture, count: int, spacing: float) -> void:
 	var npc := _spawn(VILLAGER, Vector3.ZERO, Vector3(0, 0, 1))
 	_fixed_camera(Vector3(0.9, 1.45, 2.3), Vector3(0, 1.15, 0))
@@ -104,7 +86,6 @@ func _idle(stage: String, gesture: BodyAnimator.Gesture, count: int, spacing: fl
 	_clear()
 
 
-## Five villagers left to their own idling, which should never line up.
 func _crowd() -> void:
 	for i in 5:
 		_spawn(VILLAGER, Vector3(-2.4 + i * 1.2, 0, 0), Vector3(0, 0, 1))
@@ -115,7 +96,6 @@ func _crowd() -> void:
 	_clear()
 
 
-## A bandit holding its hammer: standing, then walking.
 func _bandit() -> void:
 	var npc := _spawn(BANDIT, Vector3.ZERO, Vector3(0, 0, 1))
 	_fixed_camera(Vector3(1.4, 1.4, 2.0), Vector3(0, 1.0, 0))
@@ -134,8 +114,6 @@ func _bandit() -> void:
 	_clear()
 
 
-## A walking villager struck on the shoulder: the flinch plays over the walk and the
-## stride picks up again once it has eased off.
 func _flinch() -> void:
 	var npc := _spawn(VILLAGER, Vector3(-20, 0, 0), Vector3(1, 0, 0))
 	npc.locomotion.move_to(Vector3(60, 0, 0))
@@ -151,7 +129,6 @@ func _flinch() -> void:
 	_clear()
 
 
-## A running bandit killed mid-stride: the animation lets go and the ragdoll falls.
 func _death() -> void:
 	var npc := _spawn(BANDIT, Vector3(-20, 0, 0), Vector3(1, 0, 0))
 	npc.locomotion.move_to(Vector3(60, 0, 0), true)
@@ -166,9 +143,6 @@ func _death() -> void:
 		frames.append(await _shot("death_%02d" % i))
 	_strip("death", frames, 0.6)
 	_clear()
-
-
-# --- Helpers ----------------------------------------------------------------------------
 
 
 func _build_stage() -> void:
@@ -188,7 +162,6 @@ func _build_stage() -> void:
 	sun.shadow_enabled = true
 	add_child(sun)
 
-	# Half-metre chequers.
 	var image := Image.create(2, 2, false, Image.FORMAT_RGB8)
 	image.set_pixel(0, 0, Color(0.42, 0.4, 0.36))
 	image.set_pixel(1, 1, Color(0.42, 0.4, 0.36))
@@ -221,8 +194,6 @@ func _build_stage() -> void:
 
 func _spawn(scene: PackedScene, at: Vector3, facing: Vector3) -> Npc:
 	var npc := scene.instantiate() as Npc
-	# Placed before it enters the tree: added at the origin first, the body's bones would
-	# sit there for a frame and shove whichever NPC stands at the origin.
 	npc.position = at + Vector3.UP * 0.02
 	add_child(npc)
 	npc.look_at(npc.global_position + facing, Vector3.UP)
@@ -243,7 +214,6 @@ func _clear() -> void:
 	for npc in _npcs:
 		npc.queue_free()
 	_npcs.clear()
-	# Items the NPCs dropped are left in the level; clear those too.
 	for child in get_children():
 		if child is RigidBody3D:
 			child.queue_free()
@@ -260,8 +230,6 @@ func _fixed_camera(at: Vector3, looking_at: Vector3) -> void:
 	_camera.look_at(looking_at, Vector3.UP)
 
 
-## Hits `npc` at `height` above its feet, travelling along `direction` in world space,
-## through its Health like any real blow.
 func _hit(npc: Npc, height: float, direction: Vector3, damage: int, knockback: float) -> void:
 	var info := DamageInfo.new(damage)
 	info.position = npc.global_position + Vector3.UP * height - direction * 0.15
@@ -270,9 +238,6 @@ func _hit(npc: Npc, height: float, direction: Vector3, damage: int, knockback: f
 	npc.health.apply_damage(info)
 
 
-## The physical bones are what blows and the interaction ray hit, so they have to follow
-## the animated pose rather than stay where the rest pose left them. Prints how far the
-## head's physical bone is from the animated head, in metres and degrees.
 func _report_head(npc: Npc, label: String) -> void:
 	var skeleton := npc.body.skeleton
 	var bone := npc.body.physical_bones.get_node("Head") as PhysicalBone3D
@@ -299,7 +264,6 @@ func _shot(shot_name: String) -> Image:
 	return image
 
 
-## Puts the middle slice of each frame side by side and saves it as one image.
 func _strip(stage: String, frames: Array[Image], slice := STRIP_SLICE) -> void:
 	if _shots_dir.is_empty() or frames.is_empty() or frames[0] == null:
 		return

@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks for the Music autoload: Outside plays at the start and while the player
-## only hits things, Combat fades in once an NPC goes for the player — a villager with a
-## grudge, a bandit — and Outside comes back combat_grace seconds after the last one
-## stopped: its grudge ran out, or it died. Prints PASS/FAIL per check and quits with the
-## number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/music_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -44,7 +36,6 @@ func _run() -> void:
 	_check("Outside at the start", _music.get_cue() == OUTSIDE and _music.get_mix() == 0.0)
 	_check("Outside cue is a loop on the Music bus", _player_of("outside"))
 
-	# The player's own blows on something that does not fight back are not a fight.
 	var dummy := DUMMY.instantiate() as Node3D
 	add_child(dummy)
 	dummy.position = Vector3(0, 0, -20)
@@ -59,8 +50,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## A villager hit by the player goes for it: Combat. Its short grudge runs out and, after
-## the grace time, Outside is back.
 func _villager_grudge() -> void:
 	var villager := _spawn(VILLAGER, Vector3(0, 0.05, -4))
 	villager.grudge_duration = 2.0
@@ -72,8 +61,6 @@ func _villager_grudge() -> void:
 	await _wait(0.6)
 	_check("villager: crossfade completes", is_equal_approx(_music.get_mix(), 1.0))
 
-	# Grudges expire on the wall clock, which under --fixed-fps runs slower than the game,
-	# so wait on the fight itself rather than a set time.
 	var wall_start := Time.get_ticks_msec()
 	while _is_fighting(villager) and Time.get_ticks_msec() - wall_start < 8000:
 		await get_tree().physics_frame
@@ -90,13 +77,9 @@ func _villager_grudge() -> void:
 	await _physics_frames(2)
 
 
-## A bandit spots the player and attacks: Combat. Killed, it no longer counts.
 func _bandit() -> void:
 	var bandit := _spawn(BANDIT, Vector3(0, 0.05, -5))
 	await _physics_frames(5)
-	# How long the bandit takes to spot the player depends on where it wanders and when its
-	# brain re-plans, and some of that runs on the wall clock, which under --fixed-fps and
-	# CPU load drifts against game time, so wait on the fight itself with a wide limit.
 	var waited := await _wait_for_cue(COMBAT, 40.0)
 	print("  bandit: Combat after %.2f s" % waited)
 	_check("bandit going for the player: Combat", _music.get_cue() == COMBAT)
@@ -113,8 +96,6 @@ func _bandit() -> void:
 	_check("bandit dead: Outside after the grace time", _music.get_cue() == OUTSIDE)
 
 
-## Waits, in game time, until the music is on `cue` or `limit` seconds have passed.
-## Returns the time waited.
 func _wait_for_cue(cue: int, limit: float) -> float:
 	var waited := 0.0
 	while waited < limit and _music.get_cue() != cue:
@@ -144,7 +125,6 @@ func _is_fighting(npc: Npc) -> bool:
 	return action is AttackTargetAction or action is ThrowAtTargetAction
 
 
-## Keeps the player standing where it was put.
 func _pin_player() -> void:
 	_player.global_position = Vector3(0, _player.global_position.y, 0)
 

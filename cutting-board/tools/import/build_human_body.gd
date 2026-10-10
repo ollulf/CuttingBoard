@@ -1,32 +1,12 @@
 extends SceneTree
 
-## Builds the body every human character shares — res://scenes/characters/human_body.tscn
-## — out of the static human_base.obj.
-##
-## The model comes without a skeleton, so this makes one: it places a chain of joints
-## inside the model, skins every vertex to the bones it belongs to, and gives each bone a
-## PhysicalBone3D with a collision shape, a mass and joint limits, ready for HumanBody to
-## ragdoll. The model is made of separate pieces — head, arms, feet, and one for the
-## torso and legs — and each piece is only ever skinned to its own bones, so an arm never
-## drags the side of the chest along with it.
-##
-## Run it again whenever the model or the tables below change:
-##   godot --headless --path cutting-board -s res://tools/import/build_human_body.gd
-## The generated scene is overwritten, so tune the body here rather than in the editor.
-## What HumanBody exports (flinch timing, impulse scale, material) is set per instance
-## and survives a rebuild.
-
 const SOURCE_MESH := "res://assets/meshes/characters/human_base.obj"
 const OUT_MESH := "res://assets/meshes/characters/human_base_skinned.res"
 const OUT_SCENE := "res://scenes/characters/human_body.tscn"
 const BODY_SCRIPT := "res://scenes/characters/human_body.gd"
 
-## The model is authored 1.34 m tall facing +Z; characters are 1.7 m and face -Z. Both
-## are baked into the mesh so no physics body ever sits under a scaled parent.
 const MODEL_SCALE := 1.27
 
-## Joints, in body space: metres, feet at the origin, facing -Z, the character's right
-## along +X. Sided joints are given for the right and mirrored for the left.
 const PELVIS := Vector3(0.0, 0.787, 0.038)
 const WAIST := Vector3(0.0, 1.016, 0.038)
 const RIBS := Vector3(0.0, 1.219, 0.038)
@@ -39,21 +19,12 @@ const HIP := Vector3(0.127, 0.762, 0.064)
 const KNEE := Vector3(0.14, 0.419, 0.076)
 const SOLE := Vector3(0.152, 0.03, 0.07)
 
-## Below this height a vertex of the torso piece belongs to the legs.
 const LEG_TOP := 0.838
-## Vertices this close to the middle at leg height are the crotch, which stays with the
-## hips rather than following either leg.
 const CROTCH_HALF_WIDTH := 0.045
-## How far past the end of a bone its influence fades out, in metres. Wider is a softer
-## bend at the joint.
 const BLEND_DISTANCE := 0.075
 
 enum Shape { BOX, CAPSULE, SPHERE }
 
-## Each bone: where it runs, what collides for it and how it may turn against its
-## parent. Swing and twist are cone limits in degrees; a hinge bends about the
-## character's left-right axis between its lower and upper limits, positive swinging the
-## far end backward — a knee bends positive, an elbow negative.
 const BONES := [
 	{
 		"name": "Hips", "parent": "", "head": PELVIS, "tail": WAIST,
@@ -96,13 +67,10 @@ const BONES := [
 	},
 ]
 
-## Physics settings every bone starts with — the limp body's. HumanBody swaps in its
-## own while a flinch plays out.
 const FRICTION := 0.8
 const LINEAR_DAMP := 0.1
 const ANGULAR_DAMP := 2.0
 
-## Union-find links between vertices, for telling the model's pieces apart.
 var _parent := PackedInt32Array()
 
 
@@ -135,9 +103,6 @@ func _init() -> void:
 	quit()
 
 
-## BONES with every sided entry split into a Right and a Left bone, parents renamed to
-## match. The unsided bones and the right side come first in table order, then the left,
-## so every parent still comes before its children.
 func _expand_sides() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for side in ["Right", "Left"]:
@@ -176,9 +141,6 @@ func _index_of(bones: Array[Dictionary], bone_name: String) -> int:
 		if bones[i]["name"] == bone_name:
 			return i
 	return -1
-
-
-# --- Mesh -------------------------------------------------------------------------------
 
 
 func _build_skinned_mesh(source: ArrayMesh, bones: Array[Dictionary]) -> ArrayMesh:
@@ -221,9 +183,6 @@ func _build_skinned_mesh(source: ArrayMesh, bones: Array[Dictionary]) -> ArrayMe
 	return mesh
 
 
-## Which piece of the model each vertex is part of, as a label per vertex: "head",
-## "arm", "foot" or "torso". Pieces are the model's connected parts, with vertices that
-## share a position counted as joined.
 func _pieces(vertices: PackedVector3Array, indices: PackedInt32Array) -> PackedStringArray:
 	_parent.resize(vertices.size())
 	for i in vertices.size():
@@ -263,7 +222,6 @@ func _pieces(vertices: PackedVector3Array, indices: PackedInt32Array) -> PackedS
 	return out
 
 
-## The bones a vertex may be skinned to, by the piece it is on and where it sits.
 func _candidates_for(vertex: Vector3, piece: String, bones: Array[Dictionary]) -> PackedInt32Array:
 	var side := "Right" if vertex.x >= 0.0 else "Left"
 	var names: PackedStringArray
@@ -287,9 +245,6 @@ func _candidates_for(vertex: Vector3, piece: String, bones: Array[Dictionary]) -
 	return out
 
 
-## Up to four (bone, weight) pairs for a vertex. Each candidate bone counts fully along
-## its own length and fades out over BLEND_DISTANCE past either end, so a vertex in the
-## middle of a bone follows that bone alone and one at a joint is shared by both sides.
 func _weigh(vertex: Vector3, candidates: PackedInt32Array, bones: Array[Dictionary]) -> Array[Vector2]:
 	var scored: Array[Vector2] = []
 	var nearest := candidates[0]
@@ -318,9 +273,6 @@ func _weigh(vertex: Vector3, candidates: PackedInt32Array, bones: Array[Dictiona
 	for k in 4:
 		out.append(Vector2(scored[k].x, scored[k].y / total) if k < scored.size() else Vector2.ZERO)
 	return out
-
-
-# --- Scene ------------------------------------------------------------------------------
 
 
 func _build_scene(mesh: ArrayMesh, bones: Array[Dictionary]) -> Node3D:
@@ -363,8 +315,6 @@ func _add_physical_bone(simulator: PhysicalBoneSimulator3D, bone: Dictionary, ro
 	var head: Vector3 = bone["head"]
 	var tail: Vector3 = bone["tail"]
 	var length := head.distance_to(tail)
-	# The body's Y runs down the bone, which is the axis a capsule lies along; X stays the
-	# character's left-right, which is what knees and elbows hinge about.
 	var y := (tail - head).normalized()
 	var z := Vector3.RIGHT.cross(y).normalized()
 	var x := y.cross(z)
@@ -377,12 +327,9 @@ func _add_physical_bone(simulator: PhysicalBoneSimulator3D, bone: Dictionary, ro
 	physical.friction = FRICTION
 	physical.linear_damp = LINEAR_DAMP
 	physical.angular_damp = ANGULAR_DAMP
-	# Bones carry no rotation of their own, so bone space is body space moved to the head.
 	physical.body_offset = Transform3D(body_basis, (tail - head) * 0.5)
 	physical.transform = Transform3D(body_basis, (head + tail) * 0.5)
 
-	# The joint sits at the bone's head. A cone twists about its frame's X, so X is laid
-	# along the bone; a hinge turns about its frame's Z, so Z is laid across the body.
 	var joint_origin := Vector3(0.0, -length * 0.5, 0.0)
 	if bone.has("cone"):
 		var limits: Vector2 = bone["cone"]
@@ -417,8 +364,6 @@ func _add_physical_bone(simulator: PhysicalBoneSimulator3D, bone: Dictionary, ro
 		_:
 			var capsule := CapsuleShape3D.new()
 			capsule.radius = bone["radius"]
-			# Reaching a radius past each end would have neighbouring limbs overlap at
-			# every joint; half a radius keeps the gap closed without that.
 			capsule.height = maxf(length + capsule.radius, capsule.radius * 2.0 + 0.01)
 			collision.shape = capsule
 	_add(physical, collision, root)

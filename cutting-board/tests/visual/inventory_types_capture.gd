@@ -1,16 +1,6 @@
 extends Node3D
 
-## The inventory with a mix of item kinds — weapons, masks, everyday things — some of
-## them worn down, and the tooltip up on a damaged weapon. For checking the type fills,
-## the damage numbers and the wear lines at a glance.
-##
-##   godot --path cutting-board --write-movie <out>.avi --resolution 1280x720
-##         res://tests/visual/inventory_types_capture.tscn -- --shots=<dir>
-##
-## Needs a real window. Saves inv_types.png and quits.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
-## Item, and the share of its durability it has left (1.0 fresh).
 const ITEMS := [
 	["chair_leg_club", 0.4], ["pegged_rolling_pin", 1.0], ["rocker_sickle", 0.8],
 	["back_scratcher_rake", 1.0], ["bandit_mask", 1.0], ["villager_mask", 0.3],
@@ -49,8 +39,6 @@ func _run() -> void:
 		var at := Vector2(400, 300)
 		if tile:
 			at = panel.get_global_transform().affine_inverse() * tile.get_global_rect().get_center()
-		# Shown twice: the first fit measures the wrapping description before it has a
-		# width. Set low over the empty squares so it hides none of the tiles.
 		panel._tooltip.show_item(club.data, club.durability)
 		await get_tree().process_frame
 		panel._tooltip.show_item(club.data, club.durability)

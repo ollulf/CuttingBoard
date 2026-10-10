@@ -1,15 +1,5 @@
 extends Node3D
 
-## Headless checks for everyday NPC small talk (Dialogue.one_liners): a villager offers
-## "E Talk" to a bare-faced or villager-masked player and says one line from its pool,
-## pausing its Brain for it; two talks in a row never say the same line; a hit puts an
-## end to it; a bandit offers nothing to a stranger, but talks to a bandit-masked player
-## and the prompt follows the mask straight away; villagers and bandits speak with blips
-## of their own, not the Mask-Monger's, each NPC at its own pitch. Prints PASS/FAIL per check and quits
-## with the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/npc_one_liner_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
@@ -34,7 +24,6 @@ func _run() -> void:
 	_player = PLAYER.instantiate()
 	add_child(_player)
 	_player.global_position = Vector3(0, 0.05, -2.0)
-	# Looking down +Z, at whoever stands at the origin.
 	_player.rotation.y = PI
 	var health := _player.get_node("%Health") as Health
 	health.max_health = 100000
@@ -120,7 +109,6 @@ func _bandit() -> void:
 	_equipment.unequip(Equipment.Slot.MASK)
 	_equipment.equip(Equipment.Slot.MASK, BANDIT_MASK)
 	await _physics_frames(30)
-	# It came at the stranger before the mask went on; back in front of the crosshair.
 	bandit.global_position = Vector3(0, 0.05, 0)
 	bandit.locomotion.stop()
 	await _physics_frames(3)
@@ -134,8 +122,6 @@ func _bandit() -> void:
 	_check("the mask off, Talk is gone again", dialogue.get_prompt(_player) == "")
 
 
-## Villagers and bandits each speak with their own blips, not the Mask-Monger's, and every
-## NPC gets its own pitch within the spread.
 func _voices() -> void:
 	var villager := _spawn(VILLAGER)
 	var bandit := _spawn(BANDIT)

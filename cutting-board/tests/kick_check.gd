@@ -1,13 +1,5 @@
 extends Node3D
 
-## Headless checks of the player's kick (docs/concepts/kick-shove.md, round 6): one press
-## kicks only the thing under the crosshair and sends a barrel several metres, a rigid body without a Kickable is no target, a kicked prop hurts the NPC it rolls into on
-## the kicker's behalf, a press at nothing costs a little stamina and moves nothing, and
-## an NPC kicked at the legs staggers longer than one kicked at the body. Prints PASS/FAIL
-## per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/kick_check.tscn
-
 const BARREL := preload("res://scenes/items/barrel.tscn")
 const BOX := preload("res://scenes/items/box_small.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
@@ -28,7 +20,6 @@ func _run() -> void:
 	_build_rig()
 	var strike_frames := int(0.15 * Engine.physics_ticks_per_second) + 2
 
-	# Two barrels side by side: only the one under the crosshair goes.
 	var barrel := _spawn_prop(BARREL, Vector3(0, 0, -1.3))
 	var neighbour := _spawn_prop(BARREL, Vector3(0.9, 0, -1.3))
 	await _physics_frames(40)
@@ -47,8 +38,6 @@ func _run() -> void:
 	neighbour.queue_free()
 	await _physics_frames(40)
 
-	# The side-kick leg: kick_started fires at the press with the target, the leg strikes
-	# on the kick's strike frame, and the view roll leaves the aim and the target alone.
 	var leg := KickLeg.new()
 	_camera.add_child(leg)
 	var started: Array = []
@@ -89,11 +78,9 @@ func _run() -> void:
 	rolled.queue_free()
 	await _physics_frames(40)
 
-	# One press sends a barrel several metres.
 	var distance := await _kick_distance()
 	_check("a single kick sends a barrel several metres (%.2f m)" % distance, distance > 2.5)
 
-	# A rigid body without a Kickable child is not a target.
 	var plain := RigidBody3D.new()
 	plain.mass = 10.0
 	var plain_shape := CollisionShape3D.new()
@@ -110,7 +97,6 @@ func _run() -> void:
 	plain.queue_free()
 	await _physics_frames(10)
 
-	# A whiff: nothing in reach.
 	_stamina.reset()
 	_aim_at(_camera.global_position + Vector3(0, 1, -3))
 	await _physics_frames(2)
@@ -120,7 +106,6 @@ func _run() -> void:
 	await _physics_frames(20)
 	_check("a whiff costs 6 stamina", is_equal_approx(stamina_before - _stamina.get_current(), 6.0))
 
-	# A kicked box slides into a bandit and hurts him, credited to the kicker.
 	_stamina.reset()
 	var bandit := await _spawn_npc(Vector3(0, 0, -1.8))
 	var box := _spawn_prop(BOX, Vector3(0, 0, -1.1))
@@ -141,11 +126,8 @@ func _run() -> void:
 	box.queue_free()
 	await _physics_frames(60)
 
-	# A barrel: the boot and its landing cost it nothing, it survives being kicked into
-	# the bandit twice and breaks on the third. Each hit counts as the kicker's attack.
 	var tracker := CombatTracker.new()
 	_rig.add_child(tracker)
-	# The bandit stands aside for the first kick, so the barrel only meets the ground.
 	bandit.global_position = Vector3(12, 0, 0)
 	var keg := _spawn_prop(BARREL, Vector3(0, 0, -1.3))
 	await _physics_frames(40)
@@ -200,7 +182,6 @@ func _run() -> void:
 	tracker.queue_free()
 	await _physics_frames(30)
 
-	# Kicking the bandit himself counts as an attack too.
 	tracker = CombatTracker.new()
 	_rig.add_child(tracker)
 	await _physics_frames(2)
@@ -220,7 +201,6 @@ func _run() -> void:
 	tracker.queue_free()
 	await _physics_frames(90)
 
-	# Kicking the bandit: the legs trip him longer than a kick to the body.
 	await _place(bandit)
 	_aim_at(bandit.global_position + Vector3.UP * 1.2)
 	await _physics_frames(2)
@@ -243,7 +223,6 @@ func _run() -> void:
 	var leg_stagger := bandit.locomotion.get_stagger()
 	_check("a leg kick trips longer (%.2f s)" % leg_stagger, leg_stagger > body_stagger + 0.15)
 
-	# An empty pool still shoves, but hurts nothing.
 	await _physics_frames(90)
 	await _place(bandit)
 	_aim_at(bandit.global_position + Vector3.UP * 1.2)
@@ -284,7 +263,6 @@ func _build_rig() -> void:
 	add_child(_rig)
 
 
-## Kicks a fresh barrel and returns how far it went along the ground.
 func _kick_distance() -> float:
 	_stamina.reset()
 	var barrel := _spawn_prop(BARREL, Vector3(0, 0, -1.3))

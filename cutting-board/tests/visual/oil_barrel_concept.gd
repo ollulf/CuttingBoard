@@ -1,14 +1,6 @@
 extends Node3D
 
-## Concept prototype for the oil barrel (docs/concepts/oil-barrel.md): a honey-toned
-## barrel of light wood oil (linseed) leaking a small stain is kicked into a post, breaks,
-## and an amber oil puddle spreads where it burst. Nothing here is game code.
-##
-##   godot --path cutting-board --write-movie <dir>/oil.avi --fixed-fps 30
-##       --resolution 960x540 --quit-after 120 res://tests/visual/oil_barrel_concept.tscn
-
 const BARREL := preload("res://scenes/items/barrel.tscn")
-## Multiplies the barrel's wood and iron: a light honey tone from wood oil.
 const OIL_TINT := Color(1.08, 0.95, 0.72)
 const KICK_IMPULSE := Vector3(320.0, 50.0, 0.0)
 const POST_X := 2.2
@@ -25,7 +17,6 @@ func _ready() -> void:
 	env.environment.background_color = Color(0.25, 0.3, 0.38)
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.environment.ambient_light_color = Color(0.55, 0.55, 0.55)
-	# The sky colour shows in glossy surfaces, so the oil reads wet rather than flat black.
 	env.environment.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	add_child(env)
 	var sun := DirectionalLight3D.new()
@@ -47,7 +38,6 @@ func _ready() -> void:
 	ground.add_child(floor_shape)
 	add_child(ground)
 
-	# A post to kick the barrel into.
 	var post := StaticBody3D.new()
 	var post_mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
@@ -69,7 +59,6 @@ func _ready() -> void:
 	_soak(_barrel)
 	_barrel.get_node("Destructible").destroyed.connect(_on_barrel_destroyed)
 
-	# The leak under a standing oil barrel: a hint that it is not a water barrel.
 	var stain := OilPuddle.new()
 	stain.radius = 0.55
 	add_child(stain)
@@ -81,7 +70,6 @@ func _ready() -> void:
 	camera.make_current()
 
 	await get_tree().create_timer(0.8).timeout
-	# Stand-in for the player's kick (kick.gd pushes 320 N s at full strength).
 	_barrel.freeze = false
 	_barrel.apply_impulse(KICK_IMPULSE)
 	await get_tree().create_timer(0.3).timeout
@@ -91,8 +79,6 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if not _kicked or not is_instance_valid(_barrel):
 		return
-	# Breaks on the post (or wherever it stops short of it); ImpactDamage would do this
-	# in game, forced here so the clip does not depend on how hard the hit lands.
 	if _barrel.global_position.x > POST_X - 0.75 or _barrel.linear_velocity.length() < 0.4:
 		(_barrel.get_node("Destructible") as Destructible).damage(Destructible.MAX_DURABILITY)
 
@@ -106,7 +92,6 @@ func _on_barrel_destroyed() -> void:
 	puddle.spread(1.2)
 
 
-## Honey-tints every surface of the barrel's meshes by OIL_TINT.
 func _soak(node: Node) -> void:
 	for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
 		for i in mi.mesh.get_surface_count():
@@ -119,13 +104,9 @@ func _soak(node: Node) -> void:
 				mi.set_surface_override_material(i, soaked)
 
 
-## A flat, irregular blob of glossy oil that grows from a point to `radius`. A few
-## smaller lobes around the main one break up the circle.
 class OilPuddle:
 	extends Node3D
 
-	## Light golden wood oil (linseed/tung): translucent amber over the ground, a warm
-	## sheen at grazing angles and a very faint rainbow film drifting across it.
 	const SHEEN_SHADER := """
 shader_type spatial;
 render_mode cull_disabled, blend_mix, depth_draw_opaque;
@@ -165,7 +146,6 @@ void fragment() {
 			var offset := Vector2.from_angle(angle) * radius * rng.randf_range(0.55, 0.85)
 			_add_blob(offset, radius * rng.randf_range(0.3, 0.5), rng, mat, 0.011)
 
-	## Grows over `seconds`, fast at first like a spill.
 	func spread(seconds: float) -> void:
 		scale = Vector3(0.05, 1.0, 0.05)
 		var tween := create_tween()
@@ -181,7 +161,6 @@ void fragment() {
 		var phase := rng.randf() * TAU
 		for i in points:
 			var a := TAU * i / points
-			# Two sine wobbles plus noise give a soft, uneven edge.
 			var k := 1.0 + 0.12 * sin(a * 3.0 + phase) + 0.08 * sin(a * 5.0 - phase) \
 				+ rng.randf_range(-0.05, 0.05)
 			rim.append(Vector3(center.x + cos(a) * r * k, height, center.y + sin(a) * r * k))

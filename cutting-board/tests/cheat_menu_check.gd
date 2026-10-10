@@ -1,11 +1,5 @@
 extends Node3D
 
-## Headless checks for the F1 cheat menu: it opens, lists every item resource as a
-## button, and a button press puts that item into the player's inventory.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/cheat_menu_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 
 var _failures := 0

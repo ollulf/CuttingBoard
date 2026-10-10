@@ -1,24 +1,5 @@
 extends Node3D
 
-## Concept B of the wood glue use, mocked up in the engine on the player's real arm rig:
-## the view tilts down to a cracked plank on the player's own chest, the right hand dabs
-## glue from the pot into the crack, the left palm clamps the plank shut and holds, then
-## the view comes back up.
-##
-## The player scene is instanced with its processing off, and the use is one two-armed
-## animation, use_glue_both, in the <action>_<set>_<side> naming of arms.tres: it poses
-## the UpperArm / Forearm / Hand bones of both skeletons (bent elbows and wrists, the cut
-## ends slid down below the view as the punches do) and tilts the camera. The keys are
-## solved here from palm targets on the chest by a two-bone reach, and --save-library
-## writes the result to ANIM_LIBRARY so it can be tuned in the editor and later moved
-## into arms.tres. Mock-up only: nothing here touches the player's gameplay, arms.tres
-## or the glue item.
-##
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 \
-##       res://tests/visual/glue_chest_concept.tscn -- --shots=<dir> [--save-library]
-##
-## Needs a real window for stills; they are saved to <dir> at the key beats.
-
 const VILLAGE := preload("res://scenes/levels/village.tscn")
 const TERRAIN := preload("res://scenes/levels/valley_terrain.tscn")
 const LIGHTING := preload("res://scenes/levels/lighting/tallow_fair_lighting.tscn")
@@ -28,26 +9,18 @@ const MEND_OVERLAY := preload("res://scenes/ui/mend_overlay.tscn")
 const ANIM_LIBRARY := "res://tests/visual/glue_use_concept_anims.tres"
 const ANIM_NAME := &"use_glue_both"
 
-## Same green as the player's body material in player.tscn.
 const BODY_COLOUR := Color(0.42, 0.5, 0.33)
 const PLANK_COLOUR := Color(0.52, 0.37, 0.22)
-## Fresh glue: lighter than mend_overlay's amber and lit from within, so it still reads
-## in the crack at night.
 const GLUE_COLOUR := Color(0.95, 0.68, 0.28)
 const GLUE_RIM := Color(1.0, 0.82, 0.45)
 
-## Eye position and the point it faces at rest (the market, as in the Monger capture).
 const EYE := Vector3(1.4, 1.6, 2.8)
 const FACING := Vector3(2.6, 1.4, 8.4)
-## How far the view tilts down to see the chest.
 const TILT_DOWN := -62.0
 
-## Bone lengths of the arm rig (the skeletons' rests in player.tscn): cut end to elbow,
-## and elbow to the palm through the wrist and the hand slot.
 const UPPER_LENGTH := 0.345
 const LOWER_LENGTH := 0.3
 const UPPER_REST := Vector3(0.0, 0.0, 0.345)
-## The idle pose the skeletons rest in: UpperArm, Forearm, Hand.
 const IDLE_POSE := [Quaternion(0, 0, 0, 1), Quaternion(0.05996, 0, 0, 0.9982), Quaternion(-0.04, 0, 0, 0.9992)]
 
 var _shots_dir := ""
@@ -87,8 +60,6 @@ func _build_player() -> void:
 	_arms = _player.get_node("%Arms")
 	var pivot: Node3D = _player.get_node("%CameraPivot")
 
-	# The torso: a box of the body's green with a plank strapped across the chest. It
-	# hangs off the camera pivot, which turns with the body but not with the view.
 	var torso := _box(Vector3(0.46, 0.6, 0.24), BODY_COLOUR)
 	torso.position = Vector3(0.0, -0.72, -0.15)
 	torso.rotation.x = deg_to_rad(50.0)
@@ -111,14 +82,12 @@ func _build_player() -> void:
 	_glue_fill.scale = Vector3(0.001, 1, 1)
 	_plank.add_child(_glue_fill)
 
-	# The pot sits in the right hand slot, as a held item would.
 	var pot := MeshInstance3D.new()
 	pot.mesh = GLUE_POT
 	pot.position = Vector3(0.0, -0.03, 0.0)
 	pot.rotation_degrees = Vector3(-90, 0, 0)
 	_player.get_node("%HandSlotRight").add_child(pot)
 
-	# A lantern's warm light just ahead, so the chest reads at night.
 	var lamp := OmniLight3D.new()
 	lamp.light_color = Color(1.0, 0.75, 0.45)
 	lamp.light_energy = 1.4
@@ -144,16 +113,12 @@ func _box(size: Vector3, colour: Color) -> MeshInstance3D:
 	return mesh
 
 
-## Builds use_glue_both. Each key gives a palm target per arm, as an offset from the
-## crack in the plank's own space (x along the plank, -z out of the chest), or null for
-## the idle pose, plus how far that wrist bends up, and the view's tilt.
 func _build_animation() -> Animation:
 	_camera.rotation.x = deg_to_rad(TILT_DOWN)
 	var to_world := _plank.global_transform
 	var crack := _crack.position
 	var aside := Vector3(0.22, -0.08, -0.16)
 	var keys := [
-		# time, right palm, right wrist, left palm, left wrist, tilt
 		[0.0, null, 0.0, null, 0.0, 0.0],
 		[0.5, Vector3(0.0, 0.0, -0.12), 25.0, null, 0.0, TILT_DOWN],
 		[0.65, Vector3(0.0, 0.0, -0.075), 40.0, null, 0.0, TILT_DOWN],
@@ -188,11 +153,8 @@ func _build_animation() -> Animation:
 		var cut_track := animation.add_track(Animation.TYPE_POSITION_3D)
 		animation.track_set_path(cut_track, NodePath(base + "UpperArm"))
 		animation.track_set_interpolation_type(cut_track, Animation.INTERPOLATION_CUBIC)
-		# The elbow swings out to the side and down, away from the eye.
 		var outward := -1.0 if side == "Left" else 1.0
 		var to_skeleton := skeleton.global_transform.affine_inverse()
-		# While reaching, the cut end slides in towards the middle and down below the
-		# view, as the punches move it, so the hand gets to the middle of the chest.
 		var reach_cut := UPPER_REST + Vector3(-outward * 0.25, -0.15, 0.05)
 		for key in keys:
 			var target = key[3] if side == "Left" else key[1]
@@ -209,9 +171,6 @@ func _build_animation() -> Animation:
 	return animation
 
 
-## A two-bone reach: the bone rotations (UpperArm, Forearm, Hand) that put the palm on
-## `palm` (skeleton space) with the elbow bent towards `hint` and the wrist bent up by
-## `wrist` degrees, the arm's cut end sitting at `cut`.
 func _reach(cut: Vector3, palm: Vector3, hint: Vector3, wrist: float) -> Array:
 	var to_palm := palm - cut
 	var distance := clampf(to_palm.length(), 0.05, UPPER_LENGTH + LOWER_LENGTH - 0.01)
@@ -236,7 +195,6 @@ func _play() -> void:
 	if _save_library:
 		ResourceSaver.save(library, ANIM_LIBRARY)
 	var anim_player := AnimationPlayer.new()
-	# The player is switched off; only this player runs inside it.
 	anim_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	_arms.add_child(anim_player)
 	anim_player.root_node = NodePath("..")
@@ -247,7 +205,6 @@ func _play() -> void:
 	anim_player.play(&"concept/" + ANIM_NAME)
 	await _wait(0.5)
 	await _shot("02_tilted")
-	# The glue fills the crack with each dab.
 	await _wait(0.15)
 	create_tween().tween_property(_glue_fill, "scale:x", 0.55, 0.15)
 	await _wait(0.05)

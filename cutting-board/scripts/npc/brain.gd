@@ -1,17 +1,9 @@
 class_name Brain
 extends Node
 
-## Picks what an NPC does, by utility: every NpcAction under this node scores itself,
-## and the highest score runs. The set of actions is the NPC's repertoire — add or
-## remove children to change what it is capable of, tune their exports to change its
-## temperament.
-
 signal action_changed(action: NpcAction)
 
-## Seconds between decisions. The running action still ticks every physics frame.
 @export var think_interval := 0.25
-## Added to the running action's score, so two near-equal options do not make the NPC
-## flick back and forth between them.
 @export var commitment_bonus := 0.1
 
 var _npc: Npc
@@ -21,7 +13,6 @@ var _timer := 0.0
 
 func setup(npc: Npc) -> void:
 	_npc = npc
-	# Staggered so a crowd placed at once does not all think on the same frame.
 	_timer = randf() * think_interval
 
 
@@ -29,7 +20,6 @@ func get_current_action() -> NpcAction:
 	return _current
 
 
-## Ends the running action and stops deciding, for good — used when the NPC dies.
 func shut_down() -> void:
 	_switch_to(null)
 	set_physics_process(false)

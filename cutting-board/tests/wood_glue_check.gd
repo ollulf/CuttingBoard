@@ -1,15 +1,5 @@
 extends Node3D
 
-## Headless checks for wood glue: a click with it in hand starts the timed use, which
-## mends the hurt player all at once at its end and spends one dab; a hit or a step
-## cancels it with no heal (keeping the glue before the first dab, spending it after);
-## the pot is gone with its last dab, a pot with dabs to spare stays in the hand, glue
-## in the left hand plays the mirrored use, and a click at full health spends nothing
-## and throws no punch.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/wood_glue_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const WOOD_GLUE := preload("res://resources/items/wood_glue.tres")
 
@@ -22,7 +12,6 @@ func _ready() -> void:
 
 func _run() -> void:
 	_add_floor()
-	# Masked: the mask is the health glue mends (a bare face has too little to test with).
 	var player = TestWorld.masked_player(PLAYER)
 	add_child(player)
 	await _physics_frames(5)
@@ -42,7 +31,6 @@ func _record() -> void:
 	_check("wood glue is not a weapon", not WOOD_GLUE.is_weapon())
 
 
-## At full health the click is refused: nothing spent, still in hand, and no punch.
 func _unhurt(player) -> void:
 	var hand: HandSlot = player.hand_right
 	var glue := _glue_into(player, hand)
@@ -58,7 +46,6 @@ func _unhurt(player) -> void:
 	await _frames(2)
 
 
-## Hurt, one click mends heal_amount over heal_time and the one-dab pot is gone.
 func _single_dab(player) -> void:
 	var health: Health = player.health
 	health.apply_damage(DamageInfo.new(50))
@@ -84,8 +71,6 @@ func _single_dab(player) -> void:
 	_check("the view is level again", is_zero_approx(player.arms.view_tilt))
 
 
-## A hit before the first dab keeps the glue; a hit after it spends the dab. Neither heals.
-## Trying to walk off cancels the same way.
 func _cancelled(player) -> void:
 	var health: Health = player.health
 	var hand: HandSlot = player.hand_right
@@ -121,8 +106,6 @@ func _cancelled(player) -> void:
 	await _frames(2)
 
 
-## A pot with two dabs: the first leaves it in the hand with one fewer, the second
-## empties it. Healing never goes past full.
 func _spare_dabs(player) -> void:
 	var health: Health = player.health
 	health.apply_damage(DamageInfo.new(health.get_current() - 20))
@@ -150,7 +133,6 @@ func _glue_into(player, hand: HandSlot) -> Node3D:
 	return player.interactor.spawn_into_hand(WOOD_GLUE, -1, hand)
 
 
-## A plain click of the hand's own button, through the same path the input takes.
 func _click(player, hand: HandSlot) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_LEFT if hand == player.hand_left else MOUSE_BUTTON_RIGHT

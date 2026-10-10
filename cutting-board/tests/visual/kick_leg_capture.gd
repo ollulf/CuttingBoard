@@ -1,12 +1,5 @@
 extends Node3D
 
-## The player's first-person side kick (scripts/components/kick_leg.gd) on a barrel, for
-## Movie Maker: the real player scene stands in front of a barrel and kicks it twice,
-## once looking down at it and once from a little further back.
-##
-##   godot --path cutting-board --write-movie <dir>/kick.avi --fixed-fps 30 --resolution 960x540
-##       --quit-after 120 res://tests/visual/kick_leg_capture.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const BARREL := preload("res://scenes/items/barrel.tscn")
 
@@ -18,7 +11,6 @@ func _ready() -> void:
 	_build_stage()
 	_player = PLAYER.instantiate()
 	add_child(_player)
-	# HUD and the mask-off vision overlay would cover the leg.
 	for layer in _player.find_children("*", "CanvasLayer", true, false):
 		layer.visible = false
 		layer.process_mode = Node.PROCESS_MODE_DISABLED

@@ -1,8 +1,5 @@
 @tool
 extends Node3D
-## Hollowstump: the dead hollow oak the bandits live in. Builds a ring trunk mesh with
-## a west door and a narrow east crack, plus one box collider per wall segment, so the
-## hollow inside stays walkable and the navmesh bakes through the openings.
 
 const SEGMENTS := 20
 const BARK_TEXTURE := preload("res://assets/textures/environment/trees/tree_strange_1_bark.png")
@@ -10,7 +7,6 @@ const BARK_TEXTURE := preload("res://assets/textures/environment/trees/tree_stra
 @export var outer_radius := 3.5
 @export var inner_radius := 2.6
 @export var height := 9.0
-## Opening half-widths in radians. West (PI) is the door, east (0) the back crack.
 @export var door_half_angle := 0.5
 @export var crack_half_angle := 0.16
 
@@ -29,7 +25,6 @@ func _is_open(angle: float) -> bool:
 
 
 func _top_height(i: int) -> float:
-	# Snapped top: jagged, lower on the south side.
 	var jag := [0.0, -1.2, 0.6, -0.4, -2.0, 0.3, -0.8, 0.9, -1.5, 0.2]
 	return height + jag[i % jag.size()] - 2.0 * (0.5 + 0.5 * sin(TAU * i / SEGMENTS))
 
@@ -53,7 +48,6 @@ func _build() -> void:
 		var h1 := _top_height(i + 1)
 		var d0 := Vector3(cos(a0), 0, sin(a0))
 		var d1 := Vector3(cos(a1), 0, sin(a1))
-		# Slight flare at the roots.
 		var o0b := d0 * (outer_radius + 0.4)
 		var o1b := d1 * (outer_radius + 0.4)
 		var o0t := d0 * outer_radius + Vector3.UP * h0
@@ -64,15 +58,13 @@ func _build() -> void:
 		var i1t := d1 * inner_radius + Vector3.UP * (h1 - 0.3)
 		var u0 := float(i) / SEGMENTS * 4.0
 		var u1 := float(i + 1) / SEGMENTS * 4.0
-		# Per-segment shade so the bark reads as ridges; the inside is darker.
 		var shade := 0.8 + 0.2 * fposmod(sin(i * 12.9898) * 43758.5453, 1.0)
 		st.set_color(Color(shade, shade * 0.95, shade * 0.9))
-		_quad(st, o0b, o1b, o1t, o0t, u0, u1, h0 / 3.0)   # outside
+		_quad(st, o0b, o1b, o1t, o0t, u0, u1, h0 / 3.0)
 		st.set_color(Color(shade * 0.55, shade * 0.5, shade * 0.45))
-		_quad(st, i0b, i1b, i1t, i0t, u0, u1, h0 / 3.0)   # inside
+		_quad(st, i0b, i1b, i1t, i0t, u0, u1, h0 / 3.0)
 		st.set_color(Color(shade * 0.75, shade * 0.65, shade * 0.55))
-		_quad(st, o0t, o1t, i1t, i0t, u0, u1, 0.3)        # broken rim
-		# Side faces where an opening starts or ends.
+		_quad(st, o0t, o1t, i1t, i0t, u0, u1, 0.3)
 		if _is_open(mid - step):
 			_quad(st, i0b, o0b, o0t, i0t, 0.0, 0.3, h0 / 3.0)
 		if _is_open(mid + step):
@@ -94,9 +86,6 @@ func _build() -> void:
 	add_child(mesh_instance)
 
 
-## Opaque bark: the shared foliage bark material is alpha-scissored, which cut
-## see-through holes into the trunk walls. Culling stays on since every quad
-## already has both windings.
 func _bark_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_texture = BARK_TEXTURE
@@ -105,8 +94,6 @@ func _bark_material() -> StandardMaterial3D:
 	return mat
 
 
-## Adds a quad with both windings, so it shows from either side without a
-## double-sided copy of the shared bark material.
 func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, u0: float, u1: float, v: float) -> void:
 	var pts := [[a, Vector2(u0, v)], [b, Vector2(u1, v)], [c, Vector2(u1, 0)], [d, Vector2(u0, 0)]]
 	for tri in [[0, 1, 2], [0, 2, 3], [0, 2, 1], [0, 3, 2]]:

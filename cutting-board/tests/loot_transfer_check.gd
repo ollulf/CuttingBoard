@@ -1,15 +1,5 @@
 extends Node
 
-## Headless checks for the looting view of the inventory screen: with a container open
-## the equipment frame is hidden and only the two grids show, the plain inventory still
-## shows it, and a double-click moves an item between the player's grid and the open
-## container (keeping its wear), refuses when the other side is full, and does nothing
-## with no container open or on an empty square. Clicks are fed to the panel as real
-## double-click mouse events. Prints PASS/FAIL per check and quits with the number of
-## failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/loot_transfer_check.tscn
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const ROCK := preload("res://resources/items/rock.tres")
 const HAMMER := preload("res://resources/items/hammer.tres")
@@ -68,7 +58,6 @@ func _run() -> void:
 	_check("container -> player moves it back",
 		chest.is_empty() and pack.get_entries().size() == 1)
 
-	# Fill the chest, then try to send one more rock across.
 	while chest.add(ROCK):
 		pass
 	pack.add(ROCK)
@@ -79,7 +68,6 @@ func _run() -> void:
 	await _frames(2)
 	_check("full container refuses", pack.get_entries().size() == before and _find(pack, ROCK) == rock)
 
-	# And the other way: a packed player grid refuses the chest's rock.
 	while pack.add(ROCK):
 		pass
 	var chest_count := chest.get_entries().size()
@@ -104,8 +92,6 @@ func _find(inventory: Inventory, data: ItemData) -> InventoryEntry:
 	return null
 
 
-## Two left presses on a grid square, the second flagged as a double-click, as the OS
-## delivers them.
 func _double_click(side: int, cell: Vector2i) -> void:
 	var half := _panel.cell_size * 0.5
 	var pos := _panel._grid_origin(side) + Vector2(

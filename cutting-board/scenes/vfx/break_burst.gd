@@ -1,17 +1,10 @@
 class_name BreakBurst
 extends Node3D
 
-## A one-shot burst of chunky debris and a dust puff where something came apart.
-## Destructible spawns it into the world as its object is freed; it reads the object's
-## size and look first, so a barrel bursts bigger than a small box and the pieces wear
-## the object's own material. The pieces are plain meshes moved by hand rather than
-## bodies, so they cost little and never collide with anything but a flat floor.
-
 enum Kind { WOOD, STONE }
 
 const GRAVITY := 9.8
 const LIFETIME := 1.4
-## Fallback look for objects without a readable material.
 const WOOD_COLOR := Color(0.55, 0.38, 0.22)
 const STONE_COLOR := Color(0.5, 0.5, 0.48)
 
@@ -23,9 +16,6 @@ var _age := 0.0
 var _lifetime := LIFETIME
 
 
-## Reads size and material off the object about to be freed. Call before adding the
-## burst to the tree. The pieces land on the bottom of the object unless `floor_y` says
-## where the ground is — for something that breaks in mid-air, like a mask on a face.
 func setup(source: Node3D, floor_y := NAN) -> void:
 	var box := AABB(source.global_position, Vector3.ZERO)
 	var material: Material
@@ -44,9 +34,6 @@ func setup(source: Node3D, floor_y := NAN) -> void:
 	_spawn_dust(box.size)
 
 
-## A material the shards can wear. The mask shader draws a face on a flat quad and cuts
-## away everything outside its oval, which on a splinter would be most of it, so a mask
-## breaks into plain pieces of its own wood instead.
 static func _solid(material: Material) -> Material:
 	var shader := material as ShaderMaterial
 	if shader == null:
@@ -59,11 +46,6 @@ static func _solid(material: Material) -> Material:
 	return flat
 
 
-## A small spray of splinters off a body that took a hit, instead of a whole break: thin
-## slivers and a few chips flying from where the blow landed, mostly on along the
-## direction it travelled, more and longer for heavier hits, plus a pinch of sawdust.
-## They wear the material of the body (its biggest mesh), so each creature sheds its
-## own wood. Call before adding the burst to the tree.
 func setup_hit(source: Node3D, at: Vector3, direction: Vector3, amount: int) -> void:
 	kind = Kind.WOOD
 	_lifetime = 0.8
@@ -78,7 +60,6 @@ func setup_hit(source: Node3D, at: Vector3, direction: Vector3, amount: int) -> 
 		var mat := mi.material_override
 		if mat == null and mi.mesh.get_surface_count() > 0:
 			mat = mi.get_active_material(0)
-		# The biggest mesh is the body itself, not a mask, antlers or a held tool.
 		var volume := (mi.global_transform * mi.get_aabb()).get_volume()
 		if mat != null and volume > best:
 			best = volume
@@ -94,9 +75,9 @@ func setup_hit(source: Node3D, at: Vector3, direction: Vector3, amount: int) -> 
 		var unit := randf_range(0.045, 0.08) * (0.8 + strength * 0.4)
 		var shard := BoxMesh.new()
 		if i % 3 == 2:
-			shard.size = Vector3(unit * 0.6, unit * 0.4, unit * 0.7)  # a chip
+			shard.size = Vector3(unit * 0.6, unit * 0.4, unit * 0.7)
 		else:
-			shard.size = Vector3(unit * 0.25, unit * 0.15, unit * randf_range(1.5, 3.0))  # a sliver
+			shard.size = Vector3(unit * 0.25, unit * 0.15, unit * randf_range(1.5, 3.0))
 		var mesh_instance := MeshInstance3D.new()
 		mesh_instance.mesh = shard
 		mesh_instance.material_override = material
@@ -139,7 +120,6 @@ func _spawn_shards(size: Vector3, material: Material) -> void:
 		})
 
 
-## Splinters for wood: long thin slats. Chunks for stone: lumpy blocks.
 func _shard_mesh(extent: float) -> Mesh:
 	var unit := extent * randf_range(0.12, 0.22)
 	var shard := BoxMesh.new()
@@ -194,7 +174,6 @@ func _process(delta: float) -> void:
 	if _age >= _lifetime:
 		queue_free()
 		return
-	# Shrink out over the last third of the burst.
 	var fade := clampf((_lifetime - _age) / (_lifetime / 3.0), 0.01, 1.0)
 	var floor_local := _floor_y - global_position.y
 	for shard in _shards:

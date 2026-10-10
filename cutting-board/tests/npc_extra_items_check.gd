@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks for the random extra items NPCs get at spawn: villagers and bandits
-## roll wood glue at about their configured rate, a chance of 0 never gives the item and
-## 1 always does, and a spawned NPC really ends up with it in its inventory. Prints
-## PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/npc_extra_items_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const GLUE := preload("res://resources/items/wood_glue.tres")
@@ -49,7 +42,6 @@ func _check_rate(npc: Npc, label: String, expected: float, tolerance := 0.05) ->
 		"%s glue rate %.3f (expected %.2f)" % [label, rate, expected])
 
 
-## Spawns a villager with the given glue chance and checks what its inventory holds.
 func _check_spawn(chance: float, expect_glue: bool) -> void:
 	var npc: Npc = VILLAGER.instantiate()
 	npc.extra_item_chances = [chance]

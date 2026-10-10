@@ -1,12 +1,5 @@
 extends Node
 
-## Headless checks for the worn-mask square between the hands on the hotbar: it shows
-## the worn mask's icon, follows a swap, a mask breaking off and a bare face (nothing shown), and shows
-## the wear bar once the mask is under half. Prints PASS/FAIL per check and quits with
-## the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/hud_mask_check.tscn
-
 const HOTBAR_PANEL := preload("res://scenes/ui/hotbar_panel.tscn")
 const BANDIT_MASK := preload("res://resources/items/bandit_mask.tres")
 const VILLAGER_MASK := preload("res://resources/items/villager_mask.tres")
@@ -36,7 +29,6 @@ func _ready() -> void:
 	equipment.set_durability(Equipment.Slot.MASK, int(VILLAGER_MASK.durability * 0.4))
 	_check("wear bar under half", panel.is_mask_worn_down())
 
-	# A mask that breaks comes off the face.
 	equipment.set_durability(Equipment.Slot.MASK, 0)
 	equipment.unequip(Equipment.Slot.MASK)
 	_check("bare face after break", panel.is_bare_face() and panel.get_mask_texture() == null)

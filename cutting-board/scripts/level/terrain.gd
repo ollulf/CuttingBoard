@@ -2,44 +2,20 @@
 class_name Terrain
 extends StaticBody3D
 
-## Ground for a level, generated from noise when the level loads (and in the editor):
-## open meadow in the middle that rises into hills towards the edges. The mesh and its
-## collision come from the same height grid, one vertex per metre.
-##
-## Places that need level ground — a village, a camp — are listed as flat areas and kept
-## at height 0, so buildings can be placed at y = 0 and sit flush. Paths and gravel
-## squares are painted into the vertex colours for the terrain shader to texture.
-##
-## Anything in the snap group (trees, rocks on the hills) is moved onto the ground after
-## each build, so scattered props only need their x and z placed by hand.
-
 const SNAP_GROUP := &"terrain_snap"
 
-## Edge length of the square terrain in metres; it is centred on this node.
 @export var size := 200
-## Height the hills reach at the very edge of the terrain.
 @export var hill_height := 18.0
-## Distance from the centre, along either axis, where the hills start to rise.
 @export var hills_start := 55.0
-## Height of the gentle bumps across the meadow.
 @export var bump_height := 1.2
 @export var noise: FastNoiseLite
-## Areas kept perfectly flat at height 0, as (x, z, radius) in local metres.
 @export var flat_areas: Array[Vector3] = []
-## Metres over which a flat area blends back into the surrounding ground.
 @export var flat_blend := 14.0
-## Dirt paths, each a polyline of (x, z) points in local metres.
 @export var paths: Array[PackedVector2Array] = []
 @export var path_width := 3.0
-## Gravel-covered areas such as a village square, as (x, z, radius) in local metres.
 @export var gravel_areas: Array[Vector3] = []
 @export var material: Material
-## Edge length of the square pieces the ground mesh is cut into, in metres. Each piece is
-## lit and culled on its own: the Compatibility renderer lights a mesh with only a
-## limited number of lights, so one mesh for the whole valley would drop most lanterns.
 @export var chunk_size := 24
-## How far snapped props are pushed into the ground, so roots and rock bases do not float
-## on slopes.
 @export var snap_sink := 0.3
 @export_tool_button("Rebuild") var rebuild_action := build
 
@@ -54,7 +30,6 @@ func _ready() -> void:
 	build()
 
 
-## Regenerates the height grid, mesh and collision, then settles snapped props.
 func build() -> void:
 	if not is_node_ready():
 		return
@@ -69,7 +44,6 @@ func build() -> void:
 	_snap_props()
 
 
-## Ground height at a local (x, z), interpolated between grid points.
 func height_at(x: float, z: float) -> float:
 	if _heights.is_empty():
 		return 0.0
@@ -104,7 +78,6 @@ func _height_from_noise(x: float, z: float) -> float:
 	return height * (1.0 - _flatness(x, z))
 
 
-## 1 inside a flat area, falling to 0 over the blend distance around it.
 func _flatness(x: float, z: float) -> float:
 	var flat := 0.0
 	for area in flat_areas:
@@ -113,8 +86,6 @@ func _flatness(x: float, z: float) -> float:
 	return flat
 
 
-## Replaces the ground mesh: one MeshInstance3D per chunk, under %TerrainMesh. They are
-## generated every build and never saved with the scene.
 func _build_chunks() -> void:
 	for child in _mesh_instance.get_children():
 		_mesh_instance.remove_child(child)
@@ -131,8 +102,6 @@ func _build_chunks() -> void:
 			_mesh_instance.add_child(chunk)
 
 
-## The mesh for the grid cells from (x0, z0) to (x1, z1), sharing the vertices of `grid`
-## along its edges with its neighbours so the seams match exactly.
 func _build_chunk_mesh(grid: Array, x0: int, z0: int, x1: int, z1: int) -> ArrayMesh:
 	var all_vertices: PackedVector3Array = grid[0]
 	var all_normals: PackedVector3Array = grid[1]
@@ -166,8 +135,6 @@ func _build_chunk_mesh(grid: Array, x0: int, z0: int, x1: int, z1: int) -> Array
 	return mesh
 
 
-## Vertex positions, normals and path/gravel colours for every grid point, as
-## [vertices, normals, colors].
 func _build_grid() -> Array:
 	var half := size * 0.5
 	var vertices := PackedVector3Array()
@@ -182,7 +149,6 @@ func _build_grid() -> Array:
 			var x := ix - half
 			var z := iz - half
 			vertices[i] = Vector3(x, _heights[i], z)
-			# Central differences over the grid, clamped at the border.
 			var dx := _grid_height(ix + 1, iz) - _grid_height(ix - 1, iz)
 			var dz := _grid_height(ix, iz + 1) - _grid_height(ix, iz - 1)
 			normals[i] = Vector3(-dx, 2.0, -dz).normalized()
@@ -196,7 +162,6 @@ func _grid_height(ix: int, iz: int) -> float:
 	return _heights[iz * _resolution + ix]
 
 
-## How much a point is covered by a path: 1 on the centre line, 0 past its edge.
 func _path_coverage(x: float, z: float) -> float:
 	var point := Vector2(x, z)
 	var nearest := INF

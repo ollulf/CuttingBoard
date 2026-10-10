@@ -1,20 +1,7 @@
 extends SceneTree
 
-## The building blocks the synth tools share (synth_sfx.gd, synth_music.gd,
-## synth_voice_concepts.gd extend this): white noise, envelopes, RBJ biquad filters,
-## mixing into buffers, and writing 16-bit mono WAV files. Every buffer is a
-## PackedFloat32Array of samples at `sample_rate`.
-##
-## Randomness comes from `rng`, which each tool seeds per recipe so a run reproduces the
-## same files exactly.
-
-## Samples per second. The tools render lo-fi at 22 050 Hz; synth_music.gd raises it for
-## its hi-fi rounds.
 var sample_rate := 22050
 var rng := RandomNumberGenerator.new()
-
-
-# --- Sources and envelopes ----------------------------------------------------------------
 
 
 func _noise(length: float) -> PackedFloat32Array:
@@ -26,7 +13,6 @@ func _noise(length: float) -> PackedFloat32Array:
 	return out
 
 
-## Per-sample filter frequencies gliding linearly from `from` to `to` over `length`.
 func _glide_freqs(length: float, from: float, to: float) -> PackedFloat32Array:
 	var n := _seconds(length)
 	var freqs := PackedFloat32Array()
@@ -36,8 +22,6 @@ func _glide_freqs(length: float, from: float, to: float) -> PackedFloat32Array:
 	return freqs
 
 
-## An attack ramp of `attack` seconds, then an exponential decay with time constant
-## `decay` seconds.
 func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32Array:
 	var out := x.duplicate()
 	for i in out.size():
@@ -48,7 +32,6 @@ func _shape(x: PackedFloat32Array, attack: float, decay: float) -> PackedFloat32
 	return out
 
 
-## A rise over the first `rise` of the length and a fall over the last `fall`.
 func _ramp(n: int, rise: float, fall: float) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	out.resize(n)
@@ -70,11 +53,6 @@ func _softclip(x: PackedFloat32Array, drive: float) -> PackedFloat32Array:
 	return out
 
 
-# --- Filters ------------------------------------------------------------------------------
-
-
-## Three (or more) band-passes summed, one per formant, each a little narrower than the
-## one before.
 func _formants(x: PackedFloat32Array, freqs: Array, gains: Array, q: float) -> PackedFloat32Array:
 	var out := _silence_samples(x.size())
 	for f in freqs.size():
@@ -101,9 +79,6 @@ func _biquad(x: PackedFloat32Array, type: String, freq: float, q: float) -> Pack
 	return _filter_swept(x, type, freqs, q)
 
 
-## An RBJ biquad whose frequency may change every sample; the coefficients are only
-## recomputed every 8 samples, which is far below what the ear can hear. A `freqs`
-## shorter than `x` holds its last value.
 func _filter_swept(x: PackedFloat32Array, type: String, freqs: PackedFloat32Array, q: float) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	out.resize(x.size())
@@ -149,10 +124,6 @@ func _filter_swept(x: PackedFloat32Array, type: String, freqs: PackedFloat32Arra
 	return out
 
 
-# --- Buffers ------------------------------------------------------------------------------
-
-
-## Adds `x` times `gain` into `into` from sample `offset` on; what runs past the end is cut.
 func _mix(into: PackedFloat32Array, x: PackedFloat32Array, offset: int, gain: float) -> void:
 	for i in x.size():
 		var j := offset + i
@@ -176,9 +147,6 @@ func _seconds(length: float) -> int:
 	return int(round(length * sample_rate))
 
 
-# --- Output -------------------------------------------------------------------------------
-
-
 func _normalized(x: PackedFloat32Array, peak: float) -> PackedFloat32Array:
 	var out := x.duplicate()
 	var top := 0.0
@@ -190,8 +158,6 @@ func _normalized(x: PackedFloat32Array, peak: float) -> PackedFloat32Array:
 	return out
 
 
-## 16-bit mono PCM. A looping file also gets a "smpl" chunk with one forward loop over
-## the whole file, which Godot's WAV importer reads as the loop.
 func _write_wav(path: String, x: PackedFloat32Array, looping: bool) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var data := PackedByteArray()
@@ -202,14 +168,14 @@ func _write_wav(path: String, x: PackedFloat32Array, looping: bool) -> void:
 	if looping:
 		smpl.resize(68)
 		smpl.fill(0)
-		smpl.encode_u32(0, 0x6c706d73)  # "smpl"
+		smpl.encode_u32(0, 0x6c706d73)
 		smpl.encode_u32(4, 60)
-		smpl.encode_u32(16, int(1.0e9 / sample_rate))  # sample period, ns
-		smpl.encode_u32(20, 60)  # MIDI unity note
-		smpl.encode_u32(36, 1)  # one loop
-		smpl.encode_u32(48, 0)  # forward
-		smpl.encode_u32(52, 0)  # loop start
-		smpl.encode_u32(56, x.size() - 1)  # loop end, inclusive
+		smpl.encode_u32(16, int(1.0e9 / sample_rate))
+		smpl.encode_u32(20, 60)
+		smpl.encode_u32(36, 1)
+		smpl.encode_u32(48, 0)
+		smpl.encode_u32(52, 0)
+		smpl.encode_u32(56, x.size() - 1)
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_buffer("RIFF".to_ascii_buffer())
 	file.store_32(36 + data.size() + smpl.size())

@@ -1,68 +1,15 @@
 extends Node
 
-## Icon baker: renders the inventory icon of every item from its 3D world scene, saves it
-## as a PNG and points the item's ItemData.icon at it.
-##
-##   godot --path cutting-board res://tools/icon_baker/icon_baker.tscn
-##   godot --path cutting-board res://tools/icon_baker/icon_baker.tscn -- --only=hammer,rock
-##
-## Or open this scene in the editor and press F6 (Run Current Scene). It needs a real
-## window: under --headless nothing is rendered, so the baker refuses to run there. It
-## quits by itself when done.
-##
-## For a new item: give its ItemData a world_scene_path and a grid_size, save it in
-## items_dir, run the baker. Re-running is safe and only rewrites the PNGs; an icon that
-## was assigned by hand (anything but the baker's own PNG) is left alone unless --force
-## is passed.
-##
-## How an icon is made:
-## - Only the MeshInstance3D nodes of the world scene are copied, with their materials,
-##   so the scene's physics body and component scripts never run.
-## - The icon is grid_size * pixels_per_cell pixels, so it has the shape of the item's
-##   footprint in the inventory. The item is turned (stood up, laid down, swung round)
-##   to whichever pose fills that shape best, preferring the pose it is modelled in.
-##   A scene whose root has an "icon_pose" Basis in its metadata is shown in that pose
-##   instead, given in the camera's own terms (X to the right, Y up, Z toward the
-##   camera): for a flat thing like a saw blade that no square turn shows well.
-## - An orthographic camera looks at it from a fixed 3/4 angle (camera_yaw, camera_pitch)
-##   and is framed to the item's vertices. The lights ride along with the camera in the
-##   scene's Rig node — warm key from the upper left, violet rim from behind, violet
-##   ambient — so every icon is lit the same way; tune them in the scene.
-## - The shot is rendered supersample times larger and averaged down, the edge is cut
-##   hard at alpha_cutoff and a one-pixel outline drawn round it: crisp pixels without
-##   the shimmer of sampling the textures at icon size.
-## - The PNGs are imported by a headless editor run, then each ItemData gets a
-##   CanvasTexture over its PNG with nearest filtering, so the icon stays pixel-sharp in
-##   any UI that draws it, whatever filter that UI uses.
-##
-## Extra arguments after "--":
-##   --only=a,b      bake only these items (ItemData file names without .tres)
-##   --force         also replace icons that were assigned by hand
-##   --no-assign     write the PNGs but leave the ItemData files untouched
-##   --sheet=<png>   also save all icons side by side, scaled up, for looking them over
-
-## Where the ItemData records are read from.
 @export_dir var items_dir := "res://resources/items"
-## Where the PNGs are written, one per item, named like its ItemData file.
 @export_dir var output_dir := "res://assets/ui/icons/items"
-## Icon pixels per inventory square. 22 is half the inventory's 44-pixel cell, so each
-## icon pixel is drawn as a 2x2 block there, the same as the game's 640x360 picture.
 @export var pixels_per_cell := 22
-## How many times larger the shot is rendered before it is averaged down to icon size.
 @export_range(1, 8) var supersample := 4
-## Direction the camera looks from, in degrees round the vertical axis.
 @export var camera_yaw := 45.0
-## How far the camera looks down on the item, in degrees.
 @export var camera_pitch := 30.0
-## Empty icon pixels kept round the item, outside the outline.
 @export var padding := 1
 @export var outline := true
-## The night sky's darkest violet, so the outline reads as shadow rather than ink.
 @export var outline_color := Color(0.051, 0.031, 0.071, 1.0)
-## Coverage a pixel needs to count as part of the item once averaged down.
 @export_range(0.0, 1.0) var alpha_cutoff := 0.5
-## How much worse than the best pose the modelled pose may fill the icon and still be
-## chosen. Keeps upright things upright unless lying down is clearly better.
 @export_range(0.0, 1.0) var pose_tolerance := 0.35
 
 const SHEET_SCALE := 4
@@ -121,7 +68,6 @@ func _bake_all() -> void:
 	get_tree().quit()
 
 
-## Renders one item and returns its finished icon, or null if there is nothing to draw.
 func _bake(data: ItemData) -> Image:
 	for child in %Pivot.get_children():
 		%Pivot.remove_child(child)
@@ -140,7 +86,6 @@ func _bake(data: ItemData) -> Image:
 	var pose: Variant = _authored_pose(data.world_scene_path)
 	%Pivot.basis = view * pose if pose is Basis else _choose_pose(points, view, inner)
 
-	# The item's extent as the camera sees it: across, up and toward the camera.
 	var lo := Vector3.INF
 	var hi := -Vector3.INF
 	for point in points:
@@ -157,7 +102,6 @@ func _bake(data: ItemData) -> Image:
 	%Camera.size = size.y / pixels_per_unit
 	%Camera.far = extent.z + 2.0
 	%Viewport.size = size * supersample
-	# One frame for the new size and framing to take, one to draw them.
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var shot: Image = %Viewport.get_texture().get_image()
@@ -167,8 +111,6 @@ func _bake(data: ItemData) -> Image:
 	return icon
 
 
-## Copies of the scene's visible MeshInstance3D nodes, each placed as it sits relative to
-## the scene's root. The instance itself never enters the tree, so its scripts stay idle.
 func _copy_meshes(scene_path: String) -> Array[MeshInstance3D]:
 	var copies: Array[MeshInstance3D] = []
 	var scene := load(scene_path) as PackedScene
@@ -202,8 +144,6 @@ func _copy_meshes(scene_path: String) -> Array[MeshInstance3D]:
 	return copies
 
 
-## The pose the scene asks to be shown in, from its root's "icon_pose" metadata, or
-## null when it leaves the choice to _choose_pose().
 func _authored_pose(scene_path: String) -> Variant:
 	var scene := load(scene_path) as PackedScene
 	if scene == null:
@@ -214,7 +154,6 @@ func _authored_pose(scene_path: String) -> Variant:
 	return pose if pose is Basis else null
 
 
-## Every triangle corner of the meshes, in the item's own space, for tight framing.
 func _points(meshes: Array[MeshInstance3D]) -> PackedVector3Array:
 	var points := PackedVector3Array()
 	for mesh in meshes:
@@ -223,8 +162,6 @@ func _points(meshes: Array[MeshInstance3D]) -> PackedVector3Array:
 	return points
 
 
-## The turn of the item that best fills an icon of the given shape. The poses are tried
-## upright first, so a near tie keeps the item the way it was modelled.
 func _choose_pose(points: PackedVector3Array, view: Basis, inner: Vector2) -> Basis:
 	var poses: Array[Basis] = []
 	for yaw: float in [0.0, 90.0]:
@@ -253,8 +190,6 @@ func _choose_pose(points: PackedVector3Array, view: Basis, inner: Vector2) -> Ba
 	return poses[0]
 
 
-## Averages the supersampled shot down to icon size, weighting colour by coverage so the
-## transparent background does not darken the edge, then cuts the edge hard.
 func _shrink(shot: Image, size: Vector2i) -> Image:
 	var icon := Image.create_empty(size.x, size.y, false, Image.FORMAT_RGBA8)
 	var samples := float(supersample * supersample)
@@ -273,7 +208,6 @@ func _shrink(shot: Image, size: Vector2i) -> Image:
 	return icon
 
 
-## Draws outline_color into every empty pixel that touches the item side-on.
 func _outline(icon: Image) -> void:
 	var edge: Array[Vector2i] = []
 	var w := icon.get_width()
@@ -291,7 +225,6 @@ func _outline(icon: Image) -> void:
 		icon.set_pixelv(pixel, outline_color)
 
 
-## Runs a headless editor over the project so the new PNGs are imported and loadable.
 func _import() -> void:
 	var output := []
 	var project := ProjectSettings.globalize_path("res://")
@@ -299,8 +232,6 @@ func _import() -> void:
 	OS.execute(OS.get_executable_path(), ["--headless", "--path", project, "--import"], output, true)
 
 
-## Points the item's icon at its PNG, through a CanvasTexture that forces nearest
-## filtering, and saves the ItemData. Hand-made icons are kept unless --force.
 func _assign_icon(data: ItemData, item_name: String) -> void:
 	var png := _png_path(item_name)
 	var texture := ResourceLoader.load(png, "Texture2D", ResourceLoader.CACHE_MODE_REPLACE) as Texture2D
@@ -323,9 +254,6 @@ func _assign_icon(data: ItemData, item_name: String) -> void:
 	print("assigned %s" % png)
 
 
-## Outside the editor the saver writes no uids at all, neither the file's own nor those of
-## what it refers to, so a scene that names the item by uid would lose track of it. Puts
-## them back into the saved text: the file's old uid, and each reference's from its file.
 func _restore_uids(path: String, own_uid: int) -> void:
 	var lines := FileAccess.get_file_as_string(path).split("\n")
 	var ref_path := RegEx.create_from_string(" path=\"([^\"]+)\"")
@@ -348,7 +276,6 @@ func _png_path(item_name: String) -> String:
 	return output_dir.path_join(item_name + ".png")
 
 
-## All icons in a row on a dark ground, scaled up with nearest filtering.
 func _contact_sheet(icons: Array[Image]) -> Image:
 	var gap := 4
 	var width := gap

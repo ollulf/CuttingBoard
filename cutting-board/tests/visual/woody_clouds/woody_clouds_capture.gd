@@ -1,18 +1,5 @@
 extends Node3D
 
-## Concept captures for woody clouds: three ways to make the sky belong to a world of
-## wood, each over the village in daylight and at night. B is now the real sky
-## (assets/shaders/sky/woody_sky.gdshader, used by the daylight and tallow fair
-## environments); A, C and "plain" switch its clouds off to compare against.
-##
-##   plain  the environment with the wood clouds switched off (as before B)
-##   A  whittled clouds: lumpy carved meshes hung on strings, swaying like stage props
-##   B  ring sky: a sky shader drawing clouds as end-grain log slices (growth rings)
-##   C  plywood flats: cut-out cloud boards on rails, sliding like theatre scenery
-##
-##   godot --path cutting-board res://tests/visual/woody_clouds/woody_clouds_capture.tscn -- --shots=<dir>
-##   ... -- --clip=A --time=day   holds one view (for Movie Maker clips) instead of shots
-
 const VILLAGE := preload("res://scenes/levels/village.tscn")
 const LIGHTING := {
 	"day": preload("res://scenes/levels/lighting/daylight_lighting.tscn"),
@@ -82,7 +69,6 @@ func _setup(concept: String, time: String) -> void:
 	_lighting = LIGHTING[time].instantiate()
 	add_child(_lighting)
 	_clouds = Node3D.new()
-	# Cloud layouts are given around the village centre; pull them toward the camera.
 	_clouds.position = Vector3(0, -4, 48)
 	add_child(_clouds)
 	var night := time == "night"
@@ -94,8 +80,6 @@ func _setup(concept: String, time: String) -> void:
 		"C":
 			_build_plywood(night)
 
-
-# --- A: whittled clouds on strings ---------------------------------------------------
 
 func _build_whittled(night: bool) -> void:
 	var wood := StandardMaterial3D.new()
@@ -111,7 +95,6 @@ func _build_whittled(night: bool) -> void:
 		Vector3(20, 16, -30), Vector3(-6, 30, -70), Vector3(34, 27, -62),
 	]
 	for i in spots.size():
-		# Pivot at the top of the string, so the sway swings the cloud like a prop.
 		var pivot := Node3D.new()
 		pivot.position = spots[i] + Vector3(0, 40, 0)
 		_clouds.add_child(pivot)
@@ -127,7 +110,6 @@ func _build_whittled(night: bool) -> void:
 			var r := rng.randf_range(1.4, 2.4) * (1.0 - absf(t) * 0.8)
 			sphere.radius = r
 			sphere.height = r * 1.6
-			# Few segments: the facets read as knife cuts.
 			sphere.radial_segments = 7
 			sphere.rings = 4
 			lump.mesh = sphere
@@ -135,7 +117,6 @@ func _build_whittled(night: bool) -> void:
 			lump.position = Vector3(t * width, rng.randf_range(0.0, 0.8), rng.randf_range(-0.6, 0.6))
 			lump.rotation = Vector3(rng.randf() * 0.6, rng.randf() * TAU, rng.randf() * 0.4)
 			cloud.add_child(lump)
-		# Flat sawn underside.
 		var base := MeshInstance3D.new()
 		var box := BoxMesh.new()
 		box.size = Vector3(width * 0.9, 0.5, 2.2)
@@ -157,8 +138,6 @@ func _build_whittled(night: bool) -> void:
 		_swayers.append([pivot, float(i) * 1.3])
 
 
-# --- B is the environment's own sky; the others switch its clouds off ---------------
-
 func _hide_wood_clouds() -> void:
 	var world_env := _find_world_env(_lighting)
 	var env: Environment = world_env.environment.duplicate(true)
@@ -176,8 +155,6 @@ func _find_world_env(node: Node) -> WorldEnvironment:
 	return null
 
 
-# --- C: plywood flats on rails -------------------------------------------------------
-
 func _build_plywood(night: bool) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = PLYWOOD
@@ -189,7 +166,6 @@ func _build_plywood(night: bool) -> void:
 	rail_mat.albedo_color = Color(0.3, 0.2, 0.12)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
-	# Three rows of flats, like layered stage scenery; each row hangs from a long rail.
 	var rows := [[-30.0, 15.0, 3], [-48.0, 21.0, 3], [-70.0, 28.0, 4]]
 	for row in rows:
 		var z: float = row[0]
@@ -210,7 +186,6 @@ func _build_plywood(night: bool) -> void:
 			var x0 := (float(k) - (count - 1) * 0.5) * 22.0 + rng.randf_range(-4, 4)
 			flat.position = Vector3(x0, y, z)
 			_clouds.add_child(flat)
-			# Two hanger rods from the flat up to the rail.
 			for side in [-2.5, 2.5]:
 				var rod := MeshInstance3D.new()
 				var rod_box := BoxMesh.new()
@@ -222,14 +197,12 @@ func _build_plywood(night: bool) -> void:
 			_sliders.append([flat, x0, rng.randf() * TAU])
 
 
-## A cut-out cloud: a flat sawn bottom and a row of round bumps on top.
 func _cloud_outline(rng: RandomNumberGenerator) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	var half := rng.randf_range(4.5, 6.5)
 	pts.append(Vector2(half, 0))
 	var bumps := rng.randi_range(3, 4)
 	var step := 2.0 * half / bumps
-	# Bumps from right to left, so the outline winds one way round.
 	for bi in bumps:
 		var b := bumps - 1 - bi
 		var cx := -half + step * (b + 0.5)

@@ -1,13 +1,7 @@
 extends Node3D
 
-## The Mask-Monger standing in the village market, seen from the player's eye height.
-##
-##   godot --path cutting-board res://tests/visual/mask_monger_village_capture.tscn -- --shots=<dir>
-
 const VILLAGE := preload("res://scenes/levels/village.tscn")
-## Where the Monger stands in village.tscn (Market/MaskMonger).
 const MONGER_POS := Vector3(2.6, 0.0, 8.4)
-## (name, camera position) at eye height 1.6 m.
 const VIEWS := [
 	["approach", Vector3(1.4, 1.6, 2.8)],
 	["close", Vector3(2.6, 1.6, 5.4)],

@@ -1,50 +1,32 @@
 extends Node3D
 
-## Kick animation concept: three ways the Q kick could look, played on a primitive wooden
-## puppet kicking a barrel. Each kick alternates between the first-person view and a side
-## view of the same puppet. Concept only; see docs/concepts/kick-animation.md.
-##
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540
-##       --quit-after 150 res://tests/visual/kick_animation_concept.tscn -- --option=a
-##
-## --option=a  front snap kick: the boot swings up into view from below.
-## --option=b  push kick (stomp): knee chambers high, flat boot thrusts, camera dips and recoils.
-## --option=c  side kick: hips turn, the leg shoots out sideways, the view rolls with it.
-
 const BARREL_MESH := preload("res://scenes/environment/decoration/barrel_1.tscn")
 
-## Matches Kick.windup: seconds from the press to the strike frame.
 const WINDUP := 0.15
-## Seconds between kicks in the loop.
 const CYCLE := 1.25
-## Barrel spot in front of the puppet.
 const BARREL_AT := Vector3(0.0, 0.45, -1.15)
 
-## Keyframes per option: [time, hip pitch, knee bend, hip yaw, hip roll, body yaw,
-## camera pitch, camera back offset, camera roll]. Angles in degrees, offset in metres.
-## Hip pitch swings the leg forward; knee bend folds the shin back; hip roll swings it
-## out to the side.
 const POSES := {
 	"a": [
 		[0.00, 0, 0, 0, 0, 0, 0, 0.0, 0],
-		[0.10, 35, -95, 0, 0, 0, 0, 0.0, 0],      # knee lifts, shin folded
-		[0.15, 78, -8, 0, 0, 0, 2, -0.04, 0],     # strike: shin snaps straight
-		[0.22, 82, -5, 0, 0, 0, 1, -0.03, 0],     # follow-through
-		[0.38, 30, -70, 0, 0, 0, 0, 0.0, 0],      # rechamber
+		[0.10, 35, -95, 0, 0, 0, 0, 0.0, 0],
+		[0.15, 78, -8, 0, 0, 0, 2, -0.04, 0],
+		[0.22, 82, -5, 0, 0, 0, 1, -0.03, 0],
+		[0.38, 30, -70, 0, 0, 0, 0, 0.0, 0],
 		[0.55, 0, 0, 0, 0, 0, 0, 0.0, 0],
 	],
 	"b": [
 		[0.00, 0, 0, 0, 0, 0, 0, 0.0, 0],
-		[0.11, 95, -120, 0, 0, 0, 6, 0.06, 0],    # chamber: knee to chest, lean back
-		[0.15, 70, -10, 0, 0, 0, -7, -0.10, 0],   # strike: flat boot thrust, lunge + dip
-		[0.25, 68, -12, 0, 0, 0, -3, 0.05, 0],    # recoil: pushed back off the barrel
+		[0.11, 95, -120, 0, 0, 0, 6, 0.06, 0],
+		[0.15, 70, -10, 0, 0, 0, -7, -0.10, 0],
+		[0.25, 68, -12, 0, 0, 0, -3, 0.05, 0],
 		[0.42, 35, -60, 0, 0, 0, 0, 0.0, 0],
 		[0.60, 0, 0, 0, 0, 0, 0, 0.0, 0],
 	],
 	"c": [
 		[0.00, 0, 0, 0, 0, 0, 0, 0.0, 0],
-		[0.10, 60, -110, 0, 15, 50, 0, 0.0, 8],   # turn hips, chamber across
-		[0.15, 15, -5, 0, 80, 85, -2, -0.05, 14], # strike: leg out sideways, view rolls
+		[0.10, 60, -110, 0, 15, 50, 0, 0.0, 8],
+		[0.15, 15, -5, 0, 80, 85, -2, -0.05, 14],
 		[0.24, 12, -8, 0, 78, 85, -1, -0.03, 12],
 		[0.42, 40, -80, 0, 20, 40, 0, 0.0, 4],
 		[0.62, 0, 0, 0, 0, 0, 0, 0.0, 0],
@@ -130,8 +112,6 @@ func _apply_pose(p: Array) -> void:
 	_hip.rotation_degrees = Vector3(p[0], p[2], p[3])
 	_knee.rotation_degrees = Vector3(p[1], 0, 0)
 	_body.rotation_degrees.y = p[4]
-	# The camera keeps looking at the barrel while the hips turn; only the extra
-	# pitch, push and roll of the kick reach the view.
 	_head.rotation_degrees = Vector3(-24.0 + p[5], -p[4] * 0.8, -p[7])
 	_head.position = Vector3(0, 1.6, 0) + Vector3(0, 0, p[6]).rotated(Vector3.UP, deg_to_rad(-p[4] * 0.8))
 
@@ -192,7 +172,6 @@ func _build_puppet() -> void:
 	var leather := Color(0.25, 0.16, 0.1)
 	_body = Node3D.new()
 	add_child(_body)
-	# Layer 2 parts are hidden from the first-person camera, like the player's own body.
 	var torso := BoxMesh.new()
 	torso.size = Vector3(0.38, 0.55, 0.22)
 	_part(_body, torso, Vector3(0, 1.22, 0), light_wood, 2)
@@ -205,13 +184,11 @@ func _build_puppet() -> void:
 	_part(_body, head_ball, Vector3(0, 1.62, 0), light_wood, 2)
 	for side in [-1.0, 1.0]:
 		_part(_body, _capsule(0.045, 0.6), Vector3(0.24 * side, 1.18, 0), light_wood, 2)
-	# Standing leg.
 	_part(_body, _capsule(0.06, 0.48), Vector3(-0.1, 0.64, 0), light_wood)
 	_part(_body, _capsule(0.05, 0.46), Vector3(-0.1, 0.24, 0), light_wood)
 	var boot := BoxMesh.new()
 	boot.size = Vector3(0.12, 0.09, 0.26)
 	_part(_body, boot, Vector3(-0.1, 0.045, -0.05), leather)
-	# Kicking leg: hip pivot, thigh, knee pivot, shin, boot.
 	_hip = Node3D.new()
 	_hip.position = Vector3(0.1, 0.86, 0)
 	_body.add_child(_hip)

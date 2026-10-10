@@ -1,28 +1,15 @@
 class_name LowStaminaBreath
 extends Node
 
-## The player's own laboured breath when stamina runs low: a wooden body wheezing like a
-## creaky bellows. It starts once stamina drops below `start_ratio` and only fades out
-## again once it is back above `stop_ratio`, so hovering around one line never makes it
-## flicker on and off. The emptier the pool, the quicker and louder each breath.
-##
-## Not positional: it is heard the same wherever the camera is, on the bank's bus. It
-## pauses with the game and goes silent on death until the owner is alive again.
-
 @export var stamina: Stamina
 @export var health: Health
 @export var bank: SoundBank = preload("res://resources/audio/breath.tres")
-## Below this fraction of stamina the breathing starts.
 @export_range(0.0, 1.0, 0.01) var start_ratio := 0.28
-## Above this fraction it fades out again.
 @export_range(0.0, 1.0, 0.01) var stop_ratio := 0.4
-## Seconds from one breath's start to the next, just under the start line and on empty.
 @export var interval_calm := 1.7
 @export var interval_spent := 1.05
-## Level added to the bank's, in dB, just under the start line and on empty.
 @export var volume_calm_db := -8.0
 @export var volume_spent_db := 0.0
-## Seconds the last breath takes to fade away once stamina has recovered.
 @export var fade_time := 0.6
 
 var _player: AudioStreamPlayer
@@ -40,12 +27,10 @@ func _ready() -> void:
 		health.changed.connect(_on_health_changed)
 
 
-## Whether the breathing is on: stamina is low and the owner is alive.
 func is_breathing() -> bool:
 	return _active
 
 
-## Whether a breath can be heard right now (false while the game is paused).
 func is_audible() -> bool:
 	return _player.playing and not _player.stream_paused
 
@@ -79,7 +64,6 @@ func _start() -> void:
 	_until_next = 0.0
 
 
-## One breath, `strain` 0 just under the start line to 1 on empty.
 func _breathe(strain: float) -> void:
 	if bank == null or bank.streams.is_empty():
 		return
@@ -88,7 +72,6 @@ func _breathe(strain: float) -> void:
 	_player.stream = bank.pick()
 	_player.bus = bank.bus
 	_player.volume_db = bank.random_volume_db() + lerpf(volume_calm_db, volume_spent_db, strain)
-	# Quicker breaths are a touch higher, as a strained chest pants.
 	_player.pitch_scale = bank.random_pitch() * lerpf(1.0, 1.12, strain)
 	_player.play()
 	_until_next = lerpf(interval_calm, interval_spent, strain)

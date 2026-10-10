@@ -1,17 +1,8 @@
 extends Node3D
 
-## Headless checks for the opening: the player starts bare-faced and held still, holding
-## Esc skips to the landing without opening the pause menu, the fall ends on the ground at
-## the landing spot with control handed over, and `--skip-intro` is recognised.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/intro_sequence_check.tscn
-##   godot --headless --fixed-fps 60 --path cutting-board res://tests/intro_sequence_check.tscn -- --skip-intro
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 var _failures := 0
-## Every hit the player takes, as "amount from source", for the failure message.
 var _hits: Array[String] = []
 
 
@@ -31,9 +22,6 @@ func _run() -> void:
 	_check("every sound of the opening exists", missing.is_empty())
 	var level := LEVEL.instantiate()
 	add_child(level)
-	# The level's bandits are hostile to a bare face and close enough to reach the landing
-	# within the fall; when they arrive depends on the navmesh bake, which lags under load.
-	# Freeze every NPC so the fall-damage check only sees the landing.
 	for npc in level.find_children("*", "Npc", true, false):
 		npc.process_mode = Node.PROCESS_MODE_DISABLED
 	await _frames(5)
@@ -48,7 +36,6 @@ func _run() -> void:
 	_check("the player mask is nowhere in the inventory",
 		not _inventory_has(player.inventory, "player_mask"))
 
-	# Skip: hold Esc.
 	intro.start()
 	await _frames(3)
 	_check("the opening runs", intro.running)
@@ -66,7 +53,6 @@ func _run() -> void:
 	await _frames(2)
 	_check("the skip hint is gone", not is_instance_valid(hint))
 
-	# Skip mid-fall too.
 	intro.start()
 	intro.elapsed = intro.GRAIN_END + 1.0
 	await _frames(3)
@@ -76,7 +62,6 @@ func _run() -> void:
 	_check("holding Esc skips mid-fall", not intro.running)
 	_check_landed(intro, player, hud)
 
-	# Full fall: jump to the end of the grain beat and let it drop.
 	intro.start()
 	_check("all black until the heart beats", intro._hole(intro.HEARTBEATS[0] - 0.1) == 0.0)
 	_check("the heartbeats open the dark from the centre",
@@ -86,19 +71,16 @@ func _run() -> void:
 	await _frames(20)
 	_check("look only during the grain", player.control == intro.CONTROL_LOOK_ONLY)
 	_check("still high up", player.global_position.y > 30.0)
-	# Wait on the opening itself rather than a frame count, with a generous limit.
 	var limit := int((intro.FALL_END - intro.GRAIN_END) * 60.0) * 3
 	while intro.running and limit > 0:
 		await _frames(1)
 		limit -= 1
 	_check("the fall ends the opening", not intro.running)
 	_check_landed(intro, player, hud)
-	# A second on the ground, standing on the floor, for any landing damage to show.
 	await _frames(60)
 	_check("standing on the floor after landing", player.is_on_floor())
 	_check("still standing after a second (no fall damage)%s" % (" " + str(_hits) if _hits else ""),
 		player.health.is_alive() and player.health.get_current() >= player.health.max_health)
-	# --skip-intro stands the player on the same spot without the fall.
 	player.global_position = Vector3(0, 1, 0)
 	intro.place_at_landing()
 	var flat := Vector2(player.global_position.x, player.global_position.z)
@@ -112,7 +94,6 @@ func _check_landed(intro: IntroSequence, player, hud: CanvasLayer) -> void:
 	_check("lands at the landing spot",
 		flat.distance_to(Vector2(intro.landing_spot.x, intro.landing_spot.z)) < 0.5)
 	_check("lands on the ground", absf(player.global_position.y - intro._ground_y) < 0.5)
-	# The village square is near zero; anything higher is a roof or a crate.
 	_check("lands on the ground, not on a roof", intro._ground_y < 1.0)
 	var monger := intro.owner.find_child("MaskMonger", true, false) as Node3D
 	if monger:

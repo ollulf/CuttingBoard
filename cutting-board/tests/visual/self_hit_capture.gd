@@ -1,14 +1,5 @@
 extends Node3D
 
-## A bandit left to its own brain against a villager who stands still, seen from the side,
-## with a running count of where its blows land. Made for Movie Maker:
-##
-##   godot --path cutting-board --write-movie <out>.avi --fixed-fps 30 --resolution 960x540
-##       res://tests/visual/self_hit_capture.tscn --quit-after 300
-##
-## Before the self-hit fix the bandit's own limbs caught some of its blows, and up close it
-## lost sight of its target and pressed into it.
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 
@@ -33,7 +24,6 @@ func _ready() -> void:
 	_tough(_villager.health)
 
 	_bandit = BANDIT.instantiate() as Npc
-	# No rocks, so it goes straight to the hammer.
 	_bandit.starting_items = []
 	_bandit.position = Vector3(-3.5, 0.02, 0)
 	add_child(_bandit)
@@ -54,7 +44,6 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Keep both in frame as the villager is shoved along.
 	var middle := (_bandit.global_position + _villager.global_position) * 0.5
 	middle.y = 0.0
 	_camera.global_position = middle + Vector3(0.0, 1.5, 4.2)
@@ -64,7 +53,6 @@ func _process(_delta: float) -> void:
 		_on_target, _on_self, gap
 	]
 	_label.modulate = Color(1, 0.45, 0.4) if _on_self > 0 else Color.WHITE
-	# Nothing in the clip should die.
 	_tough(_villager.health)
 	_tough(_bandit.health)
 
@@ -92,7 +80,6 @@ func _build_stage() -> void:
 	sun.shadow_enabled = true
 	add_child(sun)
 
-	# Half-metre chequers, so the gap between the two can be read off the floor.
 	var image := Image.create(2, 2, false, Image.FORMAT_RGB8)
 	image.set_pixel(0, 0, Color(0.42, 0.4, 0.36))
 	image.set_pixel(1, 1, Color(0.42, 0.4, 0.36))

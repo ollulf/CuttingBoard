@@ -1,17 +1,8 @@
 extends Node3D
 
-## Headless checks for the puppet junk dead puppets carry: every junk item loads with a
-## name, an icon and a world scene that shows its mesh and points back at it; villagers,
-## bandits and walking chairs roll each of their junk at about its configured rate; and a
-## villager given every junk for certain really ends up with all of it in its inventory.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/puppet_junk_loot_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const CHAIR := preload("res://scenes/characters/chair_creature.tscn")
-## Item file name -> expected drop chance on villagers and bandits.
 const JUNK := {
 	"finger_joint": 0.35,
 	"knee_hinge_pin": 0.15,
@@ -21,7 +12,6 @@ const JUNK := {
 	"carved_eye_bead": 0.05,
 	"peg_teeth": 0.15,
 }
-## Walking chairs only carry the wooden bits a chair is made of.
 const CHAIR_JUNK := {
 	"splintered_dowel": 0.35,
 	"finger_joint": 0.2,
@@ -96,7 +86,6 @@ func _check_rates(label: String, roll: Callable, expected: Dictionary) -> void:
 			"%s %s rate %.3f (expected %.2f)" % [label, item_name, rate, expected[item_name]])
 
 
-## Spawns a villager that carries every junk for certain and checks its inventory.
 func _check_spawn_all() -> void:
 	var npc: Npc = VILLAGER.instantiate()
 	var chances: Array[float] = [0.0]

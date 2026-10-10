@@ -1,10 +1,6 @@
 class_name CheatMenu
 extends Control
 
-## Debug cheat menu: F1 (`toggle_cheats`) lists every item resource as a plain button,
-## and a click puts a fresh one into the bound inventory. Items are found at runtime,
-## so a new .tres in the items folder shows up without code changes.
-
 const ITEMS_DIR := "res://resources/items/"
 
 @onready var _list: VBoxContainer = %ItemList
@@ -22,8 +18,6 @@ func bind(inventory: Inventory) -> void:
 	_inventory = inventory
 
 
-## Every ItemData under the items folder, sorted by file name. Exported builds list
-## the files as "<name>.tres.remap", so the suffix is stripped before loading.
 static func find_items() -> Array[ItemData]:
 	var items: Array[ItemData] = []
 	var files := Array(DirAccess.get_files_at(ITEMS_DIR))
@@ -47,7 +41,6 @@ func _build() -> void:
 		_list.add_child(button)
 
 
-## Puts a fresh copy (default durability) of the item into the inventory.
 func give(data: ItemData) -> bool:
 	if _inventory == null:
 		return false
@@ -56,8 +49,6 @@ func give(data: ItemData) -> bool:
 	return added
 
 
-## Handles its own key, like the inventory panel, so it still toggles while the mouse
-## is free and the player controller ignores input.
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_cheats"):
 		toggle()

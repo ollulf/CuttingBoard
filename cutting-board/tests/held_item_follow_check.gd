@@ -1,18 +1,8 @@
 extends Node3D
 
-## Headless checks that a held item rides the hand bone: while the player walks, and all
-## through a punch, the item in each hand sits exactly where the Hand bone (plus the
-## HandSlot's offset) puts it, position and rotation; and the walk does turn the hands,
-## not only lift them, so what they hold tilts with each step. Prints PASS/FAIL per check
-## and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/held_item_follow_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
-## Both are weapons: a hand holding anything else (wood glue, say) does not punch.
 const SAW := preload("res://resources/items/saw.tres")
 const HAMMER := preload("res://resources/items/hammer.tres")
-## How far the item may stray from the bone's pose, in metres and in radians.
 const TOLERANCE := 0.002
 
 var _failures := 0
@@ -39,8 +29,6 @@ func _run() -> void:
 	_finish()
 
 
-## Walks forward for a second, comparing each item with its bone every frame and
-## measuring how far the items turn against the camera.
 func _walk(player, left: Node3D, right: Node3D) -> void:
 	var start_left := _in_view(player, left).basis
 	var start_right := _in_view(player, right).basis
@@ -60,7 +48,6 @@ func _walk(player, left: Node3D, right: Node3D) -> void:
 	await _physics_frames(30)
 
 
-## Throws a punch with the item in `hand`, comparing it with its bone every frame.
 func _punch(player, hand: HandSlot, item: Node3D, side: String) -> void:
 	var start := _in_view(player, item)
 	player._punch(hand)
@@ -75,8 +62,6 @@ func _punch(player, hand: HandSlot, item: Node3D, side: String) -> void:
 	_check("%s punch: still held afterwards" % side, hand.get_held() == item)
 
 
-## How far `item` is from where the Hand bone of `side` holds it: the larger of the
-## distance between origins and the angle between the two orientations.
 func _stray(player, item: Node3D, side: String) -> float:
 	var skeleton: Skeleton3D = player.get_node("%%Arm%sSkeleton" % side)
 	var slot: Node3D = player.get_node("%%HandSlot%s" % side)
@@ -86,7 +71,6 @@ func _stray(player, item: Node3D, side: String) -> float:
 	return maxf(expected.origin.distance_to(actual.origin), _angle(expected.basis, actual.basis))
 
 
-## The item's transform as the camera sees it, so the body's own turning is left out.
 func _in_view(player, item: Node3D) -> Transform3D:
 	return player.camera.global_transform.affine_inverse() * item.global_transform
 

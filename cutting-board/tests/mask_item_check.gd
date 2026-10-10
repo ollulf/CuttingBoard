@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks that masks are real items: the player starts with their own mask on,
-## a mask knocked off a dead villager lies in the world as an item that can be taken into
-## the inventory and worn from there, a mask in hand goes on with a click, and a mask
-## left on a dead face is found in the body's inventory and comes off the face when it is
-## taken. Prints PASS/FAIL per check and quits with the number of failures as the exit
-## code.
-##
-##   godot --headless --path cutting-board res://tests/mask_item_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const PLAYER_MASK := preload("res://resources/items/player_mask.tres")
@@ -44,9 +35,6 @@ func _starting_mask(player) -> void:
 	_check("the starting mask has an icon", PLAYER_MASK.icon != null)
 
 
-## A villager whose mask always pops is killed in front of the player. The mask has to
-## turn up as a world item, be taken with E like anything else, and go into the Mask slot
-## once the player's own is off.
 func _knocked_off_mask(player) -> void:
 	var villager: Npc = await _spawn_villager(Vector3(0, 0, -1.5), 1.0)
 	villager.health.apply_damage(DamageInfo.new(9999))
@@ -62,9 +50,6 @@ func _knocked_off_mask(player) -> void:
 	_check("it is a physics body", item is RigidBody3D)
 	_check("it has come to rest near the body", item.global_position.y < 1.0)
 
-	# Look straight at it and press E, the way the player would. The corpse goes first:
-	# where the mask lands is random, and a limb in the line of sight would be what the
-	# ray finds instead.
 	villager.queue_free()
 	await _physics_frames(2)
 	var inventory: Inventory = player.inventory
@@ -82,8 +67,6 @@ func _knocked_off_mask(player) -> void:
 	if entry == null:
 		return
 
-	# The inventory screen's two moves: the worn mask off into the grid, then the new one
-	# on from it.
 	var equipment: Equipment = player.equipment
 	_check("the Mask slot refuses a second mask", not equipment.equip(MASK, VILLAGER_MASK))
 	var own := equipment.unequip(MASK)
@@ -96,8 +79,6 @@ func _knocked_off_mask(player) -> void:
 	_check("the Mask slot refuses a rock", not equipment.accepts(MASK, load("res://resources/items/rock.tres")))
 
 
-## The player's own mask, drawn into a hand from the grid, goes on with a click and the
-## villager's mask comes off into that hand in its place.
 func _wear_from_hand(player) -> void:
 	var inventory: Inventory = player.inventory
 	var hand: HandSlot = player.hand_right
@@ -113,8 +94,6 @@ func _wear_from_hand(player) -> void:
 	await _frames(2)
 
 
-## A villager whose mask never pops keeps it on its dead face, listed in its inventory.
-## Taking it from there takes it off the face.
 func _mask_left_on_body(player) -> void:
 	var villager: Npc = await _spawn_villager(Vector3(4, 0, -1.5), 0.0)
 	villager.health.apply_damage(DamageInfo.new(9999))
@@ -126,7 +105,6 @@ func _mask_left_on_body(player) -> void:
 	_check("the corpse still wears it", _face_of(body) != null)
 	if entry == null:
 		return
-	# The inventory screen moving it from the body's grid into the player's.
 	var inventory: Inventory = player.inventory
 	inventory.add(entry.data, entry.durability)
 	villager.inventory.remove(entry)
@@ -142,13 +120,10 @@ func _spawn_villager(at: Vector3, pop_chance: float) -> Npc:
 	await _physics_frames(5)
 	villager.brain.shut_down()
 	villager.body.mask_pop_chance = pop_chance
-	# The mask survives its wearer's death as its own kind; shattering is
-	# shattered_mask_check's.
 	villager.body.mask_shatter_chance = 0.0
 	return villager
 
 
-## Every mask lying loose in the level.
 func _loose_masks() -> Array[Carryable]:
 	var masks: Array[Carryable] = []
 	for node in find_children("Carryable", "Carryable", true, false):
@@ -165,7 +140,6 @@ func _entry_of(inventory: Inventory, data: ItemData) -> InventoryEntry:
 	return null
 
 
-## The face hung on a body's head, or null.
 func _face_of(body: HumanBody) -> Node3D:
 	var attachment := body.skeleton.get_node_or_null("HeadAttachment")
 	if attachment == null:

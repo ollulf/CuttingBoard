@@ -1,19 +1,9 @@
 extends Node3D
 
-## Headless checks that an NPC comes to rest where it was sent: once it has arrived it
-## must stand still — no creeping, no turning on the spot, no flicking between walking
-## and standing. Covers a point on open ground, a point the navigation mesh cannot reach
-## (inside a block, as a wander spot can be), a wandering villager left to its brain, and
-## a bandit fighting a target that stands still. Prints PASS/FAIL per check and quits
-## with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/npc_arrival_check.tscn
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const PLAYER := preload("res://scenes/characters/player.tscn")
 
-## Where the solid block stands that no path can enter.
 const BLOCK_CENTER := Vector3(6, 0, 6)
 const BLOCK_SIZE := Vector3(3, 2, 3)
 
@@ -38,8 +28,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Sends a villager with its brain off to `goal` and watches it for a few seconds once
-## it has come to a halt, or stopped making headway.
 func _send_to(goal: Vector3, label: String) -> void:
 	var npc: Npc = VILLAGER.instantiate()
 	add_child(npc)
@@ -48,7 +36,6 @@ func _send_to(goal: Vector3, label: String) -> void:
 	npc.brain.shut_down()
 	npc.locomotion.move_to(goal)
 
-	# Arrived: Locomotion gave up moving, or the body has covered no ground for a second.
 	var trail: Array[Vector3] = []
 	var waited := 0.0
 	while waited < 12.0:
@@ -69,10 +56,7 @@ func _send_to(goal: Vector3, label: String) -> void:
 	await _physics_frames(2)
 
 
-## A villager left to wander on its own: every pause between strolls must be a real rest.
 func _wander() -> void:
-	# The same strolls every run. Home is right beside the block and the strolls are
-	# short, so a good share of them are aimed into it.
 	seed(7)
 	var npc: Npc = VILLAGER.instantiate()
 	npc.position = BLOCK_CENTER + Vector3(BLOCK_SIZE.x * 0.5 + 1.0, 0.05, 0)
@@ -84,7 +68,6 @@ func _wander() -> void:
 	var last_pos := npc.global_position
 	var last_yaw := npc.rotation.y
 	var last_moving := npc.locomotion.is_moving()
-	# Seconds since Locomotion last started or stopped.
 	var since := 0.0
 	var elapsed := 0.0
 	var dithering := 0.0
@@ -102,10 +85,8 @@ func _wander() -> void:
 				blocked_strolls += 1
 		else:
 			since += delta
-		# Trying to walk for a whole second but getting nowhere: walking on the spot.
 		if moving and since > 1.0 and trail.size() > 60 and _flat(trail[-1] - trail[-61]).length() < 0.3:
 			dithering += delta
-		# The first moments of a rest are the body slowing down; after that it stands.
 		if not moving and since > 0.3:
 			total.path += _flat(npc.global_position - last_pos).length()
 			total.turn += absf(angle_difference(last_yaw, npc.rotation.y))
@@ -124,7 +105,6 @@ func _wander() -> void:
 	await _physics_frames(2)
 
 
-## A bandit fighting a player who stands still: once in range it holds its ground.
 func _fight() -> void:
 	var player := PLAYER.instantiate()
 	var bandit: Npc = BANDIT.instantiate()
@@ -153,9 +133,6 @@ func _fight() -> void:
 	await _physics_frames(2)
 
 
-## A bandit backed against the block with the player crowding it, closer than it likes
-## to fight from: it cannot step back through the wall, so it must hold its ground
-## rather than shuffle into the wall and out again.
 func _cornered() -> void:
 	var player := PLAYER.instantiate()
 	var bandit: Npc = BANDIT.instantiate()
@@ -174,7 +151,6 @@ func _cornered() -> void:
 	var pin := func() -> void:
 		player.global_position = Vector3(player_spot.x, player.global_position.y, player_spot.z)
 		player_health.reset()
-	# Time to notice the player, turn to it and try backing off.
 	for i in 90:
 		await get_tree().physics_frame
 		pin.call()
@@ -182,8 +158,6 @@ func _cornered() -> void:
 	print("  cornered: %.2f m from the player; then %s" % [
 		bandit.flat_distance_to(player.global_position), _describe(stats)
 	])
-	# Turning is not checked: each blow rocks the player sideways for a frame before it
-	# is pinned back, and following that with its eyes is fair.
 	_check("cornered: holds its ground",
 		stats.path < 0.02 and stats.toggles == 0 and stats.gait < 0.1)
 	player.queue_free()
@@ -191,8 +165,6 @@ func _cornered() -> void:
 	await _physics_frames(2)
 
 
-## Follows `npc` for `seconds` and sums up how much it still moves: ground crept, yaw
-## turned, how often Locomotion started or stopped, and how high the walk cycle stays.
 func _watch(npc: Npc, seconds: float, each_frame := Callable()) -> Dictionary:
 	var animator: BodyAnimator = npc.get_node("%BodyAnimator")
 	var stats := {path = 0.0, turn = 0.0, toggles = 0, gait = 0.0, speed = 0.0}
@@ -208,7 +180,6 @@ func _watch(npc: Npc, seconds: float, each_frame := Callable()) -> Dictionary:
 		stats.path += _flat(npc.global_position - last_pos).length()
 		stats.turn += absf(angle_difference(last_yaw, npc.rotation.y))
 		stats.speed = maxf(stats.speed, _flat(npc.get_real_velocity()).length())
-		# The walk cycle fades out over the first second; after that it must stay down.
 		if elapsed > 1.0:
 			stats.gait = maxf(stats.gait, animator._gait)
 		if npc.locomotion.is_moving() != last_moving:
@@ -230,8 +201,6 @@ func _check_still(stats: Dictionary, label: String) -> void:
 		stats.path < 0.02 and stats.turn < deg_to_rad(1.0) and stats.toggles == 0 and stats.gait < 0.1)
 
 
-## A flat floor with a solid block on it, and a navigation region baked from both, set
-## up like test_level's.
 func _build_floor() -> NavigationRegion3D:
 	TestWorld.add_floor(self, 60)
 	TestWorld.add_slab(self, BLOCK_SIZE, BLOCK_CENTER + Vector3.UP * BLOCK_SIZE.y * 0.5)

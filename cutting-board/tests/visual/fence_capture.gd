@@ -1,11 +1,5 @@
 extends Node
 
-## Stills of the fence colliders in the real test level: the paddock with the fence
-## shapes drawn in orange, a top-down view of the runtime-baked navmesh around it, and
-## the three fence pieces side by side.
-##
-##   godot --path cutting-board res://tests/visual/fence_capture.tscn -- --shots=<dir>
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const FENCE_1X1 := preload("res://scenes/environment/buildings/1x1_fence.tscn")
 const FENCE_1X2 := preload("res://scenes/environment/buildings/1x2_fence.tscn")
@@ -21,14 +15,12 @@ func _ready() -> void:
 		if arg.begins_with("--shots="):
 			_shots_dir = arg.get_slice("=", 1)
 	PsxScreen.enabled = false
-	# Must be set before the level enters the tree to have its shapes drawn.
 	get_tree().debug_collisions_hint = true
 	_level = LEVEL.instantiate()
 	_style_debug_shapes(_level)
 	add_child(_level)
 	for node in _level.find_children("*", "CanvasLayer", true, false):
 		node.visible = false
-	# A low sun so the night-time village reads in the stills.
 	var sun := DirectionalLight3D.new()
 	sun.light_energy = 0.7
 	sun.rotation_degrees = Vector3(-50, -30, 0)
@@ -45,7 +37,6 @@ func _take_shots() -> void:
 	await get_tree().create_timer(1.5).timeout
 	_frame(Vector3(-2.0, 17.0, -15.0), Vector3(-13.5, 0, -27.5))
 	await _shot("paddock")
-	# Top-down over the paddock with the runtime-baked navmesh drawn on the ground.
 	var overlay := _navmesh_overlay()
 	add_child(overlay)
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
@@ -57,7 +48,6 @@ func _take_shots() -> void:
 	_camera.projection = Camera3D.PROJECTION_PERSPECTIVE
 	_frame(Vector3(-17.0, 2.2, -36.5), Vector3(-17.0, 0.6, -30.0))
 	await _shot("paddock_close")
-	# The three pieces side by side in the empty paddock.
 	var pieces := [[FENCE_1X1, -20.0], [FENCE_1X2, -15.0], [FENCE_CORNER, -9.5]]
 	for piece in pieces:
 		var fence: Node3D = piece[0].instantiate()
@@ -71,8 +61,6 @@ func _take_shots() -> void:
 	get_tree().quit()
 
 
-## Draws fence shapes filled in orange so they stand out from the other debug shapes,
-## and hides the terrain's heightmap wireframe, which would cover everything.
 func _style_debug_shapes(root: Node) -> void:
 	for node in root.find_children("*", "CollisionShape3D", true, false):
 		var shape := node as CollisionShape3D
@@ -91,7 +79,6 @@ func _in_fence(node: Node) -> bool:
 	return false
 
 
-## A translucent green mesh of the navmesh the level baked at runtime.
 func _navmesh_overlay() -> MeshInstance3D:
 	var region: NavigationRegion3D = _level.get_node("NavigationRegion3D")
 	var nav_mesh := region.navigation_mesh

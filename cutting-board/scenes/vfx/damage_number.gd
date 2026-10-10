@@ -1,25 +1,13 @@
 class_name DamageNumber
 extends Label3D
 
-## One floating number, thrown up from the point where a hit landed and gone again a
-## second later. It animates itself and frees itself: whoever spawns it only has to say
-## how much, where, and in what colour.
-
-## Seconds from appearing to gone.
 @export var lifetime := 0.9
-## How far the number climbs over its life, in metres.
 @export var rise := 0.9
-## Random sideways offset applied at birth, so several hits in one spot do not stack
-## into an unreadable pile.
 @export var scatter := 0.25
-## How much bigger the number starts before settling, which is what gives the pop.
 @export var punch := 1.5
-## Fraction of the lifetime spent fully opaque before the fade begins.
 @export_range(0.0, 1.0) var hold := 0.35
 
 
-## Places the number and starts its animation. Called after the node is in the tree,
-## because the rise is animated in global space from wherever it was put.
 func pop(amount: int, at: Vector3, color: Color) -> void:
 	text = str(amount)
 	modulate = color

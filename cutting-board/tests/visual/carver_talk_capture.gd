@@ -1,11 +1,5 @@
 extends Node
 
-## Stills of the Carver talking in his grove: the player stands at his stump, presses
-## Talk, and the speech plank shows his first and third lines.
-##
-##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi \
-##       --resolution 960x540 res://tests/visual/carver_talk_capture.tscn -- --shots=<dir>
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 
@@ -49,7 +43,6 @@ func _run() -> void:
 	var dialogue: Dialogue = grove.get_node("%Dialogue")
 	dialogue.use(player)
 	for shot in ["talk_1", "talk_2", "talk_3"]:
-		# Long enough for the line to type out in full.
 		for i in 240:
 			await get_tree().process_frame
 		await RenderingServer.frame_post_draw

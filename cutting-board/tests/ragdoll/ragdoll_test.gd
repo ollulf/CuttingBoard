@@ -1,16 +1,5 @@
 extends Node3D
 
-## Test stand for hit reactions and ragdolls. A villager and a bandit stand still (their
-## brains are switched off) in front of the camera.
-##
-## Left click hits whatever is under the mouse for a little damage, right click for a
-## killing blow; both travel along the mouse ray and go through Health.find_in like any
-## real hit. R reloads the stand.
-##
-## Run with `-- --auto <folder>` to play a fixed sequence instead — two flinches, then
-## both characters killed — save screenshots into <folder>, print where the bodies came
-## to rest, and quit.
-
 const LIGHT_HIT := 12
 const KILLING_HIT := 999
 
@@ -47,7 +36,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 
 
-## Hits the first thing along from→to, the way a blow or a thrown item would.
 func _strike(from: Vector3, to: Vector3, damage: int, knockback := hit_knockback) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
@@ -63,8 +51,6 @@ func _strike(from: Vector3, to: Vector3, damage: int, knockback := hit_knockback
 	health.apply_damage(info)
 
 
-## Hits `npc` at `height` above its feet, coming in from `side` — in the NPC's own
-## frame, so FORWARD is a blow to its face.
 func _strike_npc(npc: Npc, height: float, side: Vector3, damage: int, knockback: float) -> void:
 	var target := npc.global_position + Vector3.UP * height
 	var from := npc.global_basis * side
@@ -74,7 +60,6 @@ func _strike_npc(npc: Npc, height: float, side: Vector3, damage: int, knockback:
 func _run_sequence() -> void:
 	await _wait(1.0)
 	await _shot("00_standing")
-	# A blow to the villager's face from the front, and the bandit's shoulder from the side.
 	_strike_npc(_villager, 1.55, Vector3.FORWARD, LIGHT_HIT, hit_knockback)
 	_strike_npc(_bandit, 1.35, Vector3.LEFT, LIGHT_HIT, hit_knockback)
 	await _wait(0.12)
@@ -82,8 +67,6 @@ func _run_sequence() -> void:
 	await _wait(1.0)
 	await _shot("02_recovered")
 	_report("after flinch")
-	# Killing blows: the villager in the chest from the front, the bandit in the head
-	# from the side.
 	_strike_npc(_villager, 1.2, Vector3.FORWARD, KILLING_HIT, 25.0)
 	_strike_npc(_bandit, 1.55, Vector3.LEFT, KILLING_HIT, 25.0)
 	await _wait(0.35)

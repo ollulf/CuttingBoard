@@ -1,11 +1,5 @@
 extends Node3D
 
-## Headless check that every barrel in the village (and on its market stalls) is a
-## carryable item barrel and settles on the ground instead of popping or falling through.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/village_barrels_check.tscn
-
 const VILLAGE := preload("res://scenes/levels/village.tscn")
 
 var _failures := 0

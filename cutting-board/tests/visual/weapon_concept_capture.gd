@@ -1,13 +1,5 @@
 extends Node3D
 
-## The ten weapon ideas (docs/concepts/weapon-ideas.md, meshes from
-## tools/import/build_weapon_concepts.gd), photographed: all ten in two rows, straight on and from
-## three quarters, then each one close and turned so its working end shows.
-##
-##   godot --path cutting-board --write-movie <dir>/x.avi res://tests/visual/weapon_concept_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved.
-
 const NAMES := ["marionette_cross", "pegged_rolling_pin", "chair_leg_club", "oven_peel",
 		"clothes_peg_knuckles", "loom_shuttle", "mousetrap_mace", "pendulum_maul",
 		"back_scratcher_rake", "rocker_sickle"]
@@ -41,7 +33,6 @@ func _tour() -> void:
 		var model := MeshInstance3D.new()
 		model.mesh = load("res://assets/meshes/props/weapon_concept_%s.res" % NAMES[k])
 		_stage.add_child(model)
-		# Two rows of five, each weapon centred on its slot by its bounds, turned a little.
 		var box := model.mesh.get_aabb()
 		var slot := Vector3((k % 5 - 2) * SPACING, 1.25 - (k / 5) * 0.95, 0.0)
 		model.basis = Basis(Vector3.UP, 0.5)
@@ -54,7 +45,6 @@ func _tour() -> void:
 	for k in models.size():
 		for other in models:
 			other.visible = other == models[k]
-		# Laid over on a diagonal so a long handle fills the wide frame, working end up right.
 		var box := models[k].mesh.get_aabb()
 		var at := models[k].global_transform * box.get_center()
 		models[k].basis = Basis(Vector3.BACK, -0.9) * Basis(Vector3.UP, 0.7)

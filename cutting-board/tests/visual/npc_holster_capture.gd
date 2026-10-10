@@ -1,11 +1,5 @@
 extends Node3D
 
-## Shots of NPCs with their weapon holstered at the hip: a villager with a hammer on the
-## right hip and one with a saw on the left, seen from the front and from the side.
-##
-##   godot --path cutting-board --write-movie <tmp>/out.avi --fixed-fps 30 --quit-after 70 \
-##       res://tests/visual/npc_holster_capture.tscn -- --shots=<dir>
-
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const HAMMER := preload("res://resources/items/hammer.tres")
 const SAW := preload("res://resources/items/saw.tres")

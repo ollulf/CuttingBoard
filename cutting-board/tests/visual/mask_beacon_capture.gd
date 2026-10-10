@@ -1,13 +1,5 @@
 extends Node
 
-## The Mask-Monger glowing through the mask-off grain: the test level with the player's
-## mask taken off, looking at the Monger from across the market, then the same view with
-## the mask on for comparison.
-##
-##   godot --path cutting-board res://tests/visual/mask_beacon_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved.
-
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 
 var _shots_dir := ""

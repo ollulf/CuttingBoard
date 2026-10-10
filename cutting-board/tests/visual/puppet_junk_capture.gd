@@ -1,13 +1,5 @@
 extends Node3D
 
-## The ten puppet junk concept meshes (tools/import/build_puppet_junk.gd) laid out on a
-## dark floor by lantern light, two rows of five, slowly turning: a contact sheet,
-## then a close shot of each.
-##
-##   godot --path cutting-board --write-movie <out>.avi res://tests/visual/puppet_junk_capture.tscn -- --shots=<dir>
-##
-## Needs a real window; under --headless nothing is saved. --plain turns the retro screen off.
-
 const JUNK := [
 	"finger_joint", "string_knot", "hinge_pin", "sawdust_pouch", "lacquer_flake",
 	"dowel", "screw_eye", "eye_bead", "ember_knot", "peg_teeth",
@@ -61,7 +53,6 @@ func _ready() -> void:
 		var shape := MeshInstance3D.new()
 		shape.mesh = load("res://assets/meshes/props/junk_%s.res" % JUNK[k])
 		var box := shape.mesh.get_aabb()
-		# Centred on its turning axis, standing on the floor.
 		shape.position = -Vector3(box.get_center().x, box.position.y, box.get_center().z)
 		piece.add_child(shape)
 		add_child(piece)

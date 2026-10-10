@@ -1,34 +1,14 @@
 class_name ThrowAtTargetAction
 extends NpcAction
 
-## Opens a fight at range. While the NPC can see an enemy and has something throwable in
-## its inventory, it draws one into a free hand, winds up and throws it, then the next.
-## Once the pockets are empty this stops scoring and AttackTarget takes over — which is
-## how an NPC throws its rocks first and closes to melee after, without either action
-## knowing about the other.
-
-## Score while there is something to throw and a target to throw it at. Kept above
-## AttackTarget's aggression plus the Brain's commitment bonus, so an NPC already
-## fighting up close still breaks off to throw while it has ammunition.
 @export_range(0.0, 1.0) var eagerness := 0.95
-## Score against someone it holds a grudge against, when keener than eagerness. Keep it
-## above AttackTarget's retaliation plus the commitment bonus for the same reason, and
-## below FleeAction's wounded_score minus that bonus so the badly hurt still run.
 @export_range(0.0, 1.0) var retaliation := 0.88
-## Closer than this an enemy is not thrown at. Keep it small: the point is that rocks
-## come before melee, not instead of it.
 @export var min_range := 1.0
 @export var max_range := 14.0
-## Launch speed, metres per second. ImpactDamage deals full damage from 12 m/s, and
-## nothing below 6.5, so a throw much slower than this barely hurts.
 @export var throw_speed := 12.0
-## Seconds between drawing an item and letting it go — the tell a target can react to.
 @export var windup := 0.6
-## Seconds after a throw before drawing the next.
 @export var cooldown := 0.8
-## Random error in each throw, in degrees either way.
 @export var inaccuracy_degrees := 3.0
-## Seen this recently counts as in sight. Nothing is thrown at where an enemy used to be.
 @export var in_sight_window := 0.5
 
 var _hand: HandSlot
@@ -43,7 +23,6 @@ func score(npc: Npc) -> float:
 	var distance := npc.flat_distance_to(target.global_position)
 	if distance < min_range or distance > max_range:
 		return 0.0
-	# Mid wind-up the item is already out of the inventory, but still to be thrown.
 	if _is_holding_item():
 		return keenness
 	if npc.find_throwable() == null or npc.get_free_hand() == null:
@@ -57,8 +36,6 @@ func enter(npc: Npc) -> void:
 	_timer = 0.0
 
 
-## Anything drawn but not thrown goes back in the pocket, or is dropped if there is
-## suddenly no room, so a hand is never left full of a rock nobody will throw.
 func exit(npc: Npc) -> void:
 	npc.locomotion.clear_facing()
 	if _is_holding_item() and not npc.stow(_hand):
@@ -94,9 +71,6 @@ func _is_holding_item() -> bool:
 	return _hand != null and not _hand.is_free()
 
 
-## The velocity that carries an item from `from` to `to` at throw_speed under gravity,
-## on the flatter of the two arcs that reach. A target beyond reach gets the longest
-## throw there is, 45 degrees up, and falls short.
 func _launch_velocity(from: Vector3, to: Vector3) -> Vector3:
 	var flat := Vector3(to.x - from.x, 0.0, to.z - from.z)
 	var distance := flat.length()

@@ -1,13 +1,8 @@
 extends Node
-## Captures the Hollowstump bandit camp in the test level from a few viewpoints.
-## Run with Movie Maker off-screen:
-##   godot --path cutting-board --position -10000,-10000 --write-movie <tmp>.avi
-##     res://tests/visual/bandit_camp_capture.tscn -- --shots=<dir>
 
 const LEVEL := preload("res://scenes/levels/test_level.tscn")
 const CAMP := Vector3(56, 0, -68)
 
-## name -> [camera position, look-at target], relative to the camp origin.
 const SHOTS := {
 	"trail": [Vector3(-17, 3.2, 12), Vector3(-2, 3.0, 0)],
 	"gate": [Vector3(-11, 1.8, 0.5), Vector3(0, 1.6, 0)],

@@ -1,12 +1,5 @@
 extends Node3D
 
-## Headless checks of the five setting weapons (rolling pin, chair leg, peg knuckles,
-## scratcher rake, rocker sickle): each loads, is a weapon held with the weapon arm set,
-## spawns its world scene, sits in a hand, hits for its own damage and wears on a landed
-## blow. Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/setting_weapons_check.tscn
-
 const WEAPONS := [
 	"pegged_rolling_pin", "chair_leg_club", "clothes_peg_knuckles", "back_scratcher_rake",
 	"rocker_sickle",
@@ -61,7 +54,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## A wall that never breaks, for blows to land on.
 func _add_target(at: Vector3) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	var shape := CollisionShape3D.new()

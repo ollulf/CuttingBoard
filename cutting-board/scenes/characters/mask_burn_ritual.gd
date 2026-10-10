@@ -1,24 +1,6 @@
 class_name MaskBurnRitual
 extends Usable
 
-## The Mask-Monger's trade: hand it a shattered mask and its puppet tosses it up, the
-## lantern sets it alight, and the soul that burns out of it spirals down into a vial,
-## which is lobbed to the giver's feet as a Soul in a Bottle
-## (docs/concepts/monger-burn-ritual.md). A whole mask is not burnt: one that is damaged
-## it mends instead, for one Soul in a Bottle out of the giver's inventory.
-##
-## Sits on the Monger as its Usable, so the player's interact key reaches it. The mask
-## given is the one in a hand (right first); a mask only in the inventory or being worn
-## is never taken. Burning comes before mending; with neither to offer — or a damaged
-## mask but no soul to pay with — the Monger just talks. It refuses while a ritual is
-## already playing, while the Monger is dead, and while it holds a grudge against whoever
-## is asking.
-##
-## The ritual poses the model after MaskMongerBody has (a later process_priority), so the
-## body's breathing and swaying carry on underneath and only the arms, head and jaw are
-## taken over. The Brain is paused for the length of it.
-
-## The beats, in seconds from the hand-off.
 const TOSS := 0.8
 const IGNITE := 1.5
 const SPIRAL := 2.5
@@ -26,27 +8,17 @@ const BOTTLE_UP := 3.7
 const SET_DOWN := 4.6
 const END := 5.8
 
-## Where the mask is lit, in the Monger's own space: above and in front of it.
 const APEX := Vector3(0.0, 2.5, -0.6)
 
 const SOUL_SHADER := preload("res://assets/shaders/soul_swirl.gdshader")
 
-## What the burnt mask becomes.
 @export var reward: ItemData = preload("res://resources/items/soul_bottle.tres")
-## The only mask that is burnt; every kind of face becomes this one once it splits.
 @export var shattered_mask: ItemData = preload("res://resources/items/shattered_mask.tres")
-## Heard as a damaged mask is mended: the Monger muttering over it, and the glue and
-## mallet at his hand.
 @export var repair_sound: SoundBank = preload("res://resources/audio/monger_babble.tres")
 @export var mend_sound: SoundBank = preload("res://resources/audio/monger_repair.tres")
-## How far in front of the giver the bottle lands, in metres.
 @export var landing_distance := 0.7
 
 @export_group("Sounds")
-## One per beat, all synthesised in tools/audio/synth_sfx.gd: the puppet clacking shut
-## on the mask, the toss, the lantern catching it (with the puppet's gasp), the soul's
-## whistle down into the vial, the cork, the lob, the vial clinking on the ground and the
-## puppet's pleased babble.
 @export var take_sound: SoundBank = preload("res://resources/audio/monger_take.tres")
 @export var toss_sound: SoundBank = preload("res://resources/audio/monger_toss.tres")
 @export var ignite_sound: SoundBank = preload("res://resources/audio/monger_ignite.tres")
@@ -60,9 +32,7 @@ const SOUL_SHADER := preload("res://assets/shaders/soul_swirl.gdshader")
 
 signal ritual_started(mask: ItemData)
 signal ritual_finished(bottle: Node3D)
-## A damaged mask in the giver's hand was mended to full, for one soul.
 signal mask_repaired(mask: Node3D)
-## A beat's sound was played, `at` seconds into the ritual.
 signal sound_cued(bank: SoundBank, at: float)
 
 @onready var _npc: Npc = get_parent()
@@ -73,7 +43,6 @@ signal sound_cued(bank: SoundBank, at: float)
 @onready var _jaw: Node3D = _model.get_node("%Jaw")
 @onready var _hand: Node3D = _model.get_node("%Puppet")
 
-## Seconds into the ritual, or < 0 when none is playing.
 var _time := -1.0
 var _giver: Node3D
 var _mask: Node3D
@@ -87,10 +56,8 @@ var _bottle: RigidBody3D
 var _arm_rest: Basis
 var _lantern_rest: Basis
 var _mask_start := Vector3.ZERO
-## The bottle's collision layer and mask, put back once it is let go.
 var _bottle_layers := Vector2i.ZERO
 var _bottle_ground := Vector3.ZERO
-## Which beats have already played their sound.
 var _cues := {}
 
 
@@ -98,12 +65,10 @@ func _ready() -> void:
 	held_verb = ""
 	can_use = func(by: Node) -> bool: return _can_give(by) or _can_repair(by)
 	used.connect(_on_used)
-	# After MaskMongerBody, so the ritual's pose is the one that shows.
 	process_priority = 10
 	set_process(false)
 
 
-## What the interact prompt offers this player, or "" when there is nothing to offer.
 func get_prompt(by: Node) -> String:
 	if _can_give(by):
 		return "Give shattered mask"
@@ -120,7 +85,6 @@ func _can_give(by: Node) -> bool:
 	return _will_trade(by) and _find_hand_mask(by) != null
 
 
-## A damaged mask in hand, and a soul in the inventory to pay for it.
 func _can_repair(by: Node) -> bool:
 	return _will_trade(by) and _find_damaged_mask(by) != null and _find_payment(by) != null
 
@@ -134,7 +98,6 @@ func _will_trade(by: Node) -> bool:
 	return not _npc.has_grudge_against(by as Node3D)
 
 
-## The hand holding a shattered mask, the only kind that is burnt.
 func _find_hand_mask(by: Node) -> HandSlot:
 	for hand_name: String in ["%HandSlotRight", "%HandSlotLeft"]:
 		var hand := by.get_node_or_null(hand_name) as HandSlot
@@ -143,7 +106,6 @@ func _find_hand_mask(by: Node) -> HandSlot:
 	return null
 
 
-## The hand holding a mask with less than its full durability left.
 func _find_damaged_mask(by: Node) -> HandSlot:
 	for hand_name: String in ["%HandSlotRight", "%HandSlotLeft"]:
 		var hand := by.get_node_or_null(hand_name) as HandSlot
@@ -155,7 +117,6 @@ func _find_damaged_mask(by: Node) -> HandSlot:
 	return null
 
 
-## The Soul in a Bottle a repair is paid with, out of the giver's inventory.
 func _find_payment(by: Node) -> InventoryEntry:
 	var inventory := by.get_node_or_null("Inventory") as Inventory
 	if inventory == null:
@@ -166,7 +127,6 @@ func _find_payment(by: Node) -> InventoryEntry:
 	return null
 
 
-## Takes one soul and mends the mask in hand to full, there and then.
 func _repair(by: Node) -> void:
 	var hand := _find_damaged_mask(by)
 	var payment := _find_payment(by)
@@ -181,10 +141,7 @@ func _repair(by: Node) -> void:
 	get_tree().call_group(&"interaction_prompts", &"refresh")
 
 
-## Takes the mask off the giver and starts the burn.
 func _on_used(by: Node) -> void:
-	# Marked busy before the mask leaves the giver: taking it refreshes the prompts,
-	# which must already read the Monger as busy.
 	var hand := _find_hand_mask(by)
 	if hand == null:
 		_repair(by)
@@ -192,7 +149,6 @@ func _on_used(by: Node) -> void:
 	_time = 0.0
 	var data := hand.get_item_data()
 	_mask = hand.release()
-	# Released, the object still hangs under the hand; it goes out into the world.
 	_mask.reparent(get_tree().current_scene)
 	_giver = by as Node3D
 	if _mask:
@@ -226,8 +182,6 @@ func _finish() -> void:
 	for node: Node in [_mask, _fire_light, _embers, _shavings, _smoke, _soul]:
 		if is_instance_valid(node):
 			node.queue_free()
-	# The vial is a real Soul in a Bottle from the start; letting go of it makes it a
-	# pickup like any other.
 	var bottle := _bottle
 	_bottle = null
 	if is_instance_valid(bottle):
@@ -236,8 +190,6 @@ func _finish() -> void:
 		bottle.collision_mask = _bottle_layers.y
 		bottle.freeze = false
 	ritual_finished.emit(bottle)
-	# The "Give mask" offer is back; redraw the prompt without the crosshair having to
-	# leave and come back.
 	get_tree().call_group(&"interaction_prompts", &"refresh")
 
 
@@ -341,16 +293,12 @@ func _process(delta: float) -> void:
 	var hand := _hand.global_position
 	var apex := _apex()
 
-	# Puppet arm: reach out for the mask, fling it up, sag, then raise the vial.
 	var reach := _bump(t, 0.0, TOSS) * 0.6 + _bump(t, TOSS, IGNITE) * 1.3 \
 			+ _bump(t, BOTTLE_UP - 0.2, SET_DOWN + 0.5) * 1.0
 	_puppet_arm.basis = _puppet_arm.basis * Basis(Vector3.RIGHT, reach)
-	# Lantern arm swings up under the mask to light it.
 	_lantern_arm.basis = _lantern_rest * Basis(Vector3.RIGHT,
 			_bump(t, TOSS + 0.2, SPIRAL + 0.3) * 1.4)
-	# Head follows the mask up and the soul back down.
 	_head.basis = _head.basis * Basis(Vector3.RIGHT, _bump(t, TOSS, SPIRAL + 0.8) * 0.5)
-	# Puppet jaw: a gasp at the flare (held open), then fast chatter as the soul falls.
 	var jaw := 0.0
 	if t > IGNITE and t < IGNITE + 0.6:
 		jaw = 0.6
@@ -360,7 +308,6 @@ func _process(delta: float) -> void:
 		jaw = 0.2 + 0.2 * sin(t * 25.0)
 	_jaw.basis = _jaw.basis * Basis(Vector3.RIGHT, jaw)
 
-	# Mask: from the giver's hand to the puppet, up to the apex, burns away.
 	if is_instance_valid(_mask):
 		if t < TOSS:
 			var k := smoothstep(0.0, TOSS, t)
@@ -382,7 +329,6 @@ func _process(delta: float) -> void:
 	_shavings.emitting = t > IGNITE and t < IGNITE + 0.3
 	_smoke.emitting = t > IGNITE + 0.4 and t < SPIRAL + 0.6
 
-	# Soul: spirals down from the apex into the vial's mouth.
 	var vial_mouth := hand + Vector3(0, 0.35, 0)
 	_soul.visible = t > SPIRAL - 0.2 and t < BOTTLE_UP + 0.5
 	if _soul.visible:
@@ -393,8 +339,6 @@ func _process(delta: float) -> void:
 				+ Vector3(cos(angle), 0, sin(angle)) * radius
 		_soul.scale = Vector3.ONE * (1.0 - k * 0.6) * (1.0 + 0.15 * sin(t * 20.0))
 
-	# Bottle: pops up into the puppet's hand, a cork-pop squash, then is lobbed to the
-	# giver's feet.
 	if _bottle:
 		_bottle.visible = t > BOTTLE_UP
 		if t > BOTTLE_UP and t < SET_DOWN:
@@ -424,7 +368,6 @@ func _process(delta: float) -> void:
 		_finish()
 
 
-## Plays `bank` once, the first frame the ritual passes `at`.
 func _cue(at: float, bank: SoundBank, where: Vector3) -> void:
 	if _time >= at and not _cues.has(at):
 		_cues[at] = true
@@ -436,16 +379,13 @@ func _freeze(node: Node3D) -> void:
 	var body := node as RigidBody3D
 	if body:
 		body.freeze = true
-		# Flown through the giver and the Monger, it must not shove either of them.
 		body.collision_layer = 0
 		body.collision_mask = 0
-	# Nobody can grab the mask back out of the air.
 	var carryable := node.get_node_or_null("Carryable")
 	if carryable:
 		carryable.queue_free()
 
 
-## 0 before start, rises to 1 through the middle, back to 0 at end.
 func _bump(t: float, start: float, end: float) -> float:
 	if t <= start or t >= end:
 		return 0.0

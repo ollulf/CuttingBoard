@@ -1,14 +1,5 @@
 extends Node3D
 
-## Headless checks for the Churn Thumper: it comes unarmed and a click rearms it (the
-## timed two-armed rearm); armed with no Railroad Spike in the bag a click is a dry
-## click that spends nothing; armed with spikes it fires one, which leaves the bag, kicks
-## the player back and leaves it unarmed, so the next click rearms rather than fires; the
-## spike damages a training dummy, sticks in it, and E on it puts it back in the bag.
-## Prints PASS/FAIL per check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/churn_thumper_check.tscn
-
 const PLAYER := preload("res://scenes/characters/player.tscn")
 const DUMMY := preload("res://scenes/characters/training_dummy.tscn")
 const THUMPER := preload("res://resources/items/churn_thumper.tres")
@@ -38,7 +29,6 @@ func _run() -> void:
 	_check("the Thumper is used from the hand", Usable.find_in(thumper).is_used_in_hand())
 	_check("it comes unarmed", not thumper.armed)
 
-	# Unarmed, a click rearms: two-armed, and only armed once it has played out.
 	_click(player, hand)
 	await TestWorld.physics_frames(self, 2)
 	_check("an unarmed click starts the rearm", player.is_using())
@@ -48,7 +38,6 @@ func _run() -> void:
 	_check("the rearm arms it", thumper.armed)
 	_check("the rearm is over", not player.is_using())
 
-	# Armed, nothing to shoot: a dry click, still armed.
 	var dry := [0]
 	thumper.dry_fired.connect(func() -> void: dry[0] += 1)
 	_click(player, hand)
@@ -57,7 +46,6 @@ func _run() -> void:
 	_check("no spike: still armed", thumper.armed)
 	_check("no spike: nothing in flight", _spikes_in_world().is_empty())
 
-	# Armed with three spikes: one shot, one spike.
 	for i in 3:
 		player.inventory.add(SPIKE)
 	var wear_before := Destructible.read(thumper)
@@ -71,12 +59,9 @@ func _run() -> void:
 	_check("the recoil pushes the player back", player.velocity.z > 0.5)
 	var flying := _spikes_in_world()
 	_check("one spike is in flight", flying.size() == 1)
-	# This one must stick, for the pull-out check below.
 	if not flying.is_empty():
 		flying[0].shatter_chance = 0.0
 
-	# Unarmed again: once the arm has come back from the kick, the click rearms rather
-	# than firing a second spike.
 	await get_tree().create_timer(0.5).timeout
 	_click(player, hand)
 	await TestWorld.physics_frames(self, 2)
@@ -89,7 +74,6 @@ func _run() -> void:
 	_check("the spike sticks in the dummy", spike != null and spike.stuck_in == dummy and spike.freeze)
 	_check("it is armed again after the rearm", thumper.armed)
 
-	# Pulling it out: walk up, look at it, E.
 	if spike:
 		await player.get_tree().physics_frame
 		player.velocity = Vector3.ZERO
@@ -109,8 +93,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Spikes thrown straight at the floor: a seeded roll that shatters leaves nothing
-## behind, one that doesn't leaves the spike stuck, and over many rolls about half break.
 func _check_shatter() -> void:
 	var rolls := RandomNumberGenerator.new()
 	rolls.seed = 7
@@ -134,9 +116,6 @@ func _check_shatter() -> void:
 					is_instance_valid(spike) and spike.stuck_in != null and spike.freeze)
 
 
-## Spikes in people hang from the limb they went into: one in a living villager stays on
-## that limb as he is killed and falls, one that kills him lands on the falling limb, and
-## one shot into a corpse sticks to the bone it struck.
 func _check_ragdoll() -> void:
 	var villager: Node3D = VILLAGER.instantiate()
 	add_child(villager)
@@ -157,7 +136,6 @@ func _check_ragdoll() -> void:
 	_check("the spike stays on its limb as he falls (%.2f m off)" % before.distance_to(after),
 			bone != null and before.distance_to(after) < 0.15)
 
-	# The killing blow itself.
 	var victim: Node3D = VILLAGER.instantiate()
 	add_child(victim)
 	victim.global_position = Vector3(-14, 0, 0)
@@ -174,7 +152,6 @@ func _check_ragdoll() -> void:
 			killer_bone != null and killer_before.distance_to(
 				killer_bone.global_transform.affine_inverse() * killer.global_position) < 0.15)
 
-	# Into the corpse, straight down onto the chest.
 	var corpse := await _shoot_at(_physical_bone(villager, "Chest").global_position, 10, Vector3.UP)
 	var struck := corpse.stuck_in as PhysicalBone3D
 	var corpse_holder := corpse.get_parent() as BoneAttachment3D
@@ -183,8 +160,6 @@ func _check_ragdoll() -> void:
 	_check("a spike in a corpse is still there to pull out", corpse.freeze and corpse.stuck_in != null)
 
 
-## Fires a spike that cannot shatter at `target` from 1.5 m off along `from`, and returns
-## it once it has had time to stick.
 func _shoot_at(target: Vector3, hit_damage: int, from := Vector3.BACK) -> RigidBody3D:
 	var spike: RigidBody3D = SPIKE_SCENE.instantiate()
 	spike.shatter_chance = 0.0
@@ -233,7 +208,6 @@ func _spikes_in_world() -> Array:
 	return found
 
 
-## Turns the player and their view to look straight at `target`.
 func _aim(player, target: Vector3) -> void:
 	var eye: Vector3 = player.camera.global_position
 	var flat := Vector3(target.x - eye.x, 0.0, target.z - eye.z)
@@ -241,7 +215,6 @@ func _aim(player, target: Vector3) -> void:
 	player.camera_pivot.rotation.x = atan2(target.y - eye.y, flat.length())
 
 
-## A plain click of the hand's own button, through the same path the input takes.
 func _click(player, hand: HandSlot) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_LEFT if hand == player.hand_left else MOUSE_BUTTON_RIGHT

@@ -1,20 +1,7 @@
 extends StaticBody3D
 
-## The smallest possible enemy: a body, a Health component, and a reaction to being hit.
-## It does not move, chase or fight back. Later enemies keep this exact Health component
-## and add behaviour components beside it rather than replacing anything here.
-##
-## Its name and health show on the HUD's target bar like an NPC's: hitting it makes it the
-## player's combat target, and looking at it close by names it (it is in the tracker's
-## nameplate group, aimed at through %Eyes). It is in the revives group too, so its empty
-## bar stays up through the reset and fills back up.
-
-## The name over its bar.
 @export var display_name := "Training Dummy"
-## How long the hit tint stays on, in seconds.
 @export var flash_time := 0.2
-## How long the dummy lies "dead" before standing back up. A training dummy is the one
-## enemy whose death behaviour is to reset, which is why death is not baked into Health.
 @export var reset_delay := 3.0
 @export var hit_color := Color(1.0, 0.25, 0.2, 0.55)
 @export var dead_color := Color(0.1, 0.1, 0.1, 0.6)

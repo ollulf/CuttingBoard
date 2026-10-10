@@ -1,30 +1,10 @@
 extends SceneTree
 
-## Builds the Mask-Monger's model, scenes/characters/mask_monger_model.tscn, from the
-## creature concept (docs/concepts/creature-concepts.html, "Mask-Monger"): a Whittler
-## merchant about 1.95 m tall that walks on two backward-kneed legs and two knuckle-arms,
-## holds a lantern in one upper hand and talks through a hand puppet on the other, and
-## carries a rack of five masks for sale on its back.
-##
-## Every limb is built as a chain of named Node3D pivots (hip > knee > ankle > toe,
-## shoulder > elbow > hand, rack > hook), the same joints the concept animates. Each joint
-## has its own name per side (KneeL, KneeR, HandLantern, ...) and the ones that move are
-## scene-unique names, so MaskMongerBody, the script set on the model's root, turns them
-## as %KneeL and so on.
-##
-## The concept is drawn facing +Z; it is copied here unchanged under a "Model" node that
-## is turned half round, so the finished monger faces -Z like the game's other characters.
-## Its rotations are three.js Euler angles (X, then Y, then Z, applied in that order).
-##
-## Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://tools/import/build_mask_monger.gd
-
 const OUT_PATH := "res://scenes/characters/mask_monger_model.tscn"
 const VILLAGER_MASK := preload("res://scenes/characters/masks/villager_mask.tscn")
 const BANDIT_MASK := preload("res://scenes/characters/masks/bandit_mask.tscn")
 const WHITTLER_MASK := preload("res://scenes/characters/masks/whittler_mask.tscn")
 
-## The concept's palette.
 const PUTTY := Color("8e7488")
 const PUTTY_DARK := Color("64506a")
 const SACK := Color("7a6446")
@@ -37,20 +17,16 @@ const IRON := Color("4a4650")
 const PLUM := Color("5a3048")
 const FLAME := Color("f0a838")
 
-## The masks hung on the rack: (x, y, which mask), along the top bar then the lower one.
 const RACK_MASKS := [
 	[-0.24, 0.98, "villager"], [0.0, 0.98, "bandit"], [0.24, 0.98, "whittler"],
 	[-0.13, 0.6, "whittler"], [0.13, 0.6, "villager"],
 ]
-## The masks are drawn smaller than a worn one, as in the concept.
 const MASK_SCALE := 0.62
-## The whole figure is scaled up from the concept (about 2.3 m tall).
 const FIGURE_SCALE := 1.18
 const BODY_SCRIPT := preload("res://scenes/characters/mask_monger_body.gd")
 
 var _root: Node3D
 var _materials := {}
-## Pivots to mark as scene-unique names once the root owns them.
 var _unique: Array[Node3D] = []
 
 
@@ -73,18 +49,15 @@ func _init() -> void:
 
 
 func _build(g: Node3D) -> void:
-	# The barrel of a body it walks on, lying along Z, with two rope hoops and a plum patch.
 	var barrel := _pivot(g, "Barrel", Vector3(0, 0.72, -0.25), true)
 	_cyl(barrel, "Sack", 0.27, 0.24, 0.8, SACK, Vector3.ZERO, 7).rotation.x = PI / 2
 	for z in [-0.25, 0.2]:
 		_cyl(barrel, "Hoop", 0.28, 0.28, 0.04, ROPE, Vector3(0, 0, z), 7).rotation.x = PI / 2
 	_box(barrel, "Patch", Vector3(0.4, 0.3, 0.02), PLUM, Vector3(0.27, -0.04, 0)).rotation.y = PI / 2
 
-	# Hind legs, set back under the barrel.
 	for s in [1, -1]:
 		_leg(g, "Leg" + _side(s), Vector3(0.17 * s, 0.68, -0.5), 0.06)
 
-	# Front legs: its lower arms, walking on brass-cuffed knuckles.
 	for s in [1, -1]:
 		var arm := _pivot(g, "KnuckleArm" + _side(s), Vector3(0.22 * s, 0.78, 0.08), true)
 		_euler(arm, -0.15, 0, 0.12 * s)
@@ -95,7 +68,6 @@ func _build(g: Node3D) -> void:
 		var knuckle := _limb(elbow, "Knuckle" + _side(s), 0.36, 0.05, 0.045, PUTTY)
 		_ball(knuckle, "Fist", 0.07, PUTTY_DARK, Vector3(0, -0.01, 0.02), Vector3(1, 0.7, 1.2))
 
-	# The upright torso, a leather coat with a flame-coloured muffler.
 	var body := _pivot(g, "Torso", Vector3(0, 0.84, 0.12), true)
 	_cyl(body, "Coat", 0.2, 0.24, 0.46, LEATHER, Vector3(0, 0.22, 0), 7)
 	_cyl(body, "Muffler", 0.13, 0.15, 0.1, FLAME, Vector3(0, 0.5, 0), 7)
@@ -105,7 +77,6 @@ func _build(g: Node3D) -> void:
 	_cyl(head, "HatCrown", 0.13, 0.15, 0.16, BARK, Vector3(0, 0.33, 0), 7)
 	_cyl(head, "HatBand", 0.155, 0.155, 0.03, FLAME, Vector3(0, 0.27, 0), 7)
 
-	# Upper arm on one side: a lantern hung from a hook.
 	var lantern_arm := _arm(body, "Lantern", Vector3(0.25, 0.38, 0), 0.26, 0.26, 0.045)
 	_euler(lantern_arm, -0.3, 0, 0.5)
 	lantern_arm.get_node("ElbowLantern").rotation.x = -1.3
@@ -123,15 +94,11 @@ func _build(g: Node3D) -> void:
 	lamp.position = Vector3(0, -0.16, 0.1)
 	lantern.add_child(lamp)
 
-	# Upper arm on the other side: the hand puppet with a little Whittler face, which does
-	# the talking, and its jaw.
 	var puppet_arm := _arm(body, "Puppet", Vector3(-0.25, 0.38, 0), 0.26, 0.24, 0.045)
 	_euler(puppet_arm, -1.0, 0, -0.3)
 	puppet_arm.get_node("ElbowPuppet").rotation.x = -0.6
 	var puppet := _pivot(puppet_arm.get_node("ElbowPuppet/HandPuppet"), "Puppet",
 			Vector3(0, -0.06, 0), true)
-	# The concept's 1.55 leaves the puppet's face looking at the sky once the arm is raised;
-	# a quarter turn more points it forward, at whoever the monger is talking to.
 	puppet.rotation.x = 1.55 + PI / 2
 	_cyl(puppet, "Sleeve", 0.07, 0.06, 0.12, PLUM, Vector3.ZERO, 6)
 	var face := _mask(puppet, "Face", "whittler", Vector3(0, 0.075, 0))
@@ -139,7 +106,6 @@ func _build(g: Node3D) -> void:
 	var jaw := _pivot(puppet, "Jaw", Vector3(0, -0.06, 0.05), true)
 	_box(jaw, "Chin", Vector3(0.11, 0.02, 0.1), PUTTY_DARK, Vector3.ZERO)
 
-	# The rack on its back, hung with faces for sale.
 	var rack := _pivot(g, "Rack", Vector3(0, 0.9, -0.35), true)
 	for s in [1, -1]:
 		_cyl(rack, "Post", 0.02, 0.02, 1.0, BARK_LIGHT, Vector3(0.34 * s, 0.5, 0), 4)
@@ -154,8 +120,6 @@ func _build(g: Node3D) -> void:
 	_ball(g, "Bag", 0.1, LEATHER, Vector3(-0.3, 0.55, -0.15), Vector3(1, 1.2, 1))
 
 
-## A backward-kneed leg reaching the ground from hip height y (the concept's dLeg).
-## Returns the hip pivot. Its joints carry the leg's side: KneeL, AnkleL, ToeL, FootL.
 func _leg(p: Node3D, leg_name: String, at: Vector3, r: float) -> Node3D:
 	var k := (at.y - 0.05) / 0.831
 	var s := leg_name.right(1)
@@ -173,8 +137,6 @@ func _leg(p: Node3D, leg_name: String, at: Vector3, r: float) -> Node3D:
 	return hip
 
 
-## Shoulder, upper arm, elbow, forearm and hand (the concept's arm), named after what the
-## hand holds: <what>Arm > Elbow<what> > Hand<what>. Returns the shoulder.
 func _arm(p: Node3D, what: String, at: Vector3, upper: float, fore: float, r: float) -> Node3D:
 	var shoulder := _pivot(p, what + "Arm", at, true)
 	var elbow := _limb(shoulder, "Elbow" + what, upper, r, r * 0.85, PUTTY, true)
@@ -184,14 +146,12 @@ func _arm(p: Node3D, what: String, at: Vector3, upper: float, fore: float, r: fl
 	return shoulder
 
 
-## A limb segment hanging down from p; returns the pivot at its far end, named joint_name.
 func _limb(p: Node3D, joint_name: String, length: float, r0: float, r1: float, col: Color,
 		unique := false) -> Node3D:
 	_cyl(p, "Bone", r1, r0, length, col, Vector3(0, -length / 2, 0), 5)
 	return _pivot(p, joint_name, Vector3(0, -length, 0), unique)
 
 
-## One of the game's carved masks, scaled down, facing the concept's front (+Z).
 func _mask(p: Node3D, mask_name: String, kind: String, at: Vector3) -> Node3D:
 	var holder := _pivot(p, mask_name, at)
 	holder.scale = Vector3.ONE * MASK_SCALE
@@ -199,12 +159,11 @@ func _mask(p: Node3D, mask_name: String, kind: String, at: Vector3) -> Node3D:
 		"villager": VILLAGER_MASK, "bandit": BANDIT_MASK, "whittler": WHITTLER_MASK,
 	}[kind]
 	var instance: Node3D = scene.instantiate()
-	instance.rotation.y = PI  # the mask scenes face -Z; the concept's front is +Z
+	instance.rotation.y = PI
 	holder.add_child(instance)
 	return holder
 
 
-## `unique` makes it a scene-unique name, for MaskMongerBody to reach as %node_name.
 func _pivot(p: Node3D, node_name: String, at := Vector3.ZERO, unique := false) -> Node3D:
 	var n := Node3D.new()
 	n.name = node_name
@@ -256,7 +215,6 @@ func _mesh(p: Node3D, node_name: String, m: PrimitiveMesh, col: Color, at: Vecto
 	return inst
 
 
-## Flat-coloured, unlit-looking clay like the concept's Lambert materials, one per colour.
 func _material(col: Color, glow: bool) -> StandardMaterial3D:
 	var key := col.to_html() + ("g" if glow else "")
 	if not _materials.has(key):
@@ -271,13 +229,11 @@ func _material(col: Color, glow: bool) -> StandardMaterial3D:
 	return _materials[key]
 
 
-## Sets a three.js-style rotation (X, then Y, then Z) on a pivot.
 func _euler(n: Node3D, x: float, y: float, z: float) -> void:
 	n.basis = Basis(Vector3.RIGHT, x) * Basis(Vector3.UP, y) * Basis(Vector3.BACK, z)
 
 
 func _side(s: int) -> String:
-	# The concept's +X is the monger's own left (it faces +Z).
 	return "L" if s > 0 else "R"
 
 

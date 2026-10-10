@@ -1,20 +1,10 @@
 extends Node3D
 
-## Headless checks for tree trunk collision: a walker sent straight at each tree type is
-## stopped at the bark, a thrown ball bounces off, a melee-height ray hits the trunk,
-## the trunk still blocks while its VisibleOnScreenEnabler3D has switched the tree off,
-## and a runtime navmesh bake leaves a hole around every trunk. Prints PASS/FAIL per
-## check and quits with the number of failures as the exit code.
-##
-##   godot --headless --path cutting-board res://tests/tree_collision_check.tscn
-
 const TREES := [
 	"tree_1_large", "tree_1_slim", "tree_1_strange", "tree_2_large",
 	"tree_2_slim", "tree_3_large", "tree_3_slim", "tree_4_large",
 ]
-## Room between trees, so a walker only ever meets the tree it was sent at.
 const SPACING := 30.0
-## The player's capsule radius.
 const WALKER_RADIUS := 0.4
 
 var _failures := 0
@@ -30,8 +20,6 @@ func _run() -> void:
 	for i in TREES.size():
 		var tree: Node3D = load("res://scenes/environment/foliage/trees/%s.tscn" % TREES[i]).instantiate()
 		add_child(tree)
-		# Turned and shrunk like the instances in valley_foliage, so the shapes are checked
-		# in the trees' own space rather than only at identity.
 		tree.transform = Transform3D(Basis(Vector3.UP, 0.7 * i).scaled(Vector3.ONE * 0.9), Vector3(i * SPACING, 0, 0))
 		trees.append(tree)
 	await _physics_frames(3)
@@ -54,8 +42,6 @@ func _run() -> void:
 		_check("%s is hit by a melee-height ray" % tree.name,
 			not hit.is_empty() and (hit.collider as Node).get_parent() == tree)
 
-	# The tree's on-screen enabler turns the whole tree off when the camera looks away;
-	# the trunk must keep blocking for NPCs and rocks out of view.
 	var hidden := trees[1]
 	hidden.process_mode = Node.PROCESS_MODE_DISABLED
 	await _physics_frames(2)
@@ -68,7 +54,6 @@ func _run() -> void:
 	hidden.process_mode = Node.PROCESS_MODE_INHERIT
 
 	var big := _trunk_of(trees[3])
-	# A plain ball rather than the rock item, which shatters on a hard hit.
 	var ball := RigidBody3D.new()
 	var ball_shape := CollisionShape3D.new()
 	ball_shape.shape = SphereShape3D.new()
@@ -97,8 +82,6 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## A flat floor with a navigation region that bakes from the `navigation_source` group,
-## set up like test_level's.
 func _build_floor() -> NavigationRegion3D:
 	var floor_body := StaticBody3D.new()
 	floor_body.add_to_group(&"navigation_source")

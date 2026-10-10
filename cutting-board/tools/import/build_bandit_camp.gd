@@ -1,14 +1,5 @@
 extends SceneTree
 
-## Builds scenes/environment/bandit_camp/bandit_camp.tscn, the Hollowstump bandit camp
-## (layout: docs/concepts/bandit-camp-layout.md). The camp origin is the middle of the
-## hollow oak; the door and the yard gate face west (-X), toward the village.
-##
-## It places existing props (village fences, boxes, barrels, the lantern, rocks, the
-## chest) and a few primitive-built ones (curtain, straw bed, fire pit, stump table,
-## mask rack, lookout platform). Run it again whenever the tables below change:
-##   godot --headless --path cutting-board -s res://tools/import/build_bandit_camp.gd
-
 const OUT := "res://scenes/environment/bandit_camp/bandit_camp.tscn"
 
 const HOLLOW_OAK := preload("res://scenes/environment/bandit_camp/hollow_oak.gd")
@@ -32,7 +23,6 @@ const BARK := preload("res://assets/materials/environment/foliage/tree_strange_1
 const STONE := preload("res://assets/materials/environment/foliage/stone_1.tres")
 const METAL := preload("res://assets/materials/environment/metal.tres")
 
-## Palisade ring around the tree, with a gate gap facing west.
 const YARD_RADIUS := 8.5
 const FENCE_COUNT := 11
 const GATE_GAP := 0.42
@@ -77,7 +67,6 @@ func _build_palisade() -> void:
 
 func _build_den() -> void:
 	var den := _group("Den")
-	# Stolen curtain over the door, pulled to one side; no collision, so it never blocks.
 	var curtain := _box_mesh(Vector3(0.05, 2.1, 1.1), _cloth(Color(0.55, 0.16, 0.14)))
 	_add(curtain, Vector3(-3.0, 1.15, -0.75), 0.0, [], den, "Curtain")
 	var rod := _box_mesh(Vector3(0.06, 0.06, 2.4), PLANKS)
@@ -100,7 +89,6 @@ func _build_den() -> void:
 	_add(bed, Vector3(1.2, 0.12, 1.0), 0.25, [], den, "StrawBed")
 	_add(SACK.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(1.6, 0.0, 2.0), 0.6, [], den, "Pillow")
 
-	# The bush in front of the back crack: a few dark leafy blobs, see-through for nav.
 	var bush := _group("CrackBush", den)
 	for p in [Vector3(4.4, 0.5, 0.3), Vector3(4.2, 0.4, -0.5), Vector3(4.7, 0.35, 0.9)]:
 		var blob := MeshInstance3D.new()
@@ -114,8 +102,6 @@ func _build_den() -> void:
 		_add(blob, p, 0.0, [], bush)
 
 
-## The broken limb on the north-east side with a plank platform at 6 m. There is no
-## climbing yet, so the lookout bandit is simply placed up there (see the layout notes).
 func _build_lookout() -> void:
 	var lookout := _group("Lookout")
 	var limb := StaticBody3D.new()
@@ -148,7 +134,6 @@ func _build_lookout() -> void:
 	_add(platform, dir * 4.6 + Vector3.UP * 6.0, PI * 0.25, [], lookout)
 	deck.owner = _root
 	shape.owner = _root
-	# A low rail on the outer edges.
 	for x in [-1.25, 1.25]:
 		_add(_box_mesh(Vector3(0.1, 0.6, 2.2), PLANKS), Vector3(x, 0.35, 0), 0.0, [], platform)
 	_add(_box_mesh(Vector3(2.6, 0.6, 0.1), PLANKS), Vector3(0, 0.35, -1.05), 0.0, [], platform)
@@ -156,7 +141,6 @@ func _build_lookout() -> void:
 
 func _build_yard() -> void:
 	var yard := _group("Yard")
-	# Fire pit: a ring of stones, charred logs, a soup pot and the glow.
 	var fire := _group("FirePit", yard)
 	fire.position = Vector3(-4.6, 0, 3.2)
 	for i in 7:
@@ -183,7 +167,6 @@ func _build_yard() -> void:
 	glow.omni_range = 7.0
 	_add(glow, Vector3(0, 0.6, 0), 0.0, [], fire, "FireLight")
 
-	# Stump table with a stolen villager mask and the camp's spare rocks on it.
 	var table := StaticBody3D.new()
 	table.name = "StumpTable"
 	var table_mesh := MeshInstance3D.new()
@@ -205,7 +188,6 @@ func _build_yard() -> void:
 	table_mesh.owner = _root
 	table_shape.owner = _root
 
-	# Mask rack by the door: two posts and a bar with stolen masks hung on it.
 	var rack := _group("MaskRack", yard)
 	rack.position = Vector3(-4.0, 0, -1.6)
 	rack.rotation.y = PI * 0.5
@@ -216,7 +198,6 @@ func _build_yard() -> void:
 	for i in masks.size():
 		_add(masks[i].instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(-0.6 + 0.4 * i, 1.4, -0.06), PI, [], rack, "Mask%d" % i)
 
-	# Rock pile by the gate, real throwable rocks on top of a couple of boulders.
 	var pile := _group("RockPile", yard)
 	pile.position = Vector3(-7.0, 0, 2.6)
 	_add(ROCK_2.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3.ZERO, 0.0, ["navigation_source"], pile, "Boulder")
@@ -224,7 +205,6 @@ func _build_yard() -> void:
 		var a := TAU * i / 4.0
 		_add(ROCK_ITEM.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(cos(a) * 0.7, 0.4, sin(a) * 0.7), a, [], pile, "Rock%d" % i)
 
-	# Loot stacked around the trunk.
 	var stash := _group("Stash", yard)
 	_add(BARREL.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(1.8, 0, 5.0), 0.0, ["navigation_source"], stash)
 	_add(BARREL.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(2.8, 0, 4.6), 1.2, ["navigation_source"], stash)
@@ -234,13 +214,8 @@ func _build_yard() -> void:
 	_add(ROCK.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE), Vector3(5.6, 0, 3.4), 0.0, ["navigation_source"], stash)
 
 
-## The five bandits, each the stock bandit tuned for its role through the existing NPC
-## exports: wander radius around its home, sight range, cowardice, defend allies. The
-## NPC scripts need autoloads that a -s run doesn't have, so the bandits are written as
-## plain scene text (instances with property overrides) after the scene is saved.
 func _append_bandits() -> Error:
 	var lookout_at := Vector3(1, 0, -1).normalized() * 4.6 + Vector3.UP * 6.2
-	# name, position, yaw, wander radius, sight metres, flee below health, hears allies
 	var roles := [
 		["Lookout", lookout_at, PI * 0.75, 0.0, 25.0, 0.0, false],
 		["GateGuardNorth", Vector3(-9.6, 0, -2.2), PI * 0.5, 2.0, 15.0, 0.0, false],
