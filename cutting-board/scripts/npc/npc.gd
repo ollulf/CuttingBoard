@@ -34,6 +34,10 @@ signal answering(caller: Npc, target: Node3D)
 @export var call_cooldown := 12.0
 @export_group("")
 
+@export_group("Corpse")
+@export var corpse_settle_time := 1.5
+@export_group("")
+
 @export_group("Giving Up")
 @export var give_up_cooldown := 15.0
 @export_group("")
@@ -536,3 +540,20 @@ func _on_died(info: DamageInfo) -> void:
 			if is_instance_valid(body):
 				Sfx.play_at(body_fall_sound, body.get_center())
 	)
+	get_tree().create_timer(corpse_settle_time, false).timeout.connect(_watch_corpse)
+
+
+func _watch_corpse() -> void:
+	inventory.changed.connect(_break_up_if_looted)
+	inventory.viewers_changed.connect(_break_up_if_looted)
+	_break_up_if_looted()
+
+
+func _break_up_if_looted() -> void:
+	if not inventory.is_empty() or inventory.is_viewed():
+		return
+	inventory.changed.disconnect(_break_up_if_looted)
+	inventory.viewers_changed.disconnect(_break_up_if_looted)
+	body.fell_apart.connect(queue_free)
+	if not body.fall_apart():
+		body.fell_apart.disconnect(queue_free)

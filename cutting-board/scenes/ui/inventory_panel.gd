@@ -193,9 +193,12 @@ func _bind_container(container: Inventory) -> void:
 		return
 	if _container and _container.changed.is_connected(_rebuild):
 		_container.changed.disconnect(_rebuild)
+	if is_instance_valid(_container):
+		_container.remove_viewer()
 	_container = container
 	if _container:
 		_container.changed.connect(_rebuild)
+		_container.add_viewer()
 	_rebuild()
 
 

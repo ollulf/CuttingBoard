@@ -18,11 +18,9 @@ var _variant := "A"
 var _body: HumanBody
 var _material: ShaderMaterial
 var _status: Label
-var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	_rng.seed = 7
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--variant="):
 			_variant = arg.trim_prefix("--variant=").to_upper()
@@ -121,9 +119,11 @@ func _play() -> void:
 	await get_tree().create_timer(0.4, true, true).timeout
 	match _variant:
 		"B":
-			_fall_apart(false)
+			_body.fall_apart()
 		"C":
-			_fall_apart(true)
+			_body.fall_apart()
+			await get_tree().create_timer(0.35, true, true).timeout
+			_dissolve(EFFECT_TIME)
 		_:
 			_dissolve(EFFECT_TIME)
 
@@ -138,33 +138,3 @@ func _dissolve(duration: float) -> void:
 
 func _set_progress(value: float) -> void:
 	_material.set_shader_parameter(&"progress", value)
-
-
-func _fall_apart(with_dissolve: bool) -> void:
-	var bones: Array[PhysicalBone3D] = []
-	for child in _body.physical_bones.get_children():
-		if child is PhysicalBone3D:
-			bones.append(child)
-	for bone in bones:
-		bone.joint_type = PhysicalBone3D.JOINT_TYPE_NONE
-	_material.set_shader_parameter(&"split", 1.0)
-	for bone in bones:
-		var outward := (bone.global_position - _body.get_center())
-		outward.y = 0.0
-		var kick := outward.normalized() * _rng.randf_range(0.6, 1.4) + Vector3.UP * _rng.randf_range(1.2, 2.2)
-		bone.apply_central_impulse(kick * bone.mass)
-		bone.angular_velocity = Vector3(
-			_rng.randf_range(-6, 6), _rng.randf_range(-6, 6), _rng.randf_range(-6, 6)
-		)
-	if with_dissolve:
-		await get_tree().create_timer(0.35, true, true).timeout
-		_dissolve(EFFECT_TIME)
-		return
-	await get_tree().create_timer(1.3, true, true).timeout
-	for bone in bones:
-		bone.collision_layer = 0
-		bone.collision_mask = 0
-		bone.gravity_scale = 0.0
-		bone.linear_damp = 0.0
-		bone.angular_damp = 6.0
-		bone.linear_velocity = Vector3.DOWN * _rng.randf_range(0.12, 0.2)
