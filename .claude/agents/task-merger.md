@@ -20,6 +20,7 @@ The manager's prompt gives you: the task title, the task branch `<branch>`, and 
    - Never open a windowed Godot run.
    - **Use your own scratch folder**: put scripts and logs in a scratchpad subfolder named after your merge branch (e.g. `<scratchpad>/<branch>-merge/`). Other agents share the scratchpad, so never run a script you didn't write there.
    - **Never kill Godot processes you did not start** (no `taskkill /IM godot.exe`, no `Stop-Process -Name godot`): the user and other agents run Godot at the same time. Record the PIDs of your own runs and stop only those, and prefer `timeout` so runs end on their own.
+   - Write no comments in code: when you combine conflicting changes, don't add `#`/`##` comments or trailing comments.
 4. Commit any generated `.uid` files the checks created for tracked scripts, and commit the merge (message ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
 5. Confirm `git merge-base --is-ancestor main HEAD` succeeds (main can fast-forward to you).
 

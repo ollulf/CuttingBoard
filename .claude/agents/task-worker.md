@@ -9,7 +9,8 @@ You are working on **CuttingBoard**, a Godot 4 RPG (the game project lives in `c
 
 ## Conventions
 - GDScript: reference nodes with `%UniqueName` scene-unique names, not hierarchy paths.
-- Match the style, naming and comment density of the surrounding code.
+- Match the style and naming of the surrounding code.
+- **Write no comments in code at all**: no `#` or `##` lines and no trailing comments in GDScript (and none in shaders or other code you add). Explain choices in your commit message and final report instead. If you edit a file that still has comments, leave the existing ones alone unless the task says otherwise, but don't add new ones.
 - Equipment slots are a loadout of `ItemData` records; hands hold items directly.
 
 ## Workflow
