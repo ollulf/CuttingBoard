@@ -68,7 +68,14 @@ func pick_loot() -> Array[ItemData]:
 
 
 func get_attack_target() -> Node3D:
-	return _target if is_instance_valid(_target) else null
+	if not is_instance_valid(_target) or Cheats.hides_from_enemies(_target):
+		return null
+	return _target
+
+
+func forget_target(actor: Node3D) -> void:
+	if actor != null and _target == actor and not _dead:
+		_give_up()
 
 
 func is_going_for(actor: Node) -> bool:
@@ -281,7 +288,7 @@ func _on_damaged(info: DamageInfo) -> void:
 	chair.hit_mask(info)
 	var attacker := info.get_attacker()
 	if attacker and attacker != self and get_attack_target() == null \
-			and Faction.find_in(attacker):
+			and Faction.find_in(attacker) and not Cheats.hides_from_enemies(attacker):
 		_target = attacker
 		_unseen = 0.0
 		if _state == State.ROAM:
