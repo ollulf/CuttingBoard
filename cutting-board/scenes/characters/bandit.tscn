@@ -7,13 +7,6 @@
 [ext_resource type="Resource" path="res://resources/items/rock.tres" id="5_rock"]
 [ext_resource type="Resource" path="res://resources/items/bandit_mask.tres" id="6_mask"]
 [ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="7_glue"]
-[ext_resource type="Resource" path="res://resources/items/finger_joint.tres" id="j1_finger"]
-[ext_resource type="Resource" path="res://resources/items/knee_hinge_pin.tres" id="j3_hinge"]
-[ext_resource type="Resource" path="res://resources/items/sawdust_pouch.tres" id="j4_sawdust"]
-[ext_resource type="Resource" path="res://resources/items/lacquer_flakes.tres" id="j5_lacquer"]
-[ext_resource type="Resource" path="res://resources/items/splintered_dowel.tres" id="j6_dowel"]
-[ext_resource type="Resource" path="res://resources/items/carved_eye_bead.tres" id="j8_eye"]
-[ext_resource type="Resource" path="res://resources/items/peg_teeth.tres" id="j10_teeth"]
 [ext_resource type="Script" path="res://scripts/components/dialogue.gd" id="8_dialogue"]
 [ext_resource type="Resource" path="res://resources/audio/bandit_voice.tres" id="9_voice"]
 
@@ -23,8 +16,8 @@ albedo_color = Color(0.7, 0.2, 0.18, 1)
 [node name="Bandit" instance=ExtResource("1_base")]
 right_hand_item = ExtResource("4_hammer")
 starting_items = Array[ExtResource("3_item_data")]([ExtResource("5_rock"), ExtResource("5_rock")])
-extra_items = Array[ExtResource("3_item_data")]([ExtResource("7_glue"), ExtResource("j1_finger"), ExtResource("j3_hinge"), ExtResource("j4_sawdust"), ExtResource("j5_lacquer"), ExtResource("j6_dowel"), ExtResource("j8_eye"), ExtResource("j10_teeth")])
-extra_item_chances = Array[float]([0.2, 0.35, 0.15, 0.35, 0.15, 0.35, 0.05, 0.15])
+extra_items = Array[ExtResource("3_item_data")]([ExtResource("7_glue")])
+extra_item_chances = Array[float]([0.2])
 
 [node name="Body" parent="Visual" index="0"]
 material = SubResource("StandardMaterial3D_bandit")

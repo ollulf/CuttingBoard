@@ -46,6 +46,16 @@ signal mask_broken
 @export var flinch_angular_damp := 7.0
 @export var flinch_gravity_scale := 0.0
 
+@export_group("Fall Apart")
+@export var fall_apart_shader: Shader = preload("res://assets/shaders/corpse_dissolve.gdshader")
+@export var fall_apart_outward := Vector2(0.6, 1.4)
+@export var fall_apart_upward := Vector2(1.2, 2.2)
+@export var fall_apart_spin := 6.0
+@export var fall_apart_tumble_time := 1.3
+@export var fall_apart_sink_speed := Vector2(0.12, 0.2)
+@export var fall_apart_sink_time := 2.6
+@export_group("")
+
 @onready var skeleton: Skeleton3D = %Skeleton
 @onready var mesh: MeshInstance3D = %Mesh
 @onready var physical_bones: PhysicalBoneSimulator3D = %PhysicalBones
@@ -61,6 +71,7 @@ var _face_inventory: Inventory
 var mask_rng := RandomNumberGenerator.new()
 var _dead_mask: ItemData
 var _dead_durability := -1
+var _falling_apart := false
 
 var mask_durability := 0:
 	set(value):
@@ -181,6 +192,59 @@ func go_limp(info: DamageInfo = null, carried_velocity := Vector3.ZERO) -> void:
 			_knock_off_mask.call_deferred(_face, info, carried_velocity)
 			_face = null
 	went_limp.emit()
+
+
+func is_falling_apart() -> bool:
+	return _falling_apart
+
+
+func fall_apart() -> bool:
+	if not _limp or _falling_apart:
+		return false
+	_falling_apart = true
+	_use_split_material()
+	for bone in _bones:
+		bone.joint_type = PhysicalBone3D.JOINT_TYPE_NONE
+	var center := get_center()
+	for bone in _bones:
+		var outward := bone.global_position - center
+		outward.y = 0.0
+		var kick := (
+			outward.normalized() * randf_range(fall_apart_outward.x, fall_apart_outward.y)
+			+ Vector3.UP * randf_range(fall_apart_upward.x, fall_apart_upward.y)
+		)
+		bone.apply_central_impulse(kick * bone.mass)
+		bone.angular_velocity = Vector3(
+			randf_range(-fall_apart_spin, fall_apart_spin),
+			randf_range(-fall_apart_spin, fall_apart_spin),
+			randf_range(-fall_apart_spin, fall_apart_spin)
+		)
+	get_tree().create_timer(fall_apart_tumble_time, false, true).timeout.connect(_sink_pieces)
+	return true
+
+
+func _use_split_material() -> void:
+	var split := material as ShaderMaterial
+	if split == null or split.shader != fall_apart_shader:
+		split = ShaderMaterial.new()
+		split.shader = fall_apart_shader
+		var standard := material as StandardMaterial3D
+		if standard:
+			split.set_shader_parameter(&"albedo", standard.albedo_color)
+			split.set_shader_parameter(&"roughness", standard.roughness)
+	split.set_shader_parameter(&"split", 1.0)
+	material = split
+
+
+func _sink_pieces() -> void:
+	for bone in _bones:
+		bone.collision_layer = 0
+		bone.collision_mask = 0
+		bone.gravity_scale = 0.0
+		bone.linear_damp = 0.0
+		bone.angular_damp = 6.0
+		bone.linear_velocity = Vector3.DOWN * randf_range(fall_apart_sink_speed.x, fall_apart_sink_speed.y)
+	get_tree().create_timer(fall_apart_sink_time, false, true).timeout.connect(fell_apart.emit)
 
 
 func _end_flinch() -> void:

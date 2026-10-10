@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/visual/empty_corpse_dissolve_concept.gd" id="1_concept"]
+
+[node name="EmptyCorpseDissolveConcept" type="Node3D"]
+script = ExtResource("1_concept")

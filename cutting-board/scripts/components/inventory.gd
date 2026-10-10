@@ -2,11 +2,13 @@ class_name Inventory
 extends Node
 
 signal changed
+signal viewers_changed
 
 @export var grid_size := Vector2i(6, 8)
 @export var display_name: String
 
 var _entries: Array[InventoryEntry] = []
+var _viewers := 0
 
 
 func get_entries() -> Array[InventoryEntry]:
@@ -22,6 +24,20 @@ func get_display_name() -> String:
 
 func is_empty() -> bool:
 	return _entries.is_empty()
+
+
+func add_viewer() -> void:
+	_viewers += 1
+	viewers_changed.emit()
+
+
+func remove_viewer() -> void:
+	_viewers = maxi(_viewers - 1, 0)
+	viewers_changed.emit()
+
+
+func is_viewed() -> bool:
+	return _viewers > 0
 
 
 func add(data: ItemData, durability: int = -1) -> bool:

@@ -118,6 +118,7 @@ var _timed_use_spent := false
 
 
 func _ready() -> void:
+	Cheats.register_player(self)
 	MouseGrab.capture()
 	_arm_left_base_pos = arm_left_pivot.position
 	_arm_right_base_pos = arm_right_pivot.position

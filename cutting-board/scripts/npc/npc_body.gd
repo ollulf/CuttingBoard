@@ -2,6 +2,7 @@ class_name NpcBody
 extends Node3D
 
 signal went_limp
+signal fell_apart
 
 
 func get_actor() -> Node3D:
@@ -34,3 +35,7 @@ func stick_point(_point: Vector3, _part: Node) -> Node3D:
 
 func hit_mask(_info: DamageInfo) -> void:
 	pass
+
+
+func fall_apart() -> bool:
+	return false

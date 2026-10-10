@@ -34,6 +34,10 @@ signal answering(caller: Npc, target: Node3D)
 @export var call_cooldown := 12.0
 @export_group("")
 
+@export_group("Corpse")
+@export var corpse_settle_time := 1.5
+@export_group("")
+
 @export_group("Giving Up")
 @export var give_up_cooldown := 15.0
 @export_group("")
@@ -201,6 +205,8 @@ func _die_blind(cause: DamageInfo = null) -> void:
 func hold_grudge(actor: Node3D) -> void:
 	if blind or actor == null or actor == self or not is_instance_valid(actor) or grudge_duration <= 0.0:
 		return
+	if Cheats.hides_from_enemies(actor):
+		return
 	_grudges.hold(actor, grudge_duration)
 	memory.remember(actor)
 
@@ -218,6 +224,16 @@ func give_up_on(actor: Node3D) -> void:
 	memory.forget(actor)
 	_grudges.drop(actor)
 	_given_up[actor] = Time.get_ticks_msec() / 1000.0 + give_up_cooldown
+
+
+func forget_target(actor: Node3D) -> void:
+	if actor == null:
+		return
+	if _strike_target == actor:
+		cancel_strike()
+	if alertness and alertness.target == actor:
+		alertness.calm()
+	give_up_on(actor)
 
 
 func has_given_up_on(actor: Node3D) -> bool:
@@ -244,7 +260,12 @@ func has_grudge_against(actor: Node3D) -> bool:
 
 
 func get_grudges() -> Array[Node3D]:
-	return _grudges.get_held(memory)
+	var held := _grudges.get_held(memory)
+	if Cheats.no_aggro:
+		for actor in held.duplicate():
+			if Cheats.hides_from_enemies(actor):
+				held.erase(actor)
+	return held
 
 
 func fight_score(target: Node3D, aggression: float, retaliation: float) -> float:
@@ -581,3 +602,20 @@ func _on_died(info: DamageInfo) -> void:
 			if is_instance_valid(body):
 				Sfx.play_at(body_fall_sound, body.get_center())
 	)
+	get_tree().create_timer(corpse_settle_time, false).timeout.connect(_watch_corpse)
+
+
+func _watch_corpse() -> void:
+	inventory.changed.connect(_break_up_if_looted)
+	inventory.viewers_changed.connect(_break_up_if_looted)
+	_break_up_if_looted()
+
+
+func _break_up_if_looted() -> void:
+	if not inventory.is_empty() or inventory.is_viewed():
+		return
+	inventory.changed.disconnect(_break_up_if_looted)
+	inventory.viewers_changed.disconnect(_break_up_if_looted)
+	body.fell_apart.connect(queue_free)
+	if not body.fall_apart():
+		body.fell_apart.disconnect(queue_free)

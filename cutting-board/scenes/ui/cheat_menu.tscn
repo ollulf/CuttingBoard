@@ -29,7 +29,7 @@ layout_mode = 0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 216.0
-offset_bottom = 416.0
+offset_bottom = 476.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_frame")
 
 [node name="Column" type="VBoxContainer" parent="Frame"]
@@ -42,6 +42,18 @@ text = "Cheats (F1)"
 [node name="Status" type="Label" parent="Frame/Column"]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="InfiniteHealth" type="CheckButton" parent="Frame/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Infinite health"
+
+[node name="NoAggro" type="CheckButton" parent="Frame/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "No aggro"
 
 [node name="Scroll" type="ScrollContainer" parent="Frame/Column"]
 layout_mode = 2
