@@ -18,6 +18,11 @@ extends CharacterBody3D
 ## How quickly the character reaches target speed (higher = snappier).
 @export var acceleration := 12.0
 @export var air_acceleration := 3.0
+## Movement speed multiplier right at the moment a punch, swing or kick strikes (hit or
+## whiff). Nothing slows between the click and the strike.
+@export_range(0.0, 1.0) var attack_slow_factor := 0.4
+## Seconds the strike slow lasts; it eases back to full speed over the second half.
+@export var attack_slow_time := 0.35
 
 ## Arm sway while walking.
 @export var arm_bob_frequency := 10.0
@@ -157,6 +162,8 @@ var _last_forward_tap := -INF
 var _winded := false
 ## The view's current knock from a hit, as a rotation of the camera, easing to nothing.
 var _kick := Vector3.ZERO
+## Seconds left of the strike slow; a new strike refreshes it rather than stacking.
+var _attack_slow := 0.0
 var _stagger := 0.0
 var _dead := false
 ## What the bare face has left, of bare_health: health whenever no mask is on.
@@ -199,6 +206,7 @@ func _ready() -> void:
 	# The blow lands when the animation says it does, not when the button was pressed.
 	arms.hit.connect(_on_arm_hit)
 	kick_leg.kick_started.connect(func(_target: Node3D) -> void: kick_leg_view.play_kick(kick_leg.windup))
+	kick_leg.kicked.connect(func(_target: Node3D) -> void: _start_attack_slow())
 	arms.beat.connect(_on_arm_beat)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
@@ -458,7 +466,21 @@ func blow_cost(held: ItemData) -> float:
 
 
 func _on_arm_hit(arm: int) -> void:
+	_start_attack_slow()
 	melee.strike(hand_left if arm == ArmAnimator.Arm.LEFT else hand_right)
+
+
+func _start_attack_slow() -> void:
+	_attack_slow = attack_slow_time
+
+
+## The strike slow's share of full speed now: attack_slow_factor at the strike, held for
+## the first half, then eased back to 1.
+func get_attack_slow_multiplier() -> float:
+	if _attack_slow <= 0.0 or attack_slow_time <= 0.0:
+		return 1.0
+	var t := clampf(_attack_slow / (attack_slow_time * 0.5), 0.0, 1.0)
+	return lerpf(1.0, attack_slow_factor, smoothstep(0.0, 1.0, t))
 
 
 ## Grabbing, throwing and dropping all hang off Shift, which leaves a plain left or
@@ -508,6 +530,8 @@ func _physics_process(delta: float) -> void:
 			(_sprint_latched or Input.is_action_pressed("sprint")) and not direction.is_zero_approx(),
 			delta):
 		speed = sprint_speed
+	speed *= get_attack_slow_multiplier()
+	_attack_slow = maxf(_attack_slow - delta, 0.0)
 	var accel := acceleration if is_on_floor() else air_acceleration
 	if _stagger > 0.0:
 		_stagger -= delta
