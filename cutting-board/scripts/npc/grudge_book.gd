@@ -24,5 +24,9 @@ func drop(actor: Node3D) -> void:
 	_until.erase(actor)
 
 
+func clear() -> void:
+	_until.clear()
+
+
 static func now() -> float:
 	return Time.get_ticks_msec() / 1000.0

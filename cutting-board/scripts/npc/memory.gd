@@ -22,6 +22,10 @@ func forget(actor: Node3D) -> void:
 	_entries.erase(actor)
 
 
+func clear() -> void:
+	_entries.clear()
+
+
 func knows(actor: Node3D) -> bool:
 	_prune()
 	return _entries.has(actor)

@@ -20,6 +20,17 @@ func get_current_action() -> NpcAction:
 	return _current
 
 
+func replace_actions(actions: Array[NpcAction]) -> void:
+	_switch_to(null)
+	for child in get_children():
+		if child is NpcAction:
+			remove_child(child)
+			child.queue_free()
+	for action in actions:
+		add_child(action)
+	_timer = 0.0
+
+
 func shut_down() -> void:
 	_switch_to(null)
 	set_physics_process(false)

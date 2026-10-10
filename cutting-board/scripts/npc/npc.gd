@@ -69,6 +69,7 @@ signal answering(caller: Npc, target: Node3D)
 @onready var dialogue: Dialogue = Dialogue.find_dialogue_in(self)
 
 var home := Vector3.ZERO
+var blind := false
 
 var _grudges := GrudgeBook.new()
 var _strike_target: Node3D
@@ -84,6 +85,8 @@ func _ready() -> void:
 	sight.spotted.connect(_on_spotted)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
+	if body.has_signal(&"mask_broken"):
+		body.connect(&"mask_broken", go_blind)
 	brain.setup(self)
 	_equip_loadout.call_deferred()
 
@@ -139,8 +142,26 @@ func get_attack_target() -> Node3D:
 	return best
 
 
+func go_blind() -> void:
+	if blind or not health.is_alive():
+		return
+	blind = true
+	cancel_strike()
+	faction.data = null
+	faction.own_data = null
+	sight.set_physics_process(false)
+	memory.clear()
+	_grudges.clear()
+	_given_up.clear()
+	if alertness:
+		alertness.calm()
+		alertness.set_physics_process(false)
+	var wander: Array[NpcAction] = [BlindWanderAction.new()]
+	brain.replace_actions(wander)
+
+
 func hold_grudge(actor: Node3D) -> void:
-	if actor == null or actor == self or not is_instance_valid(actor) or grudge_duration <= 0.0:
+	if blind or actor == null or actor == self or not is_instance_valid(actor) or grudge_duration <= 0.0:
 		return
 	_grudges.hold(actor, grudge_duration)
 	memory.remember(actor)
@@ -171,6 +192,8 @@ func has_given_up_on(actor: Node3D) -> bool:
 
 
 func hear_of(target: Node3D, spot: Vector3) -> void:
+	if blind:
+		return
 	_given_up.erase(target)
 	if is_instance_valid(target) and target.is_inside_tree():
 		memory.remember(target)
@@ -199,7 +222,7 @@ func flat_distance_to(point: Vector3) -> float:
 
 
 func strike_at(target: Node3D) -> bool:
-	if is_striking() or not health.is_alive():
+	if blind or is_striking() or not health.is_alive():
 		return false
 	if holster:
 		holster.draw_now()
@@ -356,7 +379,7 @@ func pick_random_weapon() -> ItemData:
 
 
 func _rally_allies(attacker: Node3D) -> void:
-	if defend_allies_radius <= 0.0 or faction.data == null:
+	if blind or defend_allies_radius <= 0.0 or faction.data == null:
 		return
 	var theirs := Faction.find_in(attacker)
 	if theirs and theirs.data == faction.data:
@@ -388,7 +411,7 @@ func allies_within(radius: float) -> Array[Npc]:
 
 func call_for_help(target: Node3D, spot: Vector3) -> bool:
 	var now := Time.get_ticks_msec() / 1000.0
-	if now < _call_ready_at or not health.is_alive():
+	if blind or now < _call_ready_at or not health.is_alive():
 		return false
 	_call_ready_at = now + call_cooldown
 	bark(&"call")
@@ -410,6 +433,8 @@ func call_for_help(target: Node3D, spot: Vector3) -> bool:
 
 
 func answer_call(caller: Npc, target: Node3D, spot: Vector3, delay: float) -> void:
+	if blind:
+		return
 	hear_of(target, spot)
 	answering.emit(caller, target)
 	get_tree().create_timer(delay, true, true).timeout.connect(
@@ -439,7 +464,7 @@ func _wall_between(other: Npc) -> bool:
 
 
 func _on_spotted(actor: Node3D) -> void:
-	if has_given_up_on(actor):
+	if blind or has_given_up_on(actor):
 		return
 	if alertness and alertness.wants_to_watch(actor):
 		alertness.see(actor)
@@ -449,7 +474,7 @@ func _on_spotted(actor: Node3D) -> void:
 
 func _on_damaged(info: DamageInfo) -> void:
 	var attacker := info.get_attacker()
-	if attacker and attacker != self and Faction.find_in(attacker) and not _is_teammate(attacker):
+	if not blind and attacker and attacker != self and Faction.find_in(attacker) and not _is_teammate(attacker):
 		_given_up.erase(attacker)
 		memory.remember(attacker)
 		if health.is_alive():
