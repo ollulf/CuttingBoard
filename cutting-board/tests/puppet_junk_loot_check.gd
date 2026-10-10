@@ -3,15 +3,15 @@ extends Node3D
 const VILLAGER := preload("res://scenes/characters/villager.tscn")
 const BANDIT := preload("res://scenes/characters/bandit.tscn")
 const CHAIR := preload("res://scenes/characters/chair_creature.tscn")
-const JUNK := {
-	"finger_joint": 0.35,
-	"knee_hinge_pin": 0.15,
-	"sawdust_pouch": 0.35,
-	"lacquer_flakes": 0.15,
-	"splintered_dowel": 0.35,
-	"carved_eye_bead": 0.05,
-	"peg_teeth": 0.15,
-}
+const JUNK := [
+	"finger_joint",
+	"knee_hinge_pin",
+	"sawdust_pouch",
+	"lacquer_flakes",
+	"splintered_dowel",
+	"carved_eye_bead",
+	"peg_teeth",
+]
 const CHAIR_JUNK := {
 	"splintered_dowel": 0.35,
 	"finger_joint": 0.2,
@@ -33,13 +33,12 @@ func _run() -> void:
 	var villager: Npc = VILLAGER.instantiate()
 	var bandit: Npc = BANDIT.instantiate()
 	var chair := CHAIR.instantiate()
-	_check_rates("villager", villager.pick_extra_items, JUNK)
-	_check_rates("bandit", bandit.pick_extra_items, JUNK)
+	_check_no_junk("villager", villager)
+	_check_no_junk("bandit", bandit)
 	_check_rates("chair", chair.pick_loot, CHAIR_JUNK)
 	villager.free()
 	bandit.free()
 	chair.free()
-	await _check_spawn_all()
 	print("%d failure(s)" % _failures)
 	get_tree().quit(_failures)
 
@@ -69,6 +68,19 @@ func _check_item(item_name: String) -> void:
 	node.free()
 
 
+func _check_no_junk(label: String, npc: Npc) -> void:
+	var junk := {}
+	for item_name in JUNK:
+		junk[_load(item_name)] = true
+	var carried := false
+	for data in npc.extra_items:
+		if junk.has(data):
+			carried = true
+	_report(not carried, "%s carries no puppet junk" % label)
+	_report(npc.extra_items.size() == npc.extra_item_chances.size(),
+		"%s extra item chances match items" % label)
+
+
 func _check_rates(label: String, roll: Callable, expected: Dictionary) -> void:
 	var hits := {}
 	for item_name in expected:
@@ -84,24 +96,6 @@ func _check_rates(label: String, roll: Callable, expected: Dictionary) -> void:
 		var rate := float(hits[item_name]) / ROLLS
 		_report(absf(rate - expected[item_name]) <= 0.04,
 			"%s %s rate %.3f (expected %.2f)" % [label, item_name, rate, expected[item_name]])
-
-
-func _check_spawn_all() -> void:
-	var npc: Npc = VILLAGER.instantiate()
-	var chances: Array[float] = [0.0]
-	for i in JUNK.size():
-		chances.append(1.0)
-	npc.extra_item_chances = chances
-	add_child(npc)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	var held := {}
-	for entry in npc.inventory.get_entries():
-		held[entry.data] = true
-	for item_name in JUNK:
-		_report(held.has(_load(item_name)), "spawned villager carries %s" % item_name)
-	npc.queue_free()
-	await get_tree().process_frame
 
 
 func _report(ok: bool, text: String) -> void:
