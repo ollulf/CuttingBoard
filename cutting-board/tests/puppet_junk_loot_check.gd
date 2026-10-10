@@ -12,12 +12,6 @@ const JUNK := [
 	"carved_eye_bead",
 	"peg_teeth",
 ]
-const CHAIR_JUNK := {
-	"splintered_dowel": 0.35,
-	"finger_joint": 0.2,
-	"peg_teeth": 0.15,
-}
-const ROLLS := 2000
 
 var _failures := 0
 
@@ -35,7 +29,7 @@ func _run() -> void:
 	var chair := CHAIR.instantiate()
 	_check_no_junk("villager", villager)
 	_check_no_junk("bandit", bandit)
-	_check_rates("chair", chair.pick_loot, CHAIR_JUNK)
+	_check_no_junk("chair", chair)
 	villager.free()
 	bandit.free()
 	chair.free()
@@ -68,7 +62,7 @@ func _check_item(item_name: String) -> void:
 	node.free()
 
 
-func _check_no_junk(label: String, npc: Npc) -> void:
+func _check_no_junk(label: String, npc: Node) -> void:
 	var junk := {}
 	for item_name in JUNK:
 		junk[_load(item_name)] = true
@@ -79,23 +73,6 @@ func _check_no_junk(label: String, npc: Npc) -> void:
 	_report(not carried, "%s carries no puppet junk" % label)
 	_report(npc.extra_items.size() == npc.extra_item_chances.size(),
 		"%s extra item chances match items" % label)
-
-
-func _check_rates(label: String, roll: Callable, expected: Dictionary) -> void:
-	var hits := {}
-	for item_name in expected:
-		hits[item_name] = 0
-	var items := {}
-	for item_name in expected:
-		items[_load(item_name)] = item_name
-	for i in ROLLS:
-		for data in roll.call():
-			if items.has(data):
-				hits[items[data]] += 1
-	for item_name in expected:
-		var rate := float(hits[item_name]) / ROLLS
-		_report(absf(rate - expected[item_name]) <= 0.04,
-			"%s %s rate %.3f (expected %.2f)" % [label, item_name, rate, expected[item_name]])
 
 
 func _report(ok: bool, text: String) -> void:
