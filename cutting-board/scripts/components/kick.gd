@@ -25,17 +25,17 @@ signal kick_started(target: Node3D)
 ## Seconds from the press to the strike frame.
 @export var windup := 0.15
 ## Push of a kick; mass decides how far it goes.
-@export var impulse := 320.0
+@export var impulse := 400.0
 ## Fastest a kick sends anything, so a cup does not leave at 300 m/s.
-@export var max_speed := 13.0
+@export var max_speed := 16.0
 ## Upward tilt of a prop's push, so a kick lifts it off the ground and travels.
 @export var lift_degrees := 22.0
 ## How far down the sight line the crosshair point is looked for.
 @export var aim_distance := 20.0
 @export var damage := 15
 @export var head_multiplier := 1.5
-@export var cost := 15.0
-@export var whiff_cost := 4.0
+@export var cost := 22.5
+@export var whiff_cost := 6.0
 @export var cooldown := 0.6
 @export var whiff_cooldown := 0.4
 ## Push given to an NPC, in metres per second, before its own mass is counted.
@@ -52,7 +52,9 @@ signal kick_started(target: Node3D)
 ## Overlay on the kick target; replaces the Interactor's tint on the same object.
 @export var highlight_material: Material
 @export var swing_sound: SoundBank = preload("res://resources/audio/swing.tres")
+## The boot landing on anything with Health; hit_object_sound on anything else, as a punch.
 @export var hit_sound: SoundBank = preload("res://resources/audio/hit_body.tres")
+@export var hit_object_sound: SoundBank = preload("res://resources/audio/impact_wood.tres")
 
 @onready var _camera: Camera3D = get_parent()
 @onready var _interactor: Interactor = get_parent().get_node_or_null("Interactor")
@@ -184,14 +186,21 @@ func _strike() -> void:
 		return
 	var strength := 1.0 if _pending_full else 0.5
 	var point := _aim_point(target)
-	if target is RigidBody3D:
-		_kick_prop(target as RigidBody3D, point, strength)
-	elif target is Npc:
+	var health := Health.find_in(target)
+	if target is Npc:
 		_kick_npc(target as Npc, strength)
+	elif target is RigidBody3D:
+		_kick_prop(target as RigidBody3D, point, strength)
+	elif health:
+		_kick_health(health, target)
+	# The boot wears a prop down only when its Kickable says so: a barrel meant to be
+	# kicked about takes its wear from what it slams into instead (ImpactDamage).
+	var kickable := Kickable.find_in(target)
 	var destructible := target.get_node_or_null("Destructible") as Destructible
-	if destructible and _pending_full and not (target is Npc):
+	if destructible and _pending_full and not (target is Npc) \
+			and (kickable == null or kickable.kick_wears):
 		destructible.damage(_damage())
-	Sfx.play_at(hit_sound, target.global_position)
+	Sfx.play_at(hit_sound if health else hit_object_sound, target.global_position)
 	kicked.emit(target)
 
 
@@ -237,6 +246,20 @@ func _kick_npc(npc: Npc, strength: float) -> void:
 	npc.kicked(info, trip_time if legs else push_time, trip_grip if legs else push_grip)
 
 
+## Kicks something with Health that is no NPC, like the training dummy: a blow just as a
+## punch lands one, credited to the kicker.
+func _kick_health(health: Health, target: Node3D) -> void:
+	var amount := _damage()
+	if amount <= 0:
+		return
+	var forward := -_camera.global_transform.basis.z
+	var info := DamageInfo.new(amount, owner)
+	info.position = _crosshair_point_on(target)
+	info.direction = Vector3(forward.x, 0.0, forward.z).normalized()
+	info.knockback = amount * 0.8
+	health.apply_damage(info)
+
+
 ## Where the crosshair line meets `node`, or its centre when the line passes beside it.
 func _crosshair_point_on(node: Node3D) -> Vector3:
 	var origin := _camera.global_position
@@ -270,6 +293,11 @@ func _kickable(collider: Variant) -> Node3D:
 		return null
 	if node is Npc:
 		return node if (node as Npc).health.is_alive() else null
+	# Anything else standing that can be hurt (the training dummy) is kicked as it is
+	# punched; a rigid prop still needs its Kickable.
+	var health := Health.find_in(node)
+	if health and not (node is RigidBody3D):
+		return node if health.is_alive() else null
 	# Props only when marked Kickable; a frozen body (held, shelved) stays put.
 	if Kickable.find_in(node) == null:
 		return null

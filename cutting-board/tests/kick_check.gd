@@ -40,9 +40,9 @@ func _run() -> void:
 	_kick.press()
 	var top := await _top_speed(barrel, 20)
 	_check("the kicked barrel moves (%.2f m/s)" % top, top > 0.3)
-	_check("its launch stays under the 13 m/s cap", top <= 13.05)
+	_check("its launch stays under the 16 m/s cap", top <= 16.05)
 	_check("the neighbour stays put", neighbour.global_position.distance_to(neighbour_start) < 0.02)
-	_check("a kick costs 15 stamina", is_equal_approx(stamina_before - _stamina.get_current(), 15.0))
+	_check("a kick costs 22.5 stamina", is_equal_approx(stamina_before - _stamina.get_current(), 22.5))
 	barrel.queue_free()
 	neighbour.queue_free()
 	await _physics_frames(40)
@@ -118,7 +118,7 @@ func _run() -> void:
 	stamina_before = _stamina.get_current()
 	_kick.press()
 	await _physics_frames(20)
-	_check("a whiff costs 4 stamina", is_equal_approx(stamina_before - _stamina.get_current(), 4.0))
+	_check("a whiff costs 6 stamina", is_equal_approx(stamina_before - _stamina.get_current(), 6.0))
 
 	# A kicked box slides into a bandit and hurts him, credited to the kicker.
 	_stamina.reset()
@@ -140,6 +140,85 @@ func _run() -> void:
 	bandit.health.damaged.disconnect(count_credited)
 	box.queue_free()
 	await _physics_frames(60)
+
+	# A barrel: the boot and its landing cost it nothing, it survives being kicked into
+	# the bandit twice and breaks on the third. Each hit counts as the kicker's attack.
+	var tracker := CombatTracker.new()
+	_rig.add_child(tracker)
+	# The bandit stands aside for the first kick, so the barrel only meets the ground.
+	bandit.global_position = Vector3(12, 0, 0)
+	var keg := _spawn_prop(BARREL, Vector3(0, 0, -1.3))
+	await _physics_frames(40)
+	var full := Destructible.read(keg)
+	_aim_at(keg.global_position + Vector3(0, 0.3, -1.0))
+	await _physics_frames(2)
+	_stamina.reset()
+	_kick.press()
+	await _physics_frames(strike_frames + 1)
+	_check("the boot costs a barrel no durability", Destructible.read(keg) == full)
+	await _physics_frames(180)
+	_check("nor does its landing and roll (%d of %d)" % [Destructible.read(keg), full], Destructible.read(keg) == full)
+	keg.queue_free()
+	await _physics_frames(20)
+	await _place(bandit)
+	bandit.global_position = Vector3(0, 0, -2.7)
+	await _physics_frames(20)
+	var barrel_hits: Array[int] = [0]
+	var count_barrel := func(info: DamageInfo) -> void:
+		if info.source is RigidBody3D and info.get_attacker() == _rig:
+			barrel_hits[0] += 1
+	bandit.health.damaged.connect(count_barrel)
+	var survived: Array[bool] = []
+	for round_index in 3:
+		if round_index > 0 and not is_instance_valid(keg):
+			break
+		if round_index == 0:
+			keg = _spawn_prop(BARREL, Vector3(0, 0, -1.3))
+		else:
+			keg.global_transform = Transform3D(Basis(), Vector3(0, 0.5, -1.3))
+			keg.linear_velocity = Vector3.ZERO
+			keg.angular_velocity = Vector3.ZERO
+		bandit.global_position = Vector3(0, 0, -2.7)
+		bandit.velocity = Vector3.ZERO
+		await _physics_frames(40)
+		_aim_at(keg.global_position + Vector3.UP * 0.3)
+		await _physics_frames(2)
+		_stamina.reset()
+		await _physics_frames(40)
+		_kick.press()
+		await _physics_frames(90)
+		survived.append(is_instance_valid(keg))
+		if round_index == 0:
+			_check("a barrel hit counts as the kicker's attack (combat tracker engaged)",
+				tracker.is_in_combat() and tracker.get_target() == bandit)
+	bandit.health.damaged.disconnect(count_barrel)
+	_check("the barrel hit the bandit three times (%d)" % barrel_hits[0], barrel_hits[0] == 3)
+	_check("the barrel survives two enemy hits and breaks on the third (%s)" % [survived],
+		survived == [true, true, false])
+	if is_instance_valid(keg):
+		keg.queue_free()
+	tracker.queue_free()
+	await _physics_frames(30)
+
+	# Kicking the bandit himself counts as an attack too.
+	tracker = CombatTracker.new()
+	_rig.add_child(tracker)
+	await _physics_frames(2)
+	await _place(bandit)
+	_aim_at(bandit.global_position + Vector3.UP * 1.2)
+	await _physics_frames(2)
+	var kicker: Array = [null]
+	var note_kicker := func(info: DamageInfo) -> void: kicker[0] = info.get_attacker()
+	bandit.health.damaged.connect(note_kicker)
+	_stamina.reset()
+	_kick.press()
+	await _physics_frames(strike_frames)
+	bandit.health.damaged.disconnect(note_kicker)
+	_check("a kick on an NPC is credited to the kicker", kicker[0] == _rig)
+	_check("and engages the combat tracker like a punch",
+		tracker.is_in_combat() and tracker.get_target() == bandit)
+	tracker.queue_free()
+	await _physics_frames(90)
 
 	# Kicking the bandit: the legs trip him longer than a kick to the body.
 	await _place(bandit)

@@ -1,5 +1,14 @@
 # Kick
 
+**Tuning, built:** impulse 400 N s, cap 16 m/s (a 40 kg barrel leaves at 10 m/s instead
+of 8), 22.5 stamina per kick, 6 per whiff (both +50%). `Kickable.kick_wears` off on the
+barrel: the boot no longer wears it, and while a kick has it armed its landing and rolling
+cost nothing; only `ImpactDamage.kick_hit_wear` (60 of its 160) is lost per living victim
+it slams into, so it survives two enemies and breaks on the third. A kick counts as an
+attack like a punch: the CombatTracker credits a kicked prop's hit to the kicker
+(`DamageInfo.get_attacker`), and anything standing with Health (the training dummy) can
+be kicked like it is punched.
+
 **Round 6, built:** **no charging.** One press kicks at once (after the 0.15 s windup)
 with the old full-charge strength: 320 N s, cap 13 m/s, 22° lift (a barrel still flies a
 few metres), 15 damage, 80 NPC knockback, 15 stamina (between the old tap 10 and full
