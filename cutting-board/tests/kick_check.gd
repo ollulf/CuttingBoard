@@ -47,6 +47,48 @@ func _run() -> void:
 	neighbour.queue_free()
 	await _physics_frames(40)
 
+	# The side-kick leg: kick_started fires at the press with the target, the leg strikes
+	# on the kick's strike frame, and the view roll leaves the aim and the target alone.
+	var leg := KickLeg.new()
+	_camera.add_child(leg)
+	var started: Array = []
+	var struck: Array = []
+	var landed: Array = []
+	var on_started := func(t: Node3D) -> void:
+		started.append(t)
+		leg.play_kick(_kick.windup)
+	var on_landed := func(t: Node3D) -> void: landed.append(t)
+	_kick.kick_started.connect(on_started)
+	_kick.kicked.connect(on_landed)
+	leg.struck.connect(func() -> void: struck.append(Time.get_ticks_msec()))
+	var rolled := _spawn_prop(BARREL, Vector3(0, 0, -1.3))
+	await _physics_frames(40)
+	_aim_at(rolled.global_position + Vector3.UP * 0.3)
+	await _physics_frames(2)
+	var forward_before := -_camera.global_transform.basis.z
+	_kick.press()
+	_check("kick_started fires with the target", started == [rolled])
+	_check("the leg shows while it kicks", leg.visible and leg.is_playing())
+	var max_roll := 0.0
+	var max_drift := 0.0
+	for i in strike_frames:
+		await get_tree().process_frame
+		_camera.rotation.z = leg.view_roll
+		max_roll = maxf(max_roll, absf(leg.view_roll))
+		max_drift = maxf(max_drift, (-_camera.global_transform.basis.z).angle_to(forward_before))
+	_check("the view rolls (%.1f deg)" % rad_to_deg(max_roll), max_roll > deg_to_rad(3.0))
+	_check("the roll leaves the aim direction alone", max_drift < 0.001)
+	_check("the leg strikes with the kick", struck.size() == 1 and landed == [rolled])
+	await _physics_frames(60)
+	_check("the leg animation finishes and hides", not leg.is_playing() and not leg.visible)
+	_check("the view roll eases back to level", absf(leg.view_roll) < 0.001)
+	_camera.rotation.z = 0.0
+	_kick.kick_started.disconnect(on_started)
+	_kick.kicked.disconnect(on_landed)
+	leg.queue_free()
+	rolled.queue_free()
+	await _physics_frames(40)
+
 	# One press sends a barrel several metres.
 	var distance := await _kick_distance()
 	_check("a single kick sends a barrel several metres (%.2f m)" % distance, distance > 2.5)

@@ -117,6 +117,7 @@ extends CharacterBody3D
 @onready var melee: MeleeAttack = %MeleeAttack
 @onready var interactor: Interactor = %Interactor
 @onready var kick_leg: Kick = %Kick
+@onready var kick_leg_view: KickLeg = %KickLeg
 @onready var hand_left: HandSlot = %HandSlotLeft
 @onready var hand_right: HandSlot = %HandSlotRight
 @onready var inventory: Inventory = %Inventory
@@ -197,6 +198,7 @@ func _ready() -> void:
 	hotbar.setup(inventory, hands, interactor)
 	# The blow lands when the animation says it does, not when the button was pressed.
 	arms.hit.connect(_on_arm_hit)
+	kick_leg.kick_started.connect(func(_target: Node3D) -> void: kick_leg_view.play_kick(kick_leg.windup))
 	arms.beat.connect(_on_arm_beat)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
@@ -534,7 +536,8 @@ func _process(delta: float) -> void:
 		return
 	_kick = _kick.lerp(Vector3.ZERO, 1.0 - exp(-hit_kick_recovery * delta))
 	# The arms' own view tilt, for an action that looks down at the body.
-	camera.rotation = _kick + Vector3(arms.view_tilt, 0.0, 0.0)
+	# The kick leg's roll turns about the sight line only, so the aim is untouched.
+	camera.rotation = _kick + Vector3(arms.view_tilt, 0.0, kick_leg_view.view_roll)
 
 
 func _on_item_stowed(data: ItemData) -> void:

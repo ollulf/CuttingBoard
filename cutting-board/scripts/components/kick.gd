@@ -11,6 +11,9 @@ extends Node
 signal target_changed(target: Node3D)
 ## Emitted on the strike frame: the kicked node, or null for a whiff.
 signal kicked(target: Node3D)
+## Emitted on a press that starts a kick, with the target taken then (null for a whiff);
+## the strike follows `windup` seconds later, so the leg animation starts from here.
+signal kick_started(target: Node3D)
 
 ## Leg reach plus a step, in metres.
 @export var reach := 1.8
@@ -110,6 +113,7 @@ func press() -> void:
 	var stamina := _stamina()
 	_windup = windup
 	Sfx.play(swing_sound)
+	kick_started.emit(target)
 	if target == null:
 		if stamina:
 			stamina.drain(whiff_cost)
