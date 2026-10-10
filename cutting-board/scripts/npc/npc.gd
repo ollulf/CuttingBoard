@@ -76,6 +76,7 @@ var _strike_target: Node3D
 var _strike_left := -1.0
 var _call_ready_at := 0.0
 var _given_up := {}
+var _collapse: BlindCollapse
 
 
 func _ready() -> void:
@@ -156,8 +157,45 @@ func go_blind() -> void:
 	if alertness:
 		alertness.calm()
 		alertness.set_physics_process(false)
-	var wander: Array[NpcAction] = [BlindWanderAction.new()]
-	brain.replace_actions(wander)
+	brain.shut_down()
+	locomotion.stop()
+	locomotion.clear_facing()
+	for hand in hands:
+		_release_to_world(hand)
+	if body_animator:
+		_collapse = body_animator.play_blind_collapse()
+	else:
+		_die_blind()
+
+
+func is_collapsing() -> bool:
+	return _collapse != null
+
+
+func _update_collapse() -> void:
+	if not health.is_alive():
+		_collapse = null
+		locomotion.creep = Vector3.ZERO
+		return
+	var forward := -visual.global_basis.z
+	forward.y = 0.0
+	locomotion.creep = forward.normalized() * _collapse.step_speed()
+	if _collapse.is_down():
+		_collapse = null
+		locomotion.creep = Vector3.ZERO
+		_die_blind()
+
+
+func _die_blind(cause: DamageInfo = null) -> void:
+	if not health.is_alive():
+		return
+	var info := DamageInfo.new(maxi(health.get_current(), 1))
+	info.silent = true
+	if cause:
+		info.position = cause.position
+		info.direction = cause.direction
+		info.knockback = cause.knockback
+	health.apply_damage(info)
 
 
 func hold_grudge(actor: Node3D) -> void:
@@ -252,6 +290,8 @@ func cancel_strike() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _collapse:
+		_update_collapse()
 	if not is_striking():
 		return
 	_strike_left -= delta
@@ -482,8 +522,13 @@ func _on_damaged(info: DamageInfo) -> void:
 			if alertness and alertness.state == Alertness.State.WATCHING:
 				alertness.raise_alarm(attacker, true)
 		_rally_allies(attacker)
+	var collapsing := _collapse != null
 	body.hit_mask(info)
-	if health.is_alive():
+	if collapsing and health.is_alive():
+		_collapse = null
+		locomotion.creep = Vector3.ZERO
+		_die_blind.call_deferred(info)
+	elif health.is_alive():
 		_react_to_blow(info)
 
 

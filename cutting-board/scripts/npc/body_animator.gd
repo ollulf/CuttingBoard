@@ -85,6 +85,7 @@ var _inspect_target := 0.0
 var _inspect_side := 1.0
 var _lean_side := 0.0
 var _lean_side_target := 1.0
+var _collapse: BlindCollapse
 
 
 func _ready() -> void:
@@ -114,6 +115,18 @@ func swing(hand: HandSlot, armed: bool) -> void:
 	_swing_time = 0.0
 
 
+func play_blind_collapse() -> BlindCollapse:
+	if _swing_hand:
+		_swing_hand.transform = _slot_rest[_swing_hand]
+		_swing_hand = null
+	_collapse = BlindCollapse.new(_body)
+	return _collapse
+
+
+func get_collapse() -> BlindCollapse:
+	return _collapse
+
+
 func contact_time(armed: bool) -> float:
 	return CHOP_CONTACT if armed else JAB_CONTACT
 
@@ -130,6 +143,9 @@ func play_gesture(gesture: Gesture) -> void:
 func _process(delta: float) -> void:
 	if _body.is_limp():
 		set_process(false)
+		return
+	if _collapse:
+		_collapse.advance(delta)
 		return
 	_time += delta
 

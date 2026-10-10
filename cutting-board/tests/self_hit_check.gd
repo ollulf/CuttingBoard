@@ -55,6 +55,7 @@ func _point_blank_swings() -> void:
 					await _physics_frames(1)
 			_tough(bandit.health)
 			_tough(villager.health)
+			_mend_mask(villager)
 
 	print("  point-blank: %d swings, %d on the target, %d on itself" % [
 		swings, target_hits[0], self_hits[0]
@@ -142,6 +143,12 @@ func _count_hits(health: Health, source: Node) -> Array[int]:
 func _tough(health: Health) -> void:
 	health.max_health = 100000
 	health.reset()
+
+
+func _mend_mask(npc: Npc) -> void:
+	var body := npc.body as HumanBody
+	if body and body.mask:
+		body.mask_durability = body.mask.durability
 
 
 func _add_floor() -> void:

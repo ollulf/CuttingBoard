@@ -43,6 +43,8 @@ func show_damage(amount: int, at: Vector3, color: Color) -> void:
 
 
 func _on_health_damaged(info: DamageInfo, health: Health) -> void:
+	if info.silent:
+		return
 	show_damage(info.amount, _hit_position(info, health), HEALTH_COLOR)
 
 

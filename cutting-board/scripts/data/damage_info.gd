@@ -9,6 +9,7 @@ var source: Node
 var position: Vector3
 var direction: Vector3
 var knockback := 0.0
+var silent := false
 
 
 func _init(p_amount: int, p_source: Node = null, p_type: Type = Type.BLUNT) -> void:

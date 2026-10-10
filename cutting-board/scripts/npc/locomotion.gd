@@ -14,6 +14,8 @@ extends Node
 @onready var _body: CharacterBody3D = owner
 @onready var _agent: NavigationAgent3D = %NavigationAgent3D
 
+var creep := Vector3.ZERO
+
 var _target := Vector3.ZERO
 var _moving := false
 var _running := false
@@ -84,7 +86,7 @@ func _physics_process(delta: float) -> void:
 	if not _body.is_on_floor():
 		_body.velocity += _body.get_gravity() * delta
 
-	var desired := Vector3.ZERO
+	var desired := creep
 	if _moving:
 		if _flat_distance(_body.global_position, _target) <= arrive_distance or _blocked_short():
 			_moving = false
