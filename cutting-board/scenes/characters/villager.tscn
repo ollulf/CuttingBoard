@@ -8,13 +8,6 @@
 [ext_resource type="Resource" uid="uid://d4k7e4lko40pm" path="res://resources/items/hammer.tres" id="6_hammer"]
 [ext_resource type="Resource" path="res://resources/items/saw.tres" id="7_saw"]
 [ext_resource type="Resource" path="res://resources/items/wood_glue.tres" id="8_glue"]
-[ext_resource type="Resource" path="res://resources/items/finger_joint.tres" id="j1_finger"]
-[ext_resource type="Resource" path="res://resources/items/knee_hinge_pin.tres" id="j3_hinge"]
-[ext_resource type="Resource" path="res://resources/items/sawdust_pouch.tres" id="j4_sawdust"]
-[ext_resource type="Resource" path="res://resources/items/lacquer_flakes.tres" id="j5_lacquer"]
-[ext_resource type="Resource" path="res://resources/items/splintered_dowel.tres" id="j6_dowel"]
-[ext_resource type="Resource" path="res://resources/items/carved_eye_bead.tres" id="j8_eye"]
-[ext_resource type="Resource" path="res://resources/items/peg_teeth.tres" id="j10_teeth"]
 [ext_resource type="Script" path="res://scripts/components/dialogue.gd" id="9_dialogue"]
 [ext_resource type="Resource" path="res://resources/audio/villager_voice.tres" id="10_voice"]
 
@@ -26,8 +19,8 @@ starting_items = Array[ExtResource("3_item_data")]([ExtResource("4_rock")])
 weapon_pool = Array[ExtResource("3_item_data")]([ExtResource("6_hammer"), ExtResource("7_saw"), ExtResource("4_rock")])
 weapon_weights = Array[float]([3.0, 3.0, 2.0])
 bare_hands_weight = 2.0
-extra_items = Array[ExtResource("3_item_data")]([ExtResource("8_glue"), ExtResource("j1_finger"), ExtResource("j3_hinge"), ExtResource("j4_sawdust"), ExtResource("j5_lacquer"), ExtResource("j6_dowel"), ExtResource("j8_eye"), ExtResource("j10_teeth")])
-extra_item_chances = Array[float]([0.3, 0.35, 0.15, 0.35, 0.15, 0.35, 0.05, 0.15])
+extra_items = Array[ExtResource("3_item_data")]([ExtResource("8_glue")])
+extra_item_chances = Array[float]([0.3])
 defend_allies_radius = 4.0
 name_pool = Array[String](["Knotty Ned", "Birchwick", "Old Spoke", "Mabel Burl", "Tom Dowel", "Elma Sap", "Pinewhistle", "Grainy Gus", "Widow Lathe", "Chip"])
 
