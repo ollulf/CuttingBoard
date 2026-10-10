@@ -1,7 +1,12 @@
 # Oil barrel
 
-Concept, 2026-10-10. A barrel full of lamp oil that bursts into a slick, glossy puddle
-when it breaks. Prototype scene: `tests/visual/oil_barrel_concept.tscn` (a kicked oil
+Concept, 2026-10-10. A **wood oil barrel** (light linseed / tung / furniture oil) that
+bursts into a slick, glossy golden puddle when it breaks.
+
+> **Round 2:** re-styled from dark lamp oil to light wood oil. The barrel is a normal,
+> slightly honey-toned barrel with an amber sheen; the puddle is translucent light
+> amber with a warm sheen and only a faint rainbow film. Gameplay stays the same; the
+> fire link still fits (linseed oil is flammable). Prototype scene: `tests/visual/oil_barrel_concept.tscn` (a kicked oil
 barrel hits a post, breaks, and a puddle spreads over ~1.2 s). No game code changed.
 
 ## The barrel
@@ -10,9 +15,9 @@ barrel hits a post, breaks, and a puddle spreads over ~1.2 s). No game code chan
   `scenes/items/oil_barrel.tscn` keeping Carryable, Kickable, Destructible and
   ImpactDamage, with its own `resources/items/oil_barrel.tres` (name "Oil barrel",
   heavier: mass 55 instead of 40, since it is full).
-- **Look:** the same mesh with staves darkened to near black (the prototype multiplies
-  the wood and iron by `Color(0.34, 0.29, 0.26)` and lowers roughness, so it reads
-  soaked), plus a small permanent **leak stain** under it when it stands in a level.
+- **Look:** the same mesh with staves slightly honey-toned (the prototype multiplies
+  the wood and iron by `Color(1.08, 0.95, 0.72)` and lowers roughness, so it has a light
+  oily amber sheen, not a dark soaked look), plus a small permanent **leak stain** under it when it stands in a level.
   The stain is the tell that tells it apart from a water barrel at a glance.
 - **Sound ideas:** a dull slosh when picked up or kicked (reuse the wood thunk with a
   low liquid layer), and a wet splash layered on `break_wood` when it bursts
@@ -28,8 +33,8 @@ barrel hits a post, breaks, and a puddle spreads over ~1.2 s). No game code chan
   a noisy circle plus 3-5 smaller lobes (seeded per puddle, so no two match), lifted
   1 cm off the ground. It grows from 5 % to full size over ~1.2 s with an ease-out, fast
   at first like a real spill. Radius ~1.3 m for a full barrel.
-- **Material:** near-black brown base, a sky-coloured sheen at grazing angles and faint
-  rainbow bands drifting slowly across it (a small spatial shader; see the prototype).
+- **Material:** translucent light golden amber (alpha ~0.6, more opaque at grazing
+  angles), a warm sheen and a very faint rainbow film drifting slowly across it (a small spatial shader; see the prototype).
   It reads wet without screen-space reflections, which fits the PSX look. A Decal would
   follow uneven ground better; worth trying once puddles land on terrain, the flat mesh
   is fine on floors and roads.

@@ -1,15 +1,15 @@
 extends Node3D
 
-## Concept prototype for the oil barrel (docs/concepts/oil-barrel.md): a darkened item
-## barrel leaking a small stain is kicked into a post, breaks, and an oil puddle
-## spreads where it burst. Nothing here is game code; the puddle lives in this file.
+## Concept prototype for the oil barrel (docs/concepts/oil-barrel.md): a honey-toned
+## barrel of light wood oil (linseed) leaking a small stain is kicked into a post, breaks,
+## and an amber oil puddle spreads where it burst. Nothing here is game code.
 ##
 ##   godot --path cutting-board --write-movie <dir>/oil.avi --fixed-fps 30
 ##       --resolution 960x540 --quit-after 120 res://tests/visual/oil_barrel_concept.tscn
 
 const BARREL := preload("res://scenes/items/barrel.tscn")
-## Multiplies the barrel's wood and iron: oil-soaked staves read near black.
-const OIL_TINT := Color(0.34, 0.29, 0.26)
+## Multiplies the barrel's wood and iron: a light honey tone from wood oil.
+const OIL_TINT := Color(1.08, 0.95, 0.72)
 const KICK_IMPULSE := Vector3(320.0, 50.0, 0.0)
 const POST_X := 2.2
 
@@ -106,7 +106,7 @@ func _on_barrel_destroyed() -> void:
 	puddle.spread(1.2)
 
 
-## Darkens every surface of the barrel's meshes by OIL_TINT.
+## Honey-tints every surface of the barrel's meshes by OIL_TINT.
 func _soak(node: Node) -> void:
 	for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
 		for i in mi.mesh.get_surface_count():
@@ -124,11 +124,11 @@ func _soak(node: Node) -> void:
 class OilPuddle:
 	extends Node3D
 
-	## Near-black oil with a sky-coloured sheen at grazing angles and faint rainbow
-	## bands that drift across it, so it reads wet even without real reflections.
+	## Light golden wood oil (linseed/tung): translucent amber over the ground, a warm
+	## sheen at grazing angles and a very faint rainbow film drifting across it.
 	const SHEEN_SHADER := """
 shader_type spatial;
-render_mode cull_disabled;
+render_mode cull_disabled, blend_mix, depth_draw_opaque;
 
 varying vec3 world_pos;
 
@@ -141,10 +141,11 @@ void fragment() {
 	float fresnel = pow(1.0 - facing, 2.0);
 	float band = sin(world_pos.x * 4.0 + cos(world_pos.z * 3.0) * 2.0 + TIME * 0.6);
 	vec3 rainbow = 0.5 + 0.5 * cos(6.2832 * (band * 0.5 + vec3(0.0, 0.33, 0.67)));
-	ALBEDO = vec3(0.05, 0.04, 0.03);
-	ROUGHNESS = 0.08;
+	ALBEDO = vec3(0.86, 0.6, 0.22);
+	ALPHA = mix(0.6, 0.85, fresnel);
+	ROUGHNESS = 0.06;
 	SPECULAR = 1.0;
-	EMISSION = vec3(0.3, 0.36, 0.45) * fresnel * 0.6 + rainbow * 0.05;
+	EMISSION = vec3(0.55, 0.38, 0.12) * (0.25 + fresnel * 0.5) + rainbow * 0.02;
 }
 """
 
