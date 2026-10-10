@@ -27,3 +27,14 @@ offset/dip on the player camera (or the existing head-bob/shake code), the NPC b
 (`human_body`) gaining a kick pose for bandits who kick, and sounds: a cloth whoosh at the
 chamber, a wooden thud at the strike (existing `hit_body` / prop impact), a creak on
 recovery.
+
+## Round 2: C is in the game
+
+The user picked **C, the side kick**. `scripts/components/kick_leg.gd` (node `%KickLeg`
+under the player camera) builds a simple leg (thigh, shin, boot) and plays the side kick
+on an `AnimationPlayer` stepped with physics, started from `Kick.kick_started` and
+stretched so its strike key lands on the kick's strike frame. The view roll is
+`view_roll_degrees` (10, down from the prototype's 14) and is added to the camera's z
+rotation by `player.gd`; a roll about the sight line leaves the crosshair direction, and
+so the aim and the target, unchanged (checked in `tests/kick_check`). Clip:
+`tests/visual/kick_leg_capture.tscn`.
