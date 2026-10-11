@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://dlj6fdxkdsijv"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_floor"]
 albedo_color = Color(0.22, 0.26, 0.3, 1)
@@ -9,45 +9,110 @@ albedo_color = Color(0.55, 0.6, 0.66, 1)
 [sub_resource type="StandardMaterial3D" id="Mat_accent"]
 albedo_color = Color(0.86, 0.52, 0.26, 1)
 
-[node name="BlockoutDemo" type="Node3D"]
+[node name="BlockoutDemo" type="Node3D" unique_id=1243021045]
 
-[node name="Ground" type="CSGBox3D" parent="."]
+[node name="Ground" type="CSGBox3D" parent="." unique_id=2017070757]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.25, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.25, 6.7691803)
 use_collision = true
-size = Vector3(16, 0.5, 14)
+size = Vector3(16, 0.5, 2.6307068)
 material = SubResource("Mat_floor")
 
-[node name="Room" type="CSGCombiner3D" parent="."]
+[node name="Room" type="CSGCombiner3D" parent="." unique_id=1850707090]
 unique_name_in_owner = true
 use_collision = true
 
-[node name="Shell" type="CSGBox3D" parent="Room"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
-size = Vector3(6, 3, 6)
+[node name="Shell" type="CSGBox3D" parent="Room" unique_id=1012531437]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5561523, 0)
+size = Vector3(6, 7.1123047, 6)
 material = SubResource("Mat_wall")
 
-[node name="Hollow" type="CSGBox3D" parent="Room"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+[node name="Shell2" type="CSGBox3D" parent="Room" unique_id=1345891370]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 2.5131836, 6)
+size = Vector3(5, 6.973633, 6)
+material = SubResource("Mat_wall")
+
+[node name="Shell3" type="CSGBox3D" parent="Room" unique_id=2067568595]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 8, 6)
+size = Vector3(5, 4, 6)
+material = SubResource("Mat_wall")
+
+[node name="Hollow" type="CSGBox3D" parent="Room" unique_id=917939357]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9782593, 0)
 operation = 2
-size = Vector3(5.4, 3.2, 5.4)
+size = Vector3(5.4, 5.5565186, 5.4)
 material = SubResource("Mat_floor")
 
-[node name="Doorway" type="CSGBox3D" parent="Room"]
+[node name="Hollow5" type="CSGBox3D" parent="Room" unique_id=716784802]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.845707, 0)
+operation = 2
+size = Vector3(5.4, 5.5565186, 5.4)
+material = SubResource("Mat_floor")
+
+[node name="Hollow3" type="CSGBox3D" parent="Room" unique_id=1238336422]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.3255494, 5.630725, -2.1168702)
+operation = 2
+size = Vector3(1.2510986, 1.2584229, 0.7883301)
+material = SubResource("Mat_floor")
+
+[node name="Hollow2" type="CSGBox3D" parent="Room" unique_id=757181484]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.70000005, 3.0100586, 6)
+operation = 2
+size = Vector3(4, 5.620117, 5.4)
+material = SubResource("Mat_floor")
+
+[node name="Hollow4" type="CSGBox3D" parent="Room" unique_id=1312349112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5093262, 8.4373045, 5.7)
+operation = 2
+size = Vector3(4.3813477, 4.765625, 6)
+material = SubResource("Mat_floor")
+
+[node name="Shell4" type="CSGBox3D" parent="Room" unique_id=897502794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7698145, -2.259735)
+size = Vector3(6, 0.30828857, 1.4805298)
+material = SubResource("Mat_wall")
+
+[node name="Doorway" type="CSGBox3D" parent="Room" unique_id=794997155]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 2.85)
 operation = 2
 size = Vector3(1.4, 2.2, 1)
 material = SubResource("Mat_floor")
 
-[node name="Window" type="CSGCylinder3D" parent="Room"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -2.85, 1.7, 0)
+[node name="Doorway2" type="CSGBox3D" parent="Room" unique_id=306373643]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3, 1.3, 6.85)
 operation = 2
-radius = 0.6
-height = 1.0
-sides = 12
+size = Vector3(1.4, 2.2, 1)
 material = SubResource("Mat_floor")
 
-[node name="Ramp" type="CSGPolygon3D" parent="."]
+[node name="Room2" type="CSGCombiner3D" parent="." unique_id=1097808012]
+unique_name_in_owner = true
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 12.912641, 0, 13.55317)
+use_collision = true
+
+[node name="Shell2" type="CSGBox3D" parent="Room2" unique_id=425294945]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5000067, -10.5, 7)
+size = Vector3(7, 33, 8)
+material = SubResource("Mat_wall")
+
+[node name="Hollow2" type="CSGBox3D" parent="Room2" unique_id=1834960116]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30000496, -10.179883, 6.8)
+operation = 2
+size = Vector3(6, 32, 7)
+material = SubResource("Mat_floor")
+
+[node name="Doorway" type="CSGBox3D" parent="Room2" unique_id=1257004194]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -24.7, 2.8499994)
+operation = 2
+size = Vector3(1.4, 2.2, 1)
+material = SubResource("Mat_floor")
+
+[node name="Doorway2" type="CSGBox3D" parent="Room2" unique_id=1543995441]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3, 1.3, 6.85)
+operation = 2
+size = Vector3(1.4, 2.2, 1)
+material = SubResource("Mat_floor")
+
+[node name="Ramp" type="CSGPolygon3D" parent="." unique_id=290013479]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, 3)
 use_collision = true
@@ -55,42 +120,42 @@ polygon = PackedVector2Array(0, 0, 4, 0, 4, 1.5)
 depth = 2.0
 material = SubResource("Mat_accent")
 
-[node name="Platform" type="CSGCombiner3D" parent="."]
+[node name="Platform" type="CSGCombiner3D" parent="." unique_id=366992691]
 unique_name_in_owner = true
 use_collision = true
 
-[node name="Deck" type="CSGBox3D" parent="Platform"]
+[node name="Deck" type="CSGBox3D" parent="Platform" unique_id=124977882]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 1.35, 2)
 size = Vector3(2, 0.3, 4)
 material = SubResource("Mat_wall")
 
-[node name="Pillar" type="CSGCylinder3D" parent="Platform"]
+[node name="Pillar" type="CSGCylinder3D" parent="Platform" unique_id=203631400]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0.6, 0.5)
 radius = 0.25
 height = 1.2
 material = SubResource("Mat_wall")
 
-[node name="Stairs" type="CSGCombiner3D" parent="."]
+[node name="Stairs" type="CSGCombiner3D" parent="." unique_id=1364342567]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, 0)
 use_collision = true
 
-[node name="Step1" type="CSGBox3D" parent="Stairs"]
+[node name="Step1" type="CSGBox3D" parent="Stairs" unique_id=162132635]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, -1.75)
 size = Vector3(2, 0.3, 0.5)
 material = SubResource("Mat_accent")
 
-[node name="Step2" type="CSGBox3D" parent="Stairs"]
+[node name="Step2" type="CSGBox3D" parent="Stairs" unique_id=1892416305]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, -1.25)
 size = Vector3(2, 0.3, 0.5)
 material = SubResource("Mat_accent")
 
-[node name="Step3" type="CSGBox3D" parent="Stairs"]
+[node name="Step3" type="CSGBox3D" parent="Stairs" unique_id=1436779977]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -0.75)
 size = Vector3(2, 0.3, 0.5)
 material = SubResource("Mat_accent")
 
-[node name="Step4" type="CSGBox3D" parent="Stairs"]
+[node name="Step4" type="CSGBox3D" parent="Stairs" unique_id=1328762993]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, -0.25)
 size = Vector3(2, 0.3, 0.5)
 material = SubResource("Mat_accent")
