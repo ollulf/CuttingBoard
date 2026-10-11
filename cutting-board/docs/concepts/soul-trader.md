@@ -27,8 +27,8 @@ Concept page: https://claude.ai/artifact/K6xHiKrGUGLmDoiAqMdg2F
 
 Look A is built by `tools/import/build_soul_trader.gd` into
 `scenes/characters/soul_trader.tscn` (static; joints `%Torso`, `%Neck`, `%Head`, `%Jaw`,
-`%ArmL/R`, `%Flask1..6` named for later animation). Capture:
-`tests/visual/soul_trader_capture.tscn -- --shots=<dir> [--clip]`.
+`%ArmL/R`, `%Flask1..6` named for later animation). The capture
+scene was removed.
 
 ## Round 2: in the game
 
@@ -41,4 +41,4 @@ Look A is built by `tools/import/build_soul_trader.gd` into
   grid with price badges on the left, pack on the right; drag or double-click a stock
   item into the pack to buy it with flasks from the pack. No counter/confirm step yet.
 - Placed in `scenes/levels/village.tscn` under Market at (-6.5, 0, 4.5).
-  Test: `tests/soul_trader_check.tscn`. Shots: `tests/visual/soul_trader_trade_capture.tscn`.
+  Test: `tests/soul_trader_check.tscn`. The shots capture scene was removed.

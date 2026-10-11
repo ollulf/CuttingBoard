@@ -2,7 +2,7 @@
 
 Guide and comparison: https://claude.ai/artifact/BVfW1UhDFMKhU9hEwAnqW7
 
-Demo scene: `res://tests/visual/blockout_demo.tscn` (built-in CSG only). Screenshot/bake check: `res://tests/visual/blockout_capture.tscn`.
+Demo scene: `res://tests/visual/blockout_demo.tscn` (built-in CSG only). Its screenshot/bake capture scene was removed.
 
 ## Recommendation
 

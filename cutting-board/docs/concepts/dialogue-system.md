@@ -316,7 +316,7 @@ Pitfalls to handle:
   `->` target exists, every speaker tag is declared (catches typos when writing).
 - `tests/dialogue_interrupt_check.tscn`: start talking to a villager, damage it, expect
   `ended("interrupted")` and the player unlocked.
-- Plank looks: a `tests/visual/dialogue_capture.tscn` for screenshots via Movie Maker.
+- Plank looks: screenshots via Movie Maker.
 
 ## 7. Build plan (each task ≤15 min, MVP first)
 

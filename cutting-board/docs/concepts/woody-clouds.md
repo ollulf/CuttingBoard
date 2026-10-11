@@ -18,8 +18,8 @@ At night the moon (`scenes/environment/sky/moon.tscn`) still draws in front of t
 
 Concept page: https://claude.ai/artifact/N5hJeipcuktGk1DWAqyWZy
 
-Three ways to make the sky belong to a world of wood, built in
-`tests/visual/woody_clouds/woody_clouds_capture.tscn` over the village, day and night,
+Three ways to make the sky belong to a world of wood, built in a
+capture scene (since removed) over the village, day and night,
 through the PSX palette grade:
 
 - **A. Whittled clouds on strings** (3D): faceted carved lumps with a flat sawn
@@ -37,5 +37,3 @@ replace the `ProceduralSkyMaterial` in `resources/environments/daylight.tres` an
 `tallow_fair.tres` with a `ShaderMaterial` (done, see above).
 C could be added later as a few foreground accents near the village.
 
-Try it: `godot --path cutting-board res://tests/visual/woody_clouds/woody_clouds_capture.tscn -- --clip=B --time=day`
-(`--clip=A|B|C`, `--time=day|night`; `--shots=<dir>` saves all six stills).

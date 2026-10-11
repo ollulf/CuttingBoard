@@ -37,7 +37,7 @@ slow code idle in `scenes/characters/carver.gd`. Not placed in any level.
   tip), knives and half-carved masks.
 - Around the stump: a plank stack and leaning boards, rough blanks to nearly finished masks,
   shaving heaps and curls, a chopping block with an axe, a workbench.
-- Capture: `tests/visual/carver_capture.tscn` (`--shots=<dir>`, `--clip` for the idle).
+- The capture scene was removed.
 
 ## Round 3: longer body, sketch mask, lamps
 
@@ -64,4 +64,4 @@ slow code idle in `scenes/characters/carver.gd`. Not placed in any level.
 - Collision: stump, workbench, chopping block, plank stack and brazier. The stump and yard
   meshes join the navmesh source group, so NPCs walk round them.
 - His 14 lights have no shadows and fade out from 40 m to 55 m away.
-- Check: `tests/carver_grove_check.tscn`; stills: `tests/visual/carver_grove_capture.tscn`.
+- Check: `tests/carver_grove_check.tscn` (the stills capture scene was removed).

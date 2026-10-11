@@ -6,8 +6,8 @@ bursts into a slick, glossy golden puddle when it breaks.
 > **Round 2:** re-styled from dark lamp oil to light wood oil. The barrel is a normal,
 > slightly honey-toned barrel with an amber sheen; the puddle is translucent light
 > amber with a warm sheen and only a faint rainbow film. Gameplay stays the same; the
-> fire link still fits (linseed oil is flammable). Prototype scene: `tests/visual/oil_barrel_concept.tscn` (a kicked oil
-barrel hits a post, breaks, and a puddle spreads over ~1.2 s). No game code changed.
+> fire link still fits (linseed oil is flammable). The prototype scene (a kicked oil
+barrel hits a post, breaks, and a puddle spreads over ~1.2 s) was removed. No game code changed.
 
 ## The barrel
 

@@ -22,7 +22,7 @@ rule the enemy health bar already uses). On `true` the music crossfades to Comba
 `combat_grace` (5 s) without any NPC going for the player, it fades back to Outside, which
 resumes where it paused. Dead NPCs and NPCs whose grudge ran out drop out on their own.
 The player's own blows (on a dummy, say) don't count. Checked by `tests/music_check.tscn`.
-Recorded in `tests/visual/music_capture.tscn`.
+The recording scene was removed.
 
 ## Round 3: outside and combat, no retro, weirder
 

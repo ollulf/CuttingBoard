@@ -7,7 +7,7 @@ https://claude.ai/artifact/8MAFRARVAHjYHnSqyVSspU. This file is a short copy.
 
 Models: `tools/import/build_nail_guns.gd` writes `assets/meshes/props/nail_gun_*.res` and the
 round 2 ammo `nail_ammo_*.res` (laid out like the saw: grip at the origin along +Y, barrel along
--Z). Photos: `tests/visual/nail_gun_capture.tscn -- --shots=<dir> [--round=2] [--plain]`.
+-Z). The photo capture scene was removed.
 
 ## Rounds 3-4: G, Churn Thumper, implemented
 
@@ -21,8 +21,8 @@ round 2 ammo `nail_ammo_*.res` (laid out like the saw: grip at the origin along 
   moving cancels it. No melee. The prompt reads "Fire" or "Rearm".
 - Held like every item at rest: the arms' rest pose sits below the frame, so the Thumper shows
   when it fires or is rearmed.
-- Checks: `tests/churn_thumper_check.tscn`; clip: `tests/visual/thumper_capture.tscn`
-  (test level, fires at the training dummy, then rearms).
+- Checks: `tests/churn_thumper_check.tscn`; the clip capture scene (fires at
+  the training dummy, then rearms) was removed.
 
 ## Round 2: blunderbusses with big nails
 

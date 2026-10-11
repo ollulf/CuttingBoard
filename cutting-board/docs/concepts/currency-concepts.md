@@ -71,5 +71,5 @@ glowing face-wisp that bobs and blinks. Now a real item (`resources/items/soul_b
 - **B**: a carved wooden flask with a window slot, the glow showing through.
 - **C**: a lantern-like glass jar, tin lid, a twine loop to carry it by.
 
-Switch by changing the mesh path in `soul_bottle.tscn`; renders from
-`tests/visual/soul_bottle_capture.tscn`. Follow-up: the Mask-Monger's ritual and the trade.
+Switch by changing the mesh path in `soul_bottle.tscn`; the render scene
+was removed. Follow-up: the Mask-Monger's ritual and the trade.

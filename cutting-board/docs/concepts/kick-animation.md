@@ -3,8 +3,8 @@
 Result page: https://claude.ai/artifact/XsSJBW8iF2qopKAvNMjVZj
 
 Three looks for the Q kick (`scripts/components/kick.gd`: 0.15 s windup, then the
-strike), prototyped on a primitive wooden puppet kicking a barrel in
-`tests/visual/kick_animation_concept.tscn` (`-- --option=a|b|c`). Each loop alternates the
+strike), prototyped on a primitive wooden puppet kicking a barrel (the concept scene was
+removed). Each loop alternates the
 first-person view and a side view.
 
 | Option | Look | Phases (frames at 60 fps) |
@@ -36,5 +36,5 @@ on an `AnimationPlayer` stepped with physics, started from `Kick.kick_started` a
 stretched so its strike key lands on the kick's strike frame. The view roll is
 `view_roll_degrees` (10, down from the prototype's 14) and is added to the camera's z
 rotation by `player.gd`; a roll about the sight line leaves the crosshair direction, and
-so the aim and the target, unchanged (checked in `tests/kick_check`). Clip:
-`tests/visual/kick_leg_capture.tscn`.
+so the aim and the target, unchanged (checked in `tests/kick_check`). The clip
+capture scene was removed.

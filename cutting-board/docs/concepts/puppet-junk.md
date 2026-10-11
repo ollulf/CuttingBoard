@@ -4,7 +4,7 @@ Junk looted from dead puppets, made from their wooden bodies. Result page:
 https://claude.ai/artifact/1JjVp2KqyKFKxkuDgFqWaw
 
 Meshes: `assets/meshes/props/junk_<name>.res`, built by `tools/import/build_puppet_junk.gd`.
-Preview: `tests/visual/puppet_junk_capture.tscn`.
+The preview capture scene was removed.
 
 In the game (round 2): 1, 3, 4, 5, 6, 8 and 10 are real items (`resources/items/`,
 `scenes/items/`, baked icons). Villagers and bandits roll each one as an extra item

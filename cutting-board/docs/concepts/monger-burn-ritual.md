@@ -4,8 +4,8 @@ Result page with storyboard and clips: https://claude.ai/artifact/4LJpptoMTyNPUK
 
 You give the Mask-Monger a mask; he tosses it up, his lantern sets it alight, its soul
 spirals down into a vial and he lobs the bottle (`scenes/items/soul_bottle.tscn`) to your
-feet as a normal pickup. Goofy, not creepy: the puppet narrates. Rough animatic:
-`tests/visual/monger_burn_ritual_capture.tscn` (`-- --wide` for a three-quarter view).
+feet as a normal pickup. Goofy, not creepy: the puppet narrates. The rough animatic
+capture scene was removed.
 
 ## Beats (about 5.8 s)
 

@@ -39,7 +39,7 @@ scripts/                 .gd files not owned by a single scene
   utils/                 static helpers (MouseGrab)
 tests/                   headless checks: tests/<name>_check.tscn, each exits with its failure count
   support/               TestWorld: shared floor, navmesh bake/sync and masked-player set-up
-  visual/                windowed capture scenes for screenshots and clips (Movie Maker)
+  visual/                tallow_capture (Movie Maker screenshots) and blockout_demo; one-off capture scenes are deleted once their result page is published
   ragdoll/               test stand for hit reactions and ragdolls, run by hand
 tools/                   editor/CLI tooling, run with `godot --headless --path cutting-board -s <script>`
   audio/                 synth_sfx / synth_music / synth_voice_concepts on synth_base.gd: regenerate the synth sounds

@@ -7,7 +7,7 @@ renders is the artifact https://claude.ai/artifact/S84y8YdaD3GGvnRKQZHgSz.
 
 Models: `tools/import/build_weapon_concepts.gd` writes
 `assets/meshes/props/weapon_concept_<name>.res` (grip at the origin along +Y, like the hammer).
-Photographs: `tests/visual/weapon_concept_capture.tscn -- --shots=<dir> [--plain]`. Concept only;
+The photo capture scene was removed. Concept only;
 no ItemData or scenes yet.
 
 1. **Marionette Cross** (bandits, Monger's thugs). Control cross with three weighted strings; flail
